@@ -21,6 +21,8 @@ export default function Sidebar({ open, onClose }) {
 
   const menuItems = [
     { label: "Dashboard", icon: FiGrid, path: "/dashboard" },
+    { label: "Admin Dashboard", icon: FiGrid, path: "/dashboard/admin-dashboard" },
+    { label: "Users", icon: FiGrid, path: "/dashboard/admin-dashboard/users" },
     { label: "Products", icon: FiBox, path: "/dashboard/products" },
     { label: "Orders", icon: FiShoppingCart, path: "/dashboard/orders" },
     { label: "Store Profile", icon: FiUser, path: "/dashboard/store-profile" },
