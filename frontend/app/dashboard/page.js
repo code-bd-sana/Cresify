@@ -1,35 +1,28 @@
 "use client";
 
-
-
 import RecentOrders from "@/components/RecentOrders";
 import SalesChart from "@/components/SalesCard";
 import StatCard from "@/components/StatCard";
-import {
-  FiShoppingBag,
-  FiShoppingCart,
-  FiBox,
-  FiStar,
-} from "react-icons/fi";
+import { FiShoppingBag, FiShoppingCart, FiBox, FiStar } from "react-icons/fi";
+import { IoCartOutline } from "react-icons/io5";
+import { LuClipboardPenLine } from "react-icons/lu";
 
 export default function DashboardPage() {
   return (
-    <div className="">
+    <div className="px-2 pt-6">
+      <h1 className="text-lg md:text-[28px] font-semibold text-gray-900">
+        Dashboard Overview
+      </h1>
+
+      <p className="mt-1 md:text-xl text-[#AC65EE]">
+        Welcome back! Here’s what’s happening with your store today
+      </p>
       {/* ======= HEADER ======= */}
-      <div className="bg-white rounded-2xl shadow-sm px-4 md:px-6 py-5 border border-[#F0EEF7]">
-        <h1 className="text-lg md:text-xl font-semibold text-gray-900">
-          Dashboard Overview
-        </h1>
-
-        <p className="mt-1 text-[13px] md:text-sm text-[#8C8CA1]">
-          Welcome back! Here’s what’s happening with your store today
-        </p>
-
+      <div className=" rounded-2xl border border-[#F0EEF7]">
         {/* ======= STAT CARDS ======= */}
         <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-
           <StatCard
-            icon={FiShoppingBag}
+            icon={IoCartOutline }
             amount="$45,655.00"
             label="Total Sales"
             change="+12.5%"
@@ -38,7 +31,7 @@ export default function DashboardPage() {
           />
 
           <StatCard
-            icon={FiShoppingCart}
+            icon={LuClipboardPenLine}
             amount="1248"
             label="Total Orders"
             change="+8.5%"
@@ -63,16 +56,11 @@ export default function DashboardPage() {
             badgeBg="bg-[#E8FFF3]"
             badgeText="text-[#22C55E]"
           />
-
         </div>
       </div>
 
       {/* ======= SALES ANALYTICS ======= */}
-      <div className="mt-6 bg-white rounded-2xl shadow-sm px-4 md:px-6 pt-4 pb-5 border border-[#F0EEF7]">
-        <h3 className="text-sm md:text-base font-semibold text-gray-900 mb-2">
-          Sales Analytics
-        </h3>
-
+      <div className="mt-6 bg-white rounded-2xl shadow-sm">
         <SalesChart />
       </div>
 
@@ -84,7 +72,6 @@ export default function DashboardPage() {
 
         <RecentOrders />
       </div>
-
     </div>
   );
 }
