@@ -1,90 +1,23 @@
 "use client";
 
-
-
-import RecentOrders from "@/components/RecentOrders";
-import SalesChart from "@/components/SalesCard";
-import StatCard from "@/components/StatCard";
-import {
-  FiShoppingBag,
-  FiShoppingCart,
-  FiBox,
-  FiStar,
-} from "react-icons/fi";
+import AboutCresify from "@/components/home/AboutCresify";
+import BlogSection from "@/components/home/BlogSection";
+import CTASection from "@/components/home/CTASection";
+import FeaturedProducts from "@/components/home/FeaturedProducts";
+import FeaturedServices from "@/components/home/FeaturedServices";
+import HomeBanner from "@/components/home/HomeBanner";
+import WhyChoose from "@/components/home/WhyChoose";
 
 export default function DashboardPage() {
   return (
     <div className="">
-      {/* ======= HEADER ======= */}
-      <div className="bg-white rounded-2xl shadow-sm px-4 md:px-6 py-5 border border-[#F0EEF7]">
-        <h1 className="text-lg md:text-xl font-semibold text-gray-900">
-          Dashboard Overview
-        </h1>
-
-        <p className="mt-1 text-[13px] md:text-sm text-[#8C8CA1]">
-          Welcome back! Here’s what’s happening with your store today
-        </p>
-
-        {/* ======= STAT CARDS ======= */}
-        <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-
-          <StatCard
-            icon={FiShoppingBag}
-            amount="$45,655.00"
-            label="Total Sales"
-            change="+12.5%"
-            badgeBg="bg-[#E8FFF3]"
-            badgeText="text-[#22C55E]"
-          />
-
-          <StatCard
-            icon={FiShoppingCart}
-            amount="1248"
-            label="Total Orders"
-            change="+8.5%"
-            badgeBg="bg-[#E8FFF3]"
-            badgeText="text-[#22C55E]"
-          />
-
-          <StatCard
-            icon={FiBox}
-            amount="156"
-            label="Products"
-            change="+3"
-            badgeBg="bg-[#EEF2FF]"
-            badgeText="text-[#6366F1]"
-          />
-
-          <StatCard
-            icon={FiStar}
-            amount="4.8"
-            label="Avg Rating"
-            change="+0.3"
-            badgeBg="bg-[#E8FFF3]"
-            badgeText="text-[#22C55E]"
-          />
-
-        </div>
-      </div>
-
-      {/* ======= SALES ANALYTICS ======= */}
-      <div className="mt-6 bg-white rounded-2xl shadow-sm px-4 md:px-6 pt-4 pb-5 border border-[#F0EEF7]">
-        <h3 className="text-sm md:text-base font-semibold text-gray-900 mb-2">
-          Sales Analytics
-        </h3>
-
-        <SalesChart />
-      </div>
-
-      {/* ======= RECENT ORDERS ======= */}
-      <div className="mt-6 bg-white rounded-2xl shadow-sm px-4 md:px-6 pt-4 pb-5 border border-[#F0EEF7]">
-        <h3 className="text-sm md:text-base font-semibold text-gray-900 mb-3">
-          Recent Orders
-        </h3>
-
-        <RecentOrders />
-      </div>
-
+      <HomeBanner />
+      <FeaturedProducts />
+      <FeaturedServices />
+      <WhyChoose />
+      <BlogSection />
+      <AboutCresify />
+      <CTASection />
     </div>
   );
 }
