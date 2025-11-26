@@ -14,7 +14,7 @@ export default function DashboardLayout({ children }) {
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col lg:ml-64 transition-all duration-300">
+      <div className="flex-1 flex flex-col lg:ml-60 transition-all duration-300">
         {/* Topbar */}
         <Topbar onMenuClick={() => setSidebarOpen(true)} />
 
