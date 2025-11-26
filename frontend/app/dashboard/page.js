@@ -22,39 +22,35 @@ export default function DashboardPage() {
         {/* ======= STAT CARDS ======= */}
         <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <StatCard
-            icon={IoCartOutline }
-            amount="$45,655.00"
+            icon={<IoCartOutline />}
+            value="$45,655.00"
             label="Total Sales"
-            change="+12.5%"
-            badgeBg="bg-[#E8FFF3]"
-            badgeText="text-[#22C55E]"
+            percent="12.5"
+            color="bg-[#E8FFF3]"
           />
 
           <StatCard
-            icon={LuClipboardPenLine}
-            amount="1248"
+            icon={<LuClipboardPenLine />}
+            value="1248"
             label="Total Orders"
-            change="+8.5%"
-            badgeBg="bg-[#E8FFF3]"
-            badgeText="text-[#22C55E]"
+            percent="8.5"
+            color="bg-[#E8FFF3]"
           />
 
           <StatCard
-            icon={FiBox}
-            amount="156"
+            icon={<FiBox />}
+            value="156"
             label="Products"
-            change="+3"
-            badgeBg="bg-[#EEF2FF]"
-            badgeText="text-[#6366F1]"
+            percent="3"
+            color="bg-[#EEF2FF]"
           />
 
           <StatCard
-            icon={FiStar}
-            amount="4.8"
+            icon={<FiStar />}
+            value="4.8"
             label="Avg Rating"
-            change="+0.3"
-            badgeBg="bg-[#E8FFF3]"
-            badgeText="text-[#22C55E]"
+            percent="0.3"
+            color="bg-[#E8FFF3]"
           />
         </div>
       </div>
