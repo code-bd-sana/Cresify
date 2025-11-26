@@ -14,7 +14,7 @@ export default function AddProduct() {
         </div>
 
         {/* Title */}
-        <h1 className="text-2xl sm:text-3xl font-semibold text-[#111827]">
+        <h1 className="text-2xl sm:text-[28px] font-semibold text-[#111827]">
           Add New Product
         </h1>
         <p className="mt-1 text-xs sm:text-sm text-[#AC65EE]">
@@ -132,8 +132,8 @@ export default function AddProduct() {
         {/* Actions */}
         <div class="mt-6 flex flex-col sm:flex-row gap-4">
           <button
-            class="w-full sm:w-auto rounded-xl border border-[#B755FF] bg-white 
-    px-10 py-3 text-sm font-medium text-[#A23BFF] 
+            class="w-1/2 rounded-lg border-2 border-[#A140D0] 
+    px-10 py-4 text-sm font-bold text-[#A544CC] 
     shadow-[0_4px_10px_rgba(0,0,0,0.03)]
     hover:bg-[#FBF8FF] transition"
           >
@@ -141,9 +141,9 @@ export default function AddProduct() {
           </button>
 
           <button
-            class="w-full sm:w-auto rounded-xl 
-    bg-gradient-to-r from-[#A047FF] via-[#C05CFF] to-[#FF8A34]
-    px-10 py-3 text-sm font-semibold text-white
+            class="w-full flex-1 sm:w-auto rounded-lg 
+    bg-gradient-to-r from-[#9838e0] via-[#cc678b] to-[#f48c47]
+    px-10 py-4 text-sm font-bold text-white
     shadow-[0_6px_20px_rgba(157,78,221,0.35)]
     hover:opacity-95 transition"
           >

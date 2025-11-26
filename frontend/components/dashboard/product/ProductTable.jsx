@@ -47,7 +47,7 @@ export default function ProductTable() {
     },
     {
       name: "Webcam HD",
-      cat: "Electronics", 
+      cat: "Electronics",
       price: "$870.00",
       stock: "$870.00",
       status: "Out of Stock",
@@ -57,13 +57,13 @@ export default function ProductTable() {
 
   return (
     <div className="bg-white shadow-md border border-gray-200 rounded-xl mt-8 overflow-hidden px-6 py-10">
-      <table className="w-full text-sm border rounded-2xl">
+      <table className="w-full text-sm border border-gray-100">
         {/* Header */}
         <thead className="rounded-2xl">
           <tr className="bg-[#F8F4FD] text-[#A278F6]  rounded-2xl  text-left text-[12px] uppercase">
             <th className="py-4 px-6">Product</th>
             <th className="py-4 px-6">Category</th>
-            <th className="py-4 px-6">Price</th> 
+            <th className="py-4 px-6">Price</th>
             <th className="py-4 px-6">Stock</th>
             <th className="py-4 px-6">Status</th>
             <th className="py-4 px-6">Actions</th>
@@ -74,7 +74,7 @@ export default function ProductTable() {
         <tbody>
           {products.map((p, i) => (
             <tr key={i} className="border-t border-gray-100">
-              <td className="px-6 py-4 flex items-center gap-3">
+              <td className="px-6 py-6 flex items-center gap-3">
                 <Image
                   src={p.image}
                   width={50}
@@ -101,13 +101,15 @@ export default function ProductTable() {
                 </span>
               </td>
 
-              <td className="px-6 py-4 flex items-center gap-3">
-                <button className="text-[#A855F7] hover:scale-110 transition">
-                  <FiEdit3 />
-                </button>
-                <button className="text-red-500 hover:scale-110 transition">
-                  <RiDeleteBin6Line />
-                </button>
+              <td className="px-6 py-6">
+                <div className="flex items-center gap-4">
+                  <button className="text-[#A855F7] hover:scale-110 transition bg-[#F2EAFA] rounded-lg p-2">
+                    <FiEdit3 className="text-lg" />
+                  </button>
+                  <button className="text-red-500 hover:scale-110 bg transition bg-[#FCEBEA] p-2 rounded-lg">
+                    <RiDeleteBin6Line className="text-lg" />
+                  </button>
+                </div>
               </td>
             </tr>
           ))}
