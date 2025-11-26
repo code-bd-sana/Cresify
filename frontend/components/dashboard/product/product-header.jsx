@@ -1,7 +1,8 @@
 "use client";
-import { FiSearch } from "react-icons/fi";
+import { FiChevronDown, FiSearch } from "react-icons/fi";
 import { MdKeyboardArrowDown } from "react-icons/md";
 import { HiPlus } from "react-icons/hi";
+import Link from "next/link";
 
 export default function ProductHeader() {
   return (
@@ -15,33 +16,36 @@ export default function ProductHeader() {
         </div>
         <div>
           {/* Add Button */}
-          <button className="flex items-center gap-2 bg-gradient-to-r from-[#AA4BF5] to-[#FF7C74] text-white px-5 py-3 rounded-lg text-sm shadow-md">
+          <Link href="/dashboard/products/add-product" className="flex items-center gap-2 bg-gradient-to-r from-[#AA4BF5] to-[#FF7C74] text-white px-5 py-3 rounded-lg text-sm shadow-md">
             <HiPlus className="text-lg" />
             Add New Product
-          </button>
+          </Link>
         </div>
       </div>
 
-      {/* Search + Filter + Add Button */}
-      <div className="mt-6 flex flex-col md:flex-row items-center gap-4 md:justify-between">
+      {/* Search + Filter */}
+      <div className="mt-8 bg-white p-4 rounded-xl border border-[#ECECEC] shadow-sm flex flex-col md:flex-row gap-4 items-center">
         {/* Search */}
-        <div className="w-full md:w-[60%] relative">
-          <FiSearch className="absolute top-3 left-3 text-gray-400 text-xl" />
+        <div className="relative w-full">
+          <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xl" />
           <input
             type="text"
-            placeholder="Search customer..."
-            className="w-full bg-white border border-gray-300 rounded-lg py-3 pl-10 pr-4 text-sm focus:outline-none"
+            placeholder="Search by order ID or customer name..."
+            className="w-full border border-[#E5E7EB] rounded-lg pl-10 pr-4 py-3 text-sm outline-none focus:ring-2 focus:ring-[#A855F7]/40"
           />
         </div>
 
-        <div className="flex items-center gap-3 w-48 bg-white border border-gray-300">
-          {/* Filter Dropdown */}
-          <div className="relative w-full">
-            <select className="  rounded-lg px-4 py-3 text-sm appearance-none pr-10">
-              <option>All</option>
-            </select>
-            <MdKeyboardArrowDown className="absolute right-3 top-3 text-xl text-gray-500" />
-          </div>
+        {/* Filter dropdown */}
+        <div className="relative w-full md:w-40">
+          <select className="appearance-none w-full px-4 py-3 border border-[#E5E7EB] text-sm rounded-lg outline-none cursor-pointer">
+            <option>All</option>
+            <option>Delivered</option>
+            <option>Pending</option>
+            <option>Processing</option>
+            <option>Canceled</option>
+            <option>Shipping</option>
+          </select>
+          <FiChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-lg pointer-events-none" />
         </div>
       </div>
     </div>

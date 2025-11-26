@@ -40,8 +40,8 @@ export default function OrdersPage() {
 
       {/* Orders Table */}
       {/* Orders Table */}
-      <div className="mt-8 bg-white rounded-2xl border border-[#ECECEC] shadow-sm overflow-x-auto">
-        <table className="w-full text-left min-w-[900px]">
+      <div className="mt-8 bg-white rounded-2xl border border-[#ECECEC] shadow-sm overflow-x-auto px-6 py-10">
+        <table className="w-full text-left min-w-[900px] border border-gray-100">
           <thead>
             <tr className="bg-[#F9F7FF] text-[#A78BFA] text-xs uppercase">
               <th className="py-4 px-6 font-semibold">Order ID</th>
