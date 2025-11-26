@@ -3,7 +3,7 @@ import React from "react";
 
 export default function EditProductPage() {
   return (
-    <div className="min-h-screen bg-[#F5F5F9] px-4 md:px-10 py-10 text-[#111827]">
+    <div className="min-h-screen px-2 py-6 text-[#111827]">
       {/* Breadcrumb */}
       <div className="text-xs md:text-sm text-[#9CA3AF] mb-4 flex items-center gap-1">
         <span className="cursor-pointer hover:text-[#6B7280]">Product</span>
@@ -85,19 +85,18 @@ export default function EditProductPage() {
       <div className="mt-8 flex flex-col md:flex-row gap-4 md:gap-6">
         {/* Update Product Button */}
         <button
-          className="w-full md:w-auto rounded-xl 
-          bg-gradient-to-r from-[#8A2FFF] via-[#C05CFF] to-[#FF8A34]
-          px-14 py-3 text-sm font-semibold text-white
-          shadow-[0_6px_20px_rgba(157,78,221,0.35)]
-          hover:opacity-95 transition"
+          class="w-full flex-1 sm:w-auto rounded-lg 
+    bg-gradient-to-r from-[#9838e0] via-[#cc678b] to-[#f48c47]
+    px-10 py-4 text-sm font-bold text-white
+    shadow-[0_6px_20px_rgba(157,78,221,0.35)]
+    hover:opacity-95 transition"
         >
           Update Product
         </button>
 
         {/* Unpublished Button */}
         <button
-          className="w-full md:w-auto rounded-xl border border-[#B755FF] 
-          bg-white px-14 py-3 text-sm font-semibold text-[#A23BFF]
+          className="w-full md:w-auto rounded-lg border-2 border-[#A140D0] px-14 py-4 text-sm font-bold text-[#A23BFF]
           shadow-[0_4px_10px_rgba(0,0,0,0.03)]
           hover:bg-[#FBF8FF] transition"
         >
@@ -106,8 +105,7 @@ export default function EditProductPage() {
 
         {/* Delete Button */}
         <button
-          className="w-full md:w-auto rounded-xl border border-[#FECACA] 
-          bg-[#FDE7E7] px-14 py-3 text-sm font-semibold text-[#E03131]
+          className="w-full md:w-auto rounded-lg border-2 border-[#F78D25] px-14 py-4 text-sm font-bold text-[#F78D25]
           hover:bg-[#FBD6D6] transition"
         >
           Delete
