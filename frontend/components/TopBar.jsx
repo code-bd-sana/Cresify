@@ -16,7 +16,7 @@ export default function Topbar({ onMenuClick }) {
             <FiMenu className="text-xl text-[#6F6C90]" />
           </button>
           <span className="hidden md:inline text-2xl font-bold">
-            Seller Dashboard
+            Dashboard
           </span>
         </div>
 

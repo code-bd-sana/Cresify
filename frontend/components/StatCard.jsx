@@ -1,39 +1,23 @@
-import React from "react";
-
-export default function StatCard({
-  icon: Icon,
-  amount,
-  label,
-  change,
-  badgeBg = "bg-green-100",
-  badgeText = "text-green-600",
-}) {
+export default function StatCard({ icon, value, label, percent, color }) {
   return (
-    <div className="bg-white w-full rounded-xl border border-[#F0EEF7] px-6 py-5 shadow-[0_4px_15px_rgba(0,0,0,0.04)] flex flex-col gap-4">
+    <div className="relative bg-white rounded-[14px] border border-[#EEEAF5] shadow-[0_4px_22px_rgba(0,0,0,0.05)] p-5">
 
-      {/* TOP ROW */}
-      <div className="flex items-start justify-between w-full">
-        {/* Icon */}
-        <div className="w-12 h-12 rounded-xl bg-[#F3E8FF] flex items-center justify-center">
-          <Icon className="text-[#8B5CF6] text-2xl" />
+      {/* Percent Badge - top right */}
+      {percent && (
+        <div className="absolute right-3 bg-[#E6FCEB] text-[#2ECC71] text-[11px] font-semibold px-2 py-1 rounded-lg">
+          +{percent}%
         </div>
+      )}
 
-        {/* Badge */}
-        <span
-          className={`${badgeBg} ${badgeText} text-[11px] font-medium px-3 py-1 rounded-full`}
-        >
-          {change}
-        </span>
+      {/* Icon Box */}
+      <div className={`w-12 h-12 flex items-center justify-center rounded-2xl ${color}`}>
+        {icon}
       </div>
 
-      {/* AMOUNT + LABEL */}
-      <div>
-        <p className="text-[#F78D25] font-semibold text-3xl leading-none">
-          {amount}
-        </p>
-        <p className="mt-1 text-[14px] text-gray-700 font-medium">
-          {label}
-        </p>
+      {/* Text Section */}
+      <div className="mt-4">
+        <h2 className="text-[22px] font-semibold text-[#F39C4A]">{value}</h2>
+        <p className="text-sm text-[#8A72BE]">{label}</p>
       </div>
     </div>
   );
