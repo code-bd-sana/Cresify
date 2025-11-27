@@ -51,9 +51,9 @@ export default function ReviewsPage() {
   ];
 
   return (
-    <div className="w-full min-h-screen px-2">
+    <div className="w-full min-h-screen px-2 pt-6">
       {/* PAGE TITLE */}
-      <h1 className="text-2xl font-semibold text-gray-900">
+      <h1 className="text-[28px] font-semibold text-gray-900">
         Reviews & Ratings
       </h1>
       <p className="text-sm text-[#9c6bff] mt-1">

@@ -9,11 +9,11 @@ import { FiEye, FiShoppingCart, FiPercent, FiDollarSign } from "react-icons/fi";
 
 export default function Analytics() {
   return (
-    <div className="w-full min-h-screen bg-[#F4F3F7] px-2 py-6">
+    <div className="w-full min-h-screen px-2 pt-6">
       {/* HEADER */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-semibold text-[#1D1D1F]">
+          <h1 className="text-[28px] font-semibold text-[#1D1D1F]">
             Analytics
           </h1>
           <p className="text-[#A78BFA] text-sm mt-1">

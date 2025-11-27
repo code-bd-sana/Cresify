@@ -14,7 +14,7 @@ export default function Payments() {
   ];
 
   return (
-    <div className="w-full min-h-screen bg-[#F4F3F7] px-6 md:px-16 py-10">
+    <div className="w-full min-h-screen px-2 pt-6">
 
       {/* HEADER */}
       <div>
