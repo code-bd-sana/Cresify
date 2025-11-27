@@ -1,203 +1,244 @@
 "use client";
 
 import Image from "next/image";
-import { FiTrendingUp, FiCheckCircle, FiStar, FiClock, FiMapPin } from "react-icons/fi";
+import { FiCheck, FiClock, FiStar, FiDollarSign, FiChevronDown } from "react-icons/fi";
+import {
+  LineChart,
+  Line,
+  ResponsiveContainer,
+  XAxis,
+  YAxis,
+  PieChart,
+  Pie,
+  Cell,
+} from "recharts";
 
-export default function DashboardOverview() {
-  const stats = [
-    {
-      icon: <FiTrendingUp className="text-[#8B4BFF] text-3xl" />,
-      value: "$45,655.00",
-      label: "Total Earning",
-      color: "text-[#8B4BFF]",
-    },
-    {
-      icon: <FiCheckCircle className="text-[#8B4BFF] text-3xl" />,
-      value: "459",
-      label: "Complete Services",
-      color: "text-[#8B4BFF]",
-    },
-    {
-      icon: <FiStar className="text-[#8B4BFF] text-3xl" />,
-      value: "400",
-      label: "New Review",
-      color: "text-[#8B4BFF]",
-    },
-    {
-      icon: <FiClock className="text-[#FF782D] text-3xl" />,
-      value: "95",
-      label: "Pending Services",
-      color: "text-[#FF782D]",
-    },
+export default function ServiceProviderDashboard() {
+  const incomeData = [
+    { month: "JAN", value: 2500 },
+    { month: "FEB", value: 4800 },
+    { month: "MAR", value: 7000 },
+    { month: "APR", value: 5000 },
+    { month: "MAY", value: 8800 },
+    { month: "JUN", value: 9500 },
   ];
 
-  const bookings = [
-    { name: "Cody Fisher", status: "Completed", badge: "bg-[#DFFFE5] text-[#1A8F3A]" },
-    { name: "Cody Fisher", status: "Pending", badge: "bg-[#FFF4D3] text-[#D6A100]" },
-    { name: "Cody Fisher", status: "Canceled", badge: "bg-[#FFE1E1] text-[#D70015]" },
-    { name: "Cody Fisher", status: "Completed", badge: "bg-[#DFFFE5] text-[#1A8F3A]" },
+  const bookingData = [
+    { name: "Cancel Booking", value: 234, color: "#F88D25" },
+    { name: "Complete Services", value: 1295654, color: "#9838E1" },
   ];
 
-  const upcoming = [
-    { name: "Cody Fisher" },
-    { name: "Cody Fisher" },
-    { name: "Cody Fisher" },
+  const todayBookings = [
+    { id: 1, name: "Cody Fisher", status: "Completed" },
+    { id: 2, name: "Cody Fisher", status: "Pending" },
+    { id: 3, name: "Cody Fisher", status: "Canceled" },
+    { id: 4, name: "Cody Fisher", status: "Completed" },
   ];
+
+  const upcomingBookings = [{ id: 1 }, { id: 2 }, { id: 3 }, { id: 4 }];
+
+  const statusColors = {
+    Completed: "bg-[#E6FCE6] text-[#29A55A]",
+    Pending: "bg-[#F3E8FF] text-[#9838E1]",
+    Canceled: "bg-[#FDE8E8] text-[#D34A4A]",
+  };
 
   return (
-    <div className="min-h-screen bg-[#F4F3F7] p-6">
-      <div className="max-w-[1300px] mx-auto">
+    <div className="px-4 py-6 space-y-6 bg-[#F6F6FA] min-h-screen">
 
-        {/* Page Header */}
-        <h2 className="text-[26px] font-bold text-[#1F1F1F]">Dashboard Overview</h2>
-        <p className="text-sm text-[#8B8498] mb-6">Welcome back! Service Provider Admin</p>
+      {/* ======================= TOP STATS CARDS ======================= */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
 
-        {/* STATS */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 pb-2">
-          {stats.map((item, i) => (
-            <div
-              key={i}
-              className="bg-white border border-[#EFEAF6] rounded-xl px-5 py-5 shadow-sm flex items-center gap-4"
-            >
-              <div className="w-12 h-12 rounded-xl bg-[#F9F5FF] flex items-center justify-center">
-                {item.icon}
-              </div>
+        {/* CARD 1 */}
+        <StatCard
+          icon={<FiDollarSign size={22} />}
+          value="$45,655.00"
+          label="Total Earning"
+        />
+
+        {/* CARD 2 */}
+        <StatCard
+          icon={<FiCheck size={22} />}
+          value="459"
+          label="Complete Services"
+        />
+
+        {/* CARD 3 */}
+        <StatCard
+          icon={<FiStar size={22} />}
+          value="400"
+          label="New Review"
+        />
+
+        {/* CARD 4 */}
+        <StatCard
+          icon={<FiClock size={22} />}
+          value="95"
+          label="Pending Services"
+        />
+      </div>
+
+      {/* ======================= CHARTS ROW ======================= */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+        {/* Income Chart */}
+        <ChartCard title="Income Overview">
+          <FilterDropdown />
+
+          <div className="w-full h-[260px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={incomeData}>
+                <XAxis dataKey="month" axisLine={false} tickLine={false} />
+                <YAxis axisLine={false} tickLine={false} />
+                <Line
+                  type="monotone"
+                  dataKey="value"
+                  stroke="#9838E1"
+                  strokeWidth={4}
+                  dot={{ r: 6, fill: "#F88D25" }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </ChartCard>
+
+        {/* Booking Overview */}
+        <ChartCard title="Booking Overview">
+          <FilterDropdown />
+
+          <div className="w-full h-[260px] flex items-center justify-center relative">
+            <ResponsiveContainer width="75%" height="100%">
+              <PieChart>
+                <Pie
+                  data={bookingData}
+                  innerRadius={70}
+                  outerRadius={95}
+                  cornerRadius={40}
+                  paddingAngle={6}
+                  dataKey="value"
+                >
+                  {bookingData.map((entry, i) => (
+                    <Cell key={i} fill={entry.color} />
+                  ))}
+                </Pie>
+              </PieChart>
+            </ResponsiveContainer>
+
+            {/* Exact Labels */}
+            <div className="absolute left-[20%] top-[22%] text-[13px] text-[#F88D25]">
+              Cancel Booking <br /> 234
+            </div>
+
+            <div className="absolute right-[10%] bottom-[35%] text-[13px] text-[#9838E1]">
+              Complete Services <br /> 12,95,654
+            </div>
+          </div>
+        </ChartCard>
+      </div>
+
+      {/* ======================= BOOKINGS LISTS ======================= */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+        {/* TODAY’S BOOKINGS */}
+        <BookingList
+          title="Today’s Bookings"
+          items={todayBookings}
+          statusColors={statusColors}
+          showStatus
+        />
+
+        {/* UPCOMING BOOKINGS */}
+        <BookingList title="Upcoming Bookings" items={upcomingBookings} />
+      </div>
+
+    </div>
+  );
+}
+
+/* ========================================================================
+   SMALL COMPONENTS (Pixel Perfect)
+   ======================================================================== */
+
+function StatCard({ icon, value, label }) {
+  return (
+    <div className="bg-white border border-[#EFE9FF] rounded-2xl p-6 flex items-start gap-4 shadow-sm">
+      <div className="w-12 h-12 bg-[#F3E8FF] rounded-xl flex items-center justify-center text-[#9838E1]">
+        {icon}
+      </div>
+      <div>
+        <p className="text-[22px] font-semibold text-[#F88D25]">{value}</p>
+        <p className="text-sm text-gray-600 mt-1">{label}</p>
+      </div>
+    </div>
+  );
+}
+
+function ChartCard({ title, children }) {
+  return (
+    <div className="bg-white border border-[#EFE9FF] rounded-2xl p-6 shadow-sm">
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
+        {children[0]}
+      </div>
+      {children[1]}
+    </div>
+  );
+}
+
+function FilterDropdown() {
+  return (
+    <div className="relative">
+      <select className="appearance-none bg-[#F7F7FA] border border-gray-300 px-3 py-1.5 rounded-lg text-sm text-gray-700 pr-8 cursor-pointer">
+        <option>All</option>
+        <option>Today</option>
+        <option>This Week</option>
+      </select>
+      <FiChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500" />
+    </div>
+  );
+}
+
+function BookingList({ title, items, statusColors, showStatus }) {
+  return (
+    <div className="bg-white border border-[#EFE9FF] rounded-2xl p-6 shadow-sm">
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
+        <button className="text-[#9838E1] text-sm font-medium">View All</button>
+      </div>
+
+      <div className="space-y-4">
+        {items.map((item, i) => (
+          <div
+            key={i}
+            className="bg-white border border-[#E5E5E5] rounded-xl p-4 shadow-sm flex items-center justify-between"
+          >
+            <div className="flex items-start gap-4">
+              <Image
+                src="/service-provider/pic.png"
+                width={50}
+                height={50}
+                alt="profile"
+                className="rounded-full"
+              />
               <div>
-                <h3 className={`text-lg font-bold ${item.color}`}>{item.value}</h3>
-                <p className="text-sm text-[#7C7A87]">{item.label}</p>
+                <h3 className="font-semibold text-gray-900">Cody Fisher</h3>
+                <p className="text-sm text-gray-600">Electrical Work</p>
+                <p className="text-sm text-gray-600 mt-1 flex gap-1 items-center">
+                  📍 123 Main Road Rampura, Dhaka 1205 <br />
+                  ⏰ 08:00 AM
+                </p>
               </div>
             </div>
-          ))}
-        </div>
 
-        {/* TWO MAIN CHARTS */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
-
-          {/* Income Overview Card */}
-          <div className="bg-white p-6 rounded-xl border border-[#EEEAF5] shadow-sm">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold">Income Overview</h3>
-              <select className="border rounded-lg px-3 py-1 text-sm">
-                <option>All</option>
-                <option>Monthly</option>
-                <option>Yearly</option>
-              </select>
-            </div>
-
-            {/* Chart Image (Replace with real chart later) */}
-            <div className="relative w-full h-[230px]">
-              <Image
-                src="/c8cc1d49-0aee-4779-8e56-67c410323371.png"
-                alt="Income Chart"
-                fill
-                style={{ objectFit: "contain" }}
-              />
-            </div>
+            {showStatus && (
+              <span
+                className={`px-4 py-1 rounded-full text-sm font-medium ${statusColors[item.status]}`}
+              >
+                {item.status}
+              </span>
+            )}
           </div>
-
-          {/* Booking Overview */}
-          <div className="bg-white p-6 rounded-xl border border-[#EEEAF5] shadow-sm">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold">Booking Overview</h3>
-              <select className="border rounded-lg px-3 py-1 text-sm">
-                <option>All</option>
-                <option>Monthly</option>
-                <option>Yearly</option>
-              </select>
-            </div>
-
-            <div className="relative w-full h-[230px]">
-              <Image
-                src="/c8cc1d49-0aee-4779-8e56-67c410323371.png"
-                alt="Donut Chart"
-                fill
-                style={{ objectFit: "contain" }}
-              />
-            </div>
-          </div>
-
-        </div>
-
-        {/* BOOKINGS ROW */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
-
-          {/* Today's Bookings */}
-          <div className="bg-white p-6 rounded-xl border border-[#EFEAF6] shadow-sm">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold">Today's Bookings</h3>
-              <button className="text-[#8B4BFF] text-sm">View All</button>
-            </div>
-
-            <div className="space-y-3">
-              {bookings.map((b, i) => (
-                <div
-                  key={i}
-                  className="p-4 border rounded-xl bg-[#FAFAFF] flex items-center justify-between"
-                >
-                  <div className="flex gap-3">
-                    <Image
-                      src="/avatar.png"
-                      width={45}
-                      height={45}
-                      alt="avatar"
-                      className="rounded-full"
-                    />
-                    <div>
-                      <p className="font-semibold">Cody Fisher</p>
-                      <p className="text-xs text-[#7B7985]">Electrical Work</p>
-                      <div className="flex items-center gap-1 text-xs text-[#7B7985]">
-                        <FiMapPin /> 123 Main Road Rampura, Dhaka 1205.
-                        <FiClock /> 08.00 AM
-                      </div>
-                    </div>
-                  </div>
-
-                  <span className={`text-xs px-3 py-1 rounded-full font-medium ${b.badge}`}>
-                    {b.status}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Upcoming Bookings */}
-          <div className="bg-white p-6 rounded-xl border border-[#EFEAF6] shadow-sm">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold">Upcoming Bookings</h3>
-              <button className="text-[#8B4BFF] text-sm">View All</button>
-            </div>
-
-            <div className="space-y-3">
-              {upcoming.map((b, i) => (
-                <div
-                  key={i}
-                  className="p-4 border rounded-xl bg-[#FAFAFF] flex items-center justify-between"
-                >
-                  <div className="flex gap-3">
-                    <Image
-                      src="/avatar.png"
-                      width={45}
-                      height={45}
-                      alt="avatar"
-                      className="rounded-full"
-                    />
-                    <div>
-                      <p className="font-semibold">Cody Fisher</p>
-                      <p className="text-xs text-[#7B7985]">Electrical Work</p>
-                      <div className="flex items-center gap-1 text-xs text-[#7B7985]">
-                        <FiMapPin /> Friday, April 12, 2024
-                        <FiClock /> 08.00 AM
-                      </div>
-                    </div>
-                  </div>
-
-                </div>
-              ))}
-            </div>
-          </div>
-
-        </div>
-
+        ))}
       </div>
     </div>
   );

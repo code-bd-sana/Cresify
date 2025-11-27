@@ -15,6 +15,7 @@ import {
   FiLogOut,
   FiStar,
 } from "react-icons/fi";
+import { SlCalender } from "react-icons/sl";
 
 export default function Sidebar({ open, onClose }) {
   const pathname = usePathname(); // <-- Current route
@@ -41,6 +42,7 @@ export default function Sidebar({ open, onClose }) {
     { label: "Orders", icon: FiShoppingCart, path: "/dashboard/orders" },
     { label: "Store Profile", icon: FiUser, path: "/dashboard/store-profile" },
     { label: "Payments", icon: FiCreditCard, path: "/dashboard/payments" },
+    { label: "Calender", icon: SlCalender , path: "/dashboard/service-provider-dashboard/calender" },
     { label: "Analytics", icon: FiBarChart2, path: "/dashboard/analytics" },
     { label: "Reviews", icon: FiStar, path: "/dashboard/reviews" },
     { label: "Messages", icon: FiMessageSquare, path: "/dashboard/messages" },
