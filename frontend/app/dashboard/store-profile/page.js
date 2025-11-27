@@ -5,7 +5,7 @@ import { FiUploadCloud } from "react-icons/fi";
 
 export default function StoreProfile() {
   return (
-    <div className="w-full min-h-screen bg-[#F4F3F7] px-6 md:px-16 py-10">
+    <div className="w-full min-h-screen px-2 pt-6">
       {/* PAGE TITLE */}
       <div>
         <h1 className="text-[28px] font-semibold text-[#1D1D1F]">Store Profile</h1>

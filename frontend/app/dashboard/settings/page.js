@@ -2,7 +2,7 @@
 
 export default function AccountSettings() {
   return (
-    <div className="w-full min-h-screen bg-[#F7F7FA] p-8 md:p-16">
+    <div className="w-full min-h-screen px-2 pt-6">
 
       {/* PAGE TITLE */}
       <h1 className="text-[28px] font-semibold text-gray-900">
