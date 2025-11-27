@@ -1,4 +1,4 @@
-import SupportEntrepreneurs from "@/components/marketplace/SupportEntrepreneurs";
+import SupportEntrepreneurs from "@/components/shared/SupportEntrepreneurs";
 import ProductsPage from "@/components/store/ProductsPage";
 import StoreHeader from "@/components/store/StoreHeader";
 import React from "react";
