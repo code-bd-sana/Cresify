@@ -2,7 +2,7 @@
 import FeaturedStores from "@/components/marketplace/FeaturedStores";
 import ProductsPage from "@/components/marketplace/ProductsPage";
 import SearchHero from "@/components/marketplace/SearchHero";
-import SupportEntrepreneurs from "@/components/marketplace/SupportEntrepreneurs";
+import SupportEntrepreneurs from "@/components/shared/SupportEntrepreneurs";
 import React from "react";
 
 const page = () => {
