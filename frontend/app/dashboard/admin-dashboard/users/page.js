@@ -106,7 +106,7 @@ export default function UserManagementPage() {
   });
 
   return (
-    <div className="min-h-screen w-full bg-[#F7F7FA] px-6 py-6 md:px-10 md:py-8">
+    <div className="min-h-screen w-full px-2 pt-6">
       {/* HEADER */}
       <div className="flex items-center justify-between">
         <div>

@@ -21,8 +21,22 @@ export default function Sidebar({ open, onClose }) {
 
   const menuItems = [
     { label: "Dashboard", icon: FiGrid, path: "/dashboard" },
-    { label: "Admin Dashboard", icon: FiGrid, path: "/dashboard/admin-dashboard" },
+    {
+      label: "Admin Dashboard",
+      icon: FiGrid,
+      path: "/dashboard/admin-dashboard",
+    },
     { label: "Users", icon: FiGrid, path: "/dashboard/admin-dashboard/users" },
+    {
+      label: "Admin Products",
+      icon: FiGrid,
+      path: "/dashboard/admin-dashboard/products",
+    },
+    {
+      label: "Services",
+      icon: FiGrid,
+      path: "/dashboard/admin-dashboard/services",
+    },
     { label: "Products", icon: FiBox, path: "/dashboard/products" },
     { label: "Orders", icon: FiShoppingCart, path: "/dashboard/orders" },
     { label: "Store Profile", icon: FiUser, path: "/dashboard/store-profile" },
@@ -61,21 +75,18 @@ export default function Sidebar({ open, onClose }) {
         {/* Menu */}
         <nav className="flex-1 space-y-1 overflow-y-auto scrollbar-thin scrollbar-thumb-transparent">
           {menuItems.map((item) => {
-            const isActive =
-              item.path === "/dashboard"
-                ? pathname === "/dashboard" // Dashboard active ONLY on exact match
-                : pathname.startsWith(item.path); // other items work normally
+            const isActive = pathname === item.path;
 
             return (
               <Link
                 href={item.path}
                 key={item.label}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-lg transition
-                  ${
-                    isActive
-                      ? "bg-[#F4F0FF] text-[#4C1D95] font-semibold"
-                      : "text-[#6F6C90] hover:bg-[#F6F5FF]"
-                  }`}
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-lg transition 
+        ${
+          isActive
+            ? "bg-[#F4F0FF] text-[#4C1D95] font-semibold"
+            : "text-[#6F6C90] hover:bg-[#F6F5FF]"
+        }`}
               >
                 <item.icon className="text-[18px]" />
                 <span>{item.label}</span>

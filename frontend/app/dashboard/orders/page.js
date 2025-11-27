@@ -3,7 +3,7 @@ import { FiSearch, FiChevronDown } from "react-icons/fi";
 
 export default function OrdersPage() {
   return (
-    <div className="min-h-screen bg-[#F5F5F9] px-2 pt-6">
+    <div className="min-h-screen px-2 pt-6">
       {/* Page Header */}
       <h1 className="text-3xl font-semibold text-[#111827]">
         Order Management
