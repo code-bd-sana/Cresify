@@ -26,7 +26,7 @@ export default function ChatUI() {
       <div className="w-[300px] border-r border-gray-200 bg-[#F5EEF8] flex flex-col">
         {/* Title + Search */}
         <div className="p-5">
-          <h1 className="text-[22px] font-semibold text-[#8D55DA]">Messages</h1>
+          <h1 className="text-[28px] font-semibold text-[#8D55DA]">Messages</h1>
 
           <input
             type="text"

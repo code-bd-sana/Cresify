@@ -10,13 +10,13 @@ import { LuClipboardPenLine } from "react-icons/lu";
 export default function DashboardPage() {
   return (
     <div className="px-2 pt-6">
-      <h1 className="text-lg md:text-[28px] font-semibold text-gray-900">
+      {/* <h1 className="text-lg md:text-[28px] font-semibold text-gray-900">
         Dashboard Overview
       </h1>
 
       <p className="mt-1 md:text-xl text-[#AC65EE]">
         Welcome back! Here’s what’s happening with your store today
-      </p>
+      </p> */}
       {/* ======= HEADER ======= */}
       <div className=" rounded-2xl border border-[#F0EEF7]">
         {/* ======= STAT CARDS ======= */}

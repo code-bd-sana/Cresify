@@ -11,7 +11,7 @@ import ServiceOverviewChart from "@/components/dashboard/Admin/ServiceOverviewCh
 
 export default function DashboardPage() {
   return (
-    <div className="min-h-screen w-full bg-[#F7F7FA] px-6 py-6 md:px-10 md:py-8">
+    <div className="min-h-screen w-full px-2 pt-6">
       {/* Header */}
       <div>
         <h1 className="text-[26px] md:text-[28px] font-semibold text-gray-900">
