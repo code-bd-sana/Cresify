@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import Link from "next/link";
 
 export default function BookingDateTimePage() {
   const GRADIENT_FROM = "#9838E1";
@@ -228,7 +229,7 @@ export default function BookingDateTimePage() {
                 backgroundImage: "linear-gradient(90deg,#9838E1,#F68E44)",
               }}
             >
-              Continue to Booking Details
+              <Link href="book-details">Continue to Booking Details</Link>
             </button>
           </div>
         </div>
