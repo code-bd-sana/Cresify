@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import { IoChevronDownOutline } from "react-icons/io5";
+import Link from "next/link";
 
 export default function HomeBanner() {
   return (
@@ -93,7 +94,8 @@ export default function HomeBanner() {
             mt-6
           "
           >
-            <button
+           <Link href="/marketplace">
+             <button
               className="
               h-[38px] px-6 text-[14px] font-medium 
               text-white 
@@ -105,7 +107,9 @@ export default function HomeBanner() {
             >
               Explore Marketplace
             </button>
+           </Link>
 
+           <Link href="/services">
             <button
               className="
               h-[38px] px-6 text-[14px] font-bold 
@@ -117,6 +121,7 @@ export default function HomeBanner() {
             >
               Browse Services
             </button>
+           </Link>
           </div>
         </div>
 

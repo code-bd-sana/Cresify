@@ -17,7 +17,7 @@ export default function Footer() {
 
         {/* COLUMN 1 — Logo + Text + Social */}
         <div >
-          <div className="-ml-8 mb-4">
+          <div className="-ml-2 mb-4">
             <Image
               src="/logo.png"
               width={118}
