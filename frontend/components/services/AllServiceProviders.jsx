@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { AiFillStar } from "react-icons/ai";
 import { LuMapPin } from "react-icons/lu";
 
@@ -115,90 +116,92 @@ export default function AllServiceProviders() {
         </h2>
 
         {/* GRID */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-          {providers.map((p) => (
-            <div
-              key={p.id}
-              className="
+        <Link href="/service-details">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            {providers.map((p) => (
+              <div
+                key={p.id}
+                className="
           p-3 
              
              
             "
-            >
-              {/* Inner white card */}
-              <div className="bg-white rounded-[20px] overflow-hidden p-[14px]">
-                {/* Image */}
-                <div className="relative w-full h-[210px] mb-4">
-                  <img
-                    src={p.image}
-                    className="w-full h-full object-cover rounded-[16px]"
-                    alt=""
-                  />
-                  <span
-                    className="
+              >
+                {/* Inner white card */}
+                <div className="bg-white rounded-[20px] overflow-hidden p-[14px]">
+                  {/* Image */}
+                  <div className="relative w-full h-[210px] mb-4">
+                    <img
+                      src={p.image}
+                      className="w-full h-full object-cover rounded-[16px]"
+                      alt=""
+                    />
+                    <span
+                      className="
                     absolute top-3 right-3 px-3 py-[3px]
                     bg-[#A46CFF] text-white text-[12px] rounded-full
                     shadow-[0_2px_8px_rgba(0,0,0,0.20)]
                     "
-                  >
-                    {p.tag}
-                  </span>
-                </div>
+                    >
+                      {p.tag}
+                    </span>
+                  </div>
 
-                {/* Name */}
-                <h3 className="text-[16px] font-semibold text-[#1A1A1A] mb-[2px]">
-                  {p.name}
-                </h3>
+                  {/* Name */}
+                  <h3 className="text-[16px] font-semibold text-[#1A1A1A] mb-[2px]">
+                    {p.name}
+                  </h3>
 
-                {/* subtitle */}
-                <p className="text-[14px] leading-[20px] text-[#A46CFF] mb-3">
-                  {p.subtitle}
-                </p>
+                  {/* subtitle */}
+                  <p className="text-[14px] leading-[20px] text-[#A46CFF] mb-3">
+                    {p.subtitle}
+                  </p>
 
-                {/* Location */}
-                <div className="flex items-center gap-2 text-[13px] text-[#6A6A6A] mb-3">
-                  <LuMapPin className="text-[16px]" />
-                  {p.location}
-                </div>
+                  {/* Location */}
+                  <div className="flex items-center gap-2 text-[13px] text-[#6A6A6A] mb-3">
+                    <LuMapPin className="text-[16px]" />
+                    {p.location}
+                  </div>
 
-                {/* Rating */}
-                <div className="flex items-center text-[14px] text-[#6A6A6A] mb-4">
-                  {[...Array(5)].map((_, i) => (
-                    <AiFillStar
-                      key={i}
-                      className={`text-[17px] ${
-                        i < Math.floor(p.rating)
-                          ? "text-[#FFA534]"
-                          : "text-[#E0E0E0]"
-                      }`}
-                    />
-                  ))}
-                  <span className="ml-1">
-                    {p.rating} ({p.reviews} review)
-                  </span>
-                </div>
+                  {/* Rating */}
+                  <div className="flex items-center text-[14px] text-[#6A6A6A] mb-4">
+                    {[...Array(5)].map((_, i) => (
+                      <AiFillStar
+                        key={i}
+                        className={`text-[17px] ${
+                          i < Math.floor(p.rating)
+                            ? "text-[#FFA534]"
+                            : "text-[#E0E0E0]"
+                        }`}
+                      />
+                    ))}
+                    <span className="ml-1">
+                      {p.rating} ({p.reviews} review)
+                    </span>
+                  </div>
 
-                {/* Price */}
-                <p className="text-[13px] text-[#6B6B6B]">Starting at</p>
-                <p className="text-[22px] font-semibold text-[#F78D25] mb-5">
-                  ${p.price}/hr
-                </p>
+                  {/* Price */}
+                  <p className="text-[13px] text-[#6B6B6B]">Starting at</p>
+                  <p className="text-[22px] font-semibold text-[#F78D25] mb-5">
+                    ${p.price}/hr
+                  </p>
 
-                {/* Button */}
-                <button
-                  className="
+                  {/* Button */}
+                  <button
+                    className="
                   w-full py-[12px] text-[15px] font-medium text-white
                   rounded-[12px]
                   bg-[linear-gradient(90deg,#9838E1,#F68E44)]
                   shadow-[0_4px_14px_rgba(0,0,0,0.15)]
                   "
-                >
-                  Book Now
-                </button>
+                  >
+                    Book Now
+                  </button>
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        </Link>
       </div>
     </section>
   );

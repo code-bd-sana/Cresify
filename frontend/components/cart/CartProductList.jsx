@@ -1,6 +1,7 @@
 "use client";
 
 import { MapPin, Star } from "lucide-react";
+import Link from "next/link";
 
 export default function CartProductList() {
   const products = [
@@ -124,17 +125,19 @@ export default function CartProductList() {
               </button>
 
               {/* Checkout */}
-              <button
-                className="
+              <Link href="/checkout">
+                <button
+                  className="
       px-5 h-[36px]
       rounded-[8px]
       text-[13px] font-medium text-white
       bg-gradient-to-r from-[#9838E1] to-[#F68E44]
       shadow-[0px_4px_12px_rgba(0,0,0,0.12)]
     "
-              >
-                Checkout
-              </button>
+                >
+                  Checkout
+                </button>
+              </Link>
             </div>
           </div>
         ))}

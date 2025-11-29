@@ -76,12 +76,16 @@ export default function Navbar() {
           {/* ICONS */}
           <FiMessageCircle className="text-[22px] text-black cursor-pointer" />
           <FiHeart className="text-[22px] text-black cursor-pointer" />
-          <FiShoppingCart className="text-[22px] text-black cursor-pointer" />
+          <Link href="/cart">
+            <FiShoppingCart className="text-[22px] text-black cursor-pointer" />
+          </Link>
 
           {/* BUTTON */}
-          <button className="px-6 py-[10px] text-white font-medium rounded-md bg-gradient-to-r from-[#9838E1] to-[#F68E44]">
-            Get started
-          </button>
+          <Link href="/dashboard">
+            <button className="px-6 py-[10px] text-white font-medium rounded-md bg-gradient-to-r from-[#9838E1] to-[#F68E44]">
+              Get started
+            </button>
+          </Link>
         </div>
       </div>
 
@@ -99,7 +103,9 @@ export default function Navbar() {
         {/* ICONS + MENU BUTTON */}
         <div className="flex items-center gap-4">
           <FiHeart className="text-[22px] text-black cursor-pointer" />
-          <FiShoppingCart className="text-[22px] text-black cursor-pointer" />
+          <Link href="/cart">
+            <FiShoppingCart className="text-[22px] text-black cursor-pointer" />
+          </Link>
 
           {/* Hamburger */}
           {open ? (
@@ -119,7 +125,6 @@ export default function Navbar() {
       {/* ---------------- MOBILE MENU DROPDOWN ---------------- */}
       {open && (
         <div className="lg:hidden bg-white px-4 pb-5 border-t animate-slideDown">
-
           {/* SEARCH BAR */}
           <div className="mt-3 flex items-center border border-[#D6D6D6] rounded-md px-3 py-[7px] w-full shadow-sm">
             <input

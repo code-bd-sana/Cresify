@@ -17,6 +17,7 @@ import {
   LuDumbbell,
   LuBookOpen,
 } from "react-icons/lu";
+import Link from "next/link";
 
 const CATEGORY_ICONS = [
   LuShirt,
@@ -394,7 +395,8 @@ export default function ProductsPage() {
           </p>
 
           {/* PRODUCT GRID */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+        <Link href="/product-details">
+           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
             {products.map((p) => (
               <article
                 key={p.id}
@@ -492,6 +494,7 @@ export default function ProductsPage() {
               </article>
             ))}
           </div>
+        </Link>
         </section>
       </div>
     </main>

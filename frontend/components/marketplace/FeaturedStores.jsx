@@ -9,6 +9,7 @@ import { Pagination } from "swiper/modules";
 // Swiper Styles
 import "swiper/css";
 import "swiper/css/pagination";
+import Link from "next/link";
 
 export default function FeaturedStores() {
   const stores = [
@@ -73,6 +74,7 @@ export default function FeaturedStores() {
         </p>
 
         {/* REAL SLIDER */}
+       <Link href="/store">
         <Swiper
           spaceBetween={25}
           slidesPerView={2.2}
@@ -138,17 +140,20 @@ export default function FeaturedStores() {
             </SwiperSlide>
           ))}
         </Swiper>
+       </Link>
 
       
         {/* CTA Button */}
         <div className="flex justify-center mt-8">
-          <button
+          <Link href="/all-shops">
+           <button
             className="px-8 py-[12px] text-[14px] font-semibold text-[#9A3ADD]
             border border-[#9A3ADD] rounded-[10px] hover:bg-[#F8F2FF]
             transition shadow-[0_2px_10px_rgba(0,0,0,0.06)]"
           >
             View All Stores
           </button>
+          </Link>
         </div>
       </div>
     </section>

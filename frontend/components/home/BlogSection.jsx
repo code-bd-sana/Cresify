@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { IoArrowForwardOutline } from "react-icons/io5";
 
 export default function BlogSection() {
@@ -97,13 +98,15 @@ export default function BlogSection() {
 
         {/* View All Button */}
         <div className="flex justify-center mt-14">
-          <button className="
+          <Link href="/blog">
+           <button className="
             px-8 py-[12px] rounded-[10px] text-white text-[15px] font-medium
             bg-gradient-to-r from-[#9838E1] to-[#F68E44]
             shadow-[0px_4px_16px_rgba(0,0,0,0.15)]
           ">
             View All Posts
           </button>
+          </Link>
         </div>
 
       </div>
