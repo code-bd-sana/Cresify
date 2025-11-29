@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 export default function CTASection() {
   return (
     <section
@@ -10,7 +12,6 @@ export default function CTASection() {
       "
     >
       <div className="max-w-[1350px] mx-auto px-6">
-
         {/* Heading */}
         <h2 className="text-white text-[32px] font-semibold mb-3">
           Ready to Get Started?
@@ -18,15 +19,16 @@ export default function CTASection() {
 
         {/* Subheading */}
         <p className="text-[#E8E8E8CC] text-[15px] font-semibold leading-[22px] mb-10">
-          Join thousands of satisfied customers and discover the best products and services in your area today.
+          Join thousands of satisfied customers and discover the best products
+          and services in your area today.
         </p>
 
         {/* Buttons */}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-
           {/* Contact Us Button */}
-          <button
-            className="
+          <Link href="/contact">
+            <button
+              className="
               bg-white text-[#7A4ACF]
               px-8 py-[12px]
               rounded-[10px] 
@@ -34,13 +36,15 @@ export default function CTASection() {
               shadow-[0px_4px_10px_rgba(0,0,0,0.20)]
               transition hover:opacity-90
             "
-          >
-            Contact Us Now
-          </button>
+            >
+              Contact Us Now
+            </button>
+          </Link>
 
           {/* Browse Marketplace Button */}
-          <button
-            className="
+          <Link href="/marketplace">
+            <button
+              className="
               bg-transparent text-white 
               border border-white
               px-8 py-[12px]
@@ -49,12 +53,11 @@ export default function CTASection() {
               backdrop-blur-[2px]
               transition hover:bg-white/10
             "
-          >
-            Browse Marketplace
-          </button>
-
+            >
+              Browse Marketplace
+            </button>
+          </Link>
         </div>
-
       </div>
     </section>
   );
