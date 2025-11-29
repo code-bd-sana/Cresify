@@ -32,13 +32,15 @@ export default function Navbar() {
         {/* LEFT */}
         <div className="flex items-center gap-72">
           {/* LOGO */}
-          <Image
-            src="/logo.png"
-            alt="logo"
-            width={100}
-            height={100}
-            className="cursor-pointer"
-          />
+          <Link href="/">
+            <Image
+              src="/logo.png"
+              alt="logo"
+              width={100}
+              height={100}
+              className="cursor-pointer"
+            />
+          </Link>
 
           {/* MENU */}
           <div className="flex items-center font-medium gap-8 text-[15px]">
