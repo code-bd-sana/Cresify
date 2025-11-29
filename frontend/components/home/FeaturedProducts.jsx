@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { AiFillStar } from "react-icons/ai";
 import { IoCartOutline } from "react-icons/io5";
 
@@ -55,7 +56,8 @@ export default function FeaturedProducts() {
         </p>
 
         {/* Product Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+       <Link href="/product-details">
+         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
 
           {products.map((item, index) => (
             <div
@@ -108,16 +110,19 @@ export default function FeaturedProducts() {
           ))}
 
         </div>
+       </Link>
 
         {/* View More Button */}
         <div className="flex justify-center mt-14">
-          <button className="
+          <Link href="">
+           <button className="
             px-8 py-[12px] rounded-[10px] text-white text-[15px] font-medium
             bg-gradient-to-r from-[#9838E1] to-[#F68E44]
             shadow-[0px_4px_14px_rgba(0,0,0,0.15)]
           ">
             View More Products
           </button>
+          </Link>
         </div>
 
       </div>

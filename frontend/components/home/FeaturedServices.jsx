@@ -11,63 +11,61 @@ import {
   LuWrench,
 } from "react-icons/lu";
 
-
-
 import { FaUserCircle } from "react-icons/fa";
+import Link from "next/link";
 
 export default function FeaturedServices() {
- const services = [
-  {
-    title: "Home Cleaning",
-    desc: "Professional cleaning services for your home",
-    icon: <LuHouse size={28} color="#ffffff" />,
-    providers: 45,
-    active: true,
-  },
-  {
-    title: "Plumbing",
-    desc: "Expert plumbers for all your needs",
-    icon: <LuWrench size={28} color="#ffffff" />,
-    providers: 45,
-  },
-  {
-    title: "Electrical",
-    desc: "Licensed electricians at your service",
-    icon: <LuZap size={28} color="#ffffff" />,
-    providers: 45,
-  },
-  {
-    title: "Gardening",
-    desc: "Transform your outdoor spaces",
-    icon: <LuFlower2 size={28} color="#ffffff" />,
-    providers: 45,
-  },
-  {
-    title: "Painting",
-    desc: "Professional painting services",
-    icon: <LuPaintbrush size={28} color="#ffffff" />,
-    providers: 45,
-  },
-  {
-    title: "Moving",
-    desc: "Reliable moving and packing services",
-    icon: <LuTruck size={28} color="#ffffff" />,
-    providers: 45,
-  },
-  {
-    title: "Pet Care",
-    desc: "Caring for your furry friends",
-    icon: <LuPawPrint size={28} color="#ffffff" />,
-    providers: 45,
-  },
-  {
-    title: "Tutoring",
-    desc: "Expert tutors for all subjects",
-    icon: <LuBookOpen size={28} color="#ffffff" />,
-    providers: 45,
-  },
-];
-
+  const services = [
+    {
+      title: "Home Cleaning",
+      desc: "Professional cleaning services for your home",
+      icon: <LuHouse size={28} color="#ffffff" />,
+      providers: 45,
+      active: true,
+    },
+    {
+      title: "Plumbing",
+      desc: "Expert plumbers for all your needs",
+      icon: <LuWrench size={28} color="#ffffff" />,
+      providers: 45,
+    },
+    {
+      title: "Electrical",
+      desc: "Licensed electricians at your service",
+      icon: <LuZap size={28} color="#ffffff" />,
+      providers: 45,
+    },
+    {
+      title: "Gardening",
+      desc: "Transform your outdoor spaces",
+      icon: <LuFlower2 size={28} color="#ffffff" />,
+      providers: 45,
+    },
+    {
+      title: "Painting",
+      desc: "Professional painting services",
+      icon: <LuPaintbrush size={28} color="#ffffff" />,
+      providers: 45,
+    },
+    {
+      title: "Moving",
+      desc: "Reliable moving and packing services",
+      icon: <LuTruck size={28} color="#ffffff" />,
+      providers: 45,
+    },
+    {
+      title: "Pet Care",
+      desc: "Caring for your furry friends",
+      icon: <LuPawPrint size={28} color="#ffffff" />,
+      providers: 45,
+    },
+    {
+      title: "Tutoring",
+      desc: "Expert tutors for all subjects",
+      icon: <LuBookOpen size={28} color="#ffffff" />,
+      providers: 45,
+    },
+  ];
 
   return (
     <section className="w-full py-20 px-10 bg-[#F5F5F7]">
@@ -124,15 +122,17 @@ export default function FeaturedServices() {
 
         {/* Button */}
         <div className="flex justify-center mt-14">
-          <button
-            className="
+          <Link href="/services">
+            <button
+              className="
             px-8 py-[12px] rounded-[10px] text-white text-[15px] font-medium
             bg-gradient-to-r from-[#9838E1] to-[#F68E44]
             shadow-[0px_4px_14px_rgba(0,0,0,0.15)]
           "
-          >
-            View All Categories
-          </button>
+            >
+              View All Categories
+            </button>
+          </Link>
         </div>
       </div>
     </section>

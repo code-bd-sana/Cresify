@@ -18,7 +18,7 @@ import {
 import { SlCalender } from "react-icons/sl";
 
 export default function Sidebar({ open, onClose }) {
-  const pathname = usePathname(); // <-- Current route
+  const pathname = usePathname();
 
   const menuItems = [
     { label: "Dashboard", icon: FiGrid, path: "/dashboard" },
@@ -42,7 +42,11 @@ export default function Sidebar({ open, onClose }) {
     { label: "Orders", icon: FiShoppingCart, path: "/dashboard/orders" },
     { label: "Store Profile", icon: FiUser, path: "/dashboard/store-profile" },
     { label: "Payments", icon: FiCreditCard, path: "/dashboard/payments" },
-    { label: "Calender", icon: SlCalender , path: "/dashboard/service-provider-dashboard/calender" },
+    {
+      label: "Calender",
+      icon: SlCalender,
+      path: "/dashboard/service-provider-dashboard/calender",
+    },
     { label: "Analytics", icon: FiBarChart2, path: "/dashboard/analytics" },
     { label: "Reviews", icon: FiStar, path: "/dashboard/reviews" },
     { label: "Messages", icon: FiMessageSquare, path: "/dashboard/messages" },
@@ -51,6 +55,7 @@ export default function Sidebar({ open, onClose }) {
 
   return (
     <>
+      {/* MOBILE OVERLAY */}
       {open && (
         <div
           onClick={onClose}
@@ -58,50 +63,63 @@ export default function Sidebar({ open, onClose }) {
         />
       )}
 
+      {/* SIDEBAR */}
       <aside
-        className={`fixed z-50 lg:z-20 top-0 left-0 h-full w-64 bg-white border-r 
-          border-[#F0EEF7] flex flex-col px-4 pt-5 pb-4 transition-transform duration-300
-          ${open ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}`}
+        className={`fixed top-0 left-0 z-50 lg:z-20 
+          h-full w-64 bg-white border-r border-[#ECECEC]
+          flex flex-col pt-6 pb-6 px-4
+          transition-all duration-300
+          ${open ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
+        `}
       >
-        {/* Logo */}
-        <div className="flex gap-2 px-2 mb-8">
-          <Image
-            src="/logo/logo2.png"
-            alt="Cresify Logo"
-            width={170}
-            height={32}
-            className="rounded-xl"
-          />
-        </div>
+        {/* LOGO */}
+        <Link href="/">
+          <div className="px-2 mb-8">
+            <Image
+              src="/logo.png"
+              alt="Cresify Logo"
+              width={170}
+              height={32}
+              className="rounded-xl mx-auto"
+            />
+          </div>
+        </Link>
 
-        {/* Menu */}
-        <nav className="flex-1 space-y-1 overflow-y-auto scrollbar-thin scrollbar-thumb-transparent">
+        {/* NAVIGATION */}
+        <nav className="flex-1 overflow-y-auto scrollbar-hide space-y-1">
           {menuItems.map((item) => {
             const isActive = pathname === item.path;
 
             return (
               <Link
-                href={item.path}
                 key={item.label}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-lg transition 
-        ${
-          isActive
-            ? "bg-[#F4F0FF] text-[#4C1D95] font-semibold"
-            : "text-[#6F6C90] hover:bg-[#F6F5FF]"
-        }`}
+                href={item.path}
+                className={`flex items-center gap-3 px-4 py-3 rounded-xl text-[15px] transition-all
+                  ${
+                    isActive
+                      ? "bg-[#F4F0FF] text-[#4C1D95] font-semibold shadow-sm"
+                      : "text-[#6F6C90] hover:bg-[#F7F6FF]"
+                  }
+                `}
               >
-                <item.icon className="text-[18px]" />
-                <span>{item.label}</span>
+                <item.icon
+                  className={`text-[18px] ${
+                    isActive ? "text-[#4C1D95]" : "text-[#6F6C90]"
+                  }`}
+                />
+                {item.label}
               </Link>
             );
           })}
         </nav>
 
-        {/* Logout */}
-        <button className="mt-4 flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-[#FF6A3D] hover:bg-[#FFF3EC]">
-          <FiLogOut className="text-[18px]" />
-          <span>Logout</span>
-        </button>
+        {/* LOGOUT BUTTON */}
+        <div className="border-t border-[#F1F1F1] pt-4 mt-4">
+          <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-[15px] text-[#FF6A3D] hover:bg-[#FFF3EC] transition">
+            <FiLogOut className="text-[18px]" />
+            Logout
+          </button>
+        </div>
       </aside>
     </>
   );
