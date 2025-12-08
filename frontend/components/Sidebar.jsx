@@ -20,19 +20,23 @@ import { SlCalender } from "react-icons/sl";
 
 export default function Sidebar({ open, onClose }) {
   const pathname = usePathname();
-  const {data} = useSession();
-  console.log(data?.user?.role, "tui ki user");
+  const { data } = useSession();
+
 
   const role = data?.user?.role;
-  console.log(role, "Hey role ki abosta");
+
+  console.log(data, "Hey young role");
+
 
   const adminItem = [
     { label: "Dashboard", icon: FiGrid, path: "/dashboard/admin-dashboard" },
 
+    {
+      label: "User Management",
+      icon: FiGrid,
+      path: "/dashboard/admin-dashboard/users",
+    },
 
-       { label: "User Management", icon: FiGrid, path: "/dashboard/admin-dashboard/users" },
-  
-   
     {
       label: "Products",
       icon: FiGrid,
@@ -43,48 +47,26 @@ export default function Sidebar({ open, onClose }) {
       icon: FiGrid,
       path: "/dashboard/admin-dashboard/services",
     },
-,
+    ,
     { label: "Orders", icon: FiShoppingCart, path: "/dashboard/orders" },
     { label: "Booking", icon: FiShoppingCart, path: "/dashboard/orders" },
-    { label: "Store Profile", icon: FiUser, path: "/dashboard/store-profile" },
+    // { label: "Store Profile", icon: FiUser, path: "/dashboard/store-profile" },
     { label: "Payments", icon: FiCreditCard, path: "/dashboard/payments" },
-    {
-      label: "Calender",
-      icon: SlCalender,
-      path: "/dashboard/service-provider-dashboard/calender",
-    },
-    { label: "Analytics", icon: FiBarChart2, path: "/dashboard/analytics" },
-    { label: "Reviews", icon: FiStar, path: "/dashboard/reviews" },
+    { label: "Content", icon: FiCreditCard, path: "/dashboard/content" },
+
+    // { label: "Reviews", icon: FiStar, path: "/dashboard/reviews" },
     { label: "Messages", icon: FiMessageSquare, path: "/dashboard/messages" },
     { label: "Settings", icon: FiSettings, path: "/dashboard/settings" },
   ];
+
   const sellerItem = [
     { label: "Dashboard", icon: FiGrid, path: "/dashboard" },
-    {
-      label: "Admin Dashboard",
-      icon: FiGrid,
-      path: "/dashboard/admin-dashboard",
-    },
-    { label: "Users", icon: FiGrid, path: "/dashboard/admin-dashboard/users" },
-    {
-      label: "Admin Products",
-      icon: FiGrid,
-      path: "/dashboard/admin-dashboard/products",
-    },
-    {
-      label: "Services",
-      icon: FiGrid,
-      path: "/dashboard/admin-dashboard/services",
-    },
+
     { label: "Products", icon: FiBox, path: "/dashboard/products" },
     { label: "Orders", icon: FiShoppingCart, path: "/dashboard/orders" },
     { label: "Store Profile", icon: FiUser, path: "/dashboard/store-profile" },
     { label: "Payments", icon: FiCreditCard, path: "/dashboard/payments" },
-    {
-      label: "Calender",
-      icon: SlCalender,
-      path: "/dashboard/service-provider-dashboard/calender",
-    },
+
     { label: "Analytics", icon: FiBarChart2, path: "/dashboard/analytics" },
     { label: "Reviews", icon: FiStar, path: "/dashboard/reviews" },
     { label: "Messages", icon: FiMessageSquare, path: "/dashboard/messages" },
@@ -92,40 +74,28 @@ export default function Sidebar({ open, onClose }) {
   ];
   const providerItem = [
     { label: "Dashboard", icon: FiGrid, path: "/dashboard" },
-    {
-      label: "Admin Dashboard",
-      icon: FiGrid,
-      path: "/dashboard/admin-dashboard",
-    },
-    { label: "Users", icon: FiGrid, path: "/dashboard/admin-dashboard/users" },
-    {
-      label: "Admin Products",
-      icon: FiGrid,
-      path: "/dashboard/admin-dashboard/products",
-    },
-    {
-      label: "Services",
-      icon: FiGrid,
-      path: "/dashboard/admin-dashboard/services",
-    },
-    { label: "Products", icon: FiBox, path: "/dashboard/products" },
-    { label: "Orders", icon: FiShoppingCart, path: "/dashboard/orders" },
-    { label: "Store Profile", icon: FiUser, path: "/dashboard/store-profile" },
-    { label: "Payments", icon: FiCreditCard, path: "/dashboard/payments" },
+
+    { label: "Booking", icon: FiShoppingCart, path: "/dashboard/booking" },
+
     {
       label: "Calender",
       icon: SlCalender,
       path: "/dashboard/service-provider-dashboard/calender",
     },
-    { label: "Analytics", icon: FiBarChart2, path: "/dashboard/analytics" },
-    { label: "Reviews", icon: FiStar, path: "/dashboard/reviews" },
+    { label: "Payments", icon: FiCreditCard, path: "/dashboard/payments" },
     { label: "Messages", icon: FiMessageSquare, path: "/dashboard/messages" },
+    { label: "Reviews", icon: FiStar, path: "/dashboard/reviews" },
     { label: "Settings", icon: FiSettings, path: "/dashboard/settings" },
   ];
 
-
-
-  const menuItems = role === "seller" ? sellerItem : role === "provider" ? providerItem : role === "admin" ? adminItem : [];
+  const menuItems =
+    role === "seller"
+      ? sellerItem
+      : role === "provider"
+      ? providerItem
+      : role === "admin"
+      ? adminItem
+      : [];
 
   return (
     <>

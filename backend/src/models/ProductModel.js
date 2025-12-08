@@ -21,11 +21,16 @@ const productSchema = new Schema({
         type:Number,
         required:[true, "Price is Required"]
     },
+    location:String,
 
     stock:{
         type:Number,
         required:[true, "Stock Quantity is Requried"]
     },
+  rating: {
+    type: Number,
+    default: 0
+},
 
     status:{
         type:String,
