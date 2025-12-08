@@ -65,7 +65,7 @@ try {
   
 } catch (error) {
 
-  console.log(error, "hey");
+
   toast.error(error?.data?.message)
 }
     
@@ -82,7 +82,7 @@ try {
   };
 
   const handleGoogleLogin = () => {
-    console.log("%c🔵 GOOGLE LOGIN CLICKED", "color: #4285F4; font-size: 14px; font-weight: bold;");
+
     // Google login logic here
   };
 

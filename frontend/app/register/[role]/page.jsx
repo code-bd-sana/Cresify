@@ -119,7 +119,7 @@ const Registerpage = () => {
 
       try {
       const response =  await createUser(finalData);
-      console.log(response, "kire reposne");
+
         toast.success("Registration Successfully");
          e.target.reset();
           window.location.href = '/login'; 
@@ -128,8 +128,7 @@ const Registerpage = () => {
       } catch (error) {
         toast.error(error?.data?.message)
       }
-      console.log("Final Registration Data:", finalData);
-      console.log("✅ All data is ready for submission!");
+ 
 
       // Here you would typically send data to your API
       // alert("Registration successful! Check console for data.");

@@ -18,27 +18,27 @@ const userSchema = new Schema(
       enum: ["buyer", "provider", "seller", "admin"],
     },
 
-    fullName: {
+    name: {
       type: String,
     },
 
-    adress:String,
-    businessLogo:String,
-    category:String,
-    nationalId:String,
-    registrationDate:String,
-    
+    address: String,
+    businessLogo: String,
+    category: String,
+    nationalId: String,
+    registrationDate: String,
+    image:String,
+
     phoneNumber: {
       type: String,
     },
-    status:{
-        type:String,
-        enum:['pending', 'active', 'suspend']
-
+    status: {
+      type: String,
+      enum: ["pending", "active", "suspend"],
     },
 
     shopName: String,
-    categories: String,
+    category: String,
     serviceName: String,
     serviceCategory: String,
     serviceArea: String,
@@ -46,6 +46,10 @@ const userSchema = new Schema(
     hourlyRate: Number,
     yearsofExperience: String,
     serviceDescription: String,
+    website: String,
+    shopDescription: String,
+    shopLogo:String,
+
     workingHours: {
       start: { type: String, default: "09:00" },
       end: { type: String, default: "18:00" },
