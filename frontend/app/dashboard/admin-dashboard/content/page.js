@@ -8,6 +8,7 @@ export default function ArticlesSection() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedArticle, setSelectedArticle] = useState(null);
+  const [articles, setArticles] = useState([]);
 
   // -------------------------
   // MAIN SECTION
