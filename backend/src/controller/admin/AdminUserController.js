@@ -1,6 +1,55 @@
 import User from "../../models/UserModel.js";
 
 /**
+ * @function getAllUsers
+ * @description Retrieves all users from the database with search and pagination.
+ * @query search - Search by email or name (optional)
+ * @query skip - Number of records to skip for pagination (default: 0)
+ * @query limit - Number of records to return (default: 10)
+ * @route GET /admin/users
+ * @access Admin
+ */
+export const getAllUsers = async (req, res) => {
+  try {
+    const { search = "", skip = 0, limit = 10 } = req.query;
+
+    // Build search query
+    const query = {};
+
+    if (search) {
+      query.$or = [
+        { email: { $regex: search, $options: "i" } },
+        { name: { $regex: search, $options: "i" } },
+      ];
+    }
+
+    // Get total count for pagination
+    const total = await User.countDocuments(query);
+
+    // Get paginated users
+    const users = await User.find(query)
+      .sort({ createdAt: -1 })
+      .skip(Number(skip))
+      .limit(Number(limit));
+
+    return res.status(200).json({
+      success: true,
+      data: users,
+      total,
+      skip: Number(skip),
+      limit: Number(limit),
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to retrieve users",
+      error: error.message,
+    });
+  }
+};
+
+
+/**
  * @function adminOverview
  * @description Provides admin overview metrics:
  *              - Total Users
@@ -30,65 +79,6 @@ export const adminOverview = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Server error while generating overview",
-      error: error.message,
-    });
-  }
-};
-
-/**
- * @function getAllUsers
- * @description Retrieves all users from the database.
- * @route GET /admin/users/all
- * @access Admin
- */
-export const getAllUsers = async (req, res) => {
-  try {
-    const users = await User.find().sort({ createdAt: -1 });
-
-    return res.status(200).json({
-      success: true,
-      data: users,
-    });
-  } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: "Failed to retrieve users",
-      error: error.message,
-    });
-  }
-};
-
-/**
- * @function searchUsers
- * @description Searches users by name or email.
- * @query email, name
- * @route GET /admin/users/search
- * @access Admin
- */
-export const searchUsers = async (req, res) => {
-  try {
-    const { email, name } = req.query;
-
-    const query = {};
-
-    if (email) {
-      query.email = { $regex: email, $options: "i" };
-    }
-
-    if (name) {
-      query.name = { $regex: name, $options: "i" };
-    }
-
-    const users = await User.find(query).sort({ createdAt: -1 });
-
-    return res.status(200).json({
-      success: true,
-      data: users,
-    });
-  } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: "Search failed",
       error: error.message,
     });
   }
