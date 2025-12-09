@@ -1,120 +1,364 @@
 "use client";
 import Image from "next/image";
-import { FiEdit3 } from "react-icons/fi";
+import { FiEdit3, FiSearch } from "react-icons/fi";
 import { RiDeleteBin6Line } from "react-icons/ri";
+import { HiPlus } from "react-icons/hi";
+import Link from "next/link";
+import { useDeleteProductMutation, useMyProductQuery } from "@/feature/ProductApi";
+import { useSession } from "next-auth/react";
+import { useState, useEffect } from "react";
+import Swal from "sweetalert2";
 
 export default function ProductTable() {
-  const products = [
-    {
-      name: "Wireless Headphones",
-      cat: "Electronics",
-      price: "$1,250.00",
-      stock: "$1,250.00",
-      status: "Active",
-      image: "/product/bag.jpg",
-    },
-    {
-      name: "Smart Watch Pro",
-      cat: "Wearables",
-      price: "$850.00",
-      stock: "$850.00",
-      status: "Active",
-      image: "/product/bag.jpg",
-    },
-    {
-      name: "TV",
-      cat: "Electronics",
-      price: "$5,250.00",
-      stock: "$5,250.00",
-      status: "Active",
-      image: "/product/bag.jpg",
-    },
-    {
-      name: "Laptop Stand",
-      cat: "Accessories",
-      price: "$250.00",
-      stock: "$250.00",
-      status: "Out of Stock",
-      image: "/product/bag.jpg",
-    },
-    {
-      name: "SSD",
-      cat: "Storage",
-      price: "$750.00",
-      stock: "$750.00",
-      status: "Active",
-      image: "/product/bag.jpg",
-    },
-    {
-      name: "Webcam HD",
-      cat: "Electronics",
-      price: "$870.00",
-      stock: "$870.00",
-      status: "Out of Stock",
-      image: "/product/bag.jpg",
-    },
-  ];
+  const { data: session } = useSession();
+  const id = session?.user?.id;
+
+  const [page, setPage] = useState(0);
+  const [limit, setLimit] = useState(10);
+  const [search, setSearch] = useState("");
+  const [searchInput, setSearchInput] = useState(""); 
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [deleteProduct, {deleteLoading, deleteError}] = useDeleteProductMutation()
+
+  const skip = page * limit;
+
+  // Debounce search for 500ms
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchInput);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchInput]);
+
+  // Update search when debounced value changes
+  useEffect(() => {
+    if (debouncedSearch !== search) {
+      setSearch(debouncedSearch);
+      setPage(0); // Reset to first page on new search
+    }
+  }, [debouncedSearch]);
+
+  const { data: resp, isLoading, isFetching, error, refetch } =
+    useMyProductQuery(
+      { id, skip, limit, search },
+      { skip: !id }
+    );
+
+  const apiProducts = resp?.data ?? [];
+  const total = resp?.total ?? 0;
+
+  const totalPages = Math.ceil(total / limit) || 1;
+
+  const handleEdit = (p) => console.log("Edit", p._id);
+
+  const handleDelete = (p) => {
+Swal.fire({
+  title: "Are you sure?",
+  text: "You won't be able to revert this!",
+  icon: "warning",
+  showCancelButton: true,
+  confirmButtonColor: "#9810FA",
+  cancelButtonColor: "#d33",
+  confirmButtonText: "Yes, delete it!"
+}).then((result) => {
+  if (result.isConfirmed) {
+    productDelete(p?._id)
+  }
+});
+    console.log("Delete", p._id);
+  };
+
+
+
+  const productDelete = async(id)=>{
+
+    await deleteProduct(id);
+     Swal.fire({
+      title: "Deleted!",
+      text: "Your file has been deleted.",
+      icon: "success"
+    });
+
+  }
+  const handleSearch = () => {
+    setSearch(searchInput);
+    setPage(0);
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === "Enter") {
+      handleSearch();
+    }
+  };
 
   return (
-    <div className="bg-white shadow-md border border-gray-200 rounded-xl mt-8 overflow-hidden px-6 py-10">
-      <table className="w-full text-sm border border-gray-100">
-        {/* Header */}
-        <thead className="rounded-2xl">
-          <tr className="bg-[#F8F4FD] text-[#A278F6]  rounded-2xl  text-left text-[12px] uppercase">
-            <th className="py-4 px-6">Product</th>
-            <th className="py-4 px-6">Category</th>
-            <th className="py-4 px-6">Price</th>
-            <th className="py-4 px-6">Stock</th>
-            <th className="py-4 px-6">Status</th>
-            <th className="py-4 px-6">Actions</th>
-          </tr>
-        </thead>
+    <div className="min-h-screen bg-gray-50 p-4 md:p-6">
+      
+      {/* Header Section */}
+      <div className="mb-8">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div>
+            <h1 className="text-2xl md:text-[28px] font-semibold text-gray-900">
+              Products
+            </h1>
+            <p className="text-sm text-gray-500 mt-1">
+              Manage your product inventory efficiently
+            </p>
+          </div>
 
-        {/* Body */}
-        <tbody>
-          {products.map((p, i) => (
-            <tr key={i} className="border-t border-gray-100">
-              <td className="px-6 py-6 flex items-center gap-3">
-                <Image
-                  src={p.image}
-                  width={50}
-                  height={50}
-                  alt="product"
-                  className="rounded-lg bg-cover"
-                />
-                <p className="font-medium">{p.name}</p>
-              </td>
+          <Link
+            href="/dashboard/products/add-product"
+            className="flex items-center gap-2 bg-gradient-to-r from-[#AA4BF5] to-[#FF7C74] text-white px-5 py-3 rounded-lg text-sm font-medium shadow-lg hover:shadow-xl transition-shadow duration-200"
+          >
+            <HiPlus className="text-lg" />
+            Add New Product
+          </Link>
+        </div>
 
-              <td className="px-6 py-4 text-gray-600">{p.cat}</td>
-              <td className="px-6 py-4 font-medium">{p.price}</td>
-              <td className="px-6 py-4 font-medium">{p.stock}</td>
+        {/* Search and Filter Section */}
+        <div className="mt-8 bg-white p-4 md:p-6 rounded-xl border border-gray-200 shadow-sm">
+          <div className="flex flex-col md:flex-row gap-4 items-center">
+            <div className="relative w-full md:w-2/3">
+              <FiSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg" />
+              <input
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                onKeyPress={handleKeyPress}
+                type="text"
+                placeholder="Search by product name, category, or ID..."
+                className="w-full border border-gray-300 rounded-xl pl-12 pr-4 py-3 text-sm outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500 transition"
+              />
+              <button
+                onClick={handleSearch}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 bg-purple-600 text-white px-4 py-1.5 rounded-lg text-sm font-medium hover:bg-purple-700 transition"
+              >
+                Search
+              </button>
+            </div>
 
-              <td className="px-6 py-4">
-                <span
-                  className={`px-3 py-1 rounded-full text-xs ${
-                    p.status === "Active"
-                      ? "bg-[#F3E8FF] text-[#A855F7]"
-                      : "bg-gray-200 text-gray-500"
-                  }`}
-                >
-                  {p.status}
-                </span>
-              </td>
+           
+          </div>
+        </div>
+      </div>
 
-              <td className="px-6 py-6">
-                <div className="flex items-center gap-4">
-                  <button className="text-[#A855F7] hover:scale-110 transition bg-[#F2EAFA] rounded-lg p-2">
-                    <FiEdit3 className="text-lg" />
+      {/* Products Table */}
+      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+        {isLoading || isFetching ? (
+          <div className="py-20 text-center">
+            <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
+            <p className="mt-4 text-gray-500">Loading products...</p>
+          </div>
+        ) : error ? (
+          <div className="py-20 text-center">
+            <div className="text-red-500 text-lg mb-2">⚠️ Error loading products</div>
+            <p className="text-gray-600 mb-4">{error?.message || "Something went wrong"}</p>
+            <button
+              onClick={() => refetch()}
+              className="px-5 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition"
+            >
+              Try Again
+            </button>
+          </div>
+        ) : apiProducts.length === 0 ? (
+          <div className="py-20 text-center">
+            <div className="text-gray-400 text-6xl mb-4">📦</div>
+            <h3 className="text-xl font-semibold text-gray-700 mb-2">No products found</h3>
+            <p className="text-gray-500 mb-6">
+              {search ? "Try a different search term" : "Start by adding your first product"}
+            </p>
+            {!search && (
+              <Link
+                href="/dashboard/products/add-product"
+                className="inline-flex items-center gap-2 bg-gradient-to-r from-[#AA4BF5] to-[#FF7C74] text-white px-6 py-3 rounded-lg text-sm font-medium shadow-lg hover:shadow-xl transition"
+              >
+                <HiPlus className="text-lg" />
+                Add New Product
+              </Link>
+            )}
+          </div>
+        ) : (
+          <>
+            {/* Table */}
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="bg-gradient-to-r from-purple-50 to-pink-50 border-b border-gray-200">
+                    <th className="py-5 px-6 text-left">
+                      <span className="text-xs font-semibold text-purple-700 uppercase tracking-wider">
+                        Product
+                      </span>
+                    </th>
+                    <th className="py-5 px-6 text-left">
+                      <span className="text-xs font-semibold text-purple-700 uppercase tracking-wider">
+                        Category
+                      </span>
+                    </th>
+                    <th className="py-5 px-6 text-left">
+                      <span className="text-xs font-semibold text-purple-700 uppercase tracking-wider">
+                        Price
+                      </span>
+                    </th>
+                    <th className="py-5 px-6 text-left">
+                      <span className="text-xs font-semibold text-purple-700 uppercase tracking-wider">
+                        Stock
+                      </span>
+                    </th>
+                    <th className="py-5 px-6 text-left">
+                      <span className="text-xs font-semibold text-purple-700 uppercase tracking-wider">
+                        Status
+                      </span>
+                    </th>
+                    <th className="py-5 px-6 text-left">
+                      <span className="text-xs font-semibold text-purple-700 uppercase tracking-wider">
+                        Actions
+                      </span>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {apiProducts.map((p) => (
+                    <tr
+                      key={p._id}
+                      className="border-b border-gray-100 hover:bg-gray-50/50 transition-colors"
+                    >
+                      <td className="px-6 py-5">
+                        <div className="flex items-center gap-4">
+                          <div className="relative w-14 h-14 rounded-xl overflow-hidden border border-gray-200">
+                            <Image
+                              src={p.image || "/product/bag.jpg"}
+                              alt={p.name}
+                              fill
+                              className="object-cover"
+                              sizes="56px"
+                            />
+                          </div>
+                          <div>
+                            <p className="font-medium text-gray-900">{p.name}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-5">
+                        <span className="px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium">
+                          {p.category}
+                        </span>
+                      </td>
+                      <td className="px-6 py-5">
+                        <span className="font-semibold text-gray-900">${p.price}</span>
+                      </td>
+                      <td className="px-6 py-5">
+                        <div className="flex items-center gap-2">
+                          <span className={`font-semibold ${p.stock < 10 ? 'text-red-600' : 'text-gray-900'}`}>
+                            {p.stock}
+                          </span>
+                          {p.stock < 10 && (
+                            <span className="text-xs text-red-500 bg-red-50 px-2 py-1 rounded">Low</span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-6 py-5">
+                        <span className={`px-3 py-1.5 rounded-full text-xs font-medium
+                          ${p.status === "active" ? "bg-green-100 text-green-800" : 
+                            p.status === "out-of-stock" ? "bg-red-100 text-red-800" : 
+                            "bg-gray-100 text-gray-800"}`}
+                        >
+                          {p.status?.charAt(0).toUpperCase() + p.status?.slice(1)}
+                        </span>
+                      </td>
+                      <td className="px-6 py-5">
+                        <div className="flex items-center gap-2">
+                         <Link href={`/dashboard/products/edit/${p?._id}`}>
+                         
+                          <button
+                        
+                            className="p-2.5 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition"
+                            title="Edit"
+                          >
+                            <FiEdit3 className="text-lg" />
+                          </button></Link>
+                          <button
+                            onClick={() => handleDelete(p)}
+                            className="p-2.5 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition"
+                            title="Delete"
+                          >
+                            <RiDeleteBin6Line className="text-lg" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Pagination */}
+            <div className="px-6 py-6 border-t border-gray-200 bg-white">
+              <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+                <div className="text-sm text-gray-600">
+                  Showing{" "}
+                  <span className="font-semibold text-gray-900">
+                    {apiProducts.length > 0 ? skip + 1 : 0}
+                  </span>
+                  {" to "}
+                  <span className="font-semibold text-gray-900">
+                    {skip + apiProducts.length}
+                  </span>
+                  {" of "}
+                  <span className="font-semibold text-gray-900">{total}</span>
+                  {" products"}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setPage((p) => Math.max(p - 1, 0))}
+                    disabled={page === 0}
+                    className="px-4 py-2.5 rounded-lg border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                  >
+                    Previous
                   </button>
-                  <button className="text-red-500 hover:scale-110 bg transition bg-[#FCEBEA] p-2 rounded-lg">
-                    <RiDeleteBin6Line className="text-lg" />
+
+                  <div className="flex items-center gap-1">
+                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                      let pageNum;
+                      if (totalPages <= 5) {
+                        pageNum = i;
+                      } else if (page < 3) {
+                        pageNum = i;
+                      } else if (page > totalPages - 4) {
+                        pageNum = totalPages - 5 + i;
+                      } else {
+                        pageNum = page - 2 + i;
+                      }
+
+                      return pageNum < totalPages ? (
+                        <button
+                          key={pageNum}
+                          onClick={() => setPage(pageNum)}
+                          className={`w-10 h-10 rounded-lg text-sm font-medium transition
+                            ${page === pageNum
+                              ? "bg-purple-600 text-white"
+                              : "border border-gray-300 text-gray-700 hover:bg-gray-50"
+                            }`}
+                        >
+                          {pageNum + 1}
+                        </button>
+                      ) : null;
+                    })}
+                  </div>
+
+                  <button
+                    onClick={() => setPage((p) => Math.min(p + 1, totalPages - 1))}
+                    disabled={page + 1 >= totalPages}
+                    className="px-4 py-2.5 rounded-lg border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                  >
+                    Next
                   </button>
                 </div>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+              </div>
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 }

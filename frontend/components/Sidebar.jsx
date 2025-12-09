@@ -1,5 +1,6 @@
 "use client";
 
+import { useSession } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -19,17 +20,25 @@ import { SlCalender } from "react-icons/sl";
 
 export default function Sidebar({ open, onClose }) {
   const pathname = usePathname();
+  const { data } = useSession();
 
-  const menuItems = [
-    { label: "Dashboard", icon: FiGrid, path: "/dashboard" },
+
+  const role = data?.user?.role;
+
+  console.log(data, "Hey young role");
+
+
+  const adminItem = [
+    { label: "Dashboard", icon: FiGrid, path: "/dashboard/admin-dashboard" },
+
     {
-      label: "Admin Dashboard",
+      label: "User Management",
       icon: FiGrid,
-      path: "/dashboard/admin-dashboard",
+      path: "/dashboard/admin-dashboard/users",
     },
-    { label: "Users", icon: FiGrid, path: "/dashboard/admin-dashboard/users" },
+
     {
-      label: "Admin Products",
+      label: "Products",
       icon: FiGrid,
       path: "/dashboard/admin-dashboard/products",
     },
@@ -38,20 +47,55 @@ export default function Sidebar({ open, onClose }) {
       icon: FiGrid,
       path: "/dashboard/admin-dashboard/services",
     },
+    ,
+    { label: "Orders", icon: FiShoppingCart, path: "/dashboard/orders" },
+    { label: "Booking", icon: FiShoppingCart, path: "/dashboard/orders" },
+    // { label: "Store Profile", icon: FiUser, path: "/dashboard/store-profile" },
+    { label: "Payments", icon: FiCreditCard, path: "/dashboard/payments" },
+    { label: "Content", icon: FiCreditCard, path: "/dashboard/content" },
+
+    // { label: "Reviews", icon: FiStar, path: "/dashboard/reviews" },
+    { label: "Messages", icon: FiMessageSquare, path: "/dashboard/messages" },
+    { label: "Settings", icon: FiSettings, path: "/dashboard/settings" },
+  ];
+
+  const sellerItem = [
+    { label: "Dashboard", icon: FiGrid, path: "/dashboard" },
+
     { label: "Products", icon: FiBox, path: "/dashboard/products" },
     { label: "Orders", icon: FiShoppingCart, path: "/dashboard/orders" },
     { label: "Store Profile", icon: FiUser, path: "/dashboard/store-profile" },
     { label: "Payments", icon: FiCreditCard, path: "/dashboard/payments" },
-    {
-      label: "Calender",
-      icon: SlCalender,
-      path: "/dashboard/service-provider-dashboard/calender",
-    },
+
     { label: "Analytics", icon: FiBarChart2, path: "/dashboard/analytics" },
     { label: "Reviews", icon: FiStar, path: "/dashboard/reviews" },
     { label: "Messages", icon: FiMessageSquare, path: "/dashboard/messages" },
     { label: "Settings", icon: FiSettings, path: "/dashboard/settings" },
   ];
+  const providerItem = [
+    { label: "Dashboard", icon: FiGrid, path: "/dashboard" },
+
+    { label: "Booking", icon: FiShoppingCart, path: "/dashboard/booking" },
+
+    {
+      label: "Calender",
+      icon: SlCalender,
+      path: "/dashboard/service-provider-dashboard/calender",
+    },
+    { label: "Payments", icon: FiCreditCard, path: "/dashboard/payments" },
+    { label: "Messages", icon: FiMessageSquare, path: "/dashboard/messages" },
+    { label: "Reviews", icon: FiStar, path: "/dashboard/reviews" },
+    { label: "Settings", icon: FiSettings, path: "/dashboard/settings" },
+  ];
+
+  const menuItems =
+    role === "seller"
+      ? sellerItem
+      : role === "provider"
+      ? providerItem
+      : role === "admin"
+      ? adminItem
+      : [];
 
   return (
     <>
