@@ -36,7 +36,7 @@ export const getAllUsers = async (req, res) => {
       success: true,
       data: users,
       total,
-      skip: Number(skip),
+      skip: Number(skip) || 0,
       limit: Number(limit),
     });
   } catch (error) {
@@ -47,7 +47,6 @@ export const getAllUsers = async (req, res) => {
     });
   }
 };
-
 
 /**
  * @function adminOverview

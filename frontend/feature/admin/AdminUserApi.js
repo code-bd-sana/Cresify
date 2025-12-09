@@ -1,5 +1,5 @@
 import { base_url } from "@/utils/utils";
-import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query";
+import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
 /**
  * Admin User Management API
