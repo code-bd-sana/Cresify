@@ -163,6 +163,7 @@ export default function StoreProfile() {
         timestamp: new Date().toISOString(),
       };
 
+
       await updateProfile(finalData);
 
       toast.success("Store Update Successfully");

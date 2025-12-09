@@ -1,48 +1,46 @@
 import mongoose, { Schema } from "mongoose";
 import User from "./UserModel.js";
 
-const productSchema = new Schema({
-
-
-    name:{
-        type:String,
-        required:[true, "Product Name is Required"]
-    }, 
-    seller:{
-        type: mongoose.Schema.Types.ObjectId,
-        ref:User,
-        required:[true, "Seller is Required"]
+const productSchema = new Schema(
+  {
+    name: {
+      type: String,
+      required: [true, "Product Name is Required"],
     },
-    category:{
-        type:String,
-        required:[true, "Category is Required"]
+    seller: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: User,
+      required: [true, "Seller is Required"],
     },
-    price:{
-        type:Number,
-        required:[true, "Price is Required"]
+    category: {
+      type: String,
+      required: [true, "Category is Required"],
     },
-    location:String,
+    price: {
+      type: Number,
+      required: [true, "Price is Required"],
+    },
+    location: String,
 
-    stock:{
-        type:Number,
-        required:[true, "Stock Quantity is Requried"]
+    stock: {
+      type: Number,
+      required: [true, "Stock Quantity is Requried"],
     },
-  rating: {
-    type: Number,
-    default: 0
-},
-
-    status:{
-        type:String,
-        enum:['active', 'out-of-stock', "ubpublish"]
+    rating: {
+      type: Number,
+      default: 0,
     },
 
-    description:String,
-    image:String,
+    status: {
+      type: String,
+      enum: ["active", "out-of-stock", "ubpublish", "rejected", "pending"],
+    },
 
-}, {timestamps:true}) ;
-
-
+    description: String,
+    image: String,
+  },
+  { timestamps: true }
+);
 
 const Product = mongoose.model("Product", productSchema);
 
