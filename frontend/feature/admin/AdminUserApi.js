@@ -28,12 +28,13 @@ export const AdminUserApi = createApi({
      * @query search - Search by email or name (optional)
      * @query skip - Number of records to skip for pagination (default: 0)
      * @query limit - Number of records to return (default: 10)
+     * @query role - Filter users by role (optional)
      */
     getAllUsers: builder.query({
-      query: ({ search, skip, limit }) =>
+      query: ({ search, skip, limit ,role}) =>
         `/admin/users?skip=${skip}&limit=${limit}&search=${encodeURIComponent(
           search ?? ""
-        )}`,
+        )}&role=${role ?? ""}`,
       providesTags: ["AdminUsers"],
     }),
 
@@ -48,7 +49,7 @@ export const AdminUserApi = createApi({
      */
     changeUserStatus: builder.mutation({
       query: (data) => ({
-        url: `/admin/users/status/${data.userId}`,
+        url: `/admin/users/status/`,
         method: "PUT",
         body: data,
       }),
