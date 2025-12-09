@@ -1,8 +1,24 @@
 "use client";
 
 import { FiSearch } from "react-icons/fi";
+import { useState } from "react";
 
-export default function SearchHero() {
+export default function SearchHero({ onSearch, initialSearch = "" }) {
+  const [search, setSearch] = useState(initialSearch);
+
+  const handleSearchClick = () => {
+    if (onSearch && typeof onSearch === 'function') {
+      console.log("Searching for:", search);
+      onSearch(search);
+    }
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      handleSearchClick();
+    }
+  };
+
   return (
     <section className="w-full py-20 text-center">
       <div className="max-w-[900px] mx-auto px-6">
@@ -18,44 +34,26 @@ export default function SearchHero() {
         </p>
 
         {/* Search Bar */}
-        {/* Search Bar */}
-        <div
-          className="
-    w-full max-w-[780px] mx-auto
-    flex items-center
-    border border-[#A766E5]
-    rounded-[12px]
-    bg-white
-    px-3 py-2
-    shadow-[0px_4px_18px_rgba(0,0,0,0.08)]
-  "
-        >
+        <div className="w-full max-w-[780px] mx-auto flex items-center border border-[#A766E5] rounded-[12px] bg-white px-3 py-2 shadow-[0px_4px_18px_rgba(0,0,0,0.08)]">
           {/* Icon */}
           <FiSearch className="text-[#F78D25] text-[20px] mr-3" />
 
           {/* Input */}
           <input
             type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            onKeyPress={handleKeyPress}
             placeholder="Search for product or stores...."
-            className="
-      flex-1 text-[15px] text-[#444]
-      placeholder:text-[#A3A3A3]
-      outline-none
-      py-1
-    "
+            className="flex-1 text-[15px] text-[#444] placeholder:text-[#A3A3A3] outline-none py-1"
           />
 
-          {/* Button – moved left with ml-3 and padding from parent */}
+          {/* Button */}
           <button
-            className="
-      ml-3
-      px-6 py-2
-      text-white text-[15px] font-medium
-      rounded-[10px]
-      bg-[linear-gradient(90deg,#9838E1_0%,#F68E44_100%)]
-    "
+            onClick={handleSearchClick}
+            className="ml-3 px-6 py-2 text-white text-[15px] font-medium rounded-[10px] bg-gradient-to-r from-[#9838E1] to-[#F68E44] hover:opacity-90 transition-opacity"
           >
-            Look for
+            Search
           </button>
         </div>
       </div>
