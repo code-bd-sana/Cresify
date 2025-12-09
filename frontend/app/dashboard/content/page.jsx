@@ -128,7 +128,7 @@ const ArticlesPage = () => {
 
       {/* View All Button */}
       <div className='flex justify-center mt-8'>
-        <button className='px-6 py-2 bg-gradient-to-r from-[#8736C5] via-[#9C47C6] to-[#F88D25] text-white rounded-lg transition'>
+        <button className='px-6 py-2 bg-gradient-to-r from-[#8736C5] via-[#9C47C6] to-[#F88D25] text-white rounded-lg transition cursor-pointer'>
           View All
         </button>
       </div>
