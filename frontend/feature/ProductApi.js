@@ -48,6 +48,41 @@ export const ProductApi = createApi({
       }),
       invalidatesTags: ["Products"],
     }),
+
+// feature/ProductApi.js
+// feature/ProductApi.js
+// feature/ProductApi.js
+// feature/ProductApi.js
+allProduct: builder.query({
+  query: (params = {}) => {
+    const {
+      skip = 0,
+      limit = 9,
+      search = "",
+      category = "",
+      location = "",
+      minPrice = 0,
+      maxPrice = 1000,
+      sortBy = "createdAt",
+      sortOrder = "desc"
+    } = params;
+
+    let queryString = `/product?skip=${skip}&limit=${limit}`;
+    
+    if (search) queryString += `&search=${encodeURIComponent(search)}`;
+    if (category) queryString += `&category=${encodeURIComponent(category)}`;
+    if (location) queryString += `&location=${encodeURIComponent(location)}`;
+    queryString += `&minPrice=${minPrice}`;
+    queryString += `&maxPrice=${maxPrice}`;
+    queryString += `&sortBy=${sortBy}`;
+    queryString += `&sortOrder=${sortOrder}`;
+
+    console.log("RTK Query URL:", queryString);
+    return queryString;
+  },
+  providesTags: ["Products"],
+}),
+
   }),
 });
 
@@ -57,5 +92,6 @@ export const {
   useMyProductQuery,
   useDeleteProductMutation,
   useSingleProductQuery,
-  useEditProductMutation
+  useEditProductMutation,
+  useAllProductQuery
 } = ProductApi;
