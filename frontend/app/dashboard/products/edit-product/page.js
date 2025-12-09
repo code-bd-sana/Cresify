@@ -1,7 +1,14 @@
 "use client";
+import { useEditProductMutation } from "@/feature/ProductApi";
+import { useParams } from "next/navigation";
 import React from "react";
 
 export default function EditProductPage() {
+
+  const params = useParams();
+  const id = params?.id;
+  const [editProduct, {isLoading, loading}] = useEditProductMutation();
+
   return (
     <div className="min-h-screen px-2 py-6 text-[#111827]">
       {/* Breadcrumb */}
