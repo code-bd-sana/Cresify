@@ -22,13 +22,10 @@ export default function UserManagementPage() {
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
 
-  /** Regular search input */
   const [search, setSearch] = useState("");
-
-  /** Debounced search value */
   const [debouncedSearch, setDebouncedSearch] = useState("");
 
-  /** Custom debounce using useEffect */
+  /** Debounce search */
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(search);
@@ -41,7 +38,9 @@ export default function UserManagementPage() {
   /** Overview stats */
   const { data: overview } = useGetAdminOverviewQuery();
 
-  /** Determine role based on active tab */
+  const stats = overview?.data; // FIXED
+
+  /** Determine role based on tab */
   const role =
     activeTab === "All Users"
       ? ""
@@ -51,7 +50,7 @@ export default function UserManagementPage() {
       ? "seller"
       : "provider";
 
-  /** Fetch Users */
+  /** Fetch users */
   const { data, isLoading } = useGetAllUsersQuery({
     search: debouncedSearch,
     page,
@@ -86,20 +85,20 @@ export default function UserManagementPage() {
       {/* STAT CARDS */}
       <div className='mt-6 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4'>
         {[
-          { label: "Total Users", value: overview?.totalUsers, icon: FiUsers },
+          { label: "Total Users", value: stats?.totalUsers, icon: FiUsers },
           {
             label: "Total Sellers",
-            value: overview?.totalSellers,
+            value: stats?.totalSellers,
             icon: FiUserCheck,
           },
           {
             label: "Total Buyers",
-            value: overview?.totalBuyers,
+            value: stats?.totalBuyers,
             icon: FiShoppingBag,
           },
           {
             label: "Total Service Providers",
-            value: overview?.totalProviders,
+            value: stats?.totalServiceProviders,
             icon: TbUserStar,
           },
         ].map((card, i) => {
