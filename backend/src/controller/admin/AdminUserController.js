@@ -6,12 +6,13 @@ import User from "../../models/UserModel.js";
  * @query search - Search by email or name (optional)
  * @query skip - Number of records to skip for pagination (default: 0)
  * @query limit - Number of records to return (default: 10)
+ * @query role - Filter users by role (optional)
  * @route GET /admin/users
  * @access Admin
  */
 export const getAllUsers = async (req, res) => {
   try {
-    const { search = "", skip = 0, limit = 10 } = req.query;
+    const { search = "", skip = 0, limit = 10, role = "" } = req.query;
 
     // Build search query
     const query = {};
@@ -21,6 +22,10 @@ export const getAllUsers = async (req, res) => {
         { email: { $regex: search, $options: "i" } },
         { name: { $regex: search, $options: "i" } },
       ];
+    }
+
+    if (role) {
+      query.role = role;
     }
 
     // Get total count for pagination
@@ -93,8 +98,8 @@ export const adminOverview = async (req, res) => {
  */
 export const changeUserStatus = async (req, res) => {
   try {
-    const { id } = req.params;
-    const { status } = req.body;
+
+    const { status, id } = req.body;
 
     const allowedStatuses = ["active", "pending", "suspend"];
     if (!allowedStatuses.includes(status)) {
