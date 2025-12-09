@@ -3,11 +3,11 @@ import { Router } from "express";
 /**
  * Controller imports
  */
-import {
+import{
   adminOverview,
-  changeUserStatus,
   getAllUsers,
   searchUsers,
+  changeUserStatus,
 } from "../../controller/admin/AdminUserController.js";
 
 const router = Router();
