@@ -1,5 +1,4 @@
 import Product from "../../models/ProductModel.js";
-import User from "../../models/UserModel.js";
 
 /**
  * @function getAllProducts
@@ -138,7 +137,9 @@ export const adminProductOverview = async (req, res) => {
     const totalProducts = await Product.countDocuments();
     const activeProducts = await Product.countDocuments({ status: "active" });
     const pendingProducts = await Product.countDocuments({ status: "pending" });
-    const rejectedProducts = await Product.countDocuments({ status: "rejected" });
+    const rejectedProducts = await Product.countDocuments({
+      status: "rejected",
+    });
 
     return res.status(200).json({
       success: true,
@@ -157,10 +158,9 @@ export const adminProductOverview = async (req, res) => {
   }
 };
 
-
 /**
  * @function changeProductStatus
- * @description Updates the status of a product (active or rejected).
+ * @description Updates the status of a product (active or rejected) and returns it in paginated product format.
  *
  * @param {Object} req - The request object
  * @param {Object} res - The response object
@@ -195,10 +195,30 @@ export const changeProductStatus = async (req, res) => {
       });
     }
 
+    // Format the product as in pagination
+    const formattedProduct = {
+      _id: updatedProduct._id,
+      name: updatedProduct.name,
+      category: updatedProduct.category,
+      price: updatedProduct.price,
+      stock: updatedProduct.stock,
+      status: updatedProduct.status,
+      image: updatedProduct.image,
+      description: updatedProduct.description,
+      seller: updatedProduct.seller
+        ? {
+            _id: updatedProduct.seller._id,
+            name: updatedProduct.seller.name,
+            email: updatedProduct.seller.email,
+          }
+        : null,
+      createdAt: updatedProduct.createdAt,
+    };
+
     return res.status(200).json({
       success: true,
       message: "Product status updated successfully",
-      data: updatedProduct,
+      data: formattedProduct,
     });
   } catch (error) {
     return res.status(500).json({

@@ -1,6 +1,6 @@
 "use client";
 
-import { useGetAdminOverviewQuery } from "@/feature/admin/AdminOverview";
+import { useGetAdminOverviewQuery } from "@/feature/admin/AdminOverviewApi";
 import { FiBarChart2 } from "react-icons/fi";
 import { LuBriefcase, LuPackage, LuShoppingBag, LuUsers } from "react-icons/lu";
 
