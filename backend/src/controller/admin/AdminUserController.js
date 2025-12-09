@@ -3,6 +3,9 @@ import User from "../../models/UserModel.js";
 /**
  * @function getAllUsers
  * @description Retrieves all users from the database with search and pagination.
+ * 
+ * @param {Object} req - The request object
+ * @param {Object} res - The response object
  * @query search - Search by email or name (optional)
  * @query skip - Number of records to skip for pagination (default: 0)
  * @query limit - Number of records to return (default: 10)
@@ -60,6 +63,10 @@ export const getAllUsers = async (req, res) => {
  *              - Total Sellers
  *              - Total Buyers
  *              - Total Service Providers
+ * 
+ * @param {Object} req - The request object
+ * @param {Object} res - The response object
+ * @returns {Object} - The response object containing the overview metrics
  * @route GET /admin/users/overview
  * @access Admin
  */
@@ -91,6 +98,9 @@ export const adminOverview = async (req, res) => {
 /**
  * @function changeUserStatus
  * @description Updates the status of a user (active, pending, suspend).
+ * 
+ * @param {Object} req - The request object
+ * @param {Object} res - The response object
  * @params id
  * @body status
  * @route PUT /admin/users/status/:id
