@@ -86,7 +86,7 @@ const ArticlesPage = () => {
         {articles.map((article, index) => (
           <div className='relative' key={index}>
             {/* Edit Icon Overlay */}
-            <div className='absolute top-[11px] right-4 w-10 h-10 bg-white rounded-full flex items-center justify-center cursor-pointer transition-all shadow-lg z-50'>
+            <div className='absolute top-[11px] right-4 w-10 h-10 bg-white rounded-full flex items-center justify-center cursor-pointer transition-all shadow-lg z-1'>
               <PencilLine className='w-5 h-5 text-[#3881E1]' />
             </div>
             <div className='bg-white rounded-lg shadow-lg overflow-hidden p-5'>
