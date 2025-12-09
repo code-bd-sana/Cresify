@@ -1,29 +1,30 @@
 import mongoose, { Schema } from "mongoose";
 
-const blogShcema = new Schema({
-    img:{
-        type:String,
-        required:[true, "Blog image is Requried"]
+const blogShcema = new Schema(
+  {
+    img: {
+      type: String,
+      required: [true, "Blog image is Requried"],
     },
-    category:{
-        type:String,
-        required:[true, "Category is Required"]
+    imgDeleteHash: {
+      type: String,
+      required: [true, "Blog image delete hash is Requried"],
     },
-
-    description:{
-        type:String,
-        required:[true, "Description Is Required"]
-
+    category: {
+      type: String,
+      required: [true, "Category is Required"],
     },
-    title:{
-        type:String,
-        required:[true, "Title Is Required"]
-    }
-
-    
-},{timestamps:true} );
-
-
+    description: {
+      type: String,
+      required: [true, "Description Is Required"],
+    },
+    title: {
+      type: String,
+      required: [true, "Title Is Required"],
+    },
+  },
+  { timestamps: true }
+);
 
 const Blog = mongoose.model("blog", blogShcema);
 
