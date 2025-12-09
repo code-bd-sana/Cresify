@@ -8,6 +8,7 @@ import adminOverviewRoute from "./admin/AdminOverviewRoute.js";
 import adminProductRoute from "./admin/AdminProductRoute.js";
 import order from "./orderRoute.js";
 import review from "./reviewRoute.js";
+import   cart from './customer/CartRoute.js'
 
 const router = Router();
 
@@ -17,6 +18,9 @@ router.use("/review", review);
 router.use("/booking", booking);
 router.use("/order", order);
 router.use("/admin/blog", adminBlogRoute);
+router.use("/blog", blog);
+router.use("/cart", cart)
+
 router.use("/admin/users", adminUserRoute);
 router.use("/admin/overview", adminOverviewRoute);
 router.use("/admin/products", adminProductRoute);

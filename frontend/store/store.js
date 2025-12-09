@@ -4,6 +4,7 @@ import { AdminBlogApi } from "@/feature/admin/AdminBlogApi";
 import { AdminDashboardApi } from "@/feature/admin/AdminOverviewApi";
 import { AdminProductApi } from "@/feature/admin/AdminProductApi";
 import { AdminUserApi } from "@/feature/admin/AdminUserApi";
+import { CartApi } from "@/feature/customer/CartApi";
 import { configureStore } from "@reduxjs/toolkit";
 
 export const store = configureStore({
@@ -12,8 +13,7 @@ export const store = configureStore({
     [ProductApi.reducerPath]: ProductApi.reducer,
     [AdminBlogApi.reducerPath]: AdminBlogApi.reducer,
     [AdminUserApi.reducerPath]: AdminUserApi.reducer,
-    [AdminProductApi.reducerPath]: AdminProductApi.reducer,
-    [AdminDashboardApi.reducerPath]: AdminDashboardApi.reducer,
+    [CartApi.reducerPath] : CartApi.reducer
   },
 
   middleware: (getDefaultMiddleware) =>
@@ -22,7 +22,6 @@ export const store = configureStore({
       ProductApi.middleware,
       AdminBlogApi.middleware,
       AdminUserApi.middleware,
-      AdminProductApi.middleware,
-      AdminDashboardApi.middleware,
+      CartApi.middleware
     ]),
 });
