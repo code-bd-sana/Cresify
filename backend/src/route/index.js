@@ -14,6 +14,7 @@ router.use("/review", review);
 router.use("/booking", booking);
 router.use("/order", order);
 router.use("/blog", blog);
-router.use("/admin", adminUserRoute);
+router.use("/admin/users", adminUserRoute);
 
 export default router;
+  
