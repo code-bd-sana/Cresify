@@ -207,7 +207,9 @@ const ArticlesPage = () => {
                 {article.category}
               </p>
               <div>
-                <h3 className='text-lg font-bold text-gray-900'>
+                <h3
+                  className='text-lg font-bold text-gray-900 single-line-ellipsis'
+                  title={article.title}>
                   {article.title}
                 </h3>
                 <p className='text-sm text-[#000000] mt-2 two-line-ellipsis'>
