@@ -11,13 +11,11 @@ const userSchema = new Schema(
       type: String,
       required: [true, "Password is Required"],
     },
-
     role: {
       type: String,
       required: [true, "Role is Required"],
       enum: ["buyer", "provider", "seller", "admin"],
     },
-
     name: {
       type: String,
     },
@@ -27,7 +25,7 @@ const userSchema = new Schema(
     category: String,
     nationalId: String,
     registrationDate: String,
-    image:String,
+    image: String,
 
     phoneNumber: {
       type: String,
@@ -35,8 +33,8 @@ const userSchema = new Schema(
     status: {
       type: String,
       enum: ["pending", "active", "suspend"],
+      default: "active",
     },
-
     shopName: String,
     category: String,
     serviceName: String,
@@ -48,7 +46,7 @@ const userSchema = new Schema(
     serviceDescription: String,
     website: String,
     shopDescription: String,
-    shopLogo:String,
+    shopLogo: String,
 
     workingHours: {
       start: { type: String, default: "09:00" },

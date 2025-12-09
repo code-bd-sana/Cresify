@@ -1,109 +1,91 @@
 "use client";
 
-import { useState } from "react";
+import Pagination from "@/components/Pagination";
+import {
+  useChangeUserStatusMutation,
+  useGetAdminOverviewQuery,
+  useGetAllUsersQuery,
+} from "@/feature/admin/AdminUserApi";
 import Image from "next/image";
-import { FiUsers, FiShoppingBag, FiUserCheck, FiSearch } from "react-icons/fi";
+import { useEffect, useState } from "react";
+import { FiSearch, FiShoppingBag, FiUserCheck, FiUsers } from "react-icons/fi";
 import { TbUserStar } from "react-icons/tb";
-
-const users = [
-  {
-    id: 1,
-    name: "Cody Fisher",
-    email: "debbie.baker@example.com",
-    phone: "(629) 555-0129",
-    type: "Buyer",
-    status: "Active",
-    registered: "2025-05-01",
-    orders: 16,
-    total: "$1,250.00",
-    avatar: "/user2.png",
-  },
-  {
-    id: 2,
-    name: "Wade Warren",
-    email: "kenzi.lawson@example.com",
-    phone: "(208) 555-0112",
-    type: "Seller",
-    status: "Active",
-    registered: "2025-05-01",
-    orders: 69,
-    total: "$850.00",
-    avatar: "/user2.png",
-  },
-  {
-    id: 3,
-    name: "Marvin McKinney",
-    email: "bill.sanders@example.com",
-    phone: "(907) 555-0101",
-    type: "Service Provider",
-    status: "Suspended",
-    registered: "2025-05-01",
-    orders: 36,
-    total: "$5,250.00",
-    avatar: "/user2.png",
-  },
-  {
-    id: 4,
-    name: "Guy Hawkins",
-    email: "bill.sanders@example.com",
-    phone: "(252) 555-0126",
-    type: "Seller",
-    status: "Active",
-    registered: "2025-05-01",
-    orders: 53,
-    total: "$250.00",
-    avatar: "/user2.png",
-  },
-  {
-    id: 5,
-    name: "Darlene Robertson",
-    email: "Wade Warren",
-    phone: "(405) 555-0120",
-    type: "Seller",
-    status: "Suspended",
-    registered: "2025-05-01",
-    orders: 96,
-    total: "$750.00",
-    avatar: "/user2.png",
-  },
-  {
-    id: 6,
-    name: "Guy Hawkins",
-    email: "kenzi.lawson@example.com",
-    phone: "(684) 555-0102",
-    type: "Service Provider",
-    status: "Active",
-    registered: "2025-05-01",
-    orders: 25,
-    total: "$870.00",
-    avatar: "/user2.png",
-  },
-];
+import Swal from "sweetalert2";
 
 const statusColors = {
-  Active: "bg-[#E6F8EF] text-[#32A35A]",
-  Suspended: "bg-[#FEE2E2] text-[#D32F2F]",
+  active: "bg-[#E6F8EF] text-[#32A35A]",
+  suspend: "bg-[#FEE2E2] text-[#D32F2F]",
+  pending: "bg-[#FFF8E1] text-[#D97706]",
 };
-
-const statCards = [
-  { id: 1, label: "Total Users", value: "45,500", icon: FiUsers },
-  { id: 2, label: "Total Sellers", value: "45,500", icon: FiUserCheck },
-  { id: 3, label: "Total Buyers", value: "45,500", icon: FiShoppingBag },
-  {
-    id: 4,
-    label: "Total Service Providers",
-    value: "45,500",
-    icon: TbUserStar,
-  },
-];
 
 export default function UserManagementPage() {
   const [activeTab, setActiveTab] = useState("All Users");
+  const [page, setPage] = useState(1);
+  const [limit] = useState(10);
 
-  const filteredUsers = users.filter((u) => {
-    if (activeTab === "All Users") return true;
-    return u.type === activeTab;
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+
+  /** Debounce search input */
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+      setPage(1);
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  /** Fetch overview stats */
+  const { data: overview } = useGetAdminOverviewQuery();
+  const stats = overview?.data;
+
+  /** Determine role based on active tab */
+  const role =
+    activeTab === "All Users"
+      ? ""
+      : activeTab === "Buyer"
+      ? "buyer"
+      : activeTab === "Seller"
+      ? "seller"
+      : "provider";
+
+  /** Fetch users with search, pagination, and role filter */
+  const { data, isLoading, refetch } = useGetAllUsersQuery({
+    search: debouncedSearch,
+    page,
+    limit,
+    role,
   });
+
+  const [changeStatus] = useChangeUserStatusMutation();
+
+  const users = data?.data || [];
+  const total = data?.total || 0;
+
+  /** Handle status change with Swal feedback */
+  const handleStatusChange = async (id, status) => {
+    try {
+      const res = await changeStatus({ id, status }).unwrap();
+
+      if (res.success) {
+        Swal.fire({
+          icon: "success",
+          title: "Success",
+          text: res.message || "User status updated successfully",
+          timer: 1500,
+          showConfirmButton: false,
+        });
+        refetch(); // refresh the users list
+      }
+    } catch (error) {
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: error?.data?.message || "Failed to update status",
+      });
+    }
+  };
 
   return (
     <div className="min-h-screen w-full px-2 pt-6">
@@ -126,26 +108,25 @@ export default function UserManagementPage() {
 
       {/* STAT CARDS */}
       <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-        {statCards.map((card) => {
+        {[
+          { label: "Total Users", value: stats?.totalUsers, icon: FiUsers },
+          { label: "Total Sellers", value: stats?.totalSellers, icon: FiUserCheck },
+          { label: "Total Buyers", value: stats?.totalBuyers, icon: FiShoppingBag },
+          { label: "Total Service Providers", value: stats?.totalServiceProviders, icon: TbUserStar },
+        ].map((card, i) => {
           const Icon = card.icon;
           return (
             <div
-              key={card.id}
+              key={i}
               className="bg-white rounded-2xl shadow-sm border border-[#F0ECFF] px-6 py-5 flex items-center justify-between"
             >
               <div>
-                {/* Title */}
-                <p className="text-[15px] font-medium text-[#2E2E2E]">
-                  {card.label}
-                </p>
-
-                {/* Value */}
+                <p className="text-[15px] font-medium text-[#2E2E2E]">{card.label}</p>
                 <p className="mt-1 text-[28px] font-semibold text-[#F88D25] leading-none">
-                  {card.value}
+                  {card.value ?? 0}
                 </p>
               </div>
 
-              {/* Right Icon */}
               <div className="w-12 h-12 rounded-xl bg-[#F2E9FF] flex items-center justify-center">
                 <Icon className="text-[26px] text-[#8736C5]" />
               </div>
@@ -156,27 +137,25 @@ export default function UserManagementPage() {
 
       {/* TABS + SEARCH */}
       <div className="mt-6 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-        {/* TABS */}
         <div className="flex flex-wrap gap-3">
           {["All Users", "Buyer", "Seller", "Service Provider"].map((tab) => (
             <button
               key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`
-                px-4 py-2 rounded-full text-sm font-medium transition
-                ${
-                  activeTab === tab
-                    ? "text-white bg-gradient-to-r from-[#8736C5] via-[#9C47C6] to-[#F88D25] shadow"
-                    : "text-gray-700 bg-white border border-[#E4E2F5]"
-                }
-              `}
+              onClick={() => {
+                setActiveTab(tab);
+                setPage(1);
+              }}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition ${
+                activeTab === tab
+                  ? "text-white bg-gradient-to-r from-[#8736C5] via-[#9C47C6] to-[#F88D25] shadow"
+                  : "text-gray-700 bg-white border border-[#E4E2F5]"
+              }`}
             >
               {tab}
             </button>
           ))}
         </div>
 
-        {/* SEARCH BAR */}
         <div className="w-full lg:w-[320px]">
           <div className="relative">
             <span className="absolute left-3 top-2.5 text-[#F88D25]">
@@ -186,6 +165,8 @@ export default function UserManagementPage() {
               type="text"
               placeholder="Search by name or email"
               className="w-full pl-9 pr-3 py-2.5 bg-white rounded-full border border-[#E4E2F5] text-sm focus:outline-none focus:ring-1 focus:ring-[#F88D25]"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
             />
           </div>
         </div>
@@ -193,7 +174,7 @@ export default function UserManagementPage() {
 
       {/* USERS TABLE */}
       <div className="mt-6 mb-10 bg-white rounded-xl shadow-sm border border-[#F0ECFF] p-4 md:p-5">
-        <div className="overflow-x-auto">
+        <div className="overflow-x-scroll">
           <table className="min-w-full text-left text-sm">
             <thead>
               <tr className="text-[12px] text-[#A3A3B5] border-b border-gray-200 bg-[#F9F6FF]">
@@ -202,79 +183,95 @@ export default function UserManagementPage() {
                 <th className="py-3 px-3">TYPE</th>
                 <th className="py-3 px-3">STATUS</th>
                 <th className="py-3 px-3">REGISTERED</th>
-                <th className="py-3 px-3">ORDERS</th>
-                <th className="py-3 px-3">TOTAL</th>
-                <th className="py-3 px-3 text-right">ACTIONS</th>
+                <th className="py-3 px-3 text-right">ACTION</th>
               </tr>
             </thead>
 
             <tbody>
-              {filteredUsers.map((user, idx) => (
-                <tr
-                  key={user.id}
-                  className={`text-[13px] ${
-                    idx !== filteredUsers.length - 1 ? "border-b border-gray-200" : ""
-                  }`}
-                >
-                  {/* USER COLUMN */}
-                  <td className="py-3 px-3">
-                    <div className="flex items-center gap-3">
-                      <Image
-                        src={user.avatar}
-                        width={40}
-                        height={40}
-                        alt="avatar"
-                        className="rounded-full object-cover"
-                      />
-                      <p className="font-medium text-gray-800">{user.name}</p>
-                    </div>
-                  </td>
-
-                  {/* CONTACT */}
-                  <td className="py-3 px-3 text-gray-700">
-                    <div className="flex flex-col">
-                      <span>{user.email}</span>
-                      <span className="text-xs text-gray-500">
-                        {user.phone}
-                      </span>
-                    </div>
-                  </td>
-
-                  {/* TYPE */}
-                  <td className="py-3 px-3 text-gray-700">{user.type}</td>
-
-                  {/* STATUS */}
-                  <td className="py-3 px-3">
-                    <span
-                      className={`px-3 py-1 rounded-full text-xs font-medium ${
-                        statusColors[user.status]
-                      }`}
-                    >
-                      {user.status}
-                    </span>
-                  </td>
-
-                  {/* REGISTERED */}
-                  <td className="py-3 px-3 text-gray-700">{user.registered}</td>
-
-                  {/* ORDERS */}
-                  <td className="py-3 px-3 text-gray-700">{user.orders}</td>
-
-                  {/* TOTAL */}
-                  <td className="py-3 px-3 text-[#F88D25] font-medium">
-                    {user.total}
-                  </td>
-
-                  {/* ACTION BUTTON */}
-                  <td className="py-3 px-3 text-right">
-                    <button className="text-xs border rounded-lg px-3 py-1 text-[#9C6BFF] border-[#E2D4FF] bg-[#F9F6FF]">
-                      View
-                    </button>
+              {isLoading ? (
+                <tr>
+                  <td colSpan={6} className="py-6 text-center text-gray-500">
+                    Loading...
                   </td>
                 </tr>
-              ))}
+              ) : users.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="py-6 text-center text-gray-500">
+                    No users found.
+                  </td>
+                </tr>
+              ) : (
+                users.map((user, idx) => (
+                  <tr
+                    key={user._id}
+                    className={`text-[13px] ${
+                      idx !== users.length - 1 ? "border-b border-gray-200" : ""
+                    }`}
+                  >
+                    <td className="py-3 px-3">
+                      <div className="flex items-center gap-3">
+                        <Image
+                          src={user.shopLogo || "/user2.png"}
+                          width={40}
+                          height={40}
+                          alt="avatar"
+                        />
+                        <p className="font-medium text-gray-800">{user.name}</p>
+                      </div>
+                    </td>
+
+                    <td className="py-3 px-3 text-gray-700">
+                      <div className="flex flex-col">
+                        <span>{user.email}</span>
+                        <span className="text-xs text-gray-500">
+                          {user.phoneNumber || "-"}
+                        </span>
+                      </div>
+                    </td>
+
+                    <td className="py-3 px-3">{user.role}</td>
+
+                    <td className="py-3 px-3">
+                      <select
+                        value={user.status}
+                        onChange={(e) =>
+                          handleStatusChange(user._id, e.target.value)
+                        }
+                        className={`px-3 py-1 rounded-full text-xs font-medium cursor-pointer border ${
+                          statusColors[user.status]
+                        }`}
+                      >
+                        <option value="active">Active</option>
+                        <option value="pending">Pending</option>
+                        <option value="suspend">Suspended</option>
+                      </select>
+                    </td>
+
+                    <td className="py-3 px-3">
+                      {user.createdAt
+                        ? new Date(user.createdAt).toLocaleDateString()
+                        : "-"}
+                    </td>
+
+                    <td className="py-3 px-3 text-right">
+                      <button className="text-xs border rounded-lg px-3 py-1 text-[#9C6BFF] border-[#E2D4FF] bg-[#F9F6FF]">
+                        View
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
+
+          {/* PAGINATION */}
+          <Pagination
+            page={page - 1}
+            setPage={(p) => setPage(p + 1)}
+            limit={limit}
+            total={total}
+            currentCount={users.length}
+          />
         </div>
       </div>
     </div>

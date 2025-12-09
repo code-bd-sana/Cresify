@@ -44,10 +44,19 @@ try {
 
     const response = await login(data);
 
-    console.log(response?.data?.data, "kire response");
+    console.log(response?.data, "kire response");
 
 
-      const res = await signIn("credentials", {
+   
+
+
+
+    if(response?.error){
+      toast.error(response?.error?.data?.message)
+      return;
+    }
+
+       const res = await signIn("credentials", {
         redirect: false,
         email: response?.data?.data?.email,
         role: response?.data?.data?.role,
@@ -56,12 +65,6 @@ try {
 
 
       window.location.href = '/'
-
-
-
-    if(response?.error){
-      toast.error(response?.error?.data?.message)
-    }
   
 } catch (error) {
 

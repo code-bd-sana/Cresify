@@ -15,7 +15,8 @@ export default function AddProduct() {
     price: "",
     stockQuantity: "",
     description: "",
-    status: "active", // Default status
+    location: "", // নতুন লকেশন ফিল্ড
+    status: "active",
     image: null,
     imagePreview: null,
   });
@@ -23,7 +24,7 @@ export default function AddProduct() {
   const [isUploading, setIsUploading] = useState(false);
   const { data } = useSession();
   const sellerId = data?.user?.id;
-  const [createProduct, {isloading, loading}] = useCreateProductMutation();
+  const [createProduct, { isloading, loading }] = useCreateProductMutation();
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -43,13 +44,11 @@ export default function AddProduct() {
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      // Validate file size (10MB max)
       if (file.size > 10 * 1024 * 1024) {
         alert("File size should be less than 10MB");
         return;
       }
 
-      // Validate file type
       if (!file.type.match(/image\/(png|jpg|jpeg)/)) {
         alert("Please upload only PNG, JPG, or JPEG images");
         return;
@@ -91,7 +90,6 @@ export default function AddProduct() {
   const publishHandler = async (e) => {
     e.preventDefault();
 
-    // Validate required fields
     if (!formData.productName.trim()) {
       toast.error("Please enter product name");
       return;
@@ -103,7 +101,7 @@ export default function AddProduct() {
     }
 
     if (!formData.price || parseFloat(formData.price) <= 0) {
-     toast.error("Please enter a valid price");
+      toast.error("Please enter a valid price");
       return;
     }
 
@@ -114,6 +112,11 @@ export default function AddProduct() {
 
     if (!formData.description.trim()) {
       toast.error("Please enter description");
+      return;
+    }
+
+    if (!formData.location.trim()) { // নতুন লকেশন ভ্যালিডেশন
+      toast.error("Please enter location");
       return;
     }
 
@@ -130,43 +133,32 @@ export default function AddProduct() {
     setIsUploading(true);
 
     try {
-      // Step 1: Upload image to ImgBB
       const imageUrl = await uploadToImgBB(formData.image);
 
-      // Step 2: Prepare final data with image URL
       const finalData = {
         name: formData.productName,
         seller: sellerId,
         category: formData.category,
         price: parseFloat(formData.price),
         stock: parseInt(formData.stockQuantity),
-        status: formData.status, // Status field added
+        location: formData.location, // নতুন লকেশন ফিল্ড যোগ করা হয়েছে
+        status: formData.status,
         description: formData.description,
         image: imageUrl,
         createdAt: new Date().toISOString(),
       };
 
-   
-
- 
-
-
-
       await createProduct(finalData);
-      toast.success("Product posted successfully")
+      toast.success("Product posted successfully");
 
-
-
-    
-
-      // Step 5: Reset form
       setFormData({
         productName: "",
         category: "",
         price: "",
         stockQuantity: "",
         description: "",
-        status: "active", // Reset to default
+        location: "", // রিসেট করার সময়ও যুক্ত হয়েছে
+        status: "active",
         image: null,
         imagePreview: null,
       });
@@ -182,7 +174,6 @@ export default function AddProduct() {
     e.preventDefault();
     const file = e.dataTransfer.files[0];
     if (file && file.type.startsWith("image/")) {
-      // Validate file size
       if (file.size > 10 * 1024 * 1024) {
         alert("File size should be less than 10MB");
         return;
@@ -210,7 +201,7 @@ export default function AddProduct() {
 
   return (
     <div className="min-h-screen text-[#111827]">
-      <Toaster/>
+      <Toaster />
       <div className="w-full px-2 pt-2">
         {/* Breadcrumb */}
         <div className="text-xs sm:text-sm text-[#9CA3AF] mb-4 flex items-center gap-1">
@@ -259,15 +250,23 @@ export default function AddProduct() {
                   <label className="block text-xs font-medium text-[#4B5563]">
                     Category<span className="text-[#F97316]">*</span>
                   </label>
-                  <input
-                    type="text"
+                  <select
                     name="category"
                     value={formData.category}
                     onChange={handleInputChange}
-                    placeholder="e.g. Electronics"
-                    className="w-full rounded-lg border border-[#E4E4EE] bg-[#FDFDFE] px-3.5 py-2.5 text-xs sm:text-sm placeholder:text-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#FF7A00]/40 focus:border-[#FF7A00] transition"
+                    className="w-full rounded-lg border border-[#E4E4EE] bg-[#FDFDFE] px-3.5 py-2.5 text-xs sm:text-sm text-[#4B5563] placeholder:text-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#FF7A00]/40 focus:border-[#FF7A00] transition"
                     required
-                  />
+                  >
+                    <option value="" disabled>Select Category</option>
+                    <option value="fashion">Fashion</option>
+                    <option value="foodDrinks">Food and Drinks</option>
+                    <option value="technology">Technology</option>
+                    <option value="artsCrafts">Arts and Crafts</option>
+                    <option value="beauty">Beauty</option>
+                    <option value="homeDecoration">Home and Decoration</option>
+                    <option value="sports">Sports</option>
+                    <option value="books">Books</option>
+                  </select>
                 </div>
 
                 <div className="space-y-1.5">
@@ -293,7 +292,7 @@ export default function AddProduct() {
                 </div>
               </div>
 
-              {/* Stock Quantity & Status */}
+              {/* Stock Quantity & Location */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
                 <div className="space-y-1.5">
                   <label className="block text-xs font-medium text-[#4B5563]">
@@ -311,37 +310,54 @@ export default function AddProduct() {
                   />
                 </div>
 
+                {/* নতুন লকেশন ফিল্ড */}
                 <div className="space-y-1.5">
                   <label className="block text-xs font-medium text-[#4B5563]">
-                    Status<span className="text-[#F97316]">*</span>
+                    Location<span className="text-[#F97316]">*</span>
                   </label>
-                  <div className="relative">
-                    <select
-                      name="status"
-                      value={formData.status}
-                      onChange={handleStatusChange}
-                      className="w-full rounded-lg border border-[#E4E4EE] bg-[#FDFDFE] px-3.5 py-2.5 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#FF7A00]/40 focus:border-[#FF7A00] transition appearance-none"
+                  <input
+                    type="text"
+                    name="location"
+                    value={formData.location}
+                    onChange={handleInputChange}
+                    placeholder="Enter product location (e.g., Dhaka, Bangladesh)"
+                    className="w-full rounded-lg border border-[#E4E4EE] bg-[#FDFDFE] px-3.5 py-2.5 text-xs sm:text-sm placeholder:text-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#FF7A00]/40 focus:border-[#FF7A00] transition"
+                    required
+                  />
+                </div>
+              </div>
+
+              {/* Status */}
+              <div className="space-y-1.5">
+                <label className="block text-xs font-medium text-[#4B5563]">
+                  Status<span className="text-[#F97316]">*</span>
+                </label>
+                <div className="relative">
+                  <select
+                    name="status"
+                    value={formData.status}
+                    onChange={handleStatusChange}
+                    className="w-full rounded-lg border border-[#E4E4EE] bg-[#FDFDFE] px-3.5 py-2.5 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#FF7A00]/40 focus:border-[#FF7A00] transition appearance-none"
+                  >
+                    <option value="active">Active</option>
+                    <option value="out-of-stock">Out of Stock</option>
+                    <option value="unpublish">Unpublish</option>
+                  </select>
+                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+                    <svg
+                      className="h-4 w-4 text-gray-400"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      xmlns="http://www.w3.org/2000/svg"
                     >
-                      <option value="active">Active</option>
-                      <option value="out-of-stock">Out of Stock</option>
-                      <option value="unpublish">Unpublish</option>
-                    </select>
-                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-                      <svg
-                        className="h-4 w-4 text-gray-400"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M19 9l-7 7-7-7"
-                        ></path>
-                      </svg>
-                    </div>
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M19 9l-7 7-7-7"
+                      ></path>
+                    </svg>
                   </div>
                 </div>
               </div>
