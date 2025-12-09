@@ -3,14 +3,24 @@ import { Router } from "express";
 /**
  * Controller imports
  */
-import{
+import {
   adminOverview,
-  getAllUsers,
-  searchUsers,
   changeUserStatus,
+  getAllUsers,
 } from "../../controller/admin/AdminUserController.js";
 
 const router = Router();
+
+/**
+ * @route   GET /admin/users
+ * @desc    Get all users
+ * @query search - Search by email or name (optional)
+ * @query skip - Number of records to skip for pagination (default: 0)
+ * @query limit - Number of records to return (default: 10)
+ * @access  Admin
+ * @controller getAllUsers
+ */
+router.get("/", getAllUsers);
 
 /**
  * @route   GET /admin/users/overview
@@ -19,23 +29,6 @@ const router = Router();
  * @controller adminOverview
  */
 router.get("/overview", adminOverview);
-
-/**
- * @route   GET /admin/users
- * @desc    Get all users
- * @access  Admin
- * @controller getAllUsers
- */
-router.get("/all", getAllUsers);
-
-/**
- * @route   GET /admin/users/search
- * @desc    Search users by email or name
- * @query   email, name
- * @access  Admin
- * @controller searchUsers
- */
-router.get("/search", searchUsers);
 
 /**
  * @route   PUT /admin/users/status/:id

@@ -1,6 +1,7 @@
 import { BlogApi } from "@/feature/BlogApi";
 import { ProductApi } from "@/feature/ProductApi";
 import { UserApi } from "@/feature/UserApi";
+import { AdminUserApi } from "@/feature/admin/AdminUserApi";
 import { configureStore } from "@reduxjs/toolkit";
 
 export const store = configureStore({
@@ -8,6 +9,7 @@ export const store = configureStore({
     [UserApi.reducerPath]: UserApi.reducer,
     [ProductApi.reducerPath]: ProductApi.reducer,
     [BlogApi.reducerPath]: BlogApi.reducer,
+    [AdminUserApi.reducerPath]: AdminUserApi.reducer,
   },
 
   middleware: (getDefaultMiddleware) =>
@@ -15,5 +17,6 @@ export const store = configureStore({
       UserApi.middleware,
       ProductApi.middleware,
       BlogApi.middleware,
+      AdminUserApi.middleware,
     ]),
 });
