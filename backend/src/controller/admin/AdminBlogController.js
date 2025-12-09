@@ -1,23 +1,46 @@
 import Blog from "../../models/BlogModel.js";
+import {
+  extractBase64FromDataURL,
+  uploadImageToImgBB,
+} from "../../utils/imageUpload.js";
 
 /**
  * @function saveBlog
  * @description Creates a new blog/article in the database.
- *              Accepts blog data including title, category, description, and image.
+ *              Uploads image to ImgBB and stores the URL and delete hash.
  *
  * @param {Object} req - The request object
  * @param {Object} res - The response object
  * @body {String} title - Blog title (required)
  * @body {String} category - Blog category (required)
  * @body {String} description - Blog content/description (required)
- * @body {String} img - Blog image URL (required)
- * @route POST /api/blog
- * @access Public/Admin
+ * @body {String} img - Base64 encoded image or image URL (required)
+ * @route POST /api/admin/blog/save
+ * @access Admin
  */
 export const saveBlog = async (req, res) => {
   try {
     const data = req.body;
-    const newBlog = await Blog(data);
+
+    // Upload image to ImgBB if it's a base64 string
+    let imageUrl = data.img;
+    let imageDeleteHash = "";
+
+    if (data.img && data.img.startsWith("data:")) {
+      const base64Image = extractBase64FromDataURL(data.img);
+      const uploadResult = await uploadImageToImgBB(base64Image);
+      imageUrl = uploadResult.url;
+      imageDeleteHash = uploadResult.deleteHash;
+    }
+
+    const newBlog = new Blog({
+      title: data.title,
+      category: data.category,
+      description: data.description,
+      img: imageUrl,
+      imgDeleteHash: imageDeleteHash,
+    });
+
     const saved = await newBlog.save();
 
     res.status(200).json({
@@ -37,16 +60,33 @@ export const saveBlog = async (req, res) => {
 /**
  * @function deleteBlog
  * @description Deletes a blog/article from the database by ID.
+ *              Also deletes the associated image from ImgBB.
  *
  * @param {Object} req - The request object
  * @param {Object} res - The response object
  * @params {String} id - Blog ID to delete
- * @route DELETE /api/blog/:id
+ * @route DELETE /api/admin/blog/delete/:id
  * @access Admin
  */
 export const deleteBlog = async (req, res) => {
   try {
     const id = req.params.id;
+
+    // Find blog to get image delete hash
+    const blog = await Blog.findById(id);
+    if (!blog) {
+      return res.status(404).json({
+        success: false,
+        message: "Blog not found",
+      });
+    }
+
+    // Delete image from ImgBB if delete hash exists
+    if (blog.imgDeleteHash) {
+      await deleteImageFromImgBB(blog.imgDeleteHash);
+    }
+
+    // Delete blog from database
     const deleted = await Blog.deleteOne({ _id: id });
 
     if (deleted.deletedCount === 0) {
@@ -73,7 +113,7 @@ export const deleteBlog = async (req, res) => {
 /**
  * @function editBlog
  * @description Updates an existing blog/article in the database.
- *              Accepts updated blog data and blog ID.
+ *              If image is updated, uploads new image to ImgBB and deletes old one.
  *
  * @param {Object} req - The request object
  * @param {Object} res - The response object
@@ -81,8 +121,8 @@ export const deleteBlog = async (req, res) => {
  * @body {String} title - Updated blog title
  * @body {String} category - Updated blog category
  * @body {String} description - Updated blog content/description
- * @body {String} img - Updated blog image URL
- * @route PUT /api/blog
+ * @body {String} img - Updated blog image (base64 or URL)
+ * @route PUT /api/admin/blog/edit
  * @access Admin
  */
 export const editBlog = async (req, res) => {
@@ -90,11 +130,38 @@ export const editBlog = async (req, res) => {
     const data = req.body;
     const id = data.id;
 
+    // Find existing blog to get old image delete hash
+    const existingBlog = await Blog.findById(id);
+    if (!existingBlog) {
+      return res.status(404).json({
+        success: false,
+        message: "Blog not found",
+      });
+    }
+
+    let imageUrl = data.img;
+    let imageDeleteHash = existingBlog.imgDeleteHash;
+
+    // Check if image is being updated (new base64 image)
+    if (data.img && data.img.startsWith("data:")) {
+      // Upload new image to ImgBB
+      const base64Image = extractBase64FromDataURL(data.img);
+      const uploadResult = await uploadImageToImgBB(base64Image);
+      imageUrl = uploadResult.url;
+      imageDeleteHash = uploadResult.deleteHash;
+
+      // Delete old image from ImgBB (if exists)
+      if (existingBlog.imgDeleteHash) {
+        await deleteImageFromImgBB(existingBlog.imgDeleteHash);
+      }
+    }
+
     const updated = await Blog.updateOne(
       { _id: id },
       {
         $set: {
-          img: data?.img,
+          img: imageUrl,
+          imgDeleteHash: imageDeleteHash,
           title: data?.title,
           category: data?.category,
           description: data?.description,
