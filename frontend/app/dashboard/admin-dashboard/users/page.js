@@ -38,7 +38,7 @@ export default function UserManagementPage() {
   /** Overview stats */
   const { data: overview } = useGetAdminOverviewQuery();
 
-  const stats = overview?.data; // FIXED
+  const stats = overview?.data;
 
   /** Determine role based on tab */
   const role =
