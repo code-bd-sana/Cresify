@@ -4,6 +4,9 @@ import { useState } from "react";
 import { MapPin, Star, Heart, Store, MessageCircle } from "lucide-react";
 import { useSingleProductQuery } from "@/feature/ProductApi";
 import Image from "next/image";
+import { useSession } from "next-auth/react";
+import { useAddToCartMutation } from "@/feature/customer/CartApi";
+import toast, { Toaster } from "react-hot-toast";
 
 export default function ProductDetails({ id }) {
   const images = [
@@ -15,7 +18,36 @@ export default function ProductDetails({ id }) {
 
   const { data, isLoading } = useSingleProductQuery(id);
   const [selectedImg, setSelectedImg] = useState(images[0]);
+  const [addToCart, { isLoading: addToCartLoading }] = useAddToCartMutation();
   const [qty, setQty] = useState(1);
+  const { data: user } = useSession();
+  const userId = user?.user?.id;
+
+  const cartHandler = async () => {
+    try {
+      console.log("Product ID:", id, "User ID:", userId, "Quantity:", qty);
+      
+      const data = {
+        product: id,
+        user: userId,
+        count: qty, // এখানে quantity যোগ করুন
+      };
+      
+      const saved = await addToCart(data);
+      console.log(saved, "API Response");
+
+      if (saved.error) {
+        toast.error(saved?.error?.data?.message);
+        return;
+      }
+
+      toast.success(`Added ${qty} item(s) to your cart`);
+      
+    } catch (error) {
+      console.log(error, "Error in cart handler");
+      toast.error(error?.data?.message || "Something went wrong");
+    }
+  };
 
   if (isLoading) {
     return (
@@ -49,12 +81,13 @@ export default function ProductDetails({ id }) {
     );
   }
 
-  // Calculate discount if original price exists (for demo, using 709 as original)
+  // Calculate discount if original price exists
   const originalPrice = 709;
   const discountPercentage = Math.round(((originalPrice - p.price) / originalPrice) * 100);
 
   return (
     <section className="w-full bg-[#F7F7FA] py-10 px-6">
+      <Toaster />
       <div className="max-w-[1300px] mx-auto">
         {/* PAGE TITLE */}
         <h2 className="text-[20px] font-semibold text-[#1B1B1B] mb-6">
@@ -64,7 +97,7 @@ export default function ProductDetails({ id }) {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           {/* LEFT SIDE */}
           <div>
-            {/* MAIN IMAGE (smaller now) */}
+            {/* MAIN IMAGE */}
             <div className="w-full bg-white rounded-[14px] overflow-hidden shadow-sm">
               <Image
                 src={p.image || "/product/bag.jpg"}
@@ -74,28 +107,9 @@ export default function ProductDetails({ id }) {
                 height={400}
               />
             </div>
-
-            {/* THUMBNAILS */}
-            {/* <div className="flex gap-3 mt-5">
-              {[p.image, ...images.slice(0, 3)].map((img, i) => (
-                <button
-                  key={i}
-                  onClick={() => setSelectedImg(img)}
-                  className={`w-[58px] h-[58px] rounded-[10px] overflow-hidden shadow-sm border ${
-                    selectedImg === img ? "border-[#A46CFF]" : "border-transparent"
-                  }`}
-                >
-                  <img
-                    src={img}
-                    className="w-full h-full object-cover"
-                    alt={`thumbnail-${i}`}
-                  />
-                </button>
-              ))}
-            </div> */}
           </div>
 
-          {/* RIGHT SIDE (taller + more spacing) */}
+          {/* RIGHT SIDE */}
           <div className="pr-4 pt-2">
             {/* TITLE */}
             <h3 className="text-[26px] font-semibold text-[#1B1B1B] leading-tight mb-1">
@@ -151,19 +165,6 @@ export default function ProductDetails({ id }) {
               </span>
             </div>
 
-            {/* STOCK INFO */}
-            {/* <div className="mb-6">
-              <div className="flex items-center gap-2 text-[14px] text-[#6B6B6B] mb-1">
-                <span>Availability:</span>
-                <span className={`font-medium ${p.stock > 0 ? "text-[#32A35A]" : "text-[#D32F2F]"}`}>
-                  {p.stock > 0 ? `In Stock (${p.stock} items)` : "Out of Stock"}
-                </span>
-              </div>
-              {p.stock > 0 && p.stock < 10 && (
-                <p className="text-[12px] text-[#D97706]">Only a few items left!</p>
-              )}
-            </div> */}
-
             {/* Description */}
             <h4 className="text-[15px] font-semibold text-[#1B1B1B] mb-2">
               Description
@@ -172,9 +173,6 @@ export default function ProductDetails({ id }) {
             <p className="text-[14px] leading-[21px] text-[#6B6B6B] mb-7 max-w-[500px]">
               {p.description}
             </p>
-
-            {/* Product Details */}
-   
 
             {/* Amount Section */}
             <div className="flex items-center gap-3 mb-8">
@@ -211,19 +209,20 @@ export default function ProductDetails({ id }) {
             <div className="flex items-center gap-4 mb-10">
               {/* Add to Cart */}
               <button
+                onClick={cartHandler}
                 className={`
                   flex-1 py-[12px] rounded-[10px]
                   text-white text-[15px] font-medium
                   shadow-[0_4px_14px_rgba(0,0,0,0.12)]
                   transition-all duration-200
-                  ${p.stock === 0 
+                  ${p.stock === 0 || addToCartLoading
                     ? "bg-gray-400 cursor-not-allowed" 
                     : "bg-gradient-to-r from-[#9838E1] to-[#F68E44] hover:opacity-90"
                   }
                 `}
-                disabled={p.stock === 0}
+                disabled={p.stock === 0 || addToCartLoading}
               >
-                {p.stock === 0 ? "Out of Stock" : "Add to cart"}
+                {addToCartLoading ? "Adding..." : (p.stock === 0 ? "Out of Stock" : "Add to cart")}
               </button>
 
               {/* Wishlist */}
@@ -242,9 +241,6 @@ export default function ProductDetails({ id }) {
               <Store size={17} />
               <span className="font-medium">Visit {p.seller?.shopName || "Seller"}'s Store</span>
             </div>
-
-            {/* Seller Info */}
-        
           </div>
         </div>
       </div>
