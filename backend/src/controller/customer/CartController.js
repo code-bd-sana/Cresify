@@ -8,7 +8,7 @@ export const addToCart = async(req, res)=>{
         const {product, user} = data;
         const isExist = await Cart.findOne({user:user, product:product});
 
-        if(!isExist){
+        if(isExist){
             res.status(401).json({
                 message:"Already added on the cart"
             })

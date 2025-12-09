@@ -3,15 +3,19 @@ import User from "../../models/UserModel.js";
 /**
  * @function getAllUsers
  * @description Retrieves all users from the database with search and pagination.
+ * 
+ * @param {Object} req - The request object
+ * @param {Object} res - The response object
  * @query search - Search by email or name (optional)
  * @query skip - Number of records to skip for pagination (default: 0)
  * @query limit - Number of records to return (default: 10)
+ * @query role - Filter users by role (optional)
  * @route GET /admin/users
  * @access Admin
  */
 export const getAllUsers = async (req, res) => {
   try {
-    const { search = "", skip = 0, limit = 10 } = req.query;
+    const { search = "", skip = 0, limit = 10, role = "" } = req.query;
 
     // Build search query
     const query = {};
@@ -21,6 +25,10 @@ export const getAllUsers = async (req, res) => {
         { email: { $regex: search, $options: "i" } },
         { name: { $regex: search, $options: "i" } },
       ];
+    }
+
+    if (role) {
+      query.role = role;
     }
 
     // Get total count for pagination
@@ -36,7 +44,7 @@ export const getAllUsers = async (req, res) => {
       success: true,
       data: users,
       total,
-      skip: Number(skip),
+      skip: Number(skip) || 0,
       limit: Number(limit),
     });
   } catch (error) {
@@ -48,7 +56,6 @@ export const getAllUsers = async (req, res) => {
   }
 };
 
-
 /**
  * @function adminOverview
  * @description Provides admin overview metrics:
@@ -56,6 +63,10 @@ export const getAllUsers = async (req, res) => {
  *              - Total Sellers
  *              - Total Buyers
  *              - Total Service Providers
+ * 
+ * @param {Object} req - The request object
+ * @param {Object} res - The response object
+ * @returns {Object} - The response object containing the overview metrics
  * @route GET /admin/users/overview
  * @access Admin
  */
@@ -87,6 +98,9 @@ export const adminOverview = async (req, res) => {
 /**
  * @function changeUserStatus
  * @description Updates the status of a user (active, pending, suspend).
+ * 
+ * @param {Object} req - The request object
+ * @param {Object} res - The response object
  * @params id
  * @body status
  * @route PUT /admin/users/status/:id
@@ -94,8 +108,8 @@ export const adminOverview = async (req, res) => {
  */
 export const changeUserStatus = async (req, res) => {
   try {
-    const { id } = req.params;
-    const { status } = req.body;
+
+    const { status, id } = req.body;
 
     const allowedStatuses = ["active", "pending", "suspend"];
     if (!allowedStatuses.includes(status)) {

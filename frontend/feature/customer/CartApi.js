@@ -63,4 +63,4 @@ export const CartApi = createApi({
 
 
 
-const {useAddToCartMutation, useDeleteCartMutation, useRemoveCartMutation, useDecreaseCartMutation, useMyCartMutation}  = CartApi;
+export const {useAddToCartMutation, useDeleteCartMutation, useRemoveCartMutation, useDecreaseCartMutation, useMyCartMutation}  = CartApi;
