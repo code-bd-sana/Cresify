@@ -5,7 +5,7 @@ import ProductTable from "@/components/dashboard/product/ProductTable";
 export default function Products() {
   return (
     <div className="w-full pt-6 px-2">
-      <ProductHeader />
+
       <ProductTable />
     </div>
   );
