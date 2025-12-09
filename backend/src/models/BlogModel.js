@@ -10,7 +10,6 @@ const blogShcema = new Schema(
       type: String,
       required: [true, "Category is Required"],
     },
-
     description: {
       type: String,
       required: [true, "Description Is Required"],
