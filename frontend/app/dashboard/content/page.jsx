@@ -19,7 +19,8 @@ const ArticlesPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [editingArticle, setEditingArticle] = useState(null);
-  const [image, setImage] = useState(null);
+  const [imageFile, setImageFile] = useState(null); // Store the actual file
+  const [imagePreview, setImagePreview] = useState(null); // Store preview URL
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState("");
   const [details, setDetails] = useState("");
@@ -61,10 +62,51 @@ const ArticlesPage = () => {
     "Home & Living",
   ];
 
+  // Helper function to convert file to base64
+  const convertFileToBase64 = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = (error) => reject(error);
+    });
+  };
+
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      setImage(URL.createObjectURL(file));
+      // Validate file type
+      const validTypes = [
+        "image/jpeg",
+        "image/jpg",
+        "image/png",
+        "image/gif",
+        "image/webp",
+      ];
+      if (!validTypes.includes(file.type)) {
+        Swal.fire({
+          icon: "error",
+          title: "Invalid File Type",
+          text: "Please upload a valid image file (PNG, JPG, GIF, or WebP)",
+        });
+        e.target.value = ""; // Clear the input
+        return;
+      }
+
+      // Validate file size (15MB = 15 * 1024 * 1024 bytes)
+      const maxSize = 15 * 1024 * 1024;
+      if (file.size > maxSize) {
+        Swal.fire({
+          icon: "error",
+          title: "File Too Large",
+          text: "Please upload an image smaller than 15MB",
+        });
+        e.target.value = ""; // Clear the input
+        return;
+      }
+
+      setImageFile(file);
+      setImagePreview(URL.createObjectURL(file));
     }
   };
 
@@ -73,7 +115,8 @@ const ArticlesPage = () => {
     setTitle(article.title);
     setCategory(article.category);
     setDetails(article.description);
-    setImage(null); // Reset image, or set to article.image if you want to show existing
+    setImageFile(null); // No new file yet
+    setImagePreview(article.img || null); // Show existing image
     setIsModalOpen(true);
   };
 
@@ -89,11 +132,31 @@ const ArticlesPage = () => {
         return;
       }
 
+      // For new blogs, image is required
+      if (!editingArticle && !imageFile) {
+        Swal.fire({
+          icon: "error",
+          title: "Validation Error",
+          text: "Please upload an image",
+        });
+        return;
+      }
+
+      let imageData = null;
+
+      // Convert image to base64 if a new file was uploaded
+      if (imageFile) {
+        imageData = await convertFileToBase64(imageFile);
+      } else if (editingArticle && imagePreview) {
+        // For editing without new image, keep the existing URL
+        imageData = imagePreview;
+      }
+
       const blogData = {
         title,
         category,
         description: details,
-        img: image || "https://placehold.co/362x240/8736C5/white?text=Blog",
+        img: imageData || "https://placehold.co/362x240/8736C5/white?text=Blog",
       };
 
       if (editingArticle) {
@@ -125,14 +188,29 @@ const ArticlesPage = () => {
       setTitle("");
       setCategory("");
       setDetails("");
-      setImage(null);
+      setImageFile(null);
+      setImagePreview(null);
       setEditingArticle(null);
       setIsModalOpen(false);
     } catch (error) {
+      console.error("Blog save error:", error);
+
+      let errorMessage = "Failed to save blog";
+
+      // Handle different error types
+      if (error?.data?.message) {
+        errorMessage = error.data.message;
+      } else if (error?.message) {
+        errorMessage = error.message;
+      } else if (error?.status === 413) {
+        errorMessage =
+          "Image file is too large. Please upload an image smaller than 15MB.";
+      }
+
       Swal.fire({
         icon: "error",
         title: "Error",
-        text: error?.data?.message || "Failed to save blog",
+        text: errorMessage,
       });
     }
   };
@@ -143,7 +221,8 @@ const ArticlesPage = () => {
     setTitle("");
     setCategory("");
     setDetails("");
-    setImage(null);
+    setImageFile(null);
+    setImagePreview(null);
     setEditingArticle(null);
   };
 
@@ -152,7 +231,8 @@ const ArticlesPage = () => {
     setTitle("");
     setCategory("");
     setDetails("");
-    setImage(null);
+    setImageFile(null);
+    setImagePreview(null);
     setIsModalOpen(true);
   };
 
@@ -162,7 +242,7 @@ const ArticlesPage = () => {
         <h1 className='text-3xl font-semibold text-gray-800'>All Articles</h1>
         <button
           onClick={handleOpenCreateModal}
-          className='px-6 py-2 bg-gradient-to-r from-[#8736C5] via-[#9C47C6] to-[#F88D25] text-white rounded-lg cursor-pointer transition hover:shadow-lg'>
+          className='px-6 py-2 bg-linear-to-r from-[#8736C5] via-[#9C47C6] to-[#F88D25] text-white rounded-lg cursor-pointer transition hover:shadow-lg'>
           + Add Articles
         </button>
       </div>
@@ -265,7 +345,7 @@ const ArticlesPage = () => {
               <button
                 onClick={() => setPage(page + 1)}
                 disabled={isLoading}
-                className='px-6 py-2 bg-gradient-to-r from-[#8736C5] via-[#9C47C6] to-[#F88D25] text-white rounded-lg transition cursor-pointer hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed'>
+                className='px-6 py-2 bg-linear-to-r from-[#8736C5] via-[#9C47C6] to-[#F88D25] text-white rounded-lg transition cursor-pointer hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed'>
                 {isLoading ? "Loading..." : "Load More"}
               </button>
             </div>
@@ -311,13 +391,14 @@ const ArticlesPage = () => {
                 />
                 <label htmlFor='file-upload' className='cursor-pointer'>
                   <div className='flex flex-col items-center'>
-                    {image ? (
+                    {imagePreview ? (
                       <div className='relative w-full h-32 mb-2'>
                         <Image
-                          src={image}
+                          src={imagePreview}
                           alt='Article Preview'
                           fill
                           className='object-cover rounded-lg'
+                          unoptimized
                         />
                       </div>
                     ) : (
@@ -381,7 +462,7 @@ const ArticlesPage = () => {
                   {isDropdownOpen && (
                     <div className='absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-xl overflow-hidden animate-slideDown'>
                       {/* Gradient Header */}
-                      <div className='bg-gradient-to-r from-[#8736C5] via-[#9C47C6] to-[#F88D25] px-4 py-2 flex items-center justify-between'>
+                      <div className='bg-linear-to-r from-[#8736C5] via-[#9C47C6] to-[#F88D25] px-4 py-2 flex items-center justify-between'>
                         <span className='text-white font-semibold text-sm'>
                           Select Category
                         </span>
@@ -449,7 +530,7 @@ const ArticlesPage = () => {
                 </button>
                 <button
                   onClick={handleSubmit}
-                  className='px-6 py-2 text-sm bg-gradient-to-r from-[#8736C5] via-[#9C47C6] to-[#F88D25] text-white rounded-lg hover:shadow-lg transition cursor-pointer'>
+                  className='px-6 py-2 text-sm bg-linear-to-r from-[#8736C5] via-[#9C47C6] to-[#F88D25] text-white rounded-lg hover:shadow-lg transition cursor-pointer'>
                   {editingArticle ? "Update Article" : "Upload Article"}
                 </button>
               </div>
