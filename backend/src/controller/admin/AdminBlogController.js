@@ -1,5 +1,6 @@
 import Blog from "../../models/BlogModel.js";
 import {
+  deleteImageFromImgBB,
   extractBase64FromDataURL,
   uploadImageToImgBB,
 } from "../../utils/imageUpload.js";
