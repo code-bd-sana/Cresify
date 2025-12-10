@@ -83,7 +83,7 @@ export default function Navbar() {
 
           {/* BUTTON */}
           <Link href='/dashboard'>
-            <button className='px-6 py-[10px] text-white font-medium rounded-md bg-gradient-to-r from-[#9838E1] to-[#F68E44]'>
+            <button className='px-6 py-[10px] text-white font-medium rounded-md bg-linear-to-r from-[#9838E1] to-[#F68E44] cursor-pointer'>
               Get started
             </button>
           </Link>
@@ -160,7 +160,7 @@ export default function Navbar() {
           <div className='flex mt-4 items-center gap-4'>
             <FiMessageCircle className='text-[22px] text-black cursor-pointer' />
 
-            <button className='flex-1 px-5 py-[10px] text-white font-medium rounded-md bg-gradient-to-r from-[#9838E1] to-[#F68E44]'>
+            <button className='flex-1 px-5 py-[10px] text-white font-medium rounded-md bg-linear-to-r from-[#9838E1] to-[#F68E44] cursor-pointer'>
               Get started
             </button>
           </div>
