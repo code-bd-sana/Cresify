@@ -1,3 +1,4 @@
+import { configureStore } from "@reduxjs/toolkit";
 
 import { ProductApi } from "@/feature/ProductApi";
 import { UserApi } from "@/feature/UserApi";
@@ -7,10 +8,10 @@ import { AdminProductApi } from "@/feature/admin/AdminProductApi";
 import { AdminUserApi } from "@/feature/admin/AdminUserApi";
 import { CartApi } from "@/feature/customer/CartApi";
 import { WishlistApi } from "@/feature/customer/WishlistApi";
-import { configureStore } from "@reduxjs/toolkit";
 
 export const store = configureStore({
   reducer: {
+    // RTK Query APIs
     [UserApi.reducerPath]: UserApi.reducer,
     [CartApi.reducerPath]: CartApi.reducer,
     [ProductApi.reducerPath]: ProductApi.reducer,
