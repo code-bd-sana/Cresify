@@ -74,5 +74,8 @@ export const {
     useLoginMutation,
     useMyProfileQuery,
     useUpdateProfileMutation,
-    useChangePasswordMutation
+    useChangePasswordMutation,
+    useCreateServiceProviderMutation,
+    useGetAllServiceProvidersQuery,
+    useGetServiceProviderQuery,
 } = UserApi;
