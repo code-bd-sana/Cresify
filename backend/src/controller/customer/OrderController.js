@@ -1,8 +1,13 @@
-import ShortUniqueId from "short-uuid";
+import short from "short-uuid";
 import Order from "../../models/OrderModel.js";
 import Product from "../../models/ProductModel.js";
 
-const uid = ShortUniqueId(); // initialize generator
+// Generate a short, Base58-encoded UUID immediately:
+short.generate(); // 73WakrfVbNJBaAmhQtEeDv
+
+// Or create a translator and generate using its method:
+const translator = short.createTranslator(); // Default is flickrBase58
+const orderId = translator.generate(); // mhvXdrZT4jP5T8vBxuvm75
 
 /**
  * Place an order for selected products by a user.
@@ -73,7 +78,7 @@ export const placeOrder = async (req, res) => {
 
     // Create new order
     const newOrder = new Order({
-      orderId: uid(),
+      orderId,
       customer: userId,
       products,
       item: itemCount,
