@@ -5,7 +5,7 @@ import { MapPin, Star, Heart, Store, MessageCircle } from "lucide-react";
 import { useSingleProductQuery } from "@/feature/ProductApi";
 import Image from "next/image";
 import { useSession } from "next-auth/react";
-import { useAddToCartMutation } from "@/feature/customer/CartApi";
+import { useAddToCartMutation, useDecreaseCartMutation, useIncreaseCartMutation} from "@/feature/customer/CartApi";
 import toast, { Toaster } from "react-hot-toast";
 
 export default function ProductDetails({ id }) {
@@ -21,6 +21,9 @@ export default function ProductDetails({ id }) {
   const [addToCart, { isLoading: addToCartLoading }] = useAddToCartMutation();
   const [qty, setQty] = useState(1);
   const { data: user } = useSession();
+    const [ increaseCart] = useIncreaseCartMutation();
+  const [decreaseCart] = useDecreaseCartMutation();
+
   const userId = user?.user?.id;
 
   const cartHandler = async () => {
@@ -175,35 +178,7 @@ export default function ProductDetails({ id }) {
             </p>
 
             {/* Amount Section */}
-            <div className="flex items-center gap-3 mb-8">
-              <span className="text-[14px] text-[#1B1B1B] font-medium">
-                Amount:
-              </span>
-
-              <div className="flex items-center border border-[#D8D2E9] rounded-[8px]">
-                <button
-                  onClick={() => qty > 1 && setQty(qty - 1)}
-                  className="px-3 py-[6px] text-[16px] text-[#6B6B6B] hover:bg-gray-50"
-                  disabled={p.stock === 0}
-                >
-                  -
-                </button>
-                <span className="px-4 py-[6px] border-l border-r border-[#D8D2E9] min-w-[40px] text-center">
-                  {qty}
-                </span>
-                <button
-                  onClick={() => p.stock > qty && setQty(qty + 1)}
-                  className="px-3 py-[6px] text-[16px] text-[#6B6B6B] hover:bg-gray-50"
-                  disabled={p.stock === qty || p.stock === 0}
-                >
-                  +
-                </button>
-              </div>
-              
-              <span className="text-[12px] text-[#6B6B6B] ml-2">
-                Max: {p.stock} items
-              </span>
-            </div>
+        
 
             {/* ACTION BUTTONS */}
             <div className="flex items-center gap-4 mb-10">
