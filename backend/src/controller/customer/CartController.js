@@ -160,17 +160,23 @@ export const decreaseCount = async (req, res) => {
  * @param {Object} res - Express response object.
  * @returns {Object} List of cart items.
  */
-export const myCart = async(req, res)=>{
-    try {
-        const id = req.params.id;
-        const myCarts = await Cart.find({user:id}).populate("product");
-        res.status(200).json({
-            message:"Success",
-            data: myCarts
-        })
-        
-    } catch (error) {
-           res.status(500).json({
+export const myCart = async (req, res) => {
+  try {
+    const id = req.params.id;
+    const myCarts = await Cart.find({ user: id }).populate({
+      path: "product",
+      populate: {
+        path: "seller",
+        select: "name",
+      },
+    }).select("-user");
+
+    res.status(200).json({
+      message: "Success",
+      data: myCarts,
+    });
+  } catch (error) {
+    res.status(500).json({
       error,
       message: error?.message,
     });

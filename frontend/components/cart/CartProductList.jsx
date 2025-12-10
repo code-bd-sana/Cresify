@@ -158,6 +158,8 @@ export default function CartProductList() {
       MAIN UI
   -------------------------------------------------------- */
 
+  console.log(cartItems);
+
   return (
     <section className='w-full bg-[#F5F5FA] py-8 px-5'>
       <div className='max-w-[1300px] mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6'>
@@ -206,7 +208,7 @@ export default function CartProductList() {
                   <h3 className='font-semibold text-lg'>{item.product.name}</h3>
 
                   <p className='text-sm text-[#A46CFF] mt-1'>
-                    by {item.product.brand || "Unknown Brand"}
+                    by {item.product.seller.name || "Unknown Brand"}
                   </p>
 
                   <div className='flex items-center gap-3 text-sm text-gray-600 mt-1'>
@@ -251,7 +253,9 @@ export default function CartProductList() {
 
                 {/* Delete */}
                 <div className='flex flex-col items-end gap-3'>
-                  <button onClick={() => handleDelete(item._id)} className='cursor-pointer'>
+                  <button
+                    onClick={() => handleDelete(item._id)}
+                    className='cursor-pointer'>
                     <X size={18} className='text-gray-500 hover:text-red-500' />
                   </button>
                 </div>
