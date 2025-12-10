@@ -7,10 +7,11 @@ import adminOverviewRoute from "./admin/AdminOverviewRoute.js";
 import adminProductRoute from "./admin/AdminProductRoute.js";
 import adminUserRoute from "./admin/AdminUserRoute.js";
 import cart from "./customer/CartRoute.js";
+import customerOrderRoute from "./customer/OrderRoute.js";
 import wishList from "./customer/WishListRoute.js";
 import order from "./orderRoute.js";
 import review from "./reviewRoute.js";
-
+import sellerOrderRoute from "./seller/OrderRoute.js";
 const router = Router();
 
 router.use("/user", user);
@@ -25,5 +26,8 @@ router.use("/admin/users", adminUserRoute);
 router.use("/admin/overview", adminOverviewRoute);
 router.use("/admin/products", adminProductRoute);
 router.use("/admin/blog", adminBlogRoute);
+
+router.use("/customer/order", customerOrderRoute);
+router.use("/seller/order", sellerOrderRoute);
 
 export default router;
