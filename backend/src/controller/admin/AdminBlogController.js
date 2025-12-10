@@ -25,7 +25,6 @@ export const saveBlog = async (req, res) => {
 
     // Upload image to ImgBB if it's a base64 string
     let imageUrl = data.img;
-    let imageDeleteHash = "";
 
     if (data.img && data.img.startsWith("data:")) {
       const base64Image = extractBase64FromDataURL(data.img);
