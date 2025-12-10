@@ -7,6 +7,7 @@ import adminOverviewRoute from "./admin/AdminOverviewRoute.js";
 import adminProductRoute from "./admin/AdminProductRoute.js";
 import adminUserRoute from "./admin/AdminUserRoute.js";
 import cart from "./customer/CartRoute.js";
+import wishList from "./customer/WishListRoute.js";
 import order from "./orderRoute.js";
 import review from "./reviewRoute.js";
 
@@ -18,6 +19,7 @@ router.use("/review", review);
 router.use("/booking", booking);
 router.use("/order", order);
 router.use("/cart", cart);
+router.use("/wishlist", wishList);
 
 router.use("/admin/users", adminUserRoute);
 router.use("/admin/overview", adminOverviewRoute);
