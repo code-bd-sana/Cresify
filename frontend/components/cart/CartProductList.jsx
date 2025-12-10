@@ -34,6 +34,8 @@ export default function CartProductList() {
     }
   };
 
+  // cart product
+
   // Handle decrease quantity
   const handleDecrease = async (cartItem) => {
     try {
