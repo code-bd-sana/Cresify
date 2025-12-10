@@ -127,7 +127,7 @@ export const decreaseCount = async (req, res) => {
 export const myCart = async(req, res)=>{
     try {
         const id = req.params.id;
-        const myCarts = await Cart.find({usr:id});
+        const myCarts = await Cart.find({user:id}).populate("product");
         res.status(200).json({
             message:"Success",
             data: myCarts
