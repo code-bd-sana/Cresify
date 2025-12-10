@@ -32,7 +32,6 @@ export const uploadImageToImgBB = async (base64Image) => {
     if (response.data.success) {
       return {
         url: response.data.data.url,
-        deleteHash: response.data.data.delete_url.split("/").pop(),
         thumb: response.data.data.thumb.url,
         display_url: response.data.data.display_url,
       };

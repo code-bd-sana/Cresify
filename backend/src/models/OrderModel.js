@@ -1,82 +1,74 @@
 import mongoose, { Schema } from "mongoose";
-import User from "./UserModel.js";
 import Product from "./ProductModel.js";
+import User from "./UserModel.js";
 
-const orderSchema = new Schema({
-
-    customer:{
-           type: mongoose.Schema.Types.ObjectId,
-           required:true,
-           ref:User
+const orderSchema = new Schema(
+  {
+    orderId: {
+      type: String,
+      required: true,
+      unique: true,
     },
-
- products: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref:  Product,  
-    required: true
-}],
-
-    item:{
-        type:Number,
-        required:[true, "Item is Required"]
+    customer: {
+      type: mongoose.Schema.Types.ObjectId,
+      required: true,
+      ref: User,
     },
-
-    amount:{
-        type:Number,
-        required:[true, "Amount is Required"]
-
+    products: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: Product,
+        required: true,
+      },
+    ],
+    item: {
+      type: Number,
+      required: [true, "Item is Required"],
     },
-  adress: {
-    street: {
+    amount: {
+      type: Number,
+      required: [true, "Amount is Required"],
+    },
+    address: {
+      street: {
         type: String,
         required: [true, "Street is required"],
-        trim: true
-    },
-    city: {
+        trim: true,
+      },
+      city: {
         type: String,
         required: [true, "City is required"],
-        trim: true
-    },
-    state: {
+        trim: true,
+      },
+      state: {
         type: String,
-        trim: true
-    },
-    postalCode: {
+        trim: true,
+      },
+      postalCode: {
         type: String,
-        trim: true
-    },
-    fullName:String,
-    country: {
+        trim: true,
+      },
+      fullName: String,
+      country: {
         type: String,
         required: [true, "Country is required"],
-        trim: true
+        trim: true,
+      },
     },
-
-
-},
-
-
-    status:{
-        type:String,
-        default:"pending",
-        enum:['delivered', "canceled", "shipping", "processing"]
-    } ,
-
-    
-    paymentMethod:{
-        type:String,
-        required:[true, "Payment method is Required"],
-        enum:['cod', 'card']
+    status: {
+      type: String,
+      default: "pending",
+      enum: ["delivered", "canceled", "shipping", "processing"],
     },
-
-    paymentStatus:String, 
-
-
-            
-     
-}, {timestamps:true}) ;
-
-
+    paymentMethod: {
+      type: String,
+      required: [true, "Payment method is Required"],
+      enum: ["cod", "card"],
+    },
+    paymentStatus: String,
+  },
+  { timestamps: true }
+);
 
 const Order = mongoose.model("order", orderSchema);
 

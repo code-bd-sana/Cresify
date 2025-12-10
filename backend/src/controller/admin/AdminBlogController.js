@@ -1,5 +1,6 @@
 import Blog from "../../models/BlogModel.js";
 import {
+  deleteImageFromImgBB,
   extractBase64FromDataURL,
   uploadImageToImgBB,
 } from "../../utils/imageUpload.js";
@@ -24,13 +25,11 @@ export const saveBlog = async (req, res) => {
 
     // Upload image to ImgBB if it's a base64 string
     let imageUrl = data.img;
-    let imageDeleteHash = "";
 
     if (data.img && data.img.startsWith("data:")) {
       const base64Image = extractBase64FromDataURL(data.img);
       const uploadResult = await uploadImageToImgBB(base64Image);
       imageUrl = uploadResult.url;
-      imageDeleteHash = uploadResult.deleteHash;
     }
 
     const newBlog = new Blog({
@@ -38,7 +37,6 @@ export const saveBlog = async (req, res) => {
       category: data.category,
       description: data.description,
       img: imageUrl,
-      imgDeleteHash: imageDeleteHash,
     });
 
     const saved = await newBlog.save();
@@ -79,11 +77,6 @@ export const deleteBlog = async (req, res) => {
         success: false,
         message: "Blog not found",
       });
-    }
-
-    // Delete image from ImgBB if delete hash exists
-    if (blog.imgDeleteHash) {
-      await deleteImageFromImgBB(blog.imgDeleteHash);
     }
 
     // Delete blog from database
@@ -140,28 +133,20 @@ export const editBlog = async (req, res) => {
     }
 
     let imageUrl = data.img;
-    let imageDeleteHash = existingBlog.imgDeleteHash;
 
     // Check if image is being updated (new base64 image)
     if (data.img && data.img.startsWith("data:")) {
       // Upload new image to ImgBB
       const base64Image = extractBase64FromDataURL(data.img);
       const uploadResult = await uploadImageToImgBB(base64Image);
-      imageUrl = uploadResult.url;
-      imageDeleteHash = uploadResult.deleteHash;
-
-      // Delete old image from ImgBB (if exists)
-      if (existingBlog.imgDeleteHash) {
-        await deleteImageFromImgBB(existingBlog.imgDeleteHash);
-      }
+      imageUrl = uploadResult.url;     
     }
 
     const updated = await Blog.updateOne(
       { _id: id },
       {
         $set: {
-          img: imageUrl,
-          imgDeleteHash: imageDeleteHash,
+          img: imageUrl,          
           title: data?.title,
           category: data?.category,
           description: data?.description,

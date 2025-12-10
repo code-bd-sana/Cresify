@@ -1,15 +1,62 @@
 "use client";
 
-import { 
-  useDecreaseCartMutation, 
-  useIncreaseCartMutation, 
+import {
+  useDecreaseCartMutation,
+  useDeleteCartMutation,
+  useIncreaseCartMutation,
   useMyCartQuery,
-  useDeleteCartMutation // Add this import
 } from "@/feature/customer/CartApi";
-import { MapPin, Star, X } from "lucide-react"; // Added X icon
+import Cookies from "js-cookie";
+import { MapPin, Star, X } from "lucide-react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
+
+/* -------------------------------------------------------
+    COOKIE HELPERS
+-------------------------------------------------------- */
+
+// Get selected IDs from cookie
+const getSelected = () => {
+  try {
+    return JSON.parse(Cookies.get("selectedProducts") || "[]");
+  } catch {
+    return [];
+  }
+};
+
+// Save selected IDs to cookie
+const saveSelected = (ids) => {
+  Cookies.set("selectedProducts", JSON.stringify(ids), {
+    expires: 7, // 7 days
+    sameSite: "Lax",
+  });
+};
+
+// Toggle a selected ID
+const toggleSelected = (id) => {
+  const selected = getSelected();
+  const exists = selected.includes(id);
+
+  const updated = exists ? selected.filter((x) => x !== id) : [...selected, id];
+
+  saveSelected(updated);
+  return updated;
+};
+
+// Clear selection
+const clearSelected = () => {
+  saveSelected([]);
+  return [];
+};
+
+// Select all items
+const selectAll = (cartItems) => {
+  const ids = cartItems.map((item) => item._id);
+  saveSelected(ids);
+  return ids;
+};
 
 export default function CartProductList() {
   const { data } = useSession();
@@ -18,20 +65,43 @@ export default function CartProductList() {
   const { data: cartData, isLoading } = useMyCartQuery(id);
   const [increaseCart] = useIncreaseCartMutation();
   const [decreaseCart] = useDecreaseCartMutation();
-  const [deleteCart] = useDeleteCartMutation(); // Add delete mutation
+  const [deleteCart] = useDeleteCartMutation();
 
-  // Get cart items from API response
   const cartItems = cartData?.data || [];
-  
-  console.log(cartItems, "tomi amar personal cart");
 
-  // Handle increase quantity
+  /* -------------------------------------------------------
+      LOCAL STATE FOR COOKIE SELECTED ITEMS
+  -------------------------------------------------------- */
+  const [selectedProducts, setSelectedProducts] = useState([]);
+
+  useEffect(() => {
+    queueMicrotask(() => {
+      const cookieSelected = getSelected();
+      setSelectedProducts(cookieSelected);
+    });
+  }, [cartItems]);
+
+  /* -------------------------------------------------------
+      HANDLERS
+  -------------------------------------------------------- */
+
+  const handleSelect = (cartId) => {
+    const updated = toggleSelected(cartId);
+    setSelectedProducts(updated);
+  };
+
+  const handleSelectAll = () => {
+    if (selectedProducts.length === cartItems.length) {
+      setSelectedProducts(clearSelected());
+    } else {
+      setSelectedProducts(selectAll(cartItems));
+    }
+  };
+
   const handleIncrease = async (cartId) => {
     try {
       await increaseCart(cartId);
-    } catch (error) {
-      console.error("Failed to increase quantity:", error);
-    }
+    } catch (error) {}
   };
 
   // cart product
@@ -39,219 +109,218 @@ export default function CartProductList() {
   // Handle decrease quantity
   const handleDecrease = async (cartItem) => {
     try {
-      // If count is 1, remove the item instead of decreasing
       if (cartItem.count === 1) {
-        toast.error("")
+        toast.error("Cannot decrease below 1");
       } else {
         await decreaseCart(cartItem._id);
       }
-    } catch (error) {
-      console.error("Failed to decrease quantity:", error);
-    }
+    } catch (error) {}
   };
 
-  // Handle delete item
   const handleDelete = async (cartId) => {
     try {
-      console.log("Deleting cart item with ID:", cartId);
       await deleteCart(cartId);
-    } catch (error) {
-      console.error("Failed to delete cart item:", error);
-    }
+
+      // remove from cookie selection
+      const updated = selectedProducts.filter((id) => id !== cartId);
+      saveSelected(updated);
+      setSelectedProducts(updated);
+    } catch (error) {}
   };
 
-  // Loading state
+  /* -------------------------------------------------------
+      LOADING & EMPTY STATE
+  -------------------------------------------------------- */
+
   if (isLoading) {
     return (
-      <section className="w-full bg-[#F5F5FA] py-8 px-5">
-        <div className="max-w-[1300px] mx-auto">
-          <div className="text-center py-12">
-            <p>Loading cart items...</p>
-          </div>
-        </div>
+      <section className='w-full bg-[#F5F5FA] py-8 px-5 text-center'>
+        Loading cart...
       </section>
     );
   }
 
-  // Empty cart state
-  if (!cartItems || cartItems.length === 0) {
+  if (!cartItems.length) {
     return (
-      <section className="w-full bg-[#F5F5FA] py-8 px-5">
-        <div className="max-w-[1300px] mx-auto">
-          <div className="text-center py-12">
-            <h3 className="text-xl font-semibold text-gray-700 mb-4">
-              Your cart is empty
-            </h3>
-            <p className="text-gray-500 mb-6">
-              Add some products to your cart to see them here.
-            </p>
-            <Link href="/marketplace">
-              <button className="px-6 py-3 rounded-lg bg-gradient-to-r from-[#9838E1] to-[#F68E44] text-white font-medium">
-                Browse Products
-              </button>
-            </Link>
-          </div>
-        </div>
+      <section className='w-full bg-[#F5F5FA] py-8 px-5 text-center'>
+        <h3>Your cart is empty</h3>
+        <Link href='/marketplace'>
+          <button className='px-6 py-3 rounded-lg bg-linear-to-r from-[#9838E1] to-[#F68E44] text-white font-medium mt-4'>
+            Browse Products
+          </button>
+        </Link>
       </section>
     );
   }
+
+  const finalTotal = cartItems
+    .filter((item) => selectedProducts.includes(item._id))
+    .reduce((acc, item) => acc + item.product.price * item.count, 0);
+
+  /* -------------------------------------------------------
+      MAIN UI
+  -------------------------------------------------------- */
+
+  console.log(cartItems);
 
   return (
-    <section className="w-full bg-[#F5F5FA] py-8 px-5">
-      <div className="max-w-[1300px] mx-auto space-y-6">
-        {cartItems.map((item) => (
-          <div
-            key={item._id}
-            className="
-              relative
-              flex items-center gap-6 bg-white rounded-[16px] 
-              shadow-[0px_4px_20px_rgba(0,0,0,0.05)]
-              p-5 border border-[#F1ECF8]
-            "
-          >
-            {/* DELETE BUTTON (Top-right corner) */}
-            <button
-              onClick={() => handleDelete(item._id)}
-              className="
-                absolute top-4 right-4
-                w-8 h-8
-                rounded-full
-                flex items-center justify-center
-                bg-gray-100 hover:bg-gray-200
-                text-gray-600 hover:text-red-600
-                transition-colors
-                z-10
-              "
-              title="Remove item"
-            >
-              <X size={18} />
-            </button>
-
-            {/* PRODUCT IMAGE */}
-            <div className="w-[170px] h-[140px] rounded-[12px] overflow-hidden">
-              <img
-                src={item.product?.image || "/placeholder.jpg"}
-                alt={item.product?.name}
-                className="w-full h-full object-cover"
+    <section className='w-full bg-[#F5F5FA] py-8 px-5'>
+      <div className='max-w-[1300px] mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6'>
+        {/* LEFT SIDE */}
+        <div className='lg:col-span-2'>
+          <div className='flex items-center justify-between text-sm text-gray-700 mb-4 pl-1'>
+            <div className='flex items-center gap-2'>
+              <input
+                type='checkbox'
+                onChange={handleSelectAll}
+                checked={
+                  selectedProducts.length === cartItems.length &&
+                  cartItems.length > 0
+                }
+                className='w-4 h-4 accent-[#9838E1]'
               />
-            </div>
-
-            {/* PRODUCT DETAILS */}
-            <div className="flex-grow">
-              {/* Title */}
-              <h3 className="text-[17px] font-semibold text-[#1B1B1B] mb-1">
-                {item.product?.name}
-              </h3>
-
-              {/* Category */}
-              <p className="text-[13px] text-[#A46CFF] mb-[2px] capitalize">
-                {item.product?.category}
-              </p>
-
-              {/* Location */}
-              <div className="flex items-center gap-2 text-[13px] text-[#6A6A6A] mb-[6px]">
-                <MapPin size={15} />
-                {item.product?.location}
-              </div>
-
-              {/* Rating */}
-              <div className="flex items-center gap-[4px] text-[13px] mb-2">
-                {[...Array(5)].map((_, i) => (
-                  <Star
-                    key={i}
-                    size={15}
-                    fill={i < Math.floor(item.product?.rating || 0) ? "#FFA534" : "#E0E0E0"}
-                    stroke={i < Math.floor(item.product?.rating || 0) ? "#FFA534" : "#E0E0E0"}
-                  />
-                ))}
-                <span className="text-[#6A6A6A] ml-1">
-                  {item.product?.rating || 0} (0 reviews)
-                </span>
-              </div>
-
-              {/* Price */}
-              <div className="flex items-center gap-3 mb-3">
-                <span className="text-[20px] font-semibold text-[#F78D25]">
-                  ${item.product?.price}
-                </span>
-              </div>
-
-              {/* QUANTITY CONTROLS */}
-              <div className="flex items-center gap-3">
-                <div className="flex items-center border border-gray-300 rounded-lg">
-                  <button
-                    onClick={() => handleDecrease(item)}
-                    className="
-                      w-10 h-10
-                      flex items-center justify-center
-                      text-gray-600 hover:text-[#9838E1]
-                      hover:bg-gray-50
-                      disabled:opacity-50 disabled:cursor-not-allowed
-                    "
-                  >
-                    −
-                  </button>
-                  <span className="w-12 text-center font-medium">
-                    {item.count}
-                  </span>
-                  <button
-                    onClick={() => handleIncrease(item._id)}
-                    className="
-                      w-10 h-10
-                      flex items-center justify-center
-                      text-gray-600 hover:text-[#9838E1]
-                      hover:bg-gray-50
-                    "
-                  >
-                    +
-                  </button>
-                </div>
-
-                <div className="text-sm text-gray-600 ml-2">
-                  Total: <span className="font-semibold text-[#F78D25]">
-                    ${(item.product?.price * item.count).toFixed(2)}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* BUTTONS */}
-            <div className="flex flex-col gap-3">
-              {/* Quick View */}
-              <button
-                className="
-                  px-5 h-[36px]
-                  rounded-[8px]
-                  text-[13px] font-medium
-                  text-[#9838E1]
-                  border border-[#9838E1]
-                  bg-white
-                  hover:bg-[#FAF7FF]
-                  transition
-                  min-w-[120px]
-                "
-              >
-                Quick View
-              </button>
-
-              {/* Checkout */}
-              <Link href="/checkout">
-                <button
-                  className="
-                    px-5 h-[36px]
-                    rounded-[8px]
-                    text-[13px] font-medium text-white
-                    bg-gradient-to-r from-[#9838E1] to-[#F68E44]
-                    shadow-[0px_4px_12px_rgba(0,0,0,0.12)]
-                    min-w-[120px]
-                  "
-                >
-                  Checkout
-                </button>
-              </Link>
+              <span>Select All ({cartItems.length} Items)</span>
             </div>
           </div>
-        ))}
+
+          {/* PRODUCT LIST */}
+          <div className='space-y-6'>
+            {cartItems.map((item) => (
+              <div
+                key={item._id}
+                className='relative bg-white rounded-xl p-5 shadow-sm border border-[#EDEAF4] flex items-start gap-5'>
+                {/* Checkbox */}
+                <input
+                  type='checkbox'
+                  checked={selectedProducts.includes(item._id)}
+                  onChange={() => handleSelect(item._id)}
+                  className='mt-2 w-5 h-5 accent-[#9838E1]'
+                />
+
+                {/* Product Image */}
+                <div className='w-[130px] h-[120px] rounded-lg overflow-hidden border'>
+                  <img
+                    src={item.product.image}
+                    alt={item.product.name}
+                    className='w-full h-full object-cover'
+                  />
+                </div>
+
+                {/* Product Info */}
+                <div className='flex-grow'>
+                  <h3 className='font-semibold text-lg'>{item.product.name}</h3>
+
+                  <p className='text-sm text-[#A46CFF] mt-1'>
+                    by {item.product.seller.name || "Unknown Brand"}
+                  </p>
+
+                  <div className='flex items-center gap-3 text-sm text-gray-600 mt-1'>
+                    <MapPin size={15} />
+                    {item.product.location}
+                  </div>
+
+                  <div className='flex items-center gap-1 mt-2 text-yellow-500'>
+                    <Star size={16} fill='#FFC107' stroke='#FFC107' />
+                    <span className='text-gray-700 text-sm'>
+                      4.6 (203 reviews)
+                    </span>
+                  </div>
+
+                  <p className='mt-2 text-[20px] font-semibold text-[#F78D25]'>
+                    ${item.product.price}
+                  </p>
+
+                  <div className='flex items-center gap-6 mt-3'>
+                    <div className='flex items-center border border-gray-300 rounded-lg'>
+                      <button
+                        onClick={() => handleDecrease(item)}
+                        className='w-10 h-10 text-lg'>
+                        −
+                      </button>
+                      <span className='w-12 text-center'>{item.count}</span>
+                      <button
+                        onClick={() => handleIncrease(item._id)}
+                        className='w-10 h-10 text-lg'>
+                        +
+                      </button>
+                    </div>
+
+                    <span className='text-sm text-gray-700'>
+                      Total:{" "}
+                      <b className='text-[#F78D25]'>
+                        ${(item.product.price * item.count).toFixed(2)}
+                      </b>
+                    </span>
+                  </div>
+                </div>
+
+                {/* Delete */}
+                <div className='flex flex-col items-end gap-3'>
+                  <button
+                    onClick={() => handleDelete(item._id)}
+                    className='cursor-pointer'>
+                    <X size={18} className='text-gray-500 hover:text-red-500' />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* SUMMARY */}
+        <div className='bg-white rounded-xl shadow p-6 h-max sticky top-20 mt-9'>
+          <h3 className='text-lg font-semibold mb-6'>Order Summary</h3>
+
+          {/* Selected Products Preview */}
+          <div className='space-y-5 mb-6'>
+            {cartItems
+              .filter((item) => selectedProducts.includes(item._id))
+              .map((item) => (
+                <div
+                  key={item._id}
+                  className='flex items-center justify-between'>
+                  <div className='flex items-center gap-4'>
+                    <div className='w-[60px] h-[60px] rounded-lg overflow-hidden border'>
+                      <img
+                        src={item.product.image}
+                        alt={item.product.name}
+                        className='w-full h-full object-cover'
+                      />
+                    </div>
+
+                    <div>
+                      <p className='font-medium text-sm'>{item.product.name}</p>
+                      <p className='text-gray-500 text-xs'>
+                        Quantity:{" "}
+                        <span className='font-medium'>x{item.count}</span>
+                      </p>
+                    </div>
+                  </div>
+
+                  <p className='text-[#F78D25] font-semibold'>
+                    ${(item.product.price * item.count).toFixed(2)}
+                  </p>
+                </div>
+              ))}
+          </div>
+
+          <hr className='my-4 border-gray-300' />
+
+          <div className='space-y-3 text-sm text-gray-700'>
+            <div className='flex justify-between text-lg font-semibold text-[#F78D25]'>
+              <span>Total</span>
+              <span>${finalTotal.toFixed(2)}</span>
+            </div>
+          </div>
+
+          <Link href='/checkout'>
+            <button
+              disabled={selectedProducts.length === 0}
+              className='w-full mt-6 py-3 rounded-lg bg-linear-to-r from-[#9838E1] to-[#F68E44] text-white font-medium disabled:opacity-40 cursor-pointer'>
+              Proceed To Checkout ({selectedProducts.length})
+            </button>
+          </Link>
+        </div>
       </div>
     </section>
   );
