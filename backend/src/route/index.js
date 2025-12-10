@@ -9,6 +9,7 @@ import adminProductRoute from "./admin/AdminProductRoute.js";
 import order from "./orderRoute.js";
 import review from "./reviewRoute.js";
 import   cart from './customer/CartRoute.js'
+import blog from './admin/AdminBlogRoute.js'
 
 const router = Router();
 
