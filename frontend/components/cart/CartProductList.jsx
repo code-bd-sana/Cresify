@@ -251,7 +251,7 @@ export default function CartProductList() {
 
                 {/* Delete */}
                 <div className='flex flex-col items-end gap-3'>
-                  <button onClick={() => handleDelete(item._id)}>
+                  <button onClick={() => handleDelete(item._id)} className='cursor-pointer'>
                     <X size={18} className='text-gray-500 hover:text-red-500' />
                   </button>
                 </div>
