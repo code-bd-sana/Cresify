@@ -4,12 +4,16 @@ import User from "./UserModel.js";
 
 const orderSchema = new Schema(
   {
+    orderId: {
+      type: String,
+      required: true,
+      unique: true,
+    },
     customer: {
       type: mongoose.Schema.Types.ObjectId,
       required: true,
       ref: User,
     },
-
     products: [
       {
         type: mongoose.Schema.Types.ObjectId,
@@ -17,17 +21,15 @@ const orderSchema = new Schema(
         required: true,
       },
     ],
-
     item: {
       type: Number,
       required: [true, "Item is Required"],
     },
-
     amount: {
       type: Number,
       required: [true, "Amount is Required"],
     },
-    adress: {
+    address: {
       street: {
         type: String,
         required: [true, "Street is required"],
@@ -53,19 +55,16 @@ const orderSchema = new Schema(
         trim: true,
       },
     },
-
     status: {
       type: String,
       default: "pending",
       enum: ["delivered", "canceled", "shipping", "processing"],
     },
-
     paymentMethod: {
       type: String,
       required: [true, "Payment method is Required"],
       enum: ["cod", "card"],
     },
-
     paymentStatus: String,
   },
   { timestamps: true }
