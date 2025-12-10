@@ -104,6 +104,9 @@ export default function CartProductList() {
     } catch (error) {}
   };
 
+  // cart product
+
+  // Handle decrease quantity
   const handleDecrease = async (cartItem) => {
     try {
       if (cartItem.count === 1) {
