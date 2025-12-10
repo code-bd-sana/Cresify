@@ -601,7 +601,7 @@ export default function ProductsPage({ searchTerm = "" }) {
                         <button
                           className="w-full mt-auto py-[12px] text-[15px] font-medium text-white
     rounded-[12px] bg-[linear-gradient(90deg,#9838E1,#F88D25)]
-    shadow-[0_4px_14px_rgba(0,0,0,0.15)] hover:opacity-90"
+    shadow-[0_4px_14px_rgba(0,0,0,0.15)] hover:opacity-90 cursor-pointer"
                         >
                           Add to cart
                         </button>

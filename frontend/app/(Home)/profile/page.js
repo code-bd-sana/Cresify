@@ -26,8 +26,8 @@ export default function ProfileLayout() {
         return <BookingList />;
       case "wishlist":
         return <Wishlist />;
-        case "payments":
-          return <PaymentMethods />;
+      case "payments":
+        return <PaymentMethods />;
       //   default:
       //     return <ProfileOverview />;
     }
