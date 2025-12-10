@@ -6,7 +6,7 @@ router.post('/add', addToCart);
 router.delete("/delete/:id", removeCart);
 router.put("/increase/:id", increaseCount);
 router.put("/decrease/:id", decreaseCount);
-router.get('/myCart', myCart);
+router.get('/myCart/:id', myCart);
 
 
 
