@@ -17,6 +17,15 @@ export const UserApi = createApi({
             invalidatesTags: ["User"],   // <-- auto refetch
         }),
 
+        createServiceProvider: builder.mutation({
+            query: (data) => ({
+                url: "/user/register-provider",
+                method: "POST",
+                body: data,
+            }),
+            invalidatesTags: ["User"],   // <-- auto refetch
+        }),
+
         login: builder.mutation({
             query: (data) => ({
                 url: "/user/login",
@@ -28,6 +37,16 @@ export const UserApi = createApi({
 
         myProfile: builder.query({
             query: (id) => `/user/myProfile/${id}`,
+            providesTags: ["User"],      // <-- provide tag
+        }),
+
+        getAllServiceProviders: builder.query({
+            query: (page, limit, skip) => `/user/all-providers?page=${page}&limit=${limit}&skip=${skip}`,
+            providesTags: ["User"],      // <-- provide tag
+        }),
+
+        getServiceProvider: builder.query({
+            query: (id) => `/user/provider/${id}`,
             providesTags: ["User"],      // <-- provide tag
         }),
 
