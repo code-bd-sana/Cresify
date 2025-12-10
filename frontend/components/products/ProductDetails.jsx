@@ -61,6 +61,10 @@ export default function ProductDetails({ id }) {
       }
 
       toast.success(`Added ${qty} item(s) to your cart`);
+
+      if (isWishlisted) {
+        setIsWishlisted(false);
+      }
     } catch (error) {
       toast.error(error?.data?.message || "Something went wrong");
     }
