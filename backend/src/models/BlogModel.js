@@ -6,10 +6,6 @@ const blogShcema = new Schema(
       type: String,
       required: [true, "Blog image is Requried"],
     },
-    imgDeleteHash: {
-      type: String,
-      required: [true, "Blog image delete hash is Requried"],
-    },
     category: {
       type: String,
       required: [true, "Category is Required"],
