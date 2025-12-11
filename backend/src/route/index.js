@@ -1,6 +1,7 @@
 import { Router } from "express";
 import booking from "./BookingRoute.js";
 import product from "./ProductRoute.js";
+import providerAvailability from "./ProviderAvailabilityRoute.js";
 import user from "./UserRoute.js";
 import adminBlogRoute from "./admin/AdminBlogRoute.js";
 import adminOverviewRoute from "./admin/AdminOverviewRoute.js";
@@ -21,6 +22,8 @@ router.use("/booking", booking);
 router.use("/order", order);
 router.use("/cart", cart);
 router.use("/wishlist", wishList);
+
+router.use("/provider-availability", providerAvailability);
 
 router.use("/admin/users", adminUserRoute);
 router.use("/admin/overview", adminOverviewRoute);
