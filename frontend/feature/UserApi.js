@@ -88,6 +88,7 @@ export const UserApi = createApi({
       }),
       invalidatesTags: ["User"], // <-- auto refetch after update
     }),
+
     changePassword: builder.mutation({
       query: (data) => ({
         url: `/user/changePassword`,
@@ -95,6 +96,7 @@ export const UserApi = createApi({
         body: data,
       }),
     }),
+
     // Bookings: Today's and Upcoming
     getProviderTodaysBookings: builder.query({
       query: (providerId) => `/booking/today?providerId=${providerId}`,
@@ -103,6 +105,12 @@ export const UserApi = createApi({
     getProviderUpcomingBookings: builder.query({
       query: (providerId) => `/booking/upcoming?providerId=${providerId}`,
       method: "GET",
+    }),
+
+    // Booking stats for chart
+    getProviderBookingStats: builder.query({
+      query: ({ providerId, filter }) =>
+        `/booking/stats?providerId=${providerId}&filter=${filter}`,
     }),
   }),
 });
@@ -123,4 +131,5 @@ export const {
   useGetProviderBookingsForDateQuery,
   useGetProviderTodaysBookingsQuery,
   useGetProviderUpcomingBookingsQuery,
+  useGetProviderBookingStatsQuery,
 } = UserApi;

@@ -1,10 +1,12 @@
 "use client";
 import {
+  useGetProviderBookingStatsQuery,
   useGetProviderTodaysBookingsQuery,
   useGetProviderUpcomingBookingsQuery,
 } from "@/feature/UserApi";
 import { useSession } from "next-auth/react";
 import Image from "next/image";
+import { useState } from "react";
 import {
   FiCheck,
   FiChevronDown,
@@ -26,10 +28,22 @@ import {
 export default function ServiceProviderDashboard() {
   const { data: session, status } = useSession();
 
-  // Demo booking overview data (replace with real stats if needed)
+  // Booking Overview filter state
+  const [bookingFilter, setBookingFilter] = useState("all");
+  const providerId = session?.user?.id || "000000000000000000000002";
+  const { data: bookingStats, isLoading: statsLoading } =
+    useGetProviderBookingStatsQuery({ providerId, filter: bookingFilter });
   const bookingData = [
-    { name: "Cancel Booking", value: 234, color: "#F88D25" },
-    { name: "Complete Services", value: 1295654, color: "#9838E1" },
+    {
+      name: "Cancel Booking",
+      value: bookingStats?.data?.cancelled ?? 0,
+      color: "#F88D25",
+    },
+    {
+      name: "Complete Services",
+      value: bookingStats?.data?.completed ?? 0,
+      color: "#9838E1",
+    },
   ];
   const incomeData = [
     { month: "JAN", value: 2500 },
@@ -47,8 +61,6 @@ export default function ServiceProviderDashboard() {
 
   const todayBookings = todayData?.data || [];
   const upcomingBookings = upcomingData?.data || [];
-
-  console.log(todayData, upcomingData);
 
   const statusColors = {
     accept: "bg-[#E6FCE6] text-[#29A55A]",
@@ -110,8 +122,7 @@ export default function ServiceProviderDashboard() {
 
         {/* Booking Overview */}
         <ChartCard title='Booking Overview'>
-          <FilterDropdown />
-
+          <FilterDropdown value={bookingFilter} onChange={setBookingFilter} />
           <div className='w-full h-[260px] flex items-center justify-center relative'>
             <ResponsiveContainer width='75%' height='100%'>
               <PieChart>
@@ -128,15 +139,18 @@ export default function ServiceProviderDashboard() {
                 </Pie>
               </PieChart>
             </ResponsiveContainer>
-
             {/* Exact Labels */}
             <div className='absolute left-[20%] top-[22%] text-[13px] text-[#F88D25]'>
-              Cancel Booking <br /> 234
+              Cancel Booking <br /> {bookingData[0].value}
             </div>
-
             <div className='absolute right-[10%] bottom-[35%] text-[13px] text-[#9838E1]'>
-              Complete Services <br /> 12,95,654
+              Complete Services <br /> {bookingData[1].value}
             </div>
+            {statsLoading && (
+              <div className='absolute inset-0 flex items-center justify-center bg-white/60'>
+                Loading...
+              </div>
+            )}
           </div>
         </ChartCard>
       </div>
@@ -194,13 +208,16 @@ function ChartCard({ title, children }) {
   );
 }
 
-function FilterDropdown() {
+function FilterDropdown({ value, onChange }) {
   return (
     <div className='relative'>
-      <select className='appearance-none bg-[#F7F7FA] border border-gray-300 px-3 py-1.5 rounded-lg text-sm text-gray-700 pr-8 cursor-pointer'>
-        <option>All</option>
-        <option>Today</option>
-        <option>This Week</option>
+      <select
+        className='appearance-none bg-[#F7F7FA] border border-gray-300 px-3 py-1.5 rounded-lg text-sm text-gray-700 pr-8 cursor-pointer'
+        value={value}
+        onChange={(e) => onChange(e.target.value)}>
+        <option value='all'>All</option>
+        <option value='today'>Today</option>
+        <option value='week'>This Week</option>
       </select>
       <FiChevronDown className='absolute right-2 top-1/2 -translate-y-1/2 text-gray-500' />
     </div>
