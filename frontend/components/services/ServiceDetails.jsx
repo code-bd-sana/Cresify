@@ -10,12 +10,16 @@ export default function ServiceDetails() {
   const id = searchParams.get("id");
 
   const {
-    data: provider,
+    data: response,
     isLoading,
     error,
   } = useGetServiceProviderQuery(id, {
     skip: !id,
   });
+
+  const provider = response?.data;
+
+  console.log(provider);
 
   if (isLoading) {
     return (
@@ -43,7 +47,7 @@ export default function ServiceDetails() {
     );
   }
 
-  if (error || !provider) {
+  if (error || !response) {
     return (
       <section className='w-full bg-[#F7F7FA] py-14 px-6'>
         <div className='max-w-[1300px] mx-auto text-center'>
@@ -81,13 +85,15 @@ export default function ServiceDetails() {
               />
             </div>
 
-            {/* IMAGE THUMBNAILS - Placeholder for now */}
+            {/* IMAGE THUMBNAILS */}
             <div className='flex items-center gap-4 mt-5'>
               {[
                 provider.image ||
                   provider.businessLogo ||
                   "/services/serv1.jpg",
-                "/services/serv2.jpg",
+                provider.businessLogo ||
+                  provider.image ||
+                  "/services/serv2.jpg",
                 "/services/serv3.jpg",
                 "/services/serv1.jpg",
               ].map((img, i) => (
@@ -96,7 +102,11 @@ export default function ServiceDetails() {
                   className='h-[60px] w-[60px] rounded-[12px]
                   overflow-hidden cursor-pointer
                   border border-[#E1E1E8] hover:border-[#9838E1] transition'>
-                  <img src={img} className='h-full w-full object-cover' />
+                  <img
+                    src={img}
+                    alt={`${provider.name || provider.shopName} image ${i + 1}`}
+                    className='h-full w-full object-cover'
+                  />
                 </div>
               ))}
             </div>
@@ -140,8 +150,27 @@ export default function ServiceDetails() {
 
             {/* Price */}
             <p className='text-[20px] font-semibold text-[#F78D25] mt-3'>
-              ${provider.hourlyRate || 50}/hr
+              $
+              {provider.hourlyRate > 0
+                ? provider.hourlyRate
+                : "Contact for pricing"}
+              /hr
             </p>
+
+            {/* Status Badge */}
+            {provider.status && (
+              <div className='mt-2'>
+                <span
+                  className={`inline-block px-3 py-1 text-xs font-medium rounded-full ${
+                    provider.status === "active"
+                      ? "bg-green-100 text-green-800"
+                      : "bg-red-100 text-red-800"
+                  }`}>
+                  {provider.status.charAt(0).toUpperCase() +
+                    provider.status.slice(1)}
+                </span>
+              </div>
+            )}
 
             {/* About */}
             <div className='mt-5'>
