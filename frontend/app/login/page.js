@@ -1,15 +1,18 @@
 "use client";
 
 import { useLoginMutation } from "@/feature/UserApi";
-import { signIn } from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import toast, { Toaster } from "react-hot-toast";
 import { FcGoogle } from "react-icons/fc";
 import { FiEye, FiEyeOff, FiLock, FiMail } from "react-icons/fi";
 
 export default function LoginPage() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
@@ -17,6 +20,21 @@ export default function LoginPage() {
   });
   const [rememberMe, setRememberMe] = useState(false);
   const [login, { isLoading, loading }] = useLoginMutation();
+
+  useEffect(() => {
+    if (status === "authenticated" && session?.user) {
+      const role = session.user.role;
+      if (role === "admin") {
+        router.push("/dashboard/admin-dashboard");
+      } else if (role === "provider") {
+        router.push("/dashboard/service-provider-dashboard");
+      } else if (role === "seller") {
+        router.push("/dashboard/store-profile");
+      } else {
+        router.push("/");
+      }
+    }
+  }, [session, status, router]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -53,7 +71,17 @@ export default function LoginPage() {
         _id: response?.data?.data?._id,
       });
 
-      window.location.href = "/";
+      // Redirect based on role
+      const role = response?.data?.data?.role;
+      if (role === "admin") {
+        window.location.href = "/dashboard/admin-dashboard";
+      } else if (role === "provider") {
+        window.location.href = "/dashboard/service-provider-dashboard";
+      } else if (role === "seller") {
+        window.location.href = "/dashboard/store-profile";
+      } else {
+        window.location.href = "/";
+      }
     } catch (error) {
       toast.error(error?.data?.message);
     }
