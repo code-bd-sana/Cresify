@@ -95,6 +95,15 @@ export const UserApi = createApi({
         body: data,
       }),
     }),
+    // Bookings: Today's and Upcoming
+    getProviderTodaysBookings: builder.query({
+      query: (providerId) => `/booking/today?providerId=${providerId}`,
+      method: "GET",
+    }),
+    getProviderUpcomingBookings: builder.query({
+      query: (providerId) => `/booking/upcoming?providerId=${providerId}`,
+      method: "GET",
+    }),
   }),
 });
 
@@ -112,4 +121,6 @@ export const {
   useBlockProviderDayMutation,
   useBlockProviderSlotMutation,
   useGetProviderBookingsForDateQuery,
+  useGetProviderTodaysBookingsQuery,
+  useGetProviderUpcomingBookingsQuery,
 } = UserApi;
