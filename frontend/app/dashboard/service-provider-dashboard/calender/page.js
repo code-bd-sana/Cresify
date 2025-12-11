@@ -1,88 +1,63 @@
 "use client";
 
-import {
-  useBlockProviderDayMutation,
-  useBlockProviderSlotMutation,
-  useGetProviderAvailabilityQuery,
-  useGetProviderBookingsForDateQuery,
-  useUpdateProviderAvailabilityMutation,
-} from "@/feature/UserApi";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { FiChevronLeft, FiChevronRight, FiClock } from "react-icons/fi";
 
-// TODO: Replace with real providerId from auth/session
-const providerId = "REPLACE_WITH_PROVIDER_ID";
-
 export default function AvailabilityPage() {
-  // UI state
-  const [selectedDate, setSelectedDate] = useState(new Date());
-  const [selectedDuration, setSelectedDuration] = useState(60);
-  const [workingDays, setWorkingDays] = useState([
-    "Mon",
-    "Tue",
-    "Wed",
-    "Thu",
-    "Fri",
-  ]);
-  const [workingHours, setWorkingHours] = useState({
-    start: "09:00 AM",
-    end: "06:00 PM",
-  });
-  const [loading, setLoading] = useState(false);
+  // simple UI states (for highlight only)
+  const [selectedDate, setSelectedDate] = useState("7");
+  const [selectedDuration, setSelectedDuration] = useState("60m");
 
-  // API hooks
-  const { data: availability, refetch: refetchAvailability } =
-    useGetProviderAvailabilityQuery(providerId);
-  const [updateAvailability] = useUpdateProviderAvailabilityMutation();
-  const [blockDay] = useBlockProviderDayMutation();
-  const [blockSlot] = useBlockProviderSlotMutation();
-  const { data: bookingsData, refetch: refetchBookings } =
-    useGetProviderBookingsForDateQuery({
-      providerId,
-      date: selectedDate.toISOString(),
-    });
+  const calendarDays = [
+    { label: "30", muted: true },
+    { label: "31", muted: true },
+    { label: "1", highlight: true },
+    { label: "2" },
+    { label: "3", highlight: true },
+    { label: "4", highlight: true },
+    { label: "5" },
+    { label: "6" },
+    { label: "7", highlight: true },
+    { label: "8", highlight: true },
+    { label: "9", highlight: true },
+    { label: "10" },
+    { label: "11" },
+    { label: "12" },
+    { label: "13" },
+    { label: "14" },
+    { label: "15" },
+    { label: "16" },
+    { label: "17" },
+    { label: "18" },
+    { label: "19" },
+    { label: "20" },
+    { label: "21" },
+    { label: "22" },
+    { label: "23" },
+    { label: "24" },
+    { label: "7", isSecondRow: true }, // outlined one in screenshot
+    { label: "26" },
+    { label: "27" },
+    { label: "28" },
+    { label: "29", highlight: true },
+    { label: "30" },
+    { label: "01", muted: true },
+    { label: "02", muted: true },
+    { label: "03", muted: true },
+  ];
 
-  // Sync state with API data
-  useEffect(() => {
-    if (availability?.data) {
-      setWorkingDays(availability.data.workingDays || []);
-      setWorkingHours(
-        availability.data.workingHours || { start: "09:00 AM", end: "06:00 PM" }
-      );
-      setSelectedDuration(availability.data.slotDuration || 60);
-    }
-  }, [availability]);
+  const slots = [
+    { time: "09:00 AM", name: "Makbul Hossain Tamim", status: "Booked" },
+    { time: "10:00 AM", name: "Makbul Hossain Tamim", status: "Booked" },
+    { time: "11:00 AM", name: "", status: "Block" },
+    { time: "12:00 PM", name: "Makbul Hossain Tamim", status: "Booked" },
+    { time: "01:00 PM", name: "Makbul Hossain Tamim", status: "Booked" },
+    { time: "02:00 PM", name: "", status: "Block" },
+  ];
 
-  // ...existing code for rendering UI, but replace hardcoded data with API data and actions...
-
-  // Example: handle save changes
-  const handleSave = async () => {
-    setLoading(true);
-    await updateAvailability({
-      providerId,
-      workingDays,
-      workingHours,
-      slotDuration: selectedDuration,
-    });
-    setLoading(false);
-    refetchAvailability();
-  };
-
-  // Example: handle block day
-  const handleBlockDay = async () => {
-    setLoading(true);
-    await blockDay({ providerId, date: selectedDate });
-    setLoading(false);
-    refetchAvailability();
-  };
-
-  // Example: handle block slot
-  const handleBlockSlot = async (time) => {
-    setLoading(true);
-    await blockSlot({ providerId, date: selectedDate, time });
-    setLoading(false);
-    refetchAvailability();
-  };
+  const workingDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  const activeWorkingDays = ["Mon", "Tue", "Wed", "Thu", "Fri"];
+  const durations = ["30m", "60m", "90m", "120m"];
 
   return (
     <div className='min-h-screen px-2 pt-6 flex justify-center'>
