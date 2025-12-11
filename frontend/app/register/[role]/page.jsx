@@ -1,5 +1,8 @@
 "use client";
-import { useCreateUserMutation } from "@/feature/UserApi";
+import {
+  useCreateServiceProviderMutation,
+  useCreateUserMutation,
+} from "@/feature/UserApi";
 import logo from "@/public/logo.png";
 import image from "@/public/register.png";
 import Image from "next/image";
@@ -11,7 +14,12 @@ const Registerpage = () => {
   const params = useParams();
   const role = params?.role;
   const [currentStep, setCurrentStep] = useState(1);
-  const [createUser, { isLoading, error }] = useCreateUserMutation();
+  const [createUser, { isLoading: userLoading, error: userError }] =
+    useCreateUserMutation();
+  const [
+    createServiceProvider,
+    { isLoading: providerLoading, error: providerError },
+  ] = useCreateServiceProviderMutation();
   const [formData, setFormData] = useState({
     // Step 1: Basic Information
     name: "",
@@ -44,10 +52,17 @@ const Registerpage = () => {
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
-    setFormData((prev) => ({
-      ...prev,
-      businessLogo: file,
-    }));
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setFormData((prev) => ({
+          ...prev,
+          image: event.target.result, // base64 dataURL
+          businessLogo: file,
+        }));
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const validateStep1 = () => {
@@ -117,11 +132,18 @@ const Registerpage = () => {
       const finalData = {
         ...formData,
         role: role,
+        phoneNumber: formData.phone, // map phone to phoneNumber
         registrationDate: new Date().toISOString(),
       };
+      delete finalData.phone; // remove phone
 
       try {
-        const response = await createUser(finalData);
+        let response;
+        if (role === "provider") {
+          response = await createServiceProvider(finalData);
+        } else {
+          response = await createUser(finalData);
+        }
 
         toast.success("Registration Successfully");
         e.target.reset();
@@ -230,7 +252,7 @@ const Registerpage = () => {
                       Step 1: Basic Information
                     </h4>
                     <p className='text-[#9838E1]'>
-                      Let's start with your personal details
+                      Let&apos;s start with your personal details
                     </p>
                   </div>
 
