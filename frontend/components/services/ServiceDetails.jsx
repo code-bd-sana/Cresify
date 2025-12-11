@@ -19,8 +19,6 @@ export default function ServiceDetails() {
 
   const provider = response?.data;
 
-  console.log(provider);
-
   if (isLoading) {
     return (
       <section className='w-full bg-[#F7F7FA] py-14 px-6'>
