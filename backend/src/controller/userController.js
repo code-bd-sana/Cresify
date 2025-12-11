@@ -291,6 +291,7 @@ export const getServiceProviders = async (req, res) => {
 export const getSingleProvider = async (req, res) => {
   try {
     const { id } = req.params;
+
     const provider = await User.findOne({ _id: id, role: "provider" }).select(
       "-password"
     );
