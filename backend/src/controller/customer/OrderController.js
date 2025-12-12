@@ -1,4 +1,5 @@
 import short from "short-uuid";
+import Cart from "../../models/CartModel.js";
 import Order from "../../models/OrderModel.js";
 import Product from "../../models/ProductModel.js";
 
@@ -90,6 +91,12 @@ export const placeOrder = async (req, res) => {
     });
 
     const savedOrder = await newOrder.save();
+
+    // Remove ordered products from user's cart
+    await Cart.deleteMany({
+      user: userId,
+      product: { $in: products },
+    });
 
     return res.status(201).json({
       message: "Order placed successfully",
