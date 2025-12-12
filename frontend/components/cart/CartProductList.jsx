@@ -23,7 +23,7 @@ import {
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
-import toast from "react-hot-toast";
+import toast, { Toaster } from "react-hot-toast";
 
 /* -------------------------------------------------------
     COOKIE HELPERS
@@ -73,7 +73,7 @@ const selectAll = (cartItems) => {
 export default function CombinedCartCheckoutPage() {
   const { data } = useSession();
   const id = data?.user?.id;
-  const [createOrder, {isLoading:orderLoading, error}] = useCreateOrderMutation();
+  const [createOrder, {isLoading:orderLoading,isError, error}] = useCreateOrderMutation();
 
   const { data: cartData, isLoading } = useMyCartQuery(id);
   const [increaseCart] = useIncreaseCartMutation();
@@ -191,6 +191,11 @@ export default function CombinedCartCheckoutPage() {
     setShowCheckout(true);
   };
 
+  if(isError){
+    console.log(error?.data?.message, "Kire mamur beta");
+    toast.error(error?.data?.message)
+  }
+
   const handleConfirmAndPay = async() => {
     // Prepare order data
 try {
@@ -239,6 +244,8 @@ try {
     }
   
 } catch (error) {
+
+  console.log(error);
   toast.error(error?.data?.message)
 }
 
@@ -290,6 +297,7 @@ try {
 
   return (
     <section className="w-full bg-[#F7F7FA] py-10 px-4">
+      <Toaster/>
       {!showCheckout ? (
         /* -------------------------------------------------------
             CART VIEW
