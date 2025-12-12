@@ -58,7 +58,7 @@ export const BookingSchema = new Schema(
       start: { type: String, required: true },
       end: { type: String, required: true },
     },
-    paymentStatus: String,
+    paymentStatus: {type: String, enum: ["pending", "completed"], default: "pending"},
   },
   { timestamps: true }
 );
