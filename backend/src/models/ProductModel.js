@@ -42,6 +42,8 @@ const productSchema = new Schema(
   { timestamps: true }
 );
 
+productSchema.index({ status: 1, stock: 1 });
+
 const Product = mongoose.model("Product", productSchema);
 
 export default Product;

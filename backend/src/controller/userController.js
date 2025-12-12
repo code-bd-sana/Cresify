@@ -1,10 +1,12 @@
 import bcrypt from "bcrypt";
+import mongoose from "mongoose";
+import Booking from "../models/BookingModel.js";
+import ProviderAvailability from "../models/ProviderAvailabilityModel.js";
 import User from "../models/UserModel.js";
 import {
   extractBase64FromDataURL,
   uploadImageToImgBB,
 } from "../utils/imageUpload.js";
-
 export const saveUser = async (req, res) => {
   try {
     const data = await req.body;
@@ -292,24 +294,159 @@ export const getSingleProvider = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const provider = await User.findOne({ _id: id, role: "provider" }).select(
-      "-password"
-    );
+    // 1. Get provider + availability in parallel
+    const [provider, availabilityDoc] = await Promise.all([
+      User.findOne({ _id: id, role: "provider" }).select("-password").lean(),
+      ProviderAvailability.findOne({ provider: id }).lean(),
+    ]);
 
     if (!provider) {
-      return res.status(404).json({
-        message: "Provider not found",
+      return res.status(404).json({ message: "Provider not found" });
+    }
+
+    // Fallback to User model fields if no availability doc
+    const workingDays = availabilityDoc?.workingDays?.length
+      ? availabilityDoc.workingDays
+      : provider.workingDays || [];
+
+    const workingHours = availabilityDoc?.workingHours || {
+      start: provider.workingHours?.start || "09:00",
+      end: provider.workingHours?.end || "18:00",
+    };
+
+    const slotDuration =
+      availabilityDoc?.slotDuration || provider.slotDuration || 60;
+
+    const blockedDates = (availabilityDoc?.blockedDates || []).map(
+      (d) => new Date(d).toISOString().split("T")[0]
+    );
+
+    // 2. Get ONLY next 7 days (you said 7 days now)
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const sevenDaysLater = new Date(today);
+    sevenDaysLater.setDate(today.getDate() + 7);
+
+    // ONE SUPER FAST AGGREGATION QUERY
+    const bookedSlots = await Booking.aggregate([
+      {
+        $match: {
+          provider: new mongoose.Types.ObjectId(id),
+          status: "accept",
+          bookingDate: { $gte: today, $lt: sevenDaysLater },
+        },
+      },
+      {
+        $group: {
+          _id: { $dateToString: { format: "%Y-%m-%d", date: "$bookingDate" } },
+          slots: {
+            $push: { $concat: ["$timeSlot.start", "-", "$timeSlot.end"] },
+          },
+        },
+      },
+    ]);
+
+    // Manual blocked slots (from ProviderAvailability)
+    const manualBlocked = (availabilityDoc?.blockedSlots || [])
+      .filter((bs) => {
+        const d = new Date(bs.date);
+        return d >= today && d < sevenDaysLater;
+      })
+      .reduce((acc, bs) => {
+        const dateStr = new Date(bs.date).toISOString().split("T")[0];
+        const key = bs.time;
+        if (!acc[dateStr]) acc[dateStr] = [];
+        if (!acc[dateStr].includes(key)) acc[dateStr].push(key);
+        return acc;
+      }, {});
+
+    // Merge booked + manual blocked
+    const blockedSlotsMap = {};
+    bookedSlots.forEach((item) => {
+      blockedSlotsMap[item._id] = item.slots;
+    });
+    Object.entries(manualBlocked).forEach(([date, slots]) => {
+      if (!blockedSlotsMap[date]) blockedSlotsMap[date] = [];
+      blockedSlotsMap[date] = [
+        ...new Set([...blockedSlotsMap[date], ...slots]),
+      ];
+    });
+
+    // Helper: 24h → 12h
+    const formatTime12 = (time24) => {
+      const [h, m] = time24.split(":");
+      const hour = parseInt(h);
+      const suffix = hour >= 12 ? "PM" : "AM";
+      const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+      return `${displayHour}:${m} ${suffix}`;
+    };
+
+    // Generate only next 7 working days
+    const availableDates = [];
+    const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+    for (let i = 0; i < 7; i++) {
+      const date = new Date(today);
+      date.setDate(today.getDate() + i);
+      const dateStr = date.toISOString().split("T")[0];
+      const dayName = dayNames[date.getDay()];
+
+      if (!workingDays.includes(dayName) || blockedDates.includes(dateStr))
+        continue;
+
+      // Generate slots
+      const startHour = parseInt(workingHours.start.split(":")[0], 10);
+      const endHour = parseInt(workingHours.end.split(":")[0], 10);
+
+      const slots = [];
+      let time = new Date(date);
+      time.setHours(startHour, 0, 0, 0);
+      const endTime = new Date(date);
+      endTime.setHours(endHour, 0, 0, 0);
+
+      while (time < endTime) {
+        const startStr = time.toTimeString().slice(0, 5);
+        const endTemp = new Date(time);
+        endTemp.setMinutes(endTemp.getMinutes() + slotDuration);
+        const endStr = endTemp.toTimeString().slice(0, 5);
+
+        const key = `${startStr}-${endStr}`;
+        slots.push({
+          key,
+          display: `${formatTime12(startStr)} - ${formatTime12(endStr)}`,
+        });
+
+        time = endTemp;
+      }
+
+      const blockedKeys = blockedSlotsMap[dateStr] || [];
+      const blockedDisplays = slots
+        .filter((s) => blockedKeys.includes(s.key))
+        .map((s) => s.display);
+
+      availableDates.push({
+        date: dateStr,
+        blockedSlots: blockedDisplays,
       });
     }
 
+    // Final clean response
     res.status(200).json({
       message: "Success",
-      data: provider,
+      data: {
+        ...provider,
+        availability: {
+          blockedDates: blockedDates.filter((d) => {
+            const dt = new Date(d);
+            return dt >= today && dt < sevenDaysLater;
+          }),
+          availableDays: workingDays,
+          availableDates,
+        },
+      },
     });
   } catch (error) {
-    res.status(500).json({
-      error,
-      message: error?.message,
-    });
+    console.error("getSingleProvider error:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 };

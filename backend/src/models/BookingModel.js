@@ -58,10 +58,24 @@ export const BookingSchema = new Schema(
       start: { type: String, required: true },
       end: { type: String, required: true },
     },
-    paymentStatus: {type: String, enum: ["pending", "completed"], default: "pending"},
+    paymentStatus: {
+      type: String,
+      enum: ["pending", "completed"],
+      default: "pending",
+    },
   },
   { timestamps: true }
 );
+
+BookingSchema.index({ provider: 1, status: 1, bookingDate: 1 });
+BookingSchema.index({ provider: 1, bookingDate: 1 });
+BookingSchema.index({ customer: 1 });
+BookingSchema.index({
+  provider: 1,
+  bookingDate: 1,
+  "timeSlot.start": 1,
+  "timeSlot.end": 1,
+});
 
 const Booking = mongoose.model("booking", BookingSchema);
 
