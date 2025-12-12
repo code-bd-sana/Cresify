@@ -24,6 +24,13 @@ export const saveBooking = async (req, res) => {
       });
     }
 
+    // Check if timeSlot is object with start and end
+    if (!timeSlot.start || !timeSlot.end) {
+      return res.status(400).json({
+        message: "Time slot must have start and end times",
+      });
+    }
+
     // Validate both customer and provider exist
     const [customerData, providerData] = await Promise.all([
       User.findById(customer),
@@ -89,12 +96,8 @@ export const saveBooking = async (req, res) => {
     }
 
     // ====== VALIDATE TIMESLOT FORMAT ======
-    const [slotStart, slotEnd] = timeSlot.split("-");
-    if (!slotStart || !slotEnd) {
-      return res.status(400).json({
-        message: "Invalid timeSlot format. Use HH:MM-HH:MM (24-hour format)",
-      });
-    }
+    const slotStart = timeSlot.start;
+    const slotEnd = timeSlot.end;
 
     // Validate time format
     const timeRegex = /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/;
@@ -159,7 +162,7 @@ export const saveBooking = async (req, res) => {
     const [endHour, endMinute] = slotEnd.split(":").map(Number);
     slotEndTime.setHours(endHour, endMinute, 0, 0);
 
-    // Check for overlapping bookings
+    // Simplified double booking check - using the new schema structure
     const existingBooking = await Booking.findOne({
       provider,
       bookingDate: {
@@ -168,25 +171,15 @@ export const saveBooking = async (req, res) => {
       },
       status: { $in: ["pending", "accept"] },
       $or: [
+        // New slot starts during existing booking
         {
-          // New slot starts during existing booking
           $expr: {
             $and: [
               {
                 $lte: [
                   {
                     $toDate: {
-                      $concat: [
-                        {
-                          $dateToString: {
-                            format: "%Y-%m-%d",
-                            date: "$bookingDate",
-                          },
-                        },
-                        "T",
-                        { $arrayElemAt: [{ $split: ["$timeSlot", "-"] }, 0] },
-                        ":00",
-                      ],
+                      $concat: ["$bookingDate", "T", "$timeSlot.start", ":00"],
                     },
                   },
                   slotStartTime,
@@ -196,17 +189,7 @@ export const saveBooking = async (req, res) => {
                 $gt: [
                   {
                     $toDate: {
-                      $concat: [
-                        {
-                          $dateToString: {
-                            format: "%Y-%m-%d",
-                            date: "$bookingDate",
-                          },
-                        },
-                        "T",
-                        { $arrayElemAt: [{ $split: ["$timeSlot", "-"] }, 1] },
-                        ":00",
-                      ],
+                      $concat: ["$bookingDate", "T", "$timeSlot.end", ":00"],
                     },
                   },
                   slotStartTime,
@@ -215,25 +198,15 @@ export const saveBooking = async (req, res) => {
             ],
           },
         },
+        // New slot ends during existing booking
         {
-          // New slot ends during existing booking
           $expr: {
             $and: [
               {
                 $lt: [
                   {
                     $toDate: {
-                      $concat: [
-                        {
-                          $dateToString: {
-                            format: "%Y-%m-%d",
-                            date: "$bookingDate",
-                          },
-                        },
-                        "T",
-                        { $arrayElemAt: [{ $split: ["$timeSlot", "-"] }, 0] },
-                        ":00",
-                      ],
+                      $concat: ["$bookingDate", "T", "$timeSlot.start", ":00"],
                     },
                   },
                   slotEndTime,
@@ -243,17 +216,7 @@ export const saveBooking = async (req, res) => {
                 $gte: [
                   {
                     $toDate: {
-                      $concat: [
-                        {
-                          $dateToString: {
-                            format: "%Y-%m-%d",
-                            date: "$bookingDate",
-                          },
-                        },
-                        "T",
-                        { $arrayElemAt: [{ $split: ["$timeSlot", "-"] }, 1] },
-                        ":00",
-                      ],
+                      $concat: ["$bookingDate", "T", "$timeSlot.end", ":00"],
                     },
                   },
                   slotEndTime,
@@ -262,25 +225,15 @@ export const saveBooking = async (req, res) => {
             ],
           },
         },
+        // New slot completely contains existing booking
         {
-          // New slot completely contains existing booking
           $expr: {
             $and: [
               {
                 $gte: [
                   {
                     $toDate: {
-                      $concat: [
-                        {
-                          $dateToString: {
-                            format: "%Y-%m-%d",
-                            date: "$bookingDate",
-                          },
-                        },
-                        "T",
-                        { $arrayElemAt: [{ $split: ["$timeSlot", "-"] }, 0] },
-                        ":00",
-                      ],
+                      $concat: ["$bookingDate", "T", "$timeSlot.start", ":00"],
                     },
                   },
                   slotStartTime,
@@ -290,17 +243,7 @@ export const saveBooking = async (req, res) => {
                 $lte: [
                   {
                     $toDate: {
-                      $concat: [
-                        {
-                          $dateToString: {
-                            format: "%Y-%m-%d",
-                            date: "$bookingDate",
-                          },
-                        },
-                        "T",
-                        { $arrayElemAt: [{ $split: ["$timeSlot", "-"] }, 1] },
-                        ":00",
-                      ],
+                      $concat: ["$bookingDate", "T", "$timeSlot.end", ":00"],
                     },
                   },
                   slotEndTime,
@@ -322,17 +265,20 @@ export const saveBooking = async (req, res) => {
     const newBooking = new Booking({
       customer,
       provider,
-      address: address || {}, 
+      address: address,
       paymentMethod,
       bookingDate: bookingDateObj,
-      timeSlot,
+      timeSlot: {
+        start: slotStart,
+        end: slotEnd,
+      },
       status: "pending",
       paymentStatus: paymentMethod === "cod" ? "pending" : "unpaid",
     });
 
     const savedBooking = await newBooking.save();
 
-    // Optionally: Send notification to provider
+    // Optionally send notification to provider/customer here
 
     return res.status(201).json({
       message: "Booking created successfully",

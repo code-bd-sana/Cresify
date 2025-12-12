@@ -13,7 +13,7 @@ export const BookingSchema = new Schema(
       required: true,
       ref: User,
     },
-    adress: {
+    address: {
       street: {
         type: String,
         required: [true, "Street is required"],
@@ -55,8 +55,8 @@ export const BookingSchema = new Schema(
       required: true,
     },
     timeSlot: {
-      type: String,
-      required: true,
+      start: { type: String, required: true },
+      end: { type: String, required: true },
     },
     paymentStatus: String,
   },
