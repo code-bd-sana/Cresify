@@ -1,6 +1,7 @@
 "use client";
 import {
   useCreateBlogMutation,
+  useDeleteBlogMutation,
   useEditBlogMutation,
   useGetBlogsQuery,
 } from "@/feature/admin/AdminBlogApi";
@@ -8,6 +9,7 @@ import {
   ArrowRightIcon,
   ChevronDown,
   PencilLine,
+  Trash2,
   Upload,
   X,
 } from "lucide-react";
@@ -35,6 +37,45 @@ const ArticlesPage = () => {
   } = useGetBlogsQuery({ page, limit: 9 });
   const [createBlog, { isLoading: isCreating }] = useCreateBlogMutation();
   const [editBlog, { isLoading: isEditing }] = useEditBlogMutation();
+  const [deleteBlog] = useDeleteBlogMutation();
+
+  const handleDeleteArticle = async () => {
+    if (!editingArticle?._id) return;
+
+    const confirmDelete = await Swal.fire({
+      title: "Are you sure?",
+      text: "This action will delete the article permanently.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Yes, delete it!",
+      cancelButtonText: "Cancel",
+      confirmButtonColor: "#d33",
+    });
+
+    if (!confirmDelete.isConfirmed) return;
+
+    try {
+      const result = await deleteBlog( editingArticle._id ).unwrap();
+
+      console.log(result);
+
+      Swal.fire({
+        icon: "success",
+        title: "Deleted!",
+        text: "The article has been removed.",
+      });
+
+      // reset form & close modal
+      handleCloseModal();
+    } catch (err) {
+      console.log(err);
+      Swal.fire({
+        icon: "error",
+        title: "Delete Failed",
+        text: "Something went wrong while deleting.",
+      });
+    }
+  };
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -522,17 +563,27 @@ const ArticlesPage = () => {
             <hr className='w-[96%] mx-auto border-[#E2E8F0]' />
             <div className='pb-6 pt-4 px-6'>
               {/* Buttons */}
-              <div className='flex justify-end gap-3'>
-                <button
-                  onClick={handleCloseModal}
-                  className='px-6 py-2 text-sm bg-white border border-[#F78D25] text-[#F78D25] rounded-lg hover:bg-gray-50 transition cursor-pointer'>
-                  Cancel
-                </button>
-                <button
-                  onClick={handleSubmit}
-                  className='px-6 py-2 text-sm bg-linear-to-r from-[#8736C5] via-[#9C47C6] to-[#F88D25] text-white rounded-lg hover:shadow-lg transition cursor-pointer'>
-                  {editingArticle ? "Update Article" : "Upload Article"}
-                </button>
+              <div className='flex justify-between gap-3'>
+                {editingArticle && (
+                  <button
+                    onClick={handleDeleteArticle}
+                    className='px-5 py-2 bg-red-600 text-white rounded-lg flex items-center gap-2 hover:bg-red-700 transition cursor-pointer'>
+                    <Trash2 className='w-4 h-4' />
+                    Delete
+                  </button>
+                )}
+                <div className='flex gap-2'>
+                  <button
+                    onClick={handleCloseModal}
+                    className='px-6 py-2 text-sm bg-white border border-[#F78D25] text-[#F78D25] rounded-lg hover:bg-gray-50 transition cursor-pointer'>
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleSubmit}
+                    className='px-6 py-2 text-sm bg-linear-to-r from-[#8736C5] via-[#9C47C6] to-[#F88D25] text-white rounded-lg hover:shadow-lg transition cursor-pointer'>
+                    {editingArticle ? "Update Article" : "Upload Article"}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
