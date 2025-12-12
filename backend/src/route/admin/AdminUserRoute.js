@@ -7,6 +7,7 @@ import {
   adminOverview,
   changeUserStatus,
   getAllUsers,
+  getUserById
 } from "../../controller/admin/AdminUserController.js";
 
 const router = Router();
@@ -39,5 +40,14 @@ router.get("/overview", adminOverview);
  * @controller changeUserStatus
  */
 router.put("/status", changeUserStatus);
+
+/**
+ * @route   GET /admin/users/:id
+ * @desc    Get user by ID
+ * @params  id
+ * @access  Admin
+ * @controller getUserById
+ */
+router.get("/:id", getUserById)
 
 export default router;
