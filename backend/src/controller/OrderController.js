@@ -13,6 +13,7 @@ export const saveOrder = async (req, res) => {
       data: saved,
     });
   } catch (error) {
+    console.log(error);
     res.status(500).json({
       error,
       message: error?.message,
