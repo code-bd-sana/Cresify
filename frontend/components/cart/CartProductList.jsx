@@ -6,6 +6,7 @@ import {
   useIncreaseCartMutation,
   useMyCartQuery,
 } from "@/feature/customer/CartApi";
+import { useCreateOrderMutation } from "@/feature/customer/OrderApi";
 import Cookies from "js-cookie";
 import {
   CheckCircle2,
@@ -72,6 +73,7 @@ const selectAll = (cartItems) => {
 export default function CombinedCartCheckoutPage() {
   const { data } = useSession();
   const id = data?.user?.id;
+  const [createOrder, {isLoading:orderLoading, error}] = useCreateOrderMutation();
 
   const { data: cartData, isLoading } = useMyCartQuery(id);
   const [increaseCart] = useIncreaseCartMutation();
@@ -189,9 +191,11 @@ export default function CombinedCartCheckoutPage() {
     setShowCheckout(true);
   };
 
-  const handleConfirmAndPay = () => {
+  const handleConfirmAndPay = async() => {
     // Prepare order data
-    const selectedCartItems = cartItems.filter((item) =>
+try {
+
+      const selectedCartItems = cartItems.filter((item) =>
       selectedProducts.includes(item._id)
     );
 
@@ -226,11 +230,17 @@ export default function CombinedCartCheckoutPage() {
     // Log to console based on payment method
     if (checkoutData.paymentMethod === "cod") {
       console.log("Cash on Delivery Order Data:", orderData);
+
+      await createOrder(orderData).unwrap
       toast.success("Cash on Delivery order placed! Check console for data.");
     } else {
       console.log("Card Payment Order Data:", orderData);
       toast.success("Card payment processed! Check console for data.");
     }
+  
+} catch (error) {
+  toast.error(error?.data?.message)
+}
 
     // Here you would typically send this data to your backend API
     // Example: await createOrder(orderData);
