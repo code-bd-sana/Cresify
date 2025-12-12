@@ -11,14 +11,14 @@ export const OrderApi = createApi({
     createOrder: builder.mutation({
         query:(data)=>({
 
-            url:`/order/`,
+            url:`/customer/order/place`,
             method:"POST",
             body:data
 
         })
     }),
 
-    
+
   
  
 
