@@ -268,6 +268,7 @@ export const saveBooking = async (req, res) => {
           $expr: {
             $and: [
               {
+                // New slot start is before existing booking end
                 $lte: [
                   {
                     $toDate: {
@@ -278,6 +279,7 @@ export const saveBooking = async (req, res) => {
                 ],
               },
               {
+                // New slot start is after existing booking start
                 $gt: [
                   {
                     $toDate: {
@@ -295,6 +297,7 @@ export const saveBooking = async (req, res) => {
           $expr: {
             $and: [
               {
+                // New slot end is after existing booking start
                 $lt: [
                   {
                     $toDate: {
@@ -305,6 +308,7 @@ export const saveBooking = async (req, res) => {
                 ],
               },
               {
+                // New slot end is before existing booking end
                 $gte: [
                   {
                     $toDate: {
@@ -322,6 +326,7 @@ export const saveBooking = async (req, res) => {
           $expr: {
             $and: [
               {
+                // New slot start is before existing booking start
                 $gte: [
                   {
                     $toDate: {
@@ -332,6 +337,7 @@ export const saveBooking = async (req, res) => {
                 ],
               },
               {
+                // New slot end is after existing booking end
                 $lte: [
                   {
                     $toDate: {
@@ -353,6 +359,14 @@ export const saveBooking = async (req, res) => {
       });
     }
 
+
+    // Make the payment process here (e.g., for 'card' paymentMethod)
+    if(paymentMethod === 'card'){
+      // Integrate with payment gateway here
+      // For now, we assume payment is successful
+    }
+
+
     // ====== CREATE & SAVE BOOKING ======
     const newBooking = new Booking({
       customer,
@@ -369,6 +383,8 @@ export const saveBooking = async (req, res) => {
     });
 
     const savedBooking = await newBooking.save();
+
+    // Optional send notification to provider and customer about new booking here
 
     return res.status(201).json({
       message: "Booking created successfully",
