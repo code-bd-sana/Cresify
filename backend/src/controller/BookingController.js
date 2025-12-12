@@ -379,7 +379,7 @@ export const saveBooking = async (req, res) => {
         end: slotEnd,
       },
       status: "pending",
-      paymentStatus: paymentMethod === "cod" ? "pending" : "unpaid",
+      paymentStatus: paymentMethod === "cod" ? "pending" : "completed",
     });
 
     const savedBooking = await newBooking.save();
