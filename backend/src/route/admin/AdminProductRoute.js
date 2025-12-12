@@ -7,7 +7,9 @@ import {
   getAllProducts,
   changeProductStatus,
   adminProductOverview,
+  getProductById,
 } from "../../controller/admin/AdminProductController.js";
+import { get } from "mongoose";
 
 const router = Router();
 
@@ -35,5 +37,14 @@ router.get("/overview", adminProductOverview);
  * @controller changeProductStatus
  */
 router.put("/status/:id", changeProductStatus);
+
+/**
+ * @route   GET /admin/users/:id
+ * @desc    Get user by ID
+ * @params  id
+ * @access  Admin
+ * @controller getProductById
+ */
+router.get("/:id", getProductById);
 
 export default router;

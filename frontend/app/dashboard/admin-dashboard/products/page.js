@@ -5,7 +5,10 @@ import {
   useAdminProductOverviewQuery,
   useAllProductsQuery,
   useChangeProductStatusMutation,
+  useGetProductByIdQuery,
 } from "@/feature/admin/AdminProductApi";
+
+import { Dialog } from "@headlessui/react";
 import Image from "next/image";
 import { useState } from "react";
 import {
@@ -21,12 +24,20 @@ import Swal from "sweetalert2";
 export default function ProductManagementPage() {
   const [page, setPage] = useState(0);
   const [search, setSearch] = useState("");
+  const [selectedProductId, setSelectedProductId] = useState(null);
+  const [showProductModal, setShowProductModal] = useState(false);
   const limit = 10;
+
+  // Product details API (fetch only when modal is open)
+  const { data: productDetails, isLoading: isProductLoading } =
+    useGetProductByIdQuery(selectedProductId, {
+      skip: !selectedProductId,
+    });
 
   // Fetch overview stats
   const { data: overview } = useAdminProductOverviewQuery();
 
-  // Fetch products with pagination and search
+  // Fetch products
   const { data: productsData, isLoading } = useAllProductsQuery({
     search,
     skip: page * limit,
@@ -84,18 +95,14 @@ export default function ProductManagementPage() {
       });
 
       if (result.isConfirmed) {
-        const response = await changeStatus({
-          id: productId,
-          status: newStatus,
-        }).unwrap();
+        await changeStatus({ id: productId, status: newStatus }).unwrap();
         Swal.fire({
           title: "Updated!",
-          text: `Product status has been updated to "${newStatus}".`,
+          text: `Product status updated to "${newStatus}".`,
           icon: "success",
           timer: 2000,
           showConfirmButton: false,
         });
-        console.log(response);
       }
     } catch (error) {
       Swal.fire({
@@ -103,13 +110,12 @@ export default function ProductManagementPage() {
         text: "Failed to update product status.",
         icon: "error",
       });
-      console.error("Failed to update status:", error);
     }
   };
 
   const handleSearchChange = (e) => {
     setSearch(e.target.value);
-    setPage(0); // reset page when searching
+    setPage(0);
   };
 
   return (
@@ -146,9 +152,8 @@ export default function ProductManagementPage() {
         })}
       </div>
 
-      {/* Search + Filter */}
+      {/* Search */}
       <div className='mt-8 bg-white p-4 rounded-xl border border-[#ECECEC] shadow-sm flex flex-col md:flex-row gap-4 items-center'>
-        {/* Search */}
         <div className='relative w-full'>
           <FiSearch className='absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xl' />
           <input
@@ -160,9 +165,9 @@ export default function ProductManagementPage() {
           />
         </div>
 
-        {/* Filter dropdown */}
+        {/* Dummy filter */}
         <div className='relative w-full md:w-80'>
-          <select className='appearance-none w-full px-4 py-3 bg-[#FCFCFF] border border-[#E5E7EB] text-sm rounded-lg outline-none cursor-pointer'>
+          <select className='appearance-none w-full px-4 py-3 bg-[#FCFCFF] border border-[#E5E7EB] text-sm rounded-lg'>
             <option>All Product</option>
             <option>Delivered</option>
             <option>Pending</option>
@@ -198,6 +203,7 @@ export default function ProductManagementPage() {
                   <th className='py-3 px-3 text-left'>ACTIONS</th>
                 </tr>
               </thead>
+
               <tbody>
                 {products.map((item, idx) => (
                   <tr
@@ -229,51 +235,38 @@ export default function ProductManagementPage() {
                       </div>
                     </td>
 
-                    {/* Seller */}
-                    <td className='py-3 px-3 text-gray-700'>
-                      {item.seller?.name || "N/A"}
-                    </td>
+                    <td className='py-3 px-3'>{item.seller?.name || "N/A"}</td>
 
-                    {/* Category */}
-                    <td className='py-3 px-3 text-gray-700'>
-                      {item.category || "N/A"}
-                    </td>
+                    <td className='py-3 px-3'>{item.category || "N/A"}</td>
 
-                    {/* Price */}
                     <td className='py-3 px-3 text-[#F88D25] font-medium'>
-                      ${item.price?.toFixed(2) || "0.00"}
+                      ${item.price?.toFixed(2)}
                     </td>
 
-                    {/* Stock */}
-                    <td className='py-3 px-3 text-gray-700'>
-                      {item.stock || 0}
-                    </td>
+                    <td className='py-3 px-3'>{item.stock}</td>
 
-                    {/* Status */}
                     <td className='py-3 px-3'>
                       <select
-                        value={item.status || "active"}
+                        value={item.status}
                         onChange={(e) =>
                           handleStatusChange(item._id, e.target.value)
                         }
-                        className={`px-3 py-1.5 rounded-full text-xs font-medium border-0 outline-none cursor-pointer ${
-                          statusColors[item.status || "active"]
+                        className={`px-3 py-1.5 rounded-full text-xs border cursor-pointer ${
+                          statusColors[item.status]
                         }`}>
                         <option value='active'>Active</option>
                         <option value='rejected'>Rejected</option>
                       </select>
                     </td>
 
-                    {/* Actions */}
                     <td className='py-3 px-3 text-right'>
-                      <button className='text-xs border rounded-lg px-3 py-1 text-[#9C6BFF] border-[#E2D4FF] bg-[#F9F6FF] mr-2'>
+                      <button
+                        className='text-xs border rounded-lg px-3 py-1 text-[#9C6BFF] border-[#E2D4FF] bg-[#F9F6FF]'
+                        onClick={() => {
+                          setSelectedProductId(item._id);
+                          setShowProductModal(true);
+                        }}>
                         View
-                      </button>
-                      <button className='text-xs bg-[#E6F8EF] text-[#32A35A] px-2 py-1 rounded-lg mr-2'>
-                        ✔
-                      </button>
-                      <button className='text-xs bg-[#FEE2E2] text-[#D32F2F] px-2 py-1 rounded-lg'>
-                        ✖
                       </button>
                     </td>
                   </tr>
@@ -283,7 +276,6 @@ export default function ProductManagementPage() {
           )}
         </div>
 
-        {/* Pagination */}
         {!isLoading && products.length > 0 && (
           <Pagination
             page={page}
@@ -294,6 +286,91 @@ export default function ProductManagementPage() {
           />
         )}
       </div>
+
+      {/* PRODUCT DETAILS MODAL */}
+      <Dialog
+        open={showProductModal}
+        onClose={() => {
+          setShowProductModal(false);
+          setSelectedProductId(null);
+        }}
+        className='fixed inset-0 z-50 flex items-center justify-center'>
+        {/* Overlay */}
+        <div className='fixed inset-0 bg-black/30' aria-hidden='true' />
+
+        <Dialog.Panel className='bg-white p-6 rounded-xl shadow-lg max-w-md w-full relative'>
+          <Dialog.Title className='text-lg font-semibold'>
+            Product Details
+          </Dialog.Title>
+
+          {isProductLoading ? (
+            <div className='py-6 text-center text-gray-500'>Loading...</div>
+          ) : productDetails?.data ? (
+            <div className='mt-4 space-y-3'>
+              {/* Image */}
+              <div className='flex justify-center'>
+                <Image
+                  src={productDetails.data.image || "/no-image.png"}
+                  width={150}
+                  height={150}
+                  alt='product'
+                  className='rounded-lg object-cover'
+                />
+              </div>
+
+              <div>
+                <span className='font-medium'>Name: </span>
+                {productDetails.data.name}
+              </div>
+
+              <div>
+                <span className='font-medium'>Seller: </span>
+                {productDetails.data.seller?.name || "N/A"}
+              </div>
+
+              <div>
+                <span className='font-medium'>Category: </span>
+                {productDetails.data.category}
+              </div>
+
+              <div>
+                <span className='font-medium'>Price: </span>$
+                {productDetails.data.price}
+              </div>
+
+              <div>
+                <span className='font-medium'>Stock: </span>
+                {productDetails.data.stock}
+              </div>
+
+              <div>
+                <span className='font-medium'>Status: </span>
+                {productDetails.data.status}
+              </div>
+
+              <div>
+                <span className='font-medium'>Created: </span>
+                {new Date(productDetails.data.createdAt).toLocaleString()}
+              </div>
+            </div>
+          ) : (
+            <div className='py-6 text-center text-gray-500'>
+              No product details found.
+            </div>
+          )}
+
+          <div className='mt-6 flex justify-end'>
+            <button
+              className='px-4 py-2 bg-[#9C6BFF] text-white rounded-lg'
+              onClick={() => {
+                setShowProductModal(false);
+                setSelectedProductId(null);
+              }}>
+              Close
+            </button>
+          </div>
+        </Dialog.Panel>
+      </Dialog>
     </div>
   );
 }

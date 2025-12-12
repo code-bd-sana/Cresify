@@ -228,3 +228,37 @@ export const changeProductStatus = async (req, res) => {
     });
   }
 };
+
+/**
+ * @function getProductById
+ * @description Retrieves detailed information of a specific product by its ID.
+ * 
+ * @param {Object} req - The request object
+ * @param {Object} res - The response object
+ * @params id - Product ID
+ * @route GET /admin/products/:id
+ * @access Admin
+ */
+export const getProductById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const product = await Product.findById(id).populate("seller", "name email");
+
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+        message: "Product not found",
+      });
+    }
+    return res.status(200).json({
+      success: true,
+      data: product,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to retrieve product",
+      error: error.message,
+    });
+  }
+};
