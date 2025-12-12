@@ -1,12 +1,14 @@
 import CustomerReviews from "@/components/products/CustomerReviews";
 import ServiceDetails from "@/components/services/ServiceDetails";
-import React from "react";
+import { Suspense } from "react";
 
 const page = () => {
   return (
     <div>
-      <ServiceDetails />
-      <CustomerReviews/>
+      <Suspense fallback={<div>Loading service details...</div>}>
+        <ServiceDetails />
+      </Suspense>
+      <CustomerReviews />
     </div>
   );
 };
