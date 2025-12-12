@@ -1,10 +1,10 @@
 import mongoose, { Schema } from "mongoose";
 
-const blogShcema = new Schema(
+const BlogSchema = new Schema(
   {
     img: {
       type: String,
-      required: [true, "Blog image is Requried"],
+      required: [true, "Blog image is Required"],
     },
     category: {
       type: String,
@@ -22,6 +22,6 @@ const blogShcema = new Schema(
   { timestamps: true }
 );
 
-const Blog = mongoose.model("blog", blogShcema);
+const Blog = mongoose.model("blog", BlogSchema);
 
 export default Blog;
