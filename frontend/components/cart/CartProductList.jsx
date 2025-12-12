@@ -207,6 +207,7 @@ try {
     const orderData = {
       // Customer info
       fullName: checkoutData.fullName,
+      userId:id,
       email: checkoutData.email,
       phone: checkoutData.phone,
       address: {
@@ -219,7 +220,7 @@ try {
       paymentMethod: checkoutData.paymentMethod,
       paymentStatus: checkoutData.paymentMethod === "cod" ? "pending" : "paid",
       // Order items
-      products: selectedCartItems.map((item) => item.product._id),
+      productIds: selectedCartItems.map((item) => item.product._id),
       item: selectedCartItems.length,
       amount: finalTotal,
       // Card details (if card payment)
@@ -237,7 +238,8 @@ try {
       console.log("Cash on Delivery Order Data:", orderData);
 
       await createOrder(orderData).unwrap
-      toast.success("Cash on Delivery order placed! Check console for data.");
+      toast.success("Order created successfully")
+    
     } else {
       console.log("Card Payment Order Data:", orderData);
       toast.success("Card payment processed! Check console for data.");
@@ -246,7 +248,7 @@ try {
 } catch (error) {
 
   console.log(error);
-  toast.error(error?.data?.message)
+
 }
 
     // Here you would typically send this data to your backend API

@@ -1,6 +1,7 @@
 import short from "short-uuid";
 import Order from "../../models/OrderModel.js";
 import Product from "../../models/ProductModel.js";
+import mongoose from "mongoose";
 
 // Generate a short, Base58-encoded UUID immediately:
 short.generate(); // 73WakrfVbNJBaAmhQtEeDv
