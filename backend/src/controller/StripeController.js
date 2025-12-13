@@ -10,7 +10,7 @@ import WebhookLog from "../models/WebhookLogModel.js";
 
 dotenv.config();
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: "2022-11-15",
+  apiVersion: '2025-10-29.clover',
 });
 
 export const stripeWebhook = async (req, res) => {
