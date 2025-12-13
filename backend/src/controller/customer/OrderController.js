@@ -119,7 +119,7 @@ export const placeOrder = async (req, res) => {
     // 5️⃣ Seller breakdown
     // ---------------------------
     const commissionPercent = Number(
-      process.env.PLATFORM_COMMISSION_PERCENT || 10
+      process.env.PLATFORM_COMMISSION_PERCENT || 20
     );
 
     const sellerMap = {};
@@ -172,7 +172,7 @@ export const placeOrder = async (req, res) => {
         payment_method_types: ["card"],
         line_items,
         success_url: `${process.env.FRONTEND_URL}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${process.env.FRONTEND_URL}/payment-cancel`,
+        cancel_url: `${process.env.FRONTEND_URL}/payment-cancel?orderId=${orderReadableId}`,
         metadata: {
           orderId: order._id.toString(),
           orderReadableId,
