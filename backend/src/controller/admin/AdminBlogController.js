@@ -1,6 +1,5 @@
 import Blog from "../../models/BlogModel.js";
 import {
-  deleteImageFromImgBB,
   extractBase64FromDataURL,
   uploadImageToImgBB,
 } from "../../utils/imageUpload.js";
@@ -139,14 +138,14 @@ export const editBlog = async (req, res) => {
       // Upload new image to ImgBB
       const base64Image = extractBase64FromDataURL(data.img);
       const uploadResult = await uploadImageToImgBB(base64Image);
-      imageUrl = uploadResult.url;     
+      imageUrl = uploadResult.url;
     }
 
     const updated = await Blog.updateOne(
       { _id: id },
       {
         $set: {
-          img: imageUrl,          
+          img: imageUrl,
           title: data?.title,
           category: data?.category,
           description: data?.description,

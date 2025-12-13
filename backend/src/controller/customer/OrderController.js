@@ -1,13 +1,19 @@
+import dotenv from "dotenv";
+import mongoose from "mongoose";
 import short from "short-uuid";
+import Stripe from "stripe";
+import Cart from "../../models/CartModel.js";
 import Order from "../../models/OrderModel.js";
+import Payment from "../../models/PaymentModel.js";
 import Product from "../../models/ProductModel.js";
 
-// Generate a short, Base58-encoded UUID immediately:
-short.generate(); // 73WakrfVbNJBaAmhQtEeDv
+dotenv.config();
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+  apiVersion: "2025-10-29.clover",
+});
 
-// Or create a translator and generate using its method:
-const translator = short.createTranslator(); // Default is flickrBase58
-const orderId = translator.generate(); // mhvXdrZT4jP5T8vBxuvm75
+// translator for ids
+const translator = short.createTranslator();
 
 /**
  * Place an order for selected products by a user.
@@ -23,83 +29,212 @@ const orderId = translator.generate(); // mhvXdrZT4jP5T8vBxuvm75
  * @returns {Object} JSON response with order info
  */
 export const placeOrder = async (req, res) => {
+  const session = await mongoose.startSession();
+
   try {
-    const { userId, productIds, address, paymentMethod } = req.body;
+    const { userId, address, paymentMethod } = req.body;
 
-    // Validate required fields
-    if (
-      !userId ||
-      !productIds ||
-      !Array.isArray(productIds) ||
-      productIds.length === 0
-    ) {
-      return res
-        .status(400)
-        .json({ message: "User ID and selected products are required" });
+    // ---------------------------
+    // 1️⃣ Validate input
+    // ---------------------------
+    if (!userId || !address?.street || !address?.city || !address?.country) {
+      return res.status(400).json({ message: "Invalid request data" });
     }
 
-    if (!address || !address.street || !address.city || !address.country) {
-      return res
-        .status(400)
-        .json({ message: "Complete shipping address is required" });
+    if (!["cod", "card"].includes(paymentMethod)) {
+      return res.status(400).json({ message: "Invalid payment method" });
     }
 
-    if (!paymentMethod || !["cod", "card"].includes(paymentMethod)) {
-      return res
-        .status(400)
-        .json({ message: "Valid payment method is required" });
-    }
+    session.startTransaction();
 
-    // Use aggregation to fetch products and calculate total items and total amount
-    const productAggregation = await Product.aggregate([
+    // ---------------------------
+    // 2️⃣ Load cart + products
+    // ---------------------------
+    const cartItems = await Cart.aggregate([
+      { $match: { user: new mongoose.Types.ObjectId(userId) } },
+      {
+        $lookup: {
+          from: "products",
+          localField: "product",
+          foreignField: "_id",
+          as: "productDetails",
+        },
+      },
+      { $unwind: "$productDetails" },
       {
         $match: {
-          _id: { $in: productIds.map((id) => new mongoose.Types.ObjectId(id)) },
-          status: "active",
+          "productDetails.status": "active",
+          "productDetails.stock": { $gt: 0 },
         },
       },
-      {
-        $group: {
-          _id: null,
-          totalAmount: { $sum: "$price" },
-          itemCount: { $sum: 1 },
-          products: { $push: "$_id" },
-        },
-      },
-    ]);
+    ]).session(session);
 
-    if (!productAggregation.length) {
-      return res
-        .status(404)
-        .json({ message: "No valid products found for the order" });
+    if (!cartItems.length) {
+      await session.abortTransaction();
+      return res.status(400).json({ message: "Cart is empty" });
     }
 
-    const { totalAmount, itemCount, products } = productAggregation[0];
+    const products = cartItems.map((c) => c.productDetails);
+    const productIds = products.map((p) => p._id);
 
-    // Create new order
-    const newOrder = new Order({
-      orderId,
-      customer: userId,
-      products,
-      item: itemCount,
-      amount: totalAmount,
-      address,
-      paymentMethod,
-      paymentStatus: paymentMethod === "cod" ? "pending" : "paid",
-      status: "processing",
-    });
+    const totalAmount = products.reduce((sum, p) => sum + (p.price || 0), 0);
 
-    const savedOrder = await newOrder.save();
+    // ---------------------------
+    // 3️⃣ Lock stock (atomic)
+    // ---------------------------
+    const stockUpdate = await Product.updateMany(
+      { _id: { $in: productIds }, stock: { $gt: 0 } },
+      { $inc: { stock: -1 } },
+      { session }
+    );
+
+    if (stockUpdate.modifiedCount !== productIds.length) {
+      await session.abortTransaction();
+      return res.status(400).json({ message: "Some items went out of stock" });
+    }
+
+    // ---------------------------
+    // 4️⃣ Create Order
+    // ---------------------------
+    const orderReadableId = translator.new();
+
+    const [order] = await Order.create(
+      [
+        {
+          orderId: orderReadableId,
+          customer: userId,
+          products: productIds,
+          item: products.length,
+          amount: totalAmount,
+          address,
+          paymentMethod,
+          paymentStatus: "pending",
+          status: "pending",
+        },
+      ],
+      { session }
+    );
+
+    // ---------------------------
+    // 5️⃣ Seller breakdown
+    // ---------------------------
+    const commissionPercent = Number(
+      process.env.PLATFORM_COMMISSION_PERCENT || 20
+    );
+
+    const sellerMap = {};
+
+    for (const p of products) {
+      const sellerId = p.seller?.toString();
+      if (!sellerMap[sellerId]) {
+        sellerMap[sellerId] = { amount: 0, items: [] };
+      }
+      sellerMap[sellerId].amount += p.price || 0;
+      sellerMap[sellerId].items.push({
+        productId: p._id.toString(),
+        price: p.price,
+      });
+    }
+
+    const sellerBreakdown = Object.entries(sellerMap).map(
+      ([sellerId, data]) => {
+        const commission = +(data.amount * (commissionPercent / 100)).toFixed(
+          2
+        );
+        const net = +(data.amount - commission).toFixed(2);
+        return {
+          sellerId,
+          gross: data.amount,
+          commission,
+          net,
+          items: data.items,
+        };
+      }
+    );
+
+    // ---------------------------
+    // 6️⃣ CARD PAYMENT (Stripe)
+    // ---------------------------
+    if (paymentMethod === "card") {
+      const line_items = products.map((p) => ({
+        price_data: {
+          currency: process.env.DEFAULT_CURRENCY || "usd",
+          product_data: {
+            name: p.name,
+          },
+          unit_amount: Math.round((p.price || 0) * 100),
+        },
+        quantity: 1,
+      }));
+
+      const checkoutSession = await stripe.checkout.sessions.create({
+        mode: "payment",
+        payment_method_types: ["card"],
+        line_items,
+        success_url: `${process.env.FRONTEND_URL}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${process.env.FRONTEND_URL}/payment-cancel?orderId=${orderReadableId}`,
+        metadata: {
+          orderId: order._id.toString(),
+          orderReadableId,
+          userId,
+          sellerBreakdown: JSON.stringify(sellerBreakdown),
+        },
+      });
+
+      const [payment] = await Payment.create(
+        [
+          {
+            paymentId: translator.new(),
+            order: order._id,
+            buyer: userId,
+            amount: totalAmount,
+            currency: process.env.DEFAULT_CURRENCY || "USD",
+            status: "pending",
+            method: "stripe_checkout",
+            stripeSessionId: checkoutSession.id,
+            metadata: { sellerBreakdown },
+          },
+        ],
+        { session }
+      );
+
+      await Cart.deleteMany(
+        { user: new mongoose.Types.ObjectId(userId) },
+        { session }
+      );
+
+      await session.commitTransaction();
+
+      return res.status(200).json({
+        checkoutUrl: checkoutSession.url,
+        sessionId: checkoutSession.id,
+        orderId: orderReadableId,
+        paymentId: payment.paymentId,
+      });
+    }
+
+    // ---------------------------
+    // 7️⃣ COD FLOW
+    // ---------------------------
+    await Cart.deleteMany(
+      { user: new mongoose.Types.ObjectId(userId) },
+      { session }
+    );
+
+    await session.commitTransaction();
 
     return res.status(201).json({
-      message: "Order placed successfully",
-      order: savedOrder,
+      message: "Order placed with Cash on Delivery",
+      orderId: orderReadableId,
     });
   } catch (error) {
-    console.error("Place order error:", error);
+    await session.abortTransaction();
+    console.error("Place order failed:", error);
     return res.status(500).json({
-      message: "Internal server error",
+      message: "Failed to place order",
       error: error.message,
     });
+  } finally {
+    session.endSession();
   }
 };
