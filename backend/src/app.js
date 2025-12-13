@@ -32,8 +32,13 @@ app.use(
   })
 );
 
-// Stripe webhook must receive raw body. Register before JSON body parser.
-app.post("/webhook", express.raw({ type: "application/json" }), stripeWebhook);
+// Stripe webhook must receive the raw request body so the Stripe signature
+// can be verified. Register the webhook route(s) before the JSON body parser.
+app.post(
+  "/api/webhook",
+  express.raw({ type: "application/json" }),
+  stripeWebhook
+);
 
 /**
  * Body Parser Middleware
