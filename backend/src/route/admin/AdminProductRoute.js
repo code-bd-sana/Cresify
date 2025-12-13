@@ -4,12 +4,11 @@ import { Router } from "express";
  * Controller imports
  */
 import {
-  getAllProducts,
-  changeProductStatus,
   adminProductOverview,
+  changeProductStatus,
+  getAllProducts,
   getProductById,
 } from "../../controller/admin/AdminProductController.js";
-import { get } from "mongoose";
 
 const router = Router();
 
