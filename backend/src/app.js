@@ -10,6 +10,7 @@ import cors from "cors";
 import express from "express";
 import index from "../src/route/index.js";
 import connectDB from "./configure/db.js";
+import { stripeWebhook } from "./controller/StripeController.js";
 
 /**
  * Express application instance
@@ -29,6 +30,14 @@ app.use(
     origin: ["http://localhost:3000", "https://cresify.vercel.app"],
     credentials: true,
   })
+);
+
+// Stripe webhook must receive the raw request body so the Stripe signature
+// can be verified. Register the webhook route(s) before the JSON body parser.
+app.post(
+  "/api/webhook",
+  express.raw({ type: "application/json" }),
+  stripeWebhook
 );
 
 /**

@@ -7,7 +7,6 @@ export const AdminUserApi = createApi({
   tagTypes: ["AdminUsers"],
 
   endpoints: (builder) => ({
-  
     getAdminOverview: builder.query({
       query: () => "/admin/users/overview",
       providesTags: ["AdminUsers"],
@@ -22,13 +21,18 @@ export const AdminUserApi = createApi({
      * @query role - Filter users by role (optional)
      */
     getAllUsers: builder.query({
-      query: ({ search, skip, limit ,role}) =>
+      query: ({ search, skip, limit, role }) =>
         `/admin/users?skip=${skip}&limit=${limit}&search=${encodeURIComponent(
           search ?? ""
         )}&role=${role ?? ""}`,
       providesTags: ["AdminUsers"],
     }),
 
+    /**
+     * Change User Status
+     * Updates the status of a user (active, pending, suspend).
+     * @param {Object} data - Data containing user ID and new status
+     */
     changeUserStatus: builder.mutation({
       query: (data) => ({
         url: `/admin/users/status/`,
@@ -37,6 +41,16 @@ export const AdminUserApi = createApi({
       }),
       invalidatesTags: ["AdminUsers"],
     }),
+
+    /**
+     * Get User By ID
+     * Fetches detailed information of a specific user by their ID.
+     * @param {string} id - The ID of the user to retrieve
+     */
+    getUserById: builder.query({
+      query: (id) => `/admin/users/${id}`,
+      providesTags: ["AdminUsers"],
+    }),
   }),
 });
 
@@ -44,4 +58,5 @@ export const {
   useGetAdminOverviewQuery,
   useGetAllUsersQuery,
   useChangeUserStatusMutation,
+  useGetUserByIdQuery,
 } = AdminUserApi;
