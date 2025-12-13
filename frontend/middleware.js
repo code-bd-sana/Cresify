@@ -16,25 +16,42 @@ export default async function middleware(req) {
 
   const userRole = token?.role;
 
-  //   if (pathname === "/dashboard/payments") {
+  // Protect admin routes
+  if (pathname.startsWith("/dashboard/admin-dashboard")) {
+    if (userRole !== "admin") {
+      return NextResponse.redirect(new URL("/login", req.url));
+    }
+  }
 
-  //     if (userRole !== 'customer' && userRole !== 'butler') {
-  //       return NextResponse.redirect(new URL('/login', req.url));
-  //     }
-  //   }
+  // Protect provider routes
+  if (pathname.startsWith("/dashboard/service-provider-dashboard")) {
+    if (userRole !== "provider") {
+      return NextResponse.redirect(new URL("/login", req.url));
+    }
+  }
 
-  //   if (pathname === "/dashboard/adminTools") {
+  // Protect seller/store routes
+  if (
+    pathname.startsWith("/dashboard/store-profile") ||
+    pathname.startsWith("/dashboard/products")
+  ) {
+    if (userRole !== "seller") {
+      return NextResponse.redirect(new URL("/login", req.url));
+    }
+  }
 
-  //     if (userRole !== 'admin') {
-  //       return NextResponse.redirect(new URL('/login', req.url));
-  //     }
-  //   }
-
-  //   if (pathname === "/dashboard/schedule") {
-  //     if (userRole !== 'butler') {
-  //       return NextResponse.redirect(new URL('/login', req.url));
-  //     }
-  //   }
+  // Protect customer routes
+  if (
+    pathname.startsWith("/dashboard") &&
+    !pathname.startsWith("/dashboard/admin-dashboard") &&
+    !pathname.startsWith("/dashboard/service-provider-dashboard") &&
+    !pathname.startsWith("/dashboard/store-profile") &&
+    !pathname.startsWith("/dashboard/products")
+  ) {
+    if (userRole !== "buyer" && userRole !== "customer") {
+      return NextResponse.redirect(new URL("/login", req.url));
+    }
+  }
 
   return NextResponse.next();
 }
