@@ -27,7 +27,8 @@ const paymentSchema = new Schema(
   { timestamps: true }
 );
 
-paymentSchema.index({ paymentId: 1 });
+// `paymentId` is declared with `unique: true` above which creates an index.
+// Avoid declaring the same single-field index again to prevent duplicate-index warnings.
 paymentSchema.index({ order: 1, buyer: 1, seller: 1 });
 
 const Payment = mongoose.model("Payment", paymentSchema);

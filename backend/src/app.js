@@ -10,6 +10,7 @@ import cors from "cors";
 import express from "express";
 import index from "../src/route/index.js";
 import connectDB from "./configure/db.js";
+import { stripeWebhook } from "./controller/StripeController.js";
 
 /**
  * Express application instance
@@ -30,6 +31,9 @@ app.use(
     credentials: true,
   })
 );
+
+// Stripe webhook must receive raw body. Register before JSON body parser.
+app.post("/webhook", express.raw({ type: "application/json" }), stripeWebhook);
 
 /**
  * Body Parser Middleware

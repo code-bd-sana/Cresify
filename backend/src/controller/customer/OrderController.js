@@ -1,11 +1,19 @@
+import dotenv from "dotenv";
+import mongoose from "mongoose";
 import short from "short-uuid";
+import Stripe from "stripe";
 import Cart from "../../models/CartModel.js";
 import Order from "../../models/OrderModel.js";
+import Payment from "../../models/PaymentModel.js";
 import Product from "../../models/ProductModel.js";
 
-// Or create a translator and generate using its method:
-const translator = short.createTranslator(); // Default is flickrBase58
-const orderId = translator.generate(); // mhvXdrZT4jP5T8vBxuvm75
+dotenv.config();
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+  apiVersion: "2025-10-29.clover",
+});
+
+// translator for ids
+const translator = short.createTranslator();
 
 /**
  * Place an order for selected products by a user.
@@ -26,18 +34,23 @@ export const placeOrder = async (req, res) => {
   try {
     const { userId, address, paymentMethod } = req.body;
 
-    // Validate input
+    // ---------------------------
+    // 1️⃣ Validate input
+    // ---------------------------
     if (!userId || !address?.street || !address?.city || !address?.country) {
       return res.status(400).json({ message: "Invalid request data" });
     }
+
     if (!["cod", "card"].includes(paymentMethod)) {
       return res.status(400).json({ message: "Invalid payment method" });
     }
 
     session.startTransaction();
 
-    // PURE AGGREGATION: Get cart + valid products + calculate total in DB
-    const cartAggregation = await Cart.aggregate([
+    // ---------------------------
+    // 2️⃣ Load cart + products
+    // ---------------------------
+    const cartItems = await Cart.aggregate([
       { $match: { user: new mongoose.Types.ObjectId(userId) } },
       {
         $lookup: {
@@ -54,65 +67,155 @@ export const placeOrder = async (req, res) => {
           "productDetails.stock": { $gt: 0 },
         },
       },
-      {
-        $group: {
-          _id: null,
-          totalAmount: { $sum: "$productDetails.price" },
-          itemCount: { $sum: 1 },
-          productIds: { $push: "$productDetails._id" },
-          cartItemIds: { $push: "$_id" }, // to delete cart later
-        },
-      },
     ]).session(session);
 
-    if (!cartAggregation.length || cartAggregation[0].itemCount === 0) {
+    if (!cartItems.length) {
       await session.abortTransaction();
-      return res.status(400).json({
-        message: "Your cart is empty or contains unavailable products",
-      });
+      return res.status(400).json({ message: "Cart is empty" });
     }
 
-    const { totalAmount, itemCount, productIds } = cartAggregation[0];
+    const products = cartItems.map((c) => c.productDetails);
+    const productIds = products.map((p) => p._id);
 
-    // Atomic stock decrement — prevents race condition
-    const stockResult = await Product.updateMany(
-      {
-        _id: { $in: productIds },
-        stock: { $gt: 0 },
-      },
+    const totalAmount = products.reduce((sum, p) => sum + (p.price || 0), 0);
+
+    // ---------------------------
+    // 3️⃣ Lock stock (atomic)
+    // ---------------------------
+    const stockUpdate = await Product.updateMany(
+      { _id: { $in: productIds }, stock: { $gt: 0 } },
       { $inc: { stock: -1 } },
       { session }
     );
 
-    if (stockResult.modifiedCount !== productIds.length) {
+    if (stockUpdate.modifiedCount !== productIds.length) {
       await session.abortTransaction();
-      return res.status(400).json({
-        message: "Some items went out of stock. Please try again.",
-      });
+      return res.status(400).json({ message: "Some items went out of stock" });
     }
 
-    // Generate short unique order ID
-    const orderId = translator.new();
+    // ---------------------------
+    // 4️⃣ Create Order
+    // ---------------------------
+    const orderReadableId = translator.new();
 
-    // Create order
     const [order] = await Order.create(
       [
         {
-          orderId,
+          orderId: orderReadableId,
           customer: userId,
           products: productIds,
-          item: itemCount,
+          item: products.length,
           amount: totalAmount,
           address,
           paymentMethod,
-          paymentStatus: paymentMethod === "cod" ? "pending" : "paid",
-          status: "processing",
+          paymentStatus: "pending",
+          status: "pending",
         },
       ],
       { session }
     );
 
-    // Clear cart
+    // ---------------------------
+    // 5️⃣ Seller breakdown
+    // ---------------------------
+    const commissionPercent = Number(
+      process.env.PLATFORM_COMMISSION_PERCENT || 10
+    );
+
+    const sellerMap = {};
+
+    for (const p of products) {
+      const sellerId = p.seller?.toString();
+      if (!sellerMap[sellerId]) {
+        sellerMap[sellerId] = { amount: 0, items: [] };
+      }
+      sellerMap[sellerId].amount += p.price || 0;
+      sellerMap[sellerId].items.push({
+        productId: p._id.toString(),
+        price: p.price,
+      });
+    }
+
+    const sellerBreakdown = Object.entries(sellerMap).map(
+      ([sellerId, data]) => {
+        const commission = +(data.amount * (commissionPercent / 100)).toFixed(
+          2
+        );
+        const net = +(data.amount - commission).toFixed(2);
+        return {
+          sellerId,
+          gross: data.amount,
+          commission,
+          net,
+          items: data.items,
+        };
+      }
+    );
+
+    // ---------------------------
+    // 6️⃣ CARD PAYMENT (Stripe)
+    // ---------------------------
+    if (paymentMethod === "card") {
+      const line_items = products.map((p) => ({
+        price_data: {
+          currency: process.env.DEFAULT_CURRENCY || "usd",
+          product_data: {
+            name: p.name,
+          },
+          unit_amount: Math.round((p.price || 0) * 100),
+        },
+        quantity: 1,
+      }));
+
+      const checkoutSession = await stripe.checkout.sessions.create({
+        mode: "payment",
+        payment_method_types: ["card"],
+        line_items,
+        success_url: `${process.env.FRONTEND_URL}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${process.env.FRONTEND_URL}/payment-cancel`,
+        metadata: {
+          orderId: order._id.toString(),
+          orderReadableId,
+          userId,
+          sellerBreakdown: JSON.stringify(sellerBreakdown),
+        },
+      });
+
+      const [payment] = await Payment.create(
+        [
+          {
+            paymentId: translator.new(),
+            order: order._id,
+            buyer: userId,
+            amount: totalAmount,
+            currency: process.env.DEFAULT_CURRENCY || "USD",
+            status: "pending",
+            method: "stripe_checkout",
+            stripeSessionId: checkoutSession.id,
+            metadata: { sellerBreakdown },
+          },
+        ],
+        { session }
+      );
+
+      await Cart.deleteMany(
+        { user: new mongoose.Types.ObjectId(userId) },
+        { session }
+      );
+
+      await session.commitTransaction();
+
+      return res.status(200).json({
+        checkoutUrl: checkoutSession.url,
+        sessionId: checkoutSession.id,
+        orderId: orderReadableId,
+        paymentId: payment.paymentId,
+      });
+    }
+
+    // ---------------------------
+    // 7️⃣ COD FLOW
+    // ---------------------------
     await Cart.deleteMany(
       { user: new mongoose.Types.ObjectId(userId) },
       { session }
@@ -121,15 +224,8 @@ export const placeOrder = async (req, res) => {
     await session.commitTransaction();
 
     return res.status(201).json({
-      message: "Order placed successfully!",
-      order: {
-        orderId: order.orderId,
-        amount: order.amount,
-        items: order.item,
-        status: order.status,
-        paymentStatus: order.paymentStatus,
-        createdAt: order.createdAt,
-      },
+      message: "Order placed with Cash on Delivery",
+      orderId: orderReadableId,
     });
   } catch (error) {
     await session.abortTransaction();

@@ -21,7 +21,8 @@ const transactionSchema = new Schema(
   { timestamps: true }
 );
 
-transactionSchema.index({ transactionId: 1 });
+// `transactionId` is declared with `unique: true` above which creates an index.
+// Avoid declaring the same single-field index again to prevent duplicate-index warnings.
 transactionSchema.index({ user: 1, wallet: 1, createdAt: -1 });
 
 const Transaction = mongoose.model("Transaction", transactionSchema);

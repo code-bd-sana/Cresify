@@ -16,7 +16,8 @@ const walletSchema = new Schema(
   { timestamps: true }
 );
 
-walletSchema.index({ user: 1 });
+// `user` has `unique: true` in the schema which creates an index already.
+// Avoid duplicate single-field index declarations.
 
 const Wallet = mongoose.model("Wallet", walletSchema);
 export default Wallet;
