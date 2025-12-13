@@ -14,108 +14,129 @@ import Order from "../../models/OrderModel.js";
  */
 export const getSellerOrders = async (req, res) => {
   try {
-    const { sellerId, search } = req.query;
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
-    const skip = (page - 1) * limit;
+    const { sellerId, search, page = 1, limit = 10 } = req.query;
 
     if (!sellerId) {
-      return res.status(400).json({ message: "Seller ID is required" });
+      return res.status(400).json({ message: "sellerId is required" });
     }
 
+    const pageNum = Math.max(1, parseInt(page, 10));
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10))); // max 100
+    const skip = (pageNum - 1) * limitNum;
+
     const sellerObjectId = new mongoose.Types.ObjectId(sellerId);
-    const searchRegex = search ? new RegExp(search, "i") : null;
+
+    // Build search condition (indexed if you add text index)
+    const searchCondition = search
+      ? {
+          $or: [
+            { orderId: { $regex: search, $options: "i" } },
+            { "customerDetails.name": { $regex: search, $options: "i" } },
+          ],
+        }
+      : {};
 
     const pipeline = [
-      // Lookup product details
-      {
-        $lookup: {
-          from: "products",
-          localField: "products",
-          foreignField: "_id",
-          as: "productDetails",
-        },
-      },
-      // Filter orders that include at least one product from this seller
+      // 1. Match orders that contain at least one product by this seller
       {
         $match: {
-          "productDetails.seller": sellerObjectId,
+          "products": {
+            $in: await Product.distinct("_id", { seller: sellerObjectId }),
+          },
         },
       },
-      // Lookup customer info
+
+      // 2. Lookup customer (only needed fields)
       {
         $lookup: {
           from: "users",
           localField: "customer",
           foreignField: "_id",
           as: "customerDetails",
+          pipeline: [
+            { $project: { name: 1, email: 1, phoneNumber: 1, image: 1 } },
+          ],
         },
       },
       { $unwind: "$customerDetails" },
-      // Apply search filter if provided
-      ...(searchRegex
-        ? [
+
+      // 3. Lookup only seller's products in this order
+      {
+        $lookup: {
+          from: "products",
+          let: { productIds: "$products" },
+          pipeline: [
             {
               $match: {
-                $or: [
-                  { orderId: searchRegex },
-                  { "customerDetails.name": searchRegex },
-                ],
+                $expr: { $in: ["$_id", "$$productIds"] },
+                seller: sellerObjectId,
+                status: "active",
               },
             },
-          ]
-        : []),
-      // Facet for pagination + total count
+            {
+              $project: {
+                name: 1,
+                price: 1,
+                image: 1,
+                category: 1,
+              },
+            },
+          ],
+          as: "sellerProducts",
+        },
+      },
+
+      // 4. Search filter
+      ...(Object.keys(searchCondition).length ? [{ $match: searchCondition }] : []),
+
+      // 5. Sort newest first
+      { $sort: { createdAt: -1 } },
+
+      // 6. Facet for pagination + total count (single pass!)
       {
         $facet: {
           metadata: [{ $count: "total" }],
           data: [
-            { $sort: { createdAt: -1 } },
             { $skip: skip },
-            { $limit: limit },
+            { $limit: limitNum },
+            {
+              $project: {
+                orderId: 1,
+                amount: 1,
+                item: 1,
+                status: 1,
+                paymentMethod: 1,
+                paymentStatus: 1,
+                createdAt: 1,
+                customer: "$customerDetails",
+                products: "$sellerProducts", // only seller's products
+              },
+            },
           ],
-        },
-      },
-      {
-        $project: {
-          data: 1,
-          total: { $arrayElemAt: ["$metadata.total", 0] },
         },
       },
     ];
 
     const result = await Order.aggregate(pipeline);
-    const orders = result[0]?.data || [];
-    const total = result[0]?.total || 0;
 
-    res.status(200).json({
+    const orders = result[0]?.data || [];
+    const total = result[0]?.metadata[0]?.total || 0;
+
+    return res.status(200).json({
       message: "Success",
-      data: orders.map((order) => ({
-        _id: order._id,
-        orderId: order.orderId,
-        amount: order.amount,
-        item: order.item,
-        status: order.status,
-        paymentMethod: order.paymentMethod,
-        paymentStatus: order.paymentStatus,
-        createdAt: order.createdAt,
-        customer: {
-          _id: order.customerDetails._id,
-          name: order.customerDetails.name,
-          email: order.customerDetails.email,
-        },
-        products: order.productDetails,
-      })),
+      data: orders,
       pagination: {
-        page,
-        limit,
+        page: pageNum,
+        limit: limitNum,
         total,
+        pages: Math.ceil(total / limitNum),
+        hasMore: pageNum * limitNum < total,
       },
     });
   } catch (error) {
-    console.error("Get seller orders error:", error);
-    res.status(500).json({
-      message: "Internal server error",
+    console.error("getSellerOrders error:", error);
+    return res.status(500).json({
+      message: "Server error",
       error: error.message,
     });
   }
