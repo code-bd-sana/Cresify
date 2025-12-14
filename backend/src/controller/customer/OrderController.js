@@ -48,34 +48,61 @@ export const placeOrder = async (req, res) => {
     session.startTransaction();
 
     // ---------------------------
-    // 2️⃣ Load cart + products
+    // 2️⃣ Load selected products
+    // If frontend passes `productIds` we'll use those; otherwise fall back to user's cart
     // ---------------------------
-    const cartItems = await Cart.aggregate([
-      { $match: { user: new mongoose.Types.ObjectId(userId) } },
-      {
-        $lookup: {
-          from: "products",
-          localField: "product",
-          foreignField: "_id",
-          as: "productDetails",
-        },
-      },
-      { $unwind: "$productDetails" },
-      {
-        $match: {
-          "productDetails.status": "active",
-          "productDetails.stock": { $gt: 0 },
-        },
-      },
-    ]).session(session);
+    const requestedProductIds = Array.isArray(req.body.productIds)
+      ? req.body.productIds.map((id) => new mongoose.Types.ObjectId(id))
+      : null;
 
-    if (!cartItems.length) {
-      await session.abortTransaction();
-      return res.status(400).json({ message: "Cart is empty" });
+    let products = [];
+    let productIds = [];
+
+    if (requestedProductIds && requestedProductIds.length) {
+      // load products by ids
+      products = await Product.find({
+        _id: { $in: requestedProductIds },
+        status: "active",
+        stock: { $gt: 0 },
+      }).session(session);
+
+      if (!products.length || products.length !== requestedProductIds.length) {
+        await session.abortTransaction();
+        return res
+          .status(400)
+          .json({ message: "Some selected products are unavailable" });
+      }
+
+      productIds = products.map((p) => p._id);
+    } else {
+      // load from user's cart
+      const cartItems = await Cart.aggregate([
+        { $match: { user: new mongoose.Types.ObjectId(userId) } },
+        {
+          $lookup: {
+            from: "products",
+            localField: "product",
+            foreignField: "_id",
+            as: "productDetails",
+          },
+        },
+        { $unwind: "$productDetails" },
+        {
+          $match: {
+            "productDetails.status": "active",
+            "productDetails.stock": { $gt: 0 },
+          },
+        },
+      ]).session(session);
+
+      if (!cartItems.length) {
+        await session.abortTransaction();
+        return res.status(400).json({ message: "Cart is empty" });
+      }
+
+      products = cartItems.map((c) => c.productDetails);
+      productIds = products.map((p) => p._id);
     }
-
-    const products = cartItems.map((c) => c.productDetails);
-    const productIds = products.map((p) => p._id);
 
     const totalAmount = products.reduce((sum, p) => sum + (p.price || 0), 0);
 
@@ -198,10 +225,21 @@ export const placeOrder = async (req, res) => {
         { session }
       );
 
-      await Cart.deleteMany(
-        { user: new mongoose.Types.ObjectId(userId) },
-        { session }
-      );
+      // remove only the selected items from cart if productIds were provided
+      if (productIds && productIds.length && requestedProductIds) {
+        await Cart.deleteMany(
+          {
+            user: new mongoose.Types.ObjectId(userId),
+            product: { $in: productIds },
+          },
+          { session }
+        );
+      } else {
+        await Cart.deleteMany(
+          { user: new mongoose.Types.ObjectId(userId) },
+          { session }
+        );
+      }
 
       await session.commitTransaction();
 
@@ -216,10 +254,21 @@ export const placeOrder = async (req, res) => {
     // ---------------------------
     // 7️⃣ COD FLOW
     // ---------------------------
-    await Cart.deleteMany(
-      { user: new mongoose.Types.ObjectId(userId) },
-      { session }
-    );
+    // For COD flow, remove selected items if provided, otherwise clear cart
+    if (productIds && productIds.length && requestedProductIds) {
+      await Cart.deleteMany(
+        {
+          user: new mongoose.Types.ObjectId(userId),
+          product: { $in: productIds },
+        },
+        { session }
+      );
+    } else {
+      await Cart.deleteMany(
+        { user: new mongoose.Types.ObjectId(userId) },
+        { session }
+      );
+    }
 
     await session.commitTransaction();
 
