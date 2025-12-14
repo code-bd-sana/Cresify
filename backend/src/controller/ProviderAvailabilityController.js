@@ -1,5 +1,6 @@
 import Booking from "../models/BookingModel.js";
 import ProviderAvailability from "../models/ProviderAvailabilityModel.js";
+import User from "../models/UserModel.js";
 
 /**
  * Get provider's availability settings
