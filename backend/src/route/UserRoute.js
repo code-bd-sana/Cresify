@@ -1,5 +1,4 @@
 import { Router } from "express";
-import { changeAvailability } from "../controller/ProviderController.js";
 import {
   changePassword,
   getServiceProviders,
@@ -10,6 +9,7 @@ import {
   saveUser,
   updateProfile,
 } from "../controller/userController.js";
+import { changeAvailability } from "../controller/ProviderAvailabilityController.js";
 
 const router = Router();
 
