@@ -8,10 +8,9 @@ const walletSchema = new Schema(
       required: true,
       unique: true,
     },
-    balance: { type: Number, default: 0, min: 0 },
+    currentBalance: { type: Number, default: 0 },
+    reserved: { type: Number, default: 0 },
     currency: { type: String, default: "USD" },
-    reserved: { type: Number, default: 0, min: 0 }, // funds on hold (escrow)
-    metadata: { type: Schema.Types.Mixed },
   },
   { timestamps: true }
 );

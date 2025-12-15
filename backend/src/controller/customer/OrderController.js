@@ -35,7 +35,7 @@ export const placeOrder = async (req, res) => {
     const { userId, address, paymentMethod } = req.body;
 
     // ---------------------------
-    // 1️⃣ Validate input
+    // 1️. Validate input
     // ---------------------------
     if (!userId || !address?.street || !address?.city || !address?.country) {
       return res.status(400).json({ message: "Invalid request data" });
@@ -48,7 +48,7 @@ export const placeOrder = async (req, res) => {
     session.startTransaction();
 
     // ---------------------------
-    // 2️⃣ Load selected products
+    // 2️. Load selected products
     // If frontend passes `productIds` we'll use those; otherwise fall back to user's cart
     // ---------------------------
     const requestedProductIds = Array.isArray(req.body.productIds)
@@ -104,24 +104,26 @@ export const placeOrder = async (req, res) => {
       productIds = products.map((p) => p._id);
     }
 
-    const totalAmount = products.reduce((sum, p) => sum + (p.price || 0), 0);
+    const totalAmount = products.reduce((sum, p) => sum + p.price * p.count, 0);
 
     // ---------------------------
-    // 3️⃣ Lock stock (atomic)
+    // 3️. Lock stock (atomic)
     // ---------------------------
-    const stockUpdate = await Product.updateMany(
-      { _id: { $in: productIds }, stock: { $gt: 0 } },
-      { $inc: { stock: -1 } },
-      { session }
-    );
+    const bulkOps = products.map((p) => ({
+      updateOne: {
+        filter: { _id: p._id, stock: { $gte: p.count } },
+        update: { $inc: { stock: -p.count } },
+      },
+    }));
 
-    if (stockUpdate.modifiedCount !== productIds.length) {
-      await session.abortTransaction();
-      return res.status(400).json({ message: "Some items went out of stock" });
+    const stockResult = await Product.bulkWrite(bulkOps, { session });
+
+    if (stockResult.modifiedCount !== products.length) {
+      throw new Error("Insufficient stock");
     }
 
     // ---------------------------
-    // 4️⃣ Create Order
+    // 4️. Create Order
     // ---------------------------
     const orderReadableId = translator.new();
 
@@ -131,7 +133,7 @@ export const placeOrder = async (req, res) => {
           orderId: orderReadableId,
           customer: userId,
           products: productIds,
-          item: products.length,
+          item: products.reduce((s, p) => s + p.count, 0),
           amount: totalAmount,
           address,
           paymentMethod,
@@ -143,44 +145,33 @@ export const placeOrder = async (req, res) => {
     );
 
     // ---------------------------
-    // 5️⃣ Seller breakdown
+    // 5️. Seller breakdown
     // ---------------------------
     const commissionPercent = Number(
       process.env.PLATFORM_COMMISSION_PERCENT || 20
     );
-
     const sellerMap = {};
 
     for (const p of products) {
-      const sellerId = p.seller?.toString();
-      if (!sellerMap[sellerId]) {
-        sellerMap[sellerId] = { amount: 0, items: [] };
-      }
-      sellerMap[sellerId].amount += p.price || 0;
-      sellerMap[sellerId].items.push({
-        productId: p._id.toString(),
-        price: p.price,
-      });
+      const sellerId = p.seller.toString();
+      if (!sellerMap[sellerId]) sellerMap[sellerId] = 0;
+      sellerMap[sellerId] += p.price * p.count;
     }
 
     const sellerBreakdown = Object.entries(sellerMap).map(
-      ([sellerId, data]) => {
-        const commission = +(data.amount * (commissionPercent / 100)).toFixed(
-          2
-        );
-        const net = +(data.amount - commission).toFixed(2);
+      ([sellerId, gross]) => {
+        const commission = +((gross * commissionPercent) / 100).toFixed(2);
         return {
           sellerId,
-          gross: data.amount,
+          gross,
           commission,
-          net,
-          items: data.items,
+          net: +(gross - commission).toFixed(2),
         };
       }
     );
 
     // ---------------------------
-    // 6️⃣ CARD PAYMENT (Stripe)
+    // 6️. CARD PAYMENT (Stripe)
     // ---------------------------
     if (paymentMethod === "card") {
       const line_items = products.map((p) => ({
@@ -191,7 +182,7 @@ export const placeOrder = async (req, res) => {
           },
           unit_amount: Math.round((p.price || 0) * 100),
         },
-        quantity: 1,
+        quantity: p.count,
       }));
 
       const checkoutSession = await stripe.checkout.sessions.create({
@@ -252,7 +243,7 @@ export const placeOrder = async (req, res) => {
     }
 
     // ---------------------------
-    // 7️⃣ COD FLOW
+    // 7️. COD FLOW
     // ---------------------------
     // For COD flow, remove selected items if provided, otherwise clear cart
     if (productIds && productIds.length && requestedProductIds) {
