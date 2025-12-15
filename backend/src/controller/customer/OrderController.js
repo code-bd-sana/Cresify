@@ -6,7 +6,6 @@ import Cart from "../../models/CartModel.js";
 import Order from "../../models/OrderModel.js";
 import Payment from "../../models/PaymentModel.js";
 import Product from "../../models/ProductModel.js";
-import mongoose from "mongoose";
 
 dotenv.config();
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
