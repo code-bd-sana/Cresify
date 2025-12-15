@@ -18,7 +18,6 @@ const paymentSchema = new Schema(
       default: "stripe_checkout",
     },
     stripeSessionId: { type: String },
-    stripePaymentIntentId: { type: String },
     capturedAt: { type: Date },
     metadata: { type: Schema.Types.Mixed },
     refunds: [{ type: Schema.Types.ObjectId, ref: "Refund" }],
