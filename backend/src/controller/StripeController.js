@@ -5,12 +5,13 @@ import Order from "../models/OrderModel.js";
 import Payment from "../models/PaymentModel.js";
 import Product from "../models/ProductModel.js";
 import Transaction from "../models/TransactionModel.js";
+import WalletLedger from "../models/WalletLedgerModel.js";
 import Wallet from "../models/WalletModel.js";
 import WebhookLog from "../models/WebhookLogModel.js";
 
 dotenv.config();
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: '2025-10-29.clover',
+  apiVersion: "2025-10-29.clover",
 });
 
 export const stripeWebhook = async (req, res) => {
@@ -110,27 +111,36 @@ export const stripeWebhook = async (req, res) => {
           ? JSON.parse(session.metadata.sellerBreakdown)
           : []);
 
-      for (const item of breakdown) {
-        const sellerId = item.sellerId;
-        const amount = Number(item.gross) || 0;
+      for (const b of breakdown) {
+        const { sellerId, gross, platformFee, net } = b;
 
-        // wallet upsert
         let wallet = await Wallet.findOne({ user: sellerId }).session(
           dbSession
         );
         if (!wallet) {
-          wallet = await Wallet.create(
+          [wallet] = await Wallet.create(
             [{ user: sellerId, balance: 0, reserved: 0 }],
             { session: dbSession }
           );
-          wallet = wallet[0];
         }
 
-        const before = wallet.reserved || 0;
-        wallet.reserved = (wallet.reserved || 0) + amount;
+        const beforeReserved = wallet.reserved;
+        wallet.reserved += net;
         await wallet.save({ session: dbSession });
 
-        // ledger entry
+        await WalletLedger.create(
+          [
+            {
+              user: sellerId,
+              type: "credit",
+              amount: net,
+              reason: "sale_hold",
+              refId: order._id,
+            },
+          ],
+          { session: dbSession }
+        );
+
         await Transaction.create(
           [
             {
@@ -138,12 +148,11 @@ export const stripeWebhook = async (req, res) => {
               type: "hold",
               wallet: wallet._id,
               user: sellerId,
-              order: payment.order,
+              order: order._id,
               payment: payment._id,
-              amount: amount,
-              currency:
-                payment.currency || process.env.DEFAULT_CURRENCY || "USD",
-              balanceBefore: before,
+              amount: net,
+              currency: payment.currency,
+              balanceBefore: beforeReserved,
               balanceAfter: wallet.reserved,
             },
           ],
