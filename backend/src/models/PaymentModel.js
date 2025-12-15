@@ -2,7 +2,6 @@ import mongoose, { Schema } from "mongoose";
 
 const paymentSchema = new Schema(
   {
-    paymentId: { type: String, required: true, unique: true, trim: true }, // Stripe PaymentIntent / Session ID
     order: { type: Schema.Types.ObjectId, ref: "order", required: true },
     buyer: { type: Schema.Types.ObjectId, ref: "User", required: true },
     seller: { type: Schema.Types.ObjectId, ref: "User" },
@@ -19,7 +18,6 @@ const paymentSchema = new Schema(
       default: "stripe_checkout",
     },
     stripeSessionId: { type: String },
-    stripePaymentIntentId: { type: String },
     capturedAt: { type: Date },
     metadata: { type: Schema.Types.Mixed },
     refunds: [{ type: Schema.Types.ObjectId, ref: "Refund" }],

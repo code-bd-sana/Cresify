@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import Order from "../../models/OrderModel.js";
+import OrderVendorModel from "../../models/OrderVendorModel.js";
 
 /**
  * Get orders for a seller with pagination and search by order ID or customer name.
@@ -13,86 +13,83 @@ import Order from "../../models/OrderModel.js";
  * @param {Object} res - Express response object
  */
 export const getSellerOrders = async (req, res) => {
+
+
   try {
-    const { sellerId, search, page = 1, limit = 10 } = req.query;
+    const { sellerId, search = "", page = 1, limit = 10 } = req.query;
 
     if (!sellerId) {
       return res.status(400).json({ message: "sellerId is required" });
     }
 
-    const pageNum = Math.max(1, parseInt(page, 10));
-    const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10))); // max 100
-    const skip = (pageNum - 1) * limitNum;
-
     const sellerObjectId = new mongoose.Types.ObjectId(sellerId);
 
-    // Build search condition (indexed if you add text index)
-    const searchCondition = search
-      ? {
-          $or: [
-            { orderId: { $regex: search, $options: "i" } },
-            { "customerDetails.name": { $regex: search, $options: "i" } },
-          ],
-        }
-      : {};
+    const pageNum = Math.max(1, Number(page));
+    const limitNum = Math.min(100, Math.max(1, Number(limit)));
+    const skip = (pageNum - 1) * limitNum;
+
+    const searchRegex = search ? new RegExp(search.trim(), "i") : null;
 
     const pipeline = [
-      // 1. Match orders that contain at least one product by this seller
+      /**
+       * 1️. Seller isolation
+       */
       {
         $match: {
-          "products": {
-            $in: await Product.distinct("_id", { seller: sellerObjectId }),
-          },
+          seller: sellerObjectId,
         },
       },
 
-      // 2. Lookup customer (only needed fields)
+      /**
+       * 2️. Join Order
+       */
+      {
+        $lookup: {
+          from: "orders",
+          localField: "order",
+          foreignField: "_id",
+          as: "order",
+        },
+      },
+      { $unwind: "$order" },
+
+      /**
+       * 3️. Join Customer
+       */
       {
         $lookup: {
           from: "users",
-          localField: "customer",
+          localField: "order.customer",
           foreignField: "_id",
-          as: "customerDetails",
-          pipeline: [
-            { $project: { name: 1, email: 1, phoneNumber: 1, image: 1 } },
-          ],
+          as: "customer",
         },
       },
-      { $unwind: "$customerDetails" },
+      { $unwind: "$customer" },
 
-      // 3. Lookup only seller's products in this order
-      {
-        $lookup: {
-          from: "products",
-          let: { productIds: "$products" },
-          pipeline: [
+      /**
+       * 4️. Search filter (Order ID OR Customer Name)
+       */
+      ...(searchRegex
+        ? [
             {
               $match: {
-                $expr: { $in: ["$_id", "$$productIds"] },
-                seller: sellerObjectId,
-                status: "active",
+                $or: [
+                  { "order._id": { $regex: searchRegex } },
+                  { "customer.name": { $regex: searchRegex } },
+                ],
               },
             },
-            {
-              $project: {
-                name: 1,
-                price: 1,
-                image: 1,
-                category: 1,
-              },
-            },
-          ],
-          as: "sellerProducts",
-        },
-      },
+          ]
+        : []),
 
-      // 4. Search filter
-      ...(Object.keys(searchCondition).length ? [{ $match: searchCondition }] : []),
-
-      // 5. Sort newest first
+      /**
+       * 5️. Sort latest first
+       */
       { $sort: { createdAt: -1 } },
 
-      // 6. Facet for pagination + total count (single pass!)
+      /**
+       * 6️. Pagination + total count
+       */
       {
         $facet: {
           metadata: [{ $count: "total" }],
@@ -101,15 +98,27 @@ export const getSellerOrders = async (req, res) => {
             { $limit: limitNum },
             {
               $project: {
-                orderId: 1,
+                _id: 1,
+                orderId: "$order._id",
+                orderDate: "$order.createdAt",
+
+                customer: {
+                  _id: "$customer._id",
+                  name: "$customer.name",
+                  email: "$customer.email",
+                  phoneNumber: "$customer.phoneNumber",
+                  image: "$customer.image",
+                },
+
+                products: 1,
                 amount: 1,
-                item: 1,
+                commission: 1,
+                netAmount: 1,
                 status: 1,
-                paymentMethod: 1,
-                paymentStatus: 1,
+                paymentStatus: "$order.paymentStatus",
+                paymentMethod: "$order.paymentMethod",
+                address: "$order.address",
                 createdAt: 1,
-                customer: "$customerDetails",
-                products: "$sellerProducts", // only seller's products
               },
             },
           ],
@@ -117,13 +126,13 @@ export const getSellerOrders = async (req, res) => {
       },
     ];
 
-    const result = await Order.aggregate(pipeline);
+    const result = await OrderVendorModel.aggregate(pipeline);
 
     const orders = result[0]?.data || [];
     const total = result[0]?.metadata[0]?.total || 0;
 
     return res.status(200).json({
-      message: "Success",
+      message: "Seller orders fetched successfully",
       data: orders,
       pagination: {
         page: pageNum,
@@ -136,8 +145,40 @@ export const getSellerOrders = async (req, res) => {
   } catch (error) {
     console.error("getSellerOrders error:", error);
     return res.status(500).json({
-      message: "Server error",
+      message: "Failed to fetch seller orders",
       error: error.message,
     });
   }
 };
+
+
+
+
+
+
+
+export const orderStatusUpdate = async(req, res)=>{
+
+
+  try {
+ 
+    const {status, id} = req.body;
+    const updated = await OrderVendorModel.updateOne({
+      _id:id
+    }, {$set:{
+      status:status
+    }});
+
+    res.status(200).json({
+      message:"Success",
+      data:updated
+    })
+    
+  } catch (error) {
+    console.log(error, "this is error kawa");
+    res.status(500).json({
+      error,
+      message:error?.message
+    })
+  }
+}

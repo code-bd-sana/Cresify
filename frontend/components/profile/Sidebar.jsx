@@ -17,7 +17,7 @@ export default function Sidebar({ active, setActive }) {
     { key: "orders", label: "My Orders", icon: ShoppingBag },
     { key: "booking", label: "My Booking", icon: CalendarCheck2 },
     { key: "wishlist", label: "Wishlist", icon: Heart },
-    { key: "payments", label: "Payment Methods", icon: CreditCard },
+    // { key: "payments", label: "Payment Methods", icon: CreditCard },
   ];
 
   return (

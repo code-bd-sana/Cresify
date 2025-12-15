@@ -101,7 +101,7 @@ export default function ProductsPage({ searchTerm = "" }) {
     "Books",
   ];
 
-  console.log(data, "hey data ki abosta");
+
 
   // Extract unique locations
   const locations = [...new Set(products.map(p => p.location).filter(Boolean))];
