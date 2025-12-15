@@ -1,12 +1,15 @@
 import dotenv from "dotenv";
 import mongoose from "mongoose";
 import Stripe from "stripe";
+
 import Cart from "../../models/CartModel.js";
 import Order from "../../models/OrderModel.js";
+import OrderVendor from "../../models/OrderVendorModel.js";
 import Payment from "../../models/PaymentModel.js";
 import Product from "../../models/ProductModel.js";
 
 dotenv.config();
+
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
   apiVersion: "2025-10-29.clover",
 });
@@ -28,11 +31,8 @@ export const placeOrder = async (req, res) => {
   const session = await mongoose.startSession();
 
   try {
-    const { userId, address, paymentMethod } = req.body;
+    const { userId, address, paymentMethod, productIds } = req.body;
 
-    // ---------------------------
-    // 1️. Validate input
-    // ---------------------------
     if (!userId || !address?.street || !address?.city || !address?.country) {
       return res.status(400).json({ message: "Invalid request data" });
     }
@@ -43,40 +43,23 @@ export const placeOrder = async (req, res) => {
 
     session.startTransaction();
 
-    // ---------------------------
-    // 2️. Load selected products
-    // If frontend passes `productIds` we'll use those; otherwise fall back to user's cart
-    // ---------------------------
-    const requestedProductIds = Array.isArray(req.body.productIds)
-      ? req.body.productIds.map((id) => new mongoose.Types.ObjectId(id))
-      : null;
+    /* -------------------- Load Products -------------------- */
 
     let products = [];
-    let productIds = [];
 
-    if (requestedProductIds && requestedProductIds.length) {
-      // load products by ids
-      products = (
-        await Product.find({
-          _id: { $in: requestedProductIds },
-          status: "active",
-          stock: { $gt: 0 },
-        }).session(session)
-      ).map((p) => ({
-        ...p.toObject(),
-        count: 1,
-      }));
+    if (Array.isArray(productIds) && productIds.length) {
+      products = await Product.find({
+        _id: { $in: productIds },
+        status: "active",
+        stock: { $gt: 0 },
+      }).session(session);
 
-      if (!products.length || products.length !== requestedProductIds.length) {
-        await session.abortTransaction();
-        return res
-          .status(400)
-          .json({ message: "Some selected products are unavailable" });
+      if (products.length !== productIds.length) {
+        throw new Error("Some products are unavailable");
       }
 
-      productIds = products.map((p) => p._id);
+      products = products.map((p) => ({ ...p.toObject(), count: 1 }));
     } else {
-      // load from user's cart
       const cartItems = await Cart.aggregate([
         { $match: { user: new mongoose.Types.ObjectId(userId) } },
         {
@@ -84,39 +67,29 @@ export const placeOrder = async (req, res) => {
             from: "products",
             localField: "product",
             foreignField: "_id",
-            as: "productDetails",
+            as: "product",
           },
         },
-        { $unwind: "$productDetails" },
-        {
-          $match: {
-            "productDetails.status": "active",
-            "productDetails.stock": { $gt: 0 },
-          },
-        },
-      ]).session(session);
+        { $unwind: "$product" },
+        { $match: { "product.stock": { $gt: 0 } } },
+      ]);
 
       if (!cartItems.length) {
-        await session.abortTransaction();
-        return res.status(400).json({ message: "Cart is empty" });
+        throw new Error("Cart is empty");
       }
 
       products = cartItems.map((c) => ({
-        ...c.productDetails.toObject(),
+        ...c.product,
         count: c.count,
       }));
-      productIds = products.map((p) => p._id);
     }
 
-    const totalAmount = products.reduce((sum, p) => sum + p.price * p.count, 0);
+    /* -------------------- Stock Lock -------------------- */
 
-    // ---------------------------
-    // 3️. Lock stock (atomic)
-    // ---------------------------
     const bulkOps = products.map((p) => ({
       updateOne: {
         filter: { _id: p._id, stock: { $gte: p.count } },
-        update: { $inc: { stock: -Number(p.count) } },
+        update: { $inc: { stock: -p.count } },
       },
     }));
 
@@ -126,163 +99,131 @@ export const placeOrder = async (req, res) => {
       throw new Error("Insufficient stock");
     }
 
-    // ---------------------------
-    // 4️. Create Order
-    // ---------------------------
+    /* -------------------- Seller Breakdown -------------------- */
 
-    const [order] = await Order.create(
+    const commissionPercent = Number(
+      process.env.PLATFORM_COMMISSION_PERCENT || 20
+    );
+
+    const sellerMap = {};
+
+    for (const p of products) {
+      const sellerId = p.seller.toString();
+
+      if (!sellerMap[sellerId]) {
+        sellerMap[sellerId] = {
+          seller: p.seller,
+          products: [],
+          gross: 0,
+        };
+      }
+
+      sellerMap[sellerId].products.push({
+        product: p._id,
+        quantity: p.count,
+        price: p.price,
+      });
+
+      sellerMap[sellerId].gross += p.price * p.count;
+    }
+
+    const totalAmount = Object.values(sellerMap).reduce(
+      (sum, s) => sum + s.gross,
+      0
+    );
+
+    /* -------------------- Create Order -------------------- */
+
+    const order = await Order.create(
       [
         {
           customer: userId,
-          products: productIds,
-          item: products.reduce((s, p) => s + p.count, 0),
           amount: totalAmount,
           address,
           paymentMethod,
-          paymentStatus: "pending",
-          status: "pending",
         },
       ],
       { session }
     );
 
-    // ---------------------------
-    // 5️. Seller breakdown
-    // ---------------------------
-    const commissionPercent = Number(
-      process.env.PLATFORM_COMMISSION_PERCENT || 20
-    );
-    const sellerMap = {};
+    /* -------------------- Create OrderVendor -------------------- */
 
-    for (const p of products) {
-      if (!Number.isFinite(p.count) || p.count <= 0) {
-        throw new Error(`Invalid product count for product ${p._id}`);
-      }
+    const orderVendorDocs = [];
 
-      const sellerId = p.seller.toString();
-      if (!sellerMap[sellerId]) sellerMap[sellerId] = 0;
-      sellerMap[sellerId] += p.price * p.count;
+    for (const s of Object.values(sellerMap)) {
+      const commission = +(s.gross * commissionPercent) / 100;
+      const net = s.gross - commission;
+
+      orderVendorDocs.push({
+        order: order[0]._id,
+        seller: s.seller,
+        products: s.products,
+        amount: s.gross,
+        commission,
+        netAmount: net,
+      });
     }
 
-    const sellerBreakdown = Object.entries(sellerMap).map(
-      ([sellerId, gross]) => {
-        const commission = +((gross * commissionPercent) / 100).toFixed(2);
-        return {
-          sellerId,
-          gross,
-          commission,
-          net: +(gross - commission).toFixed(2),
-        };
-      }
-    );
+    const vendors = await OrderVendor.insertMany(orderVendorDocs, { session });
 
-    // ---------------------------
-    // 6️. CARD PAYMENT (Stripe)
-    // ---------------------------
+    order[0].orderVendors = vendors.map((v) => v._id);
+    await order[0].save({ session });
+
+    /* -------------------- STRIPE -------------------- */
+
     if (paymentMethod === "card") {
-      const line_items = products.map((p) => ({
-        price_data: {
-          currency: process.env.DEFAULT_CURRENCY || "usd",
-          product_data: {
-            name: p.name,
-          },
-          unit_amount: Math.round((p.price || 0) * 100),
-        },
-        quantity: p.count,
-      }));
-
       const checkoutSession = await stripe.checkout.sessions.create({
         mode: "payment",
         payment_method_types: ["card"],
-        line_items,
-        success_url: `${process.env.FRONTEND_URL}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${
-          process.env.FRONTEND_URL
-        }/payment-cancel?orderId=${order._id.toString()}`,
+        line_items: products.map((p) => ({
+          price_data: {
+            currency: "usd",
+            product_data: { name: p.name },
+            unit_amount: Math.round(p.price * 100),
+          },
+          quantity: p.count,
+        })),
+        success_url: `${process.env.FRONTEND_URL}/payment-success`,
+        cancel_url: `${process.env.FRONTEND_URL}/payment-cancel`,
         metadata: {
-          orderId: order._id.toString(),
+          orderId: order[0]._id.toString(),
           userId,
-          itemType:"proudct",
-          sellerBreakdown: JSON.stringify(sellerBreakdown),
+          itemType: "product",
         },
       });
 
-      const [payment] = await Payment.create(
+      await Payment.create(
         [
           {
-            order: order._id,
+            order: order[0]._id,
             buyer: userId,
             amount: totalAmount,
-            currency: process.env.DEFAULT_CURRENCY || "usd",
             status: "pending",
             method: "stripe_checkout",
             stripeSessionId: checkoutSession.id,
-            metadata: { sellerBreakdown },
           },
         ],
         { session }
       );
 
-      // remove only the selected items from cart if productIds were provided
-      if (productIds && productIds.length && requestedProductIds) {
-        await Cart.deleteMany(
-          {
-            user: new mongoose.Types.ObjectId(userId),
-            product: { $in: productIds },
-          },
-          { session }
-        );
-      } else {
-        await Cart.deleteMany(
-          { user: new mongoose.Types.ObjectId(userId) },
-          { session }
-        );
-      }
-
+      await Cart.deleteMany({ user: userId }, { session });
       await session.commitTransaction();
 
-      return res.status(200).json({
-        checkoutUrl: checkoutSession.url,
-        sessionId: checkoutSession.id,
-        orderId: order._id.toString(),
-        paymentId: payment.paymentId,
-      });
+      return res.json({ checkoutUrl: checkoutSession.url });
     }
 
-    // ---------------------------
-    // 7️. COD FLOW
-    // ---------------------------
-    // For COD flow, remove selected items if provided, otherwise clear cart
-    if (productIds && productIds.length && requestedProductIds) {
-      await Cart.deleteMany(
-        {
-          user: new mongoose.Types.ObjectId(userId),
-          product: { $in: productIds },
-        },
-        { session }
-      );
-    } else {
-      await Cart.deleteMany(
-        { user: new mongoose.Types.ObjectId(userId) },
-        { session }
-      );
-    }
+    /* -------------------- COD -------------------- */
 
+    await Cart.deleteMany({ user: userId }, { session });
     await session.commitTransaction();
 
-    return res.status(201).json({
-      message: "Order placed with Cash on Delivery",
-      orderId: order._id.toString(),
+    res.status(201).json({
+      message: "Order placed successfully (COD)",
+      orderId: order[0]._id,
     });
-  } catch (error) {
-    console.log(error, "baler error");
-    if (session.inTransaction && session.inTransaction())
-      await session.abortTransaction();
-    console.error("Place order failed:", error);
-    return res.status(500).json({
-      message: "Failed to place order",
-      error: error.message,
-    });
+  } catch (err) {
+    await session.abortTransaction();
+    res.status(500).json({ message: err.message });
   } finally {
     session.endSession();
   }
