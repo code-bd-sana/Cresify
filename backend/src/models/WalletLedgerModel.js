@@ -15,7 +15,7 @@ const walletLedgerSchema = new Schema(
       enum: ["sale", "refund", "payout"],
       required: true,
     },
-    refId: { type: Schema.Types.ObjectId }; // Reference ID for related transaction (e.g., Order ID, Refund ID)
+    refId: { type: Schema.Types.ObjectId, ref: "Order" },
   },
   { timestamps: true }
 );
