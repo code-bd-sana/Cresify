@@ -1,6 +1,5 @@
 import dotenv from "dotenv";
 import mongoose from "mongoose";
-import short from "short-uuid";
 import Stripe from "stripe";
 import Cart from "../../models/CartModel.js";
 import Order from "../../models/OrderModel.js";
@@ -11,9 +10,6 @@ dotenv.config();
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
   apiVersion: "2025-10-29.clover",
 });
-
-// translator for ids
-const translator = short.createTranslator();
 
 /**
  * Place an order for selected products by a user.
@@ -133,12 +129,10 @@ export const placeOrder = async (req, res) => {
     // ---------------------------
     // 4️. Create Order
     // ---------------------------
-    const orderReadableId = translator.new();
 
     const [order] = await Order.create(
       [
         {
-          orderId: orderReadableId,
           customer: userId,
           products: productIds,
           item: products.reduce((s, p) => s + p.count, 0),
@@ -202,10 +196,9 @@ export const placeOrder = async (req, res) => {
         payment_method_types: ["card"],
         line_items,
         success_url: `${process.env.FRONTEND_URL}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${process.env.FRONTEND_URL}/payment-cancel?orderId=${orderReadableId}`,
+        cancel_url: `${process.env.FRONTEND_URL}/payment-cancel?orderId=${order._id.toString()}`,
         metadata: {
           orderId: order._id.toString(),
-          orderReadableId,
           userId,
           sellerBreakdown: JSON.stringify(sellerBreakdown),
         },
@@ -214,7 +207,6 @@ export const placeOrder = async (req, res) => {
       const [payment] = await Payment.create(
         [
           {
-            paymentId: translator.new(),
             order: order._id,
             buyer: userId,
             amount: totalAmount,

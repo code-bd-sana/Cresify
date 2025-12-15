@@ -2,7 +2,7 @@ import mongoose, { Schema } from "mongoose";
 
 const paymentSchema = new Schema(
   {
-    paymentId: { type: String, required: true, unique: true, trim: true }, // Stripe PaymentIntent / Session ID
+
     order: { type: Schema.Types.ObjectId, ref: "order", required: true },
     buyer: { type: Schema.Types.ObjectId, ref: "User", required: true },
     seller: { type: Schema.Types.ObjectId, ref: "User" },

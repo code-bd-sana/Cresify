@@ -5,12 +5,7 @@ import User from "./UserModel.js";
 
 const orderSchema = new Schema(
   {
-    orderId: {
-      type: String,
-      required: true,
-      unique: true,
-      trim: true,
-    },
+ 
     customer: {
       type: Schema.Types.ObjectId,
       ref: "User",
