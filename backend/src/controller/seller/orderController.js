@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import Order from "../../models/OrderModel.js";
+import Product from "../../models/ProductModel.js";
 
 /**
  * Get orders for a seller with pagination and search by order ID or customer name.
@@ -40,7 +41,7 @@ export const getSellerOrders = async (req, res) => {
       // 1. Match orders that contain at least one product by this seller
       {
         $match: {
-          "products": {
+          products: {
             $in: await Product.distinct("_id", { seller: sellerObjectId }),
           },
         },
@@ -87,7 +88,9 @@ export const getSellerOrders = async (req, res) => {
       },
 
       // 4. Search filter
-      ...(Object.keys(searchCondition).length ? [{ $match: searchCondition }] : []),
+      ...(Object.keys(searchCondition).length
+        ? [{ $match: searchCondition }]
+        : []),
 
       // 5. Sort newest first
       { $sort: { createdAt: -1 } },
