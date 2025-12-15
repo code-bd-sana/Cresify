@@ -168,6 +168,7 @@ export const stripeWebhook = async (req, res) => {
     const payload = event.data.object;
     const session = await mongoose.startSession();
 
+    // TODO: quantity restore isn't done
     try {
       await session.withTransaction(async () => {
         const payment = await Payment.findOne({
