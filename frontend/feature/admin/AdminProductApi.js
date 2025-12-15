@@ -48,6 +48,18 @@ export const AdminProductApi = createApi({
       }),
       invalidatesTags: ["AdminProducts"],
     }),
+
+    /**
+     * Get product by ID
+     * Fetches detailed information of a specific product by its ID.
+     * @param {string} id - The ID of the product to retrieve
+    */
+    getProductById: builder.query({
+      query: (id) => `/admin/products/${id}`,
+      providesTags: ["AdminProducts"],
+    }),
+    
+    
   }),
 });
 
@@ -55,4 +67,5 @@ export const {
   useAdminProductOverviewQuery,
   useAllProductsQuery,
   useChangeProductStatusMutation,
+  useGetProductByIdQuery,
 } = AdminProductApi;
