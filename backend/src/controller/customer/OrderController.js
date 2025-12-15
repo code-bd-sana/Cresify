@@ -206,7 +206,7 @@ export const placeOrder = async (req, res) => {
             order: order._id,
             buyer: userId,
             amount: totalAmount,
-            currency: process.env.DEFAULT_CURRENCY || "USD",
+            currency: process.env.DEFAULT_CURRENCY || "usd",
             status: "pending",
             method: "stripe_checkout",
             stripeSessionId: checkoutSession.id,

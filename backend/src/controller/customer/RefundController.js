@@ -23,7 +23,7 @@ export const requestRefund = async (req, res) => {
       order: order._id,
       requestedBy: userId,
       amount,
-      currency: payment.currency || "USD",
+      currency: payment.currency || "usd",
       reason,
       evidence,
       status: "requested",

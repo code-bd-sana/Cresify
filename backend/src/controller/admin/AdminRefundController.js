@@ -122,7 +122,7 @@ export const reviewRefund = async (req, res) => {
             order: refund.order,
             payment: payment._id,
             amount: reduceAmount,
-            currency: payment.currency || "USD",
+            currency: payment.currency || "usd",
             balanceBefore: before,
             balanceAfter: wallet.reserved,
           },

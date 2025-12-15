@@ -16,7 +16,7 @@ const refundSchema = new Schema(
     order: { type: Schema.Types.ObjectId, ref: "order", required: true },
     requestedBy: { type: Schema.Types.ObjectId, ref: "User", required: true },
     amount: { type: Number, required: true, min: 0 },
-    currency: { type: String, default: "USD" },
+    currency: { type: String, default: "usd" },
     reason: { type: String },
     evidence: [evidenceSchema],
     status: {
