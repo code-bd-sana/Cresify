@@ -73,7 +73,6 @@ export const stripeWebhook = async (req, res) => {
                   status: "pending",
                   method: "stripe_checkout",
                   stripeSessionId: stripeSession.id,
-                  stripePaymentIntentId: stripeSession.payment_intent,
                   metadata: {
                     sellerBreakdown: stripeSession.metadata?.sellerBreakdown
                       ? JSON.parse(stripeSession.metadata.sellerBreakdown)
@@ -179,15 +178,9 @@ export const stripeWebhook = async (req, res) => {
 
     try {
       await session.withTransaction(async () => {
-        let payment =
-          (payload.id &&
-            (await Payment.findOne({ stripeSessionId: payload.id }).session(
-              session
-            ))) ||
-          (payload.payment_intent &&
-            (await Payment.findOne({
-              stripePaymentIntentId: payload.payment_intent,
-            }).session(session)));
+        let payment = await Payment.findOne({
+          stripeSessionId: payload.id,
+        }).session(session);
 
         // Idempotency guard
         if (!payment || payment.status === "paid") {
