@@ -43,23 +43,35 @@ export const placeOrder = async (req, res) => {
 
     session.startTransaction();
 
-    /* -------------------- Load Products -------------------- */
+    /* --------------------------------------------------
+       LOAD PRODUCTS (FROM CART OR DIRECT PRODUCT IDS)
+    -------------------------------------------------- */
 
     let products = [];
 
+    // DIRECT BUY
     if (Array.isArray(productIds) && productIds.length) {
-      products = await Product.find({
+      const dbProducts = await Product.find({
         _id: { $in: productIds },
         status: "active",
         stock: { $gt: 0 },
       }).session(session);
 
-      if (products.length !== productIds.length) {
+      if (dbProducts.length !== productIds.length) {
         throw new Error("Some products are unavailable");
       }
 
-      products = products.map((p) => ({ ...p.toObject(), count: 1 }));
-    } else {
+      products = dbProducts.map((p) => ({
+        _id: p._id,
+        name: p.name,
+        seller: p.seller,
+        price: p.price,
+        quantity: 1,
+      }));
+    }
+
+    // CART BUY
+    else {
       const cartItems = await Cart.aggregate([
         { $match: { user: new mongoose.Types.ObjectId(userId) } },
         {
@@ -71,25 +83,33 @@ export const placeOrder = async (req, res) => {
           },
         },
         { $unwind: "$product" },
-        { $match: { "product.stock": { $gt: 0 } } },
+        { $match: { "product.stock": { $gte: "$count" } } },
+        {
+          $project: {
+            _id: "$product._id",
+            name: "$product.name",
+            seller: "$product.seller",
+            price: "$product.price",
+            quantity: "$count",
+          },
+        },
       ]);
 
       if (!cartItems.length) {
         throw new Error("Cart is empty");
       }
 
-      products = cartItems.map((c) => ({
-        ...c.product,
-        count: c.count,
-      }));
+      products = cartItems;
     }
 
-    /* -------------------- Stock Lock -------------------- */
+    /* --------------------------------------------------
+       STOCK LOCK
+    -------------------------------------------------- */
 
     const bulkOps = products.map((p) => ({
       updateOne: {
-        filter: { _id: p._id, stock: { $gte: p.count } },
-        update: { $inc: { stock: -p.count } },
+        filter: { _id: p._id, stock: { $gte: p.quantity } },
+        update: { $inc: { stock: -p.quantity } },
       },
     }));
 
@@ -99,7 +119,9 @@ export const placeOrder = async (req, res) => {
       throw new Error("Insufficient stock");
     }
 
-    /* -------------------- Seller Breakdown -------------------- */
+    /* --------------------------------------------------
+       SELLER BREAKDOWN
+    -------------------------------------------------- */
 
     const commissionPercent = Number(
       process.env.PLATFORM_COMMISSION_PERCENT || 20
@@ -118,13 +140,16 @@ export const placeOrder = async (req, res) => {
         };
       }
 
+      const amount = p.price * p.quantity;
+
       sellerMap[sellerId].products.push({
         product: p._id,
-        quantity: p.count,
-        price: p.price,
+        quantity: p.quantity,
+        price: p.price, // unit price
+        amount,
       });
 
-      sellerMap[sellerId].gross += p.price * p.count;
+      sellerMap[sellerId].gross += amount;
     }
 
     const totalAmount = Object.values(sellerMap).reduce(
@@ -132,9 +157,11 @@ export const placeOrder = async (req, res) => {
       0
     );
 
-    /* -------------------- Create Order -------------------- */
+    /* --------------------------------------------------
+       CREATE ORDER
+    -------------------------------------------------- */
 
-    const order = await Order.create(
+    const [order] = await Order.create(
       [
         {
           customer: userId,
@@ -146,30 +173,31 @@ export const placeOrder = async (req, res) => {
       { session }
     );
 
-    /* -------------------- Create OrderVendor -------------------- */
+    /* --------------------------------------------------
+       CREATE ORDER VENDORS
+    -------------------------------------------------- */
 
-    const orderVendorDocs = [];
+    const orderVendorDocs = Object.values(sellerMap).map((s) => {
+      const commission = (s.gross * commissionPercent) / 100;
 
-    for (const s of Object.values(sellerMap)) {
-      const commission = +(s.gross * commissionPercent) / 100;
-      const net = s.gross - commission;
-
-      orderVendorDocs.push({
-        order: order[0]._id,
+      return {
+        order: order._id,
         seller: s.seller,
         products: s.products,
         amount: s.gross,
         commission,
-        netAmount: net,
-      });
-    }
+        netAmount: s.gross - commission,
+      };
+    });
 
     const vendors = await OrderVendor.insertMany(orderVendorDocs, { session });
 
-    order[0].orderVendors = vendors.map((v) => v._id);
-    await order[0].save({ session });
+    order.orderVendors = vendors.map((v) => v._id);
+    await order.save({ session });
 
-    /* -------------------- STRIPE -------------------- */
+    /* --------------------------------------------------
+       STRIPE PAYMENT
+    -------------------------------------------------- */
 
     if (paymentMethod === "card") {
       const checkoutSession = await stripe.checkout.sessions.create({
@@ -181,21 +209,20 @@ export const placeOrder = async (req, res) => {
             product_data: { name: p.name },
             unit_amount: Math.round(p.price * 100),
           },
-          quantity: p.count,
+          quantity: p.quantity,
         })),
         success_url: `${process.env.FRONTEND_URL}/payment-success`,
         cancel_url: `${process.env.FRONTEND_URL}/payment-cancel`,
         metadata: {
-          orderId: order[0]._id.toString(),
+          orderId: order._id.toString(),
           userId,
-          itemType: "product",
         },
       });
 
       await Payment.create(
         [
           {
-            order: order[0]._id,
+            order: order._id,
             buyer: userId,
             amount: totalAmount,
             status: "pending",
@@ -212,14 +239,16 @@ export const placeOrder = async (req, res) => {
       return res.json({ checkoutUrl: checkoutSession.url });
     }
 
-    /* -------------------- COD -------------------- */
+    /* --------------------------------------------------
+       COD
+    -------------------------------------------------- */
 
     await Cart.deleteMany({ user: userId }, { session });
     await session.commitTransaction();
 
     res.status(201).json({
       message: "Order placed successfully (COD)",
-      orderId: order[0]._id,
+      orderId: order._id,
     });
   } catch (err) {
     await session.abortTransaction();
