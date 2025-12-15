@@ -1,6 +1,6 @@
 "use client";
 
-import { useSession } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -159,7 +159,9 @@ export default function Sidebar({ open, onClose }) {
 
         {/* LOGOUT BUTTON */}
         <div className="border-t border-[#F1F1F1] pt-4 mt-4">
-          <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-[15px] text-[#FF6A3D] hover:bg-[#FFF3EC] transition">
+          <button onClick={async()=>{
+            await signOut()
+          }} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-[15px] text-[#FF6A3D] hover:bg-[#FFF3EC] transition">
             <FiLogOut className="text-[18px]" />
             Logout
           </button>

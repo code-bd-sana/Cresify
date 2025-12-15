@@ -1,9 +1,15 @@
 "use client";
 
+import { useSingleProductQuery } from "@/feature/ProductApi";
+import Image from "next/image";
+import { useSession } from "next-auth/react";
+import { useAddToCartMutation, useDecreaseCartMutation, useIncreaseCartMutation} from "@/feature/customer/CartApi";
+import toast, { Toaster } from "react-hot-toast";
+import { useAddToWishListMutation, useCheckWishlistQuery, useRemoveFromWishListMutation, } from "@/feature/customer/WishlistApi";
+import { Heart, MapPin, MessageCircle, Star, Store } from "lucide-react";
 import { useState } from "react";
-import { MapPin, Star, Heart, Store, MessageCircle } from "lucide-react";
 
-export default function ProductDetails() {
+export default function ProductDetails({ id }) {
   const images = [
     "/product/bag.jpg",
     "/product/bag.jpg",
@@ -11,158 +17,267 @@ export default function ProductDetails() {
     "/product/bag.jpg",
   ];
 
-  const [selectedImg, setSelectedImg] = useState(images[0]);
+  const { data, isLoading } = useSingleProductQuery(id);
+  const [selectedImg] = useState(images[0]);
   const [qty, setQty] = useState(1);
 
+  // Auth
+  const { data: user } = useSession();
+    const [ increaseCart] = useIncreaseCartMutation();
+  const [decreaseCart] = useDecreaseCartMutation();
+
+  const userId = user?.user?.id;
+
+  // Wishlist queries
+  const { data: wishlistStatus, isLoading: isCheckingWishlist } =
+    useCheckWishlistQuery({ id, userId }, { skip: !userId });
+
+  const [addToWishlist, { isLoading: isAdding }] = useAddToWishListMutation();
+  const [removeFromWishList, { isLoading: isRemoving }] =
+    useRemoveFromWishListMutation();
+
+  const isWishlisted = wishlistStatus?.exists;
+  const wishlistId = wishlistStatus?.wishlistId;
+  const wishlistLoading = isAdding || isRemoving || isCheckingWishlist;
+
+  // Cart
+  const [addToCart, { isLoading: addToCartLoading }] = useAddToCartMutation();
+
+  // ADD TO CART HANDLER
+  const cartHandler = async () => {
+    try {
+      const body = {
+        product: id,
+        user: userId,
+        count: qty,
+      };
+
+      const saved = await addToCart(body);
+
+      if (saved.error) {
+        toast.error(saved?.error?.data?.message);
+        return;
+      }
+
+      toast.success(`Added ${qty} item(s) to your cart`);
+
+      if (isWishlisted) {
+        setIsWishlisted(false);
+      }
+    } catch (error) {
+      toast.error(error?.data?.message || "Something went wrong");
+    }
+  };
+
+  // WISHLIST HANDLER (TOGGLE)
+  const wishlistHandler = async () => {
+    try {
+      if (!userId) {
+        toast.error("Please login first");
+        return;
+      }
+
+      if (isWishlisted) {
+        // Remove
+        const res = await removeFromWishList(wishlistId);
+        if (res?.error) {
+          toast.error(res?.error?.data?.message || "Failed to remove");
+        } else {
+          toast.success("Removed from wishlist");
+        }
+      } else {
+        // Add
+        const body = {
+          product: id,
+          user: userId,
+        };
+
+        const saved = await addToWishlist(body);
+
+        if (saved?.error) {
+          toast.error(saved?.error?.data?.message);
+        } else {
+          toast.success("Added to wishlist");
+        }
+      }
+    } catch (error) {
+      toast.error("Something went wrong");
+    }
+  };
+
+  // LOADING STATE
+  if (isLoading) {
+    return (
+      <section className='w-full bg-[#F7F7FA] py-10 px-6'>
+        <div className='max-w-[1300px] mx-auto'>
+          <h2 className='text-[20px] font-semibold text-[#1B1B1B] mb-6'>
+            Product Details
+          </h2>
+          <div className='flex justify-center items-center h-64'>
+            <p className='text-gray-500'>Loading product details...</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  const p = data?.data;
+
+  if (!p) {
+    return (
+      <section className='w-full bg-[#F7F7FA] py-10 px-6'>
+        <div className='max-w-[1300px] mx-auto'>
+          <h2 className='text-[20px] font-semibold text-[#1B1B1B] mb-6'>
+            Product Details
+          </h2>
+          <div className='flex justify-center items-center h-64'>
+            <p className='text-gray-500'>Product not found</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  const originalPrice = 709;
+  const discountPercentage = Math.round(
+    ((originalPrice - p.price) / originalPrice) * 100
+  );
+
   return (
-    <section className="w-full bg-[#F7F7FA] py-10 px-6">
-      <div className="max-w-[1300px] mx-auto">
-        {/* PAGE TITLE */}
-        <h2 className="text-[20px] font-semibold text-[#1B1B1B] mb-6">
+    <section className='w-full bg-[#F7F7FA] py-10 px-6'>
+      <Toaster />
+      <div className='max-w-[1300px] mx-auto'>
+        <h2 className='text-[20px] font-semibold text-[#1B1B1B] mb-6'>
           Product Details
         </h2>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-          {/* LEFT SIDE */}
+        <div className='grid grid-cols-1 lg:grid-cols-2 gap-12'>
+          {/* LEFT */}
           <div>
-            {/* MAIN IMAGE (smaller now) */}
-            <div className="w-full h-[300px] bg-white rounded-[14px] overflow-hidden shadow-sm">
-              <img
-                src={selectedImg}
-                className="w-full h-full object-cover"
-                alt="product"
+            <div className='w-full bg-white rounded-[14px] overflow-hidden shadow-sm'>
+              <Image
+                src={p.image || "/product/bag.jpg"}
+                className='w-full h-full object-cover'
+                alt={p.name}
+                width={400}
+                height={400}
               />
-            </div>
-
-            {/* THUMBNAILS */}
-            <div className="flex gap-3 mt-5">
-              {images.map((img, i) => (
-                <button
-                  key={i}
-                  onClick={() => setSelectedImg(img)}
-                  className={`w-[58px] h-[58px] rounded-[10px] overflow-hidden 
-                   shadow-sm`}
-                >
-                  <img
-                    src={img}
-                    className="w-full h-full object-cover"
-                    alt="thumbnail"
-                  />
-                </button>
-              ))}
             </div>
           </div>
 
-          {/* RIGHT SIDE (taller + more spacing) */}
-          <div className="pr-4 pt-2">
-            {/* TITLE */}
-            <h3 className="text-[26px] font-semibold text-[#1B1B1B] leading-tight mb-1">
-              Genuine Leather Hangbag
+          {/* RIGHT */}
+          <div className='pr-4 pt-2'>
+            <h3 className='text-[26px] font-semibold text-[#1B1B1B] mb-1'>
+              {p.name}
             </h3>
 
-            {/* SELLER */}
-            <p className="text-[14px] text-[#A46CFF] font-medium mb-4">
-              by Fine Leathers
+            <div className='mb-2'>
+              <span className='inline-block px-3 py-1 bg-[#F2E9FF] text-[#A46CFF] text-xs font-medium rounded-full'>
+                {p.category.charAt(0).toUpperCase() + p.category.slice(1)}
+              </span>
+            </div>
+
+            <p className='text-[14px] text-[#A46CFF] font-medium mb-4'>
+              {p.seller?.shopName || p.seller?.name || "Unknown Seller"}
             </p>
 
             {/* LOCATION + RATING */}
-            <div className="flex items-center gap-6 mb-4">
-              <div className="flex items-center gap-2 text-[14px] text-[#6D6D6D]">
+            <div className='flex items-center gap-6 mb-4'>
+              <div className='flex items-center gap-2 text-[14px] text-[#6D6D6D]'>
                 <MapPin size={16} />
-                Monterrey
+                {p.location}
               </div>
 
-              {/* Rating */}
-              <div className="flex items-center gap-1 text-[14px] text-[#6D6D6D]">
+              <div className='flex items-center gap-1 text-[14px] text-[#6D6D6D]'>
                 {[...Array(5)].map((_, i) => (
                   <Star
                     key={i}
                     size={16}
                     className={
-                      i < 4 ? "text-[#FFA534] fill-[#FFA534]" : "text-[#E0E0E0]"
+                      i < Math.floor(p.rating)
+                        ? "text-[#FFA534] fill-[#FFA534]"
+                        : "text-[#E0E0E0]"
                     }
                   />
                 ))}
-                <span className="ml-1 text-[#6B6B6B]">4.6 (203 review)</span>
+                <span className='ml-1 text-[#6B6B6B]'>
+                  {p.rating.toFixed(1)} ({p.rating > 0 ? "203" : "0"} review)
+                </span>
               </div>
             </div>
 
             {/* PRICE */}
-            <div className="flex items-center gap-3 mb-6">
-              <span className="text-[26px] font-semibold text-[#F78D25]">
-                $599
+            <div className='flex items-center gap-3 mb-4'>
+              <span className='text-[26px] font-semibold text-[#F78D25]'>
+                ${p.price}
               </span>
-              <span className="text-[16px] text-[#B0B0B0] line-through">
-                $709
+              <span className='text-[16px] text-[#B0B0B0] line-through'>
+                ${originalPrice}
+              </span>
+              <span className='text-[14px] font-medium text-[#32A35A] bg-[#E6F8EF] px-2 py-1 rounded'>
+                -{discountPercentage}%
               </span>
             </div>
 
-            {/* Description */}
-            <h4 className="text-[15px] font-semibold text-[#1B1B1B] mb-2">
+            {/* DESCRIPTION */}
+            <h4 className='text-[15px] font-semibold text-[#1B1B1B] mb-2'>
               Description
             </h4>
 
-            <p className="text-[14px] leading-[21px] text-[#6B6B6B] mb-7 max-w-[500px]">
-              This handcrafted product is carefully made by local entrepreneurs
-              using high-quality materials. Each piece is unique and reflects
-              the passion and dedication of our artisans. Perfect for those
-              seeking authentic products of exceptional quality.
+            <p className='text-[14px] text-[#6B6B6B] mb-7 max-w-[500px]'>
+              {p.description}
             </p>
 
-            {/* Amount Section */}
-            <div className="flex items-center gap-3 mb-8">
-              <span className="text-[14px] text-[#1B1B1B] font-medium">
-                Amount:
-              </span>
-
-              <div className="flex items-center border border-[#D8D2E9] rounded-[8px]">
-                <button
-                  onClick={() => qty > 1 && setQty(qty - 1)}
-                  className="px-3 py-[6px] text-[16px] text-[#6B6B6B]"
-                >
-                  -
-                </button>
-                <span className="px-4 py-[6px] border-l border-r border-[#D8D2E9]">
-                  {qty}
-                </span>
-                <button
-                  onClick={() => setQty(qty + 1)}
-                  className="px-3 py-[6px] text-[16px] text-[#6B6B6B]"
-                >
-                  +
-                </button>
-              </div>
-            </div>
+        
 
             {/* ACTION BUTTONS */}
-            <div className="flex items-center gap-4 mb-10">
+            <div className='flex items-center gap-4 mb-10'>
               {/* Add to Cart */}
               <button
-                className="
-                flex-1 py-[12px] rounded-[10px]
-                text-white text-[15px] font-medium
-                bg-gradient-to-r from-[#9838E1] to-[#F68E44]
-                shadow-[0_4px_14px_rgba(0,0,0,0.12)]
-                "
-              >
-                Add to cart
+                onClick={cartHandler}
+                className={`flex-1 py-[12px] rounded-[10px] text-white text-[15px] font-medium shadow-[0_4px_14px_rgba(0,0,0,0.12)] transition-all duration-200 cursor-pointer ${
+                  p.stock === 0 || addToCartLoading
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "bg-linear-to-r from-[#9838E1] to-[#F68E44] hover:opacity-90"
+                }`}
+                disabled={p.stock === 0 || addToCartLoading}>
+                {addToCartLoading
+                  ? "Adding..."
+                  : p.stock === 0
+                  ? "Out of Stock"
+                  : "Add to cart"}
               </button>
 
               {/* Wishlist */}
-              <button className="w-[44px] h-[44px] rounded-[10px] border border-[#D9D3E8] flex items-center justify-center">
-                <Heart size={19} className="text-[#A46CFF]" />
+              <button
+                onClick={wishlistHandler}
+                className='w-[44px] h-[44px] rounded-[10px] border border-[#D9D3E8] flex items-center justify-center hover:bg-[#F9F6FF] transition-colors cursor-pointer'
+                disabled={wishlistLoading}>
+                <Heart
+                  size={19}
+                  className={`${
+                    isWishlisted
+                      ? "text-[#A46CFF] fill-[#A46CFF]"
+                      : "text-[#A46CFF]"
+                  } ${wishlistLoading ? "opacity-50" : ""}`}
+                />
               </button>
 
-              {/* Bag */}
-              <button className="w-[44px] h-[44px] rounded-[10px] border border-[#D9D3E8] flex items-center justify-center">
-                <MessageCircle size={19} className="text-[#A46CFF]" />
+              {/* Message Seller */}
+              <button className='w-[44px] h-[44px] rounded-[10px] border border-[#D9D3E9] flex items-center justify-center hover:bg-[#F9F6FF] transition-colors'>
+                <MessageCircle
+                  size={19}
+                  className='text-[#A46CFF] cursor-pointer'
+                />
               </button>
             </div>
 
-            {/* Visit Store */}
-            <div className="flex items-center gap-2 text-[14px] text-[#A46CFF] cursor-pointer">
+            {/* STORE */}
+            <div className='flex items-center gap-2 text-[14px] text-[#A46CFF] cursor-pointer hover:text-[#8736C5] transition-colors'>
               <Store size={17} />
-              <span>Visit Fine Leather Goods Store</span>
+              <span className='font-medium'>
+                Visit {p.seller?.shopName || "Store"}
+              </span>
             </div>
           </div>
         </div>

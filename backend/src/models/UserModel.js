@@ -11,23 +11,21 @@ const userSchema = new Schema(
       type: String,
       required: [true, "Password is Required"],
     },
-
     role: {
       type: String,
       required: [true, "Role is Required"],
       enum: ["buyer", "provider", "seller", "admin"],
     },
-
     name: {
       type: String,
     },
 
-    address: String,
-    businessLogo: String,
-    category: String,
-    nationalId: String,
-    registrationDate: String,
-    image:String,
+    address: { type: String, default: "" },
+    businessLogo: { type: String, default: "" },
+    category: { type: String, default: "" },
+    nationalId: { type: String, default: "" },
+    registrationDate: { type: String, default: "" },
+    image: { type: String, default: "" },
 
     phoneNumber: {
       type: String,
@@ -35,20 +33,19 @@ const userSchema = new Schema(
     status: {
       type: String,
       enum: ["pending", "active", "suspend"],
+      default: "active",
     },
-
-    shopName: String,
-    category: String,
-    serviceName: String,
-    serviceCategory: String,
-    serviceArea: String,
-    serviceRedius: Number,
-    hourlyRate: Number,
-    yearsofExperience: String,
-    serviceDescription: String,
-    website: String,
-    shopDescription: String,
-    shopLogo:String,
+    shopName: { type: String, default: "" },
+    serviceName: { type: String, default: "" },
+    serviceCategory: { type: String, default: "" },
+    serviceArea: { type: String, default: "" },
+    serviceRedius: { type: Number, default: 0 },
+    hourlyRate: { type: Number, default: 0 },
+    yearsofExperience: { type: String, default: "" },
+    serviceDescription: { type: String, default: "" },
+    website: { type: String, default: "" },
+    shopDescription: { type: String, default: "" },
+    shopLogo: { type: String, default: "" },
 
     workingHours: {
       start: { type: String, default: "09:00" },

@@ -1,82 +1,78 @@
 import mongoose, { Schema } from "mongoose";
-import User from "./UserModel.js";
-import Product from "./ProductModel.js";
 
-const orderSchema = new Schema({
-
-    customer:{
-           type: mongoose.Schema.Types.ObjectId,
-           required:true,
-           ref:User
+const orderSchema = new Schema(
+  {
+    orderId: {
+      type: String,
+      required: true,
+      unique: true,
+      trim: true,
     },
-
- products: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref:  Product,  
-    required: true
-}],
-
-    item:{
-        type:Number,
-        required:[true, "Item is Required"]
+    customer: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
     },
-
-    amount:{
-        type:Number,
-        required:[true, "Amount is Required"]
-
+    products: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "Product",
+        required: true,
+      },
+    ],
+    item: {
+      type: Number,
+      required: true,
+      min: [1, "At least one item is required"],
     },
-  adress: {
-    street: {
-        type: String,
-        required: [true, "Street is required"],
-        trim: true
+    amount: {
+      type: Number,
+      required: true,
+      min: [0, "Amount cannot be negative"],
     },
-    city: {
-        type: String,
-        required: [true, "City is required"],
-        trim: true
+    address: {
+      street: { type: String, required: true, trim: true },
+      city: { type: String, required: true, trim: true },
+      state: { type: String, trim: true },
+      postalCode: { type: String, trim: true },
+      fullName: { type: String },
+      country: { type: String, required: true, trim: true },
     },
-    state: {
-        type: String,
-        trim: true
+    status: {
+      type: String,
+      enum: ["pending", "processing", "shipping", "delivered", "canceled"],
+      default: "pending",
     },
-    postalCode: {
-        type: String,
-        trim: true
+    paymentMethod: {
+      type: String,
+      required: true,
+      enum: ["cod", "card"],
     },
-    fullName:String,
-    country: {
-        type: String,
-        required: [true, "Country is required"],
-        trim: true
+    paymentStatus: {
+      type: String,
+      enum: ["pending", "paid", "failed", "refunded"],
+      default: "pending",
     },
+  },
+  { timestamps: true }
+);
 
+// ────────────────────────────── INDEXES (No Duplicates, Only Best Ones) ────────────── //
 
-},
+// 1. Most common query: get orders by customer (with latest first)
+orderSchema.index({ customer: 1, createdAt: -1 });
 
+// 2. Most common query: get orders containing a product (for seller dashboard)
+orderSchema.index({ products: 1 });
 
-    status:{
-        type:String,
-        default:"pending",
-        enum:['delivered', "canceled", "shipping", "processing"]
-    } ,
+// 3. Fast sorting by date (used in almost every list)
+orderSchema.index({ createdAt: -1 });
 
-    
-    paymentMethod:{
-        type:String,
-        required:[true, "Payment method is Required"],
-        enum:['cod', 'card']
-    },
+// 4. (Optional but recommended) For seller orders via product lookup
+orderSchema.index({ "products.seller": 1 }); // denormalize seller in future
 
-    paymentStatus:String, 
-
-
-            
-     
-}, {timestamps:true}) ;
-
-
+// 5. (Optional) Text search on orderId
+orderSchema.index({ orderId: "text" });
 
 const Order = mongoose.model("order", orderSchema);
 
