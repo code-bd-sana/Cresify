@@ -24,7 +24,7 @@ const productSchema = new Schema(
 
     stock: {
       type: Number,
-      required: [true, "Stock Quantity is Requried"],
+      required: [true, "Stock Quantity is Required"],
     },
     rating: {
       type: Number,

@@ -60,11 +60,16 @@ export const placeOrder = async (req, res) => {
 
     if (requestedProductIds && requestedProductIds.length) {
       // load products by ids
-      products = await Product.find({
-        _id: { $in: requestedProductIds },
-        status: "active",
-        stock: { $gt: 0 },
-      }).session(session);
+      products = (
+        await Product.find({
+          _id: { $in: requestedProductIds },
+          status: "active",
+          stock: { $gt: 0 },
+        }).session(session)
+      ).map((p) => ({
+        ...p.toObject(),
+        count: 1,
+      }));
 
       if (!products.length || products.length !== requestedProductIds.length) {
         await session.abortTransaction();
@@ -100,7 +105,10 @@ export const placeOrder = async (req, res) => {
         return res.status(400).json({ message: "Cart is empty" });
       }
 
-      products = cartItems.map((c) => c.productDetails);
+      products = cartItems.map((c) => ({
+        ...c.productDetails.toObject(),
+        count: c.count,
+      }));
       productIds = products.map((p) => p._id);
     }
 
@@ -112,7 +120,7 @@ export const placeOrder = async (req, res) => {
     const bulkOps = products.map((p) => ({
       updateOne: {
         filter: { _id: p._id, stock: { $gte: p.count } },
-        update: { $inc: { stock: -p.count } },
+        update: { $inc: { stock: -Number(p.count) } },
       },
     }));
 
@@ -153,6 +161,10 @@ export const placeOrder = async (req, res) => {
     const sellerMap = {};
 
     for (const p of products) {
+      if (!Number.isFinite(p.count) || p.count <= 0) {
+        throw new Error(`Invalid product count for product ${p._id}`);
+      }
+
       const sellerId = p.seller.toString();
       if (!sellerMap[sellerId]) sellerMap[sellerId] = 0;
       sellerMap[sellerId] += p.price * p.count;
