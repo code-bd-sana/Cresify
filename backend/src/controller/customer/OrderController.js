@@ -243,7 +243,7 @@ export const placeOrder = async (req, res) => {
       return res.status(200).json({
         checkoutUrl: checkoutSession.url,
         sessionId: checkoutSession.id,
-        orderId: orderReadableId,
+        orderId: order._id.toString(),
         paymentId: payment.paymentId,
       });
     }
@@ -271,7 +271,7 @@ export const placeOrder = async (req, res) => {
 
     return res.status(201).json({
       message: "Order placed with Cash on Delivery",
-      orderId: orderReadableId,
+      orderId: order._id.toString(),
     });
   } catch (error) {
     console.log(error, "baler error");
