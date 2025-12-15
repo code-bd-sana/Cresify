@@ -1,6 +1,5 @@
 import dotenv from "dotenv";
 import mongoose from "mongoose";
-import short from "short-uuid";
 import Stripe from "stripe";
 import Cart from "../../models/CartModel.js";
 import Order from "../../models/OrderModel.js";
@@ -11,9 +10,6 @@ dotenv.config();
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
   apiVersion: "2025-10-29.clover",
 });
-
-// translator for ids
-const translator = short.createTranslator();
 
 /**
  * Place an order for selected products by a user.
@@ -60,11 +56,16 @@ export const placeOrder = async (req, res) => {
 
     if (requestedProductIds && requestedProductIds.length) {
       // load products by ids
-      products = await Product.find({
-        _id: { $in: requestedProductIds },
-        status: "active",
-        stock: { $gt: 0 },
-      }).session(session);
+      products = (
+        await Product.find({
+          _id: { $in: requestedProductIds },
+          status: "active",
+          stock: { $gt: 0 },
+        }).session(session)
+      ).map((p) => ({
+        ...p.toObject(),
+        count: 1,
+      }));
 
       if (!products.length || products.length !== requestedProductIds.length) {
         await session.abortTransaction();
@@ -100,7 +101,10 @@ export const placeOrder = async (req, res) => {
         return res.status(400).json({ message: "Cart is empty" });
       }
 
-      products = cartItems.map((c) => c.productDetails);
+      products = cartItems.map((c) => ({
+        ...c.productDetails.toObject(),
+        count: c.count,
+      }));
       productIds = products.map((p) => p._id);
     }
 
@@ -112,7 +116,7 @@ export const placeOrder = async (req, res) => {
     const bulkOps = products.map((p) => ({
       updateOne: {
         filter: { _id: p._id, stock: { $gte: p.count } },
-        update: { $inc: { stock: -p.count } },
+        update: { $inc: { stock: -Number(p.count) } },
       },
     }));
 
@@ -125,12 +129,10 @@ export const placeOrder = async (req, res) => {
     // ---------------------------
     // 4️. Create Order
     // ---------------------------
-    const orderReadableId = translator.new();
 
     const [order] = await Order.create(
       [
         {
-          orderId: orderReadableId,
           customer: userId,
           products: productIds,
           item: products.reduce((s, p) => s + p.count, 0),
@@ -153,6 +155,10 @@ export const placeOrder = async (req, res) => {
     const sellerMap = {};
 
     for (const p of products) {
+      if (!Number.isFinite(p.count) || p.count <= 0) {
+        throw new Error(`Invalid product count for product ${p._id}`);
+      }
+
       const sellerId = p.seller.toString();
       if (!sellerMap[sellerId]) sellerMap[sellerId] = 0;
       sellerMap[sellerId] += p.price * p.count;
@@ -190,10 +196,11 @@ export const placeOrder = async (req, res) => {
         payment_method_types: ["card"],
         line_items,
         success_url: `${process.env.FRONTEND_URL}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${process.env.FRONTEND_URL}/payment-cancel?orderId=${orderReadableId}`,
+        cancel_url: `${
+          process.env.FRONTEND_URL
+        }/payment-cancel?orderId=${order._id.toString()}`,
         metadata: {
           orderId: order._id.toString(),
-          orderReadableId,
           userId,
           sellerBreakdown: JSON.stringify(sellerBreakdown),
         },
@@ -202,7 +209,6 @@ export const placeOrder = async (req, res) => {
       const [payment] = await Payment.create(
         [
           {
-            paymentId: translator.new(),
             order: order._id,
             buyer: userId,
             amount: totalAmount,
@@ -237,7 +243,7 @@ export const placeOrder = async (req, res) => {
       return res.status(200).json({
         checkoutUrl: checkoutSession.url,
         sessionId: checkoutSession.id,
-        orderId: orderReadableId,
+        orderId: order._id.toString(),
         paymentId: payment.paymentId,
       });
     }
@@ -265,10 +271,12 @@ export const placeOrder = async (req, res) => {
 
     return res.status(201).json({
       message: "Order placed with Cash on Delivery",
-      orderId: orderReadableId,
+      orderId: order._id.toString(),
     });
   } catch (error) {
-    await session.abortTransaction();
+    console.log(error, "baler error");
+    if (session.inTransaction && session.inTransaction())
+      await session.abortTransaction();
     console.error("Place order failed:", error);
     return res.status(500).json({
       message: "Failed to place order",

@@ -95,7 +95,7 @@ export default function ProfileOverviewPage() {
         </section>
 
         {/* ---------------- SAVED ADDRESSES ---------------- */}
-        <section className="bg-white rounded-[14px] border border-[#ECE6F7] shadow-[0_4px_20px_rgba(0,0,0,0.06)] p-6 mb-6">
+        {/* <section className="bg-white rounded-[14px] border border-[#ECE6F7] shadow-[0_4px_20px_rgba(0,0,0,0.06)] p-6 mb-6">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-[15px] font-semibold text-[#1B1B1B]">
               Saved Addresses
@@ -105,7 +105,6 @@ export default function ProfileOverviewPage() {
             </button>
           </div>
 
-          {/* ADDRESS CARD 1 */}
           <div className="border border-[#ECE6F7] rounded-[10px] p-4 mb-4">
             <div className="flex justify-between items-center mb-1">
               <p className="text-[13px] font-medium">Home</p>
@@ -131,7 +130,7 @@ export default function ProfileOverviewPage() {
             </div>
           </div>
 
-          {/* ADDRESS CARD 2 */}
+
           <div className="border border-[#ECE6F7] rounded-[10px] p-4">
             <div className="flex justify-between items-center mb-1">
               <p className="text-[13px] font-medium">Office</p>
@@ -159,7 +158,7 @@ export default function ProfileOverviewPage() {
               </div>
             </div>
           </div>
-        </section>
+        </section> */}
 
         {/* ---------------- SECURITY SETTINGS ---------------- */}
         <section className="bg-white rounded-[14px] border border-[#ECE6F7] shadow-[0_4px_20px_rgba(0,0,0,0.06)] p-6">

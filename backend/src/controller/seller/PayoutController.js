@@ -33,7 +33,8 @@ export const requestPayout = async (req, res) => {
 
     const wallet = await Wallet.findOne({ user: sellerId }).session(session);
     if (!wallet || (wallet.balance || 0) < amount) {
-      await session.abortTransaction();
+      if (session.inTransaction && session.inTransaction())
+        await session.abortTransaction();
       return res.status(400).json({ message: "Insufficient balance" });
     }
 
@@ -120,12 +121,14 @@ export const processPayout = async (req, res) => {
       payout = await Payout.findOne({ payoutId }).session(session);
     }
     if (!payout) {
-      await session.abortTransaction();
+      if (session.inTransaction && session.inTransaction())
+        await session.abortTransaction();
       return res.status(404).json({ message: "Payout not found" });
     }
 
     if (payout.status === "paid") {
-      await session.abortTransaction();
+      if (session.inTransaction && session.inTransaction())
+        await session.abortTransaction();
       return res.status(400).json({ message: "Payout already processed" });
     }
 
@@ -134,13 +137,15 @@ export const processPayout = async (req, res) => {
       session
     );
     if (!wallet) {
-      await session.abortTransaction();
+      if (session.inTransaction && session.inTransaction())
+        await session.abortTransaction();
       return res.status(404).json({ message: "Seller wallet not found" });
     }
 
     // 3️⃣ Validate escrow funds
     if (wallet.reserved < payout.amount) {
-      await session.abortTransaction();
+      if (session.inTransaction && session.inTransaction())
+        await session.abortTransaction();
       return res.status(400).json({
         message: "Insufficient reserved balance for payout",
       });
@@ -166,7 +171,8 @@ export const processPayout = async (req, res) => {
         );
       } catch (err) {
         console.error("Stripe transfer failed", err);
-        await session.abortTransaction();
+        if (session.inTransaction && session.inTransaction())
+          await session.abortTransaction();
         return res.status(502).json({
           message: "Stripe transfer failed",
           error: err.message,
@@ -219,7 +225,8 @@ export const processPayout = async (req, res) => {
     });
   } catch (err) {
     console.error("processPayout error", err);
-    await session.abortTransaction();
+    if (session.inTransaction && session.inTransaction())
+      await session.abortTransaction();
     session.endSession();
     return res.status(500).json({
       message: "Failed to process payout",

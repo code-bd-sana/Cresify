@@ -10,24 +10,35 @@ import Wallet from "../models/WalletModel.js";
 import WebhookLog from "../models/WebhookLogModel.js";
 
 dotenv.config();
+
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
   apiVersion: "2025-10-29.clover",
 });
 
+/**
+ * Stripe Webhook Handler
+ */
 export const stripeWebhook = async (req, res) => {
+  console.log("Hit");
   const sig = req.headers["stripe-signature"];
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
   let event;
   try {
     event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
+
+    console.log("Hitted one");
   } catch (err) {
-    console.error("Webhook signature verification failed:", err.message);
+    console.error("Webhook signature failed:", err.message);
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
-  // Log webhook raw
+  // ─────────────────────────────────────
+  // Webhook Idempotency Log (fire-and-forget on duplicate)
+  // ─────────────────────────────────────
   try {
+    console.log("Hitted one");
+
     await WebhookLog.create({
       eventId: event.id,
       provider: "stripe",
@@ -35,221 +46,194 @@ export const stripeWebhook = async (req, res) => {
       payload: event.data.object,
       signature: sig,
     });
-  } catch (e) {
-    console.warn("Could not save webhook log:", e.message);
+  } catch (_) {
+    // Duplicate webhook → safe to ignore
   }
 
-  // Handle checkout.session.completed
+  // =========================================================
+  // ✅ PAYMENT SUCCESS: checkout.session.completed
+  // =========================================================
   if (event.type === "checkout.session.completed") {
-    const session = event.data.object;
-    const sessionId = session.id;
+    console.log("Hitted one");
 
-    const dbSession = await mongoose.startSession();
+    const stripeSession = event.data.object;
+    const session = await mongoose.startSession();
+
     try {
-      dbSession.startTransaction();
+      await session.withTransaction(async () => {
+        let payment = await Payment.findOne({
+          stripeSessionId: stripeSession.id,
+        }).session(session);
 
-      // find payment record
-      let payment = await Payment.findOne({
-        stripeSessionId: sessionId,
-      }).session(dbSession);
-      if (!payment) {
-        // try by order id metadata
-        if (session.metadata?.orderId) {
-          const orderId = session.metadata.orderId;
-          const order = await Order.findById(orderId).session(dbSession);
+        // Fallback: create payment record if not found (rare edge case)
+        if (!payment && stripeSession.metadata?.orderId) {
+          const order = await Order.findById(
+            stripeSession.metadata.orderId
+          ).session(session);
+
+          console.log("Web Hook: Order Place");
+
           if (order) {
-            payment = await Payment.create(
+            [payment] = await Payment.create(
               [
                 {
-                  paymentId: session.payment_intent || sessionId,
+                  paymentId: stripeSession.payment_intent || stripeSession.id,
                   order: order._id,
-                  buyer: session.metadata?.userId,
-                  amount: session.amount_total / 100,
-                  currency:
-                    session.currency || process.env.DEFAULT_CURRENCY || "usd",
+                  buyer: stripeSession.metadata.userId,
+                  amount: stripeSession.amount_total / 100,
+                  currency: stripeSession.currency || "usd",
                   status: "pending",
                   method: "stripe_checkout",
-                  stripeSessionId: sessionId,
+                  stripeSessionId: stripeSession.id,
                   metadata: {
-                    sellerBreakdown: session.metadata?.sellerBreakdown
-                      ? JSON.parse(session.metadata.sellerBreakdown)
-                      : undefined,
+                    sellerBreakdown: stripeSession.metadata?.sellerBreakdown
+                      ? JSON.parse(stripeSession.metadata.sellerBreakdown)
+                      : [],
                   },
                 },
               ],
-              { session: dbSession }
+              { session }
             );
-            payment = payment[0];
           }
         }
-      }
 
-      if (!payment) {
-        console.error("No payment record found for session", sessionId);
-        await dbSession.abortTransaction();
-        return res.status(404).send();
-      }
-
-      // update payment
-      payment.status = "paid";
-      payment.stripePaymentIntentId = session.payment_intent;
-      payment.capturedAt = new Date();
-      await payment.save({ session: dbSession });
-
-      // mark order paid
-      const order = await Order.findById(payment.order).session(dbSession);
-      if (order) {
-        order.paymentStatus = "paid";
-        order.status = "processing";
-        await order.save({ session: dbSession });
-      }
-
-      // process seller breakdown: hold funds in seller wallets (reserved)
-      const breakdown =
-        payment.metadata?.sellerBreakdown ||
-        (session.metadata?.sellerBreakdown
-          ? JSON.parse(session.metadata.sellerBreakdown)
-          : []);
-
-      for (const b of breakdown) {
-        const { sellerId, gross, platformFee, net } = b;
-
-        let wallet = await Wallet.findOne({ user: sellerId }).session(
-          dbSession
-        );
-        if (!wallet) {
-          [wallet] = await Wallet.create(
-            [{ user: sellerId, balance: 0, reserved: 0 }],
-            { session: dbSession }
-          );
+        // Idempotency guard
+        if (!payment || payment.status === "paid") {
+          return; // Nothing to do → commit will still happen
         }
 
-        const beforeReserved = wallet.reserved;
-        wallet.reserved += net;
-        await wallet.save({ session: dbSession });
+        // Mark payment as paid
+        payment.status = "paid";
+        payment.capturedAt = new Date();
+        await payment.save({ session });
 
-        await WalletLedger.create(
-          [
-            {
-              user: sellerId,
-              type: "credit",
-              amount: net,
-              reason: "sale_hold",
-              refId: order._id,
-            },
-          ],
-          { session: dbSession }
-        );
+        // Update order
+        const order = await Order.findById(payment.order).session(session);
+        if (order) {
+          order.paymentStatus = "paid";
+          order.status = "processing";
+          await order.save({ session });
+        }
 
-        await Transaction.create(
-          [
-            {
-              transactionId: `${payment.paymentId}-hold-${sellerId}`,
-              type: "hold",
-              wallet: wallet._id,
-              user: sellerId,
-              order: order._id,
-              payment: payment._id,
-              amount: net,
-              currency: payment.currency,
-              balanceBefore: beforeReserved,
-              balanceAfter: wallet.reserved,
-            },
-          ],
-          { session: dbSession }
-        );
-      }
+        // Hold funds in seller wallets
+        for (const b of payment.metadata?.sellerBreakdown || []) {
+          const { sellerId, net } = b;
 
-      await dbSession.commitTransaction();
-      dbSession.endSession();
+          let wallet = await Wallet.findOne({ user: sellerId }).session(
+            session
+          );
+          if (!wallet) {
+            [wallet] = await Wallet.create(
+              [{ user: sellerId, balance: 0, reserved: 0 }],
+              { session }
+            );
+          }
+
+          const beforeReserved = wallet.reserved;
+          wallet.reserved += net;
+          await wallet.save({ session });
+
+          // Ledger entry
+          await WalletLedger.create(
+            [
+              {
+                user: sellerId,
+                type: "credit",
+                amount: net,
+                reason: "sale_hold",
+                refId: order._id,
+              },
+            ],
+            { session }
+          );
+
+          // Transaction record
+          await Transaction.create(
+            [
+              {
+                transactionId: `${payment.paymentId}-hold-${sellerId}`,
+                type: "hold",
+                wallet: wallet._id,
+                user: sellerId,
+                order: order._id,
+                payment: payment._id,
+                amount: net,
+                currency: payment.currency,
+                balanceBefore: beforeReserved,
+                balanceAfter: wallet.reserved,
+              },
+            ],
+            { session }
+          );
+        }
+      });
 
       return res.json({ received: true });
     } catch (err) {
-      console.error("Webhook handler error:", err);
-      await dbSession.abortTransaction();
-      dbSession.endSession();
-      return res.status(500).send();
+      console.error("Webhook success processing error:", err);
+      return res.status(500).send("Transaction failed");
+    } finally {
+      session.endSession();
     }
   }
 
-  // handle failed/expired sessions or failed payment intents
-  if (
+  // =========================================================
+  // ❌ PAYMENT FAILED / EXPIRED
+  // =========================================================
+  else if (
     event.type === "checkout.session.expired" ||
     event.type === "checkout.session.async_payment_failed" ||
     event.type === "payment_intent.payment_failed"
   ) {
     const payload = event.data.object;
-    const sessionId = payload.id || payload.session || null;
-    const paymentIntentId = payload.payment_intent || payload.id || null;
+    const session = await mongoose.startSession();
+    console.log("Hitted one failed");
 
-    const dbSession = await mongoose.startSession();
     try {
-      dbSession.startTransaction();
+      await session.withTransaction(async () => {
+        let payment = await Payment.findOne({
+          stripeSessionId: payload.id,
+        }).session(session);
+        console.log("Hitted one failed");
 
-      let payment = null;
-      if (sessionId)
-        payment = await Payment.findOne({ stripeSessionId: sessionId }).session(
-          dbSession
-        );
-      if (!payment && paymentIntentId)
-        payment = await Payment.findOne({
-          stripePaymentIntentId: paymentIntentId,
-        }).session(dbSession);
-
-      if (!payment && payload.metadata?.orderId) {
-        const order = await Order.findById(payload.metadata.orderId).session(
-          dbSession
-        );
-        if (order)
-          payment = await Payment.findOne({ order: order._id }).session(
-            dbSession
-          );
-      }
-
-      if (!payment) {
-        await dbSession.commitTransaction();
-        dbSession.endSession();
-        return res.json({ received: true });
-      }
-
-      // mark payment failed
-      payment.status = "failed";
-      await payment.save({ session: dbSession });
-
-      // mark order canceled and restore stock
-      const order = await Order.findById(payment.order).session(dbSession);
-      if (order) {
-        order.paymentStatus = "failed";
-        order.status = "canceled";
-        await order.save({ session: dbSession });
-
-        // restore stock counts
-        const counts = {};
-        for (const pid of order.products) {
-          const key = pid.toString();
-          counts[key] = (counts[key] || 0) + 1;
+        // Idempotency guard
+        if (!payment || payment.status === "paid") {
+          return;
         }
-        for (const [pid, qty] of Object.entries(counts)) {
-          await Product.updateOne(
-            { _id: pid },
-            { $inc: { stock: qty } },
-            { session: dbSession }
-          );
-        }
-      }
 
-      await dbSession.commitTransaction();
-      dbSession.endSession();
+        payment.status = "failed";
+        await payment.save({ session });
+
+        const order = await Order.findById(payment.order).session(session);
+        if (order) {
+          order.paymentStatus = "failed";
+          order.status = "canceled";
+          await order.save({ session });
+
+          // Restore product stock
+          for (const pid of order.products) {
+            await Product.updateOne(
+              { _id: pid },
+              { $inc: { stock: 1 } },
+              { session }
+            );
+          }
+        }
+      });
+      console.log("Hitted one failed");
+
       return res.json({ received: true });
     } catch (err) {
-      console.error("Webhook failure handler error:", err);
-      await dbSession.abortTransaction();
-      dbSession.endSession();
-      return res.status(500).send();
+      console.error("Webhook failure processing error:", err);
+      return res.status(500).send("Transaction failed");
+    } finally {
+      session.endSession();
     }
   }
 
-  // Other events - return 200
+  // =========================================================
+  // OTHER EVENTS → acknowledge
+  // =========================================================
   return res.json({ received: true });
 };
 
