@@ -107,7 +107,7 @@ export default function BookingList() {
 
         {/* ---------------- BOOKINGS ---------------- */}
         <div className="space-y-6">
-          {filtered.map((b, index) => (
+          {filtered?.map((b, index) => (
             <div
               key={index}
               className="bg-white border border-[#EEEAF7] rounded-[16px] p-5 shadow-[0_6px_18px_rgba(0,0,0,0.06)]"

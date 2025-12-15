@@ -74,7 +74,7 @@ export const loginUser = async (req, res) => {
 export const changePassword = async (req, res) => {
   try {
     const { id, oldPassword, newPassword } = req.body;
-    console.log(oldPassword, "old password is here");
+    console.log(id, oldPassword, newPassword, "old password is here");
 
     const isExist = await User.findOne({ _id: id });
 

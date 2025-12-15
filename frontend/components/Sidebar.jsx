@@ -25,7 +25,7 @@ export default function Sidebar({ open, onClose }) {
 
   const role = data?.user?.role;
 
-  console.log(data, "Hey young role");
+
 
 
   const adminItem = [
@@ -67,7 +67,7 @@ export default function Sidebar({ open, onClose }) {
     { label: "Store Profile", icon: FiUser, path: "/dashboard/store-profile" },
     { label: "Payments", icon: FiCreditCard, path: "/dashboard/payments" },
 
-    { label: "Analytics", icon: FiBarChart2, path: "/dashboard/analytics" },
+    // { label: "Analytics", icon: FiBarChart2, path: "/dashboard/analytics" },
     { label: "Reviews", icon: FiStar, path: "/dashboard/reviews" },
     { label: "Messages", icon: FiMessageSquare, path: "/dashboard/messages" },
     { label: "Settings", icon: FiSettings, path: "/dashboard/settings" },
