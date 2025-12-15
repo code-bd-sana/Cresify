@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import OrderVendorModel from "../../models/OrderVendorModel";
 
 /**
  * Get orders for a seller with pagination and search by order ID or customer name.
@@ -123,7 +124,7 @@ export const getSellerOrders = async (req, res) => {
       },
     ];
 
-    const result = await OrderVendor.aggregate(pipeline);
+    const result = await OrderVendorModel.aggregate(pipeline);
 
     const orders = result[0]?.data || [];
     const total = result[0]?.metadata[0]?.total || 0;
