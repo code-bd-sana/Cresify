@@ -196,7 +196,9 @@ export const placeOrder = async (req, res) => {
         payment_method_types: ["card"],
         line_items,
         success_url: `${process.env.FRONTEND_URL}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${process.env.FRONTEND_URL}/payment-cancel?orderId=${order._id.toString()}`,
+        cancel_url: `${
+          process.env.FRONTEND_URL
+        }/payment-cancel?orderId=${order._id.toString()}`,
         metadata: {
           orderId: order._id.toString(),
           userId,
@@ -273,7 +275,8 @@ export const placeOrder = async (req, res) => {
     });
   } catch (error) {
     console.log(error, "baler error");
-    await session.abortTransaction();
+    if (session.inTransaction && session.inTransaction())
+      await session.abortTransaction();
     console.error("Place order failed:", error);
     return res.status(500).json({
       message: "Failed to place order",

@@ -38,13 +38,15 @@ export const reviewRefund = async (req, res) => {
 
     const refund = await Refund.findById(refundId).session(session);
     if (!refund) {
-      await session.abortTransaction();
+      if (session.inTransaction && session.inTransaction())
+        await session.abortTransaction();
       return res.status(404).json({ message: "Refund not found" });
     }
 
     const payment = await Payment.findById(refund.payment).session(session);
     if (!payment) {
-      await session.abortTransaction();
+      if (session.inTransaction && session.inTransaction())
+        await session.abortTransaction();
       return res.status(404).json({ message: "Payment not found" });
     }
 
@@ -71,7 +73,8 @@ export const reviewRefund = async (req, res) => {
         });
       } catch (stripeErr) {
         console.error("Stripe refund failed", stripeErr);
-        await session.abortTransaction();
+        if (session.inTransaction && session.inTransaction())
+          await session.abortTransaction();
         return res
           .status(502)
           .json({ message: "Stripe refund failed", error: stripeErr.message });
@@ -136,7 +139,8 @@ export const reviewRefund = async (req, res) => {
     return res.json({ message: "Refund processed", refund, stripeRefund });
   } catch (err) {
     console.error("reviewRefund error", err);
-    await session.abortTransaction();
+    if (session.inTransaction && session.inTransaction())
+      await session.abortTransaction();
     session.endSession();
     return res
       .status(500)
