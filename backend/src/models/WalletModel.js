@@ -10,7 +10,7 @@ const walletSchema = new Schema(
     },
     currentBalance: { type: Number, default: 0 },
     reserved: { type: Number, default: 0 },
-    currency: { type: String, default: "USD" },
+    currency: { type: String, default: "usd" },
   },
   { timestamps: true }
 );

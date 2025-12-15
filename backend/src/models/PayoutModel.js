@@ -5,7 +5,7 @@ const payoutSchema = new Schema(
     payoutId: { type: String, required: true, unique: true, trim: true },
     seller: { type: Schema.Types.ObjectId, ref: "User", required: true },
     amount: { type: Number, required: true, min: 0 },
-    currency: { type: String, default: "USD" },
+    currency: { type: String, default: "usd" },
     status: {
       type: String,
       enum: ["pending", "queued", "in_transit", "paid", "failed"],

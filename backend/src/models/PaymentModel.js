@@ -7,7 +7,7 @@ const paymentSchema = new Schema(
     buyer: { type: Schema.Types.ObjectId, ref: "User", required: true },
     seller: { type: Schema.Types.ObjectId, ref: "User" },
     amount: { type: Number, required: true, min: 0 },
-    currency: { type: String, required: true, default: "USD" },
+    currency: { type: String, required: true, default: "usd" },
     status: {
       type: String,
       enum: ["pending", "paid", "failed", "refunded"],
