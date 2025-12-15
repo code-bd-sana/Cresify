@@ -156,24 +156,24 @@ export default function ServiceProviderDashboard() {
       </div>
 
       {/* ======================= BOOKINGS LISTS ======================= */}
-      <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
-        {/* TODAY’S BOOKINGS */}
+      {/* <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
+ 
         <BookingList
           title='Today’s Bookings'
-          items={todayBookings}
+          items={todayBookings || []}
           statusColors={statusColors}
           showStatus
           loading={todayLoading}
         />
-        {/* UPCOMING BOOKINGS */}
+
         <BookingList
           title='Upcoming Bookings'
-          items={upcomingBookings}
+          items={upcomingBookings || []}
           statusColors={statusColors}
           showStatus
           loading={upcomingLoading}
         />
-      </div>
+      </div> */}
     </div>
   );
 }
@@ -242,7 +242,7 @@ function BookingList({ title, items, statusColors, showStatus, loading }) {
             No bookings found
           </div>
         ) : (
-          items.map((item, i) => (
+          items?.map((item, i) => (
             <div
               key={i}
               className='bg-white border border-[#E5E5E5] rounded-xl p-4 shadow-sm flex items-center justify-between'>
