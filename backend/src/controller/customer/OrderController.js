@@ -202,6 +202,7 @@ export const placeOrder = async (req, res) => {
         metadata: {
           orderId: order._id.toString(),
           userId,
+          itemType:"proudct",
           sellerBreakdown: JSON.stringify(sellerBreakdown),
         },
       });
