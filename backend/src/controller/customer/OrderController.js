@@ -31,10 +31,14 @@ export const placeOrder = async (req, res) => {
   const session = await mongoose.startSession();
 
   try {
-    const { userId, address, paymentMethod, productIds } = req.body;
+    const { userId, address, paymentMethod, items } = req.body;
 
     if (!userId || !address?.street || !address?.city || !address?.country) {
-      return res.status(400).json({ message: "Invalid request data" });
+      return res.status(400).json({ message: "Invalid address or user" });
+    }
+
+    if (!Array.isArray(items) || !items.length) {
+      return res.status(400).json({ message: "No items provided" });
     }
 
     if (!["cod", "card"].includes(paymentMethod)) {
@@ -44,66 +48,62 @@ export const placeOrder = async (req, res) => {
     session.startTransaction();
 
     /* --------------------------------------------------
-       LOAD PRODUCTS (FROM CART OR DIRECT PRODUCT IDS)
+       STEP 1: UPSERT CART (BUY NOW + CART CHECKOUT)
     -------------------------------------------------- */
 
-    let products = [];
-
-    // DIRECT BUY
-    if (Array.isArray(productIds) && productIds.length) {
-      const dbProducts = await Product.find({
-        _id: { $in: productIds },
-        status: "active",
-        stock: { $gt: 0 },
-      }).session(session);
-
-      if (dbProducts.length !== productIds.length) {
-        throw new Error("Some products are unavailable");
+    for (const item of items) {
+      if (!item.productId || item.quantity < 1) {
+        throw new Error("Invalid product or quantity");
       }
 
-      products = dbProducts.map((p) => ({
-        _id: p._id,
-        name: p.name,
-        seller: p.seller,
-        price: p.price,
-        quantity: 1,
-      }));
-    }
-
-    // CART BUY
-    else {
-      const cartItems = await Cart.aggregate([
-        { $match: { user: new mongoose.Types.ObjectId(userId) } },
-        {
-          $lookup: {
-            from: "products",
-            localField: "product",
-            foreignField: "_id",
-            as: "product",
-          },
-        },
-        { $unwind: "$product" },
-        { $match: { "product.stock": { $gte: "$count" } } },
-        {
-          $project: {
-            _id: "$product._id",
-            name: "$product.name",
-            seller: "$product.seller",
-            price: "$product.price",
-            quantity: "$count",
-          },
-        },
-      ]);
-
-      if (!cartItems.length) {
-        throw new Error("Cart is empty");
-      }
-
-      products = cartItems;
+      await Cart.findOneAndUpdate(
+        { user: userId, product: item.productId },
+        { $set: { count: Number(item.quantity) } },
+        { upsert: true, new: true, session }
+      );
     }
 
     /* --------------------------------------------------
-       STOCK LOCK
+       STEP 2: LOAD PRODUCTS STRICTLY FROM CART
+    -------------------------------------------------- */
+
+    const products = await Cart.aggregate([
+      { $match: { user: new mongoose.Types.ObjectId(userId) } },
+
+      {
+        $lookup: {
+          from: "products",
+          localField: "product",
+          foreignField: "_id",
+          as: "product",
+        },
+      },
+
+      { $unwind: "$product" },
+
+      {
+        $match: {
+          $expr: { $gte: ["$product.stock", "$count"] },
+        },
+      },
+
+      {
+        $project: {
+          _id: "$product._id",
+          name: "$product.name",
+          seller: "$product.seller",
+          price: "$product.price",
+          quantity: { $toInt: "$count" }, // 🔥 ONLY SOURCE
+        },
+      },
+    ]);
+
+    if (!products.length) {
+      throw new Error("Cart is empty or insufficient stock");
+    }
+
+    /* --------------------------------------------------
+       STEP 3: STOCK LOCK
     -------------------------------------------------- */
 
     const bulkOps = products.map((p) => ({
@@ -120,7 +120,7 @@ export const placeOrder = async (req, res) => {
     }
 
     /* --------------------------------------------------
-       SELLER BREAKDOWN
+       STEP 4: SELLER BREAKDOWN
     -------------------------------------------------- */
 
     const commissionPercent = Number(
@@ -131,6 +131,7 @@ export const placeOrder = async (req, res) => {
 
     for (const p of products) {
       const sellerId = p.seller.toString();
+      const amount = p.price * p.quantity;
 
       if (!sellerMap[sellerId]) {
         sellerMap[sellerId] = {
@@ -140,12 +141,10 @@ export const placeOrder = async (req, res) => {
         };
       }
 
-      const amount = p.price * p.quantity;
-
       sellerMap[sellerId].products.push({
         product: p._id,
         quantity: p.quantity,
-        price: p.price, // unit price
+        price: p.price,
         amount,
       });
 
@@ -158,7 +157,7 @@ export const placeOrder = async (req, res) => {
     );
 
     /* --------------------------------------------------
-       CREATE ORDER
+       STEP 5: CREATE ORDER
     -------------------------------------------------- */
 
     const [order] = await Order.create(
@@ -174,10 +173,10 @@ export const placeOrder = async (req, res) => {
     );
 
     /* --------------------------------------------------
-       CREATE ORDER VENDORS
+       STEP 6: CREATE ORDER VENDORS
     -------------------------------------------------- */
 
-    const orderVendorDocs = Object.values(sellerMap).map((s) => {
+    const vendorDocs = Object.values(sellerMap).map((s) => {
       const commission = (s.gross * commissionPercent) / 100;
 
       return {
@@ -190,13 +189,13 @@ export const placeOrder = async (req, res) => {
       };
     });
 
-    const vendors = await OrderVendor.insertMany(orderVendorDocs, { session });
+    const vendors = await OrderVendor.insertMany(vendorDocs, { session });
 
     order.orderVendors = vendors.map((v) => v._id);
     await order.save({ session });
 
     /* --------------------------------------------------
-       STRIPE PAYMENT
+       STEP 7: STRIPE PAYMENT
     -------------------------------------------------- */
 
     if (paymentMethod === "card") {
@@ -240,7 +239,7 @@ export const placeOrder = async (req, res) => {
     }
 
     /* --------------------------------------------------
-       COD
+       STEP 8: COD
     -------------------------------------------------- */
 
     await Cart.deleteMany({ user: userId }, { session });
