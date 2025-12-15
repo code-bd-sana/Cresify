@@ -13,7 +13,7 @@ const transactionSchema = new Schema(
     order: { type: Schema.Types.ObjectId, ref: "order" },
     payment: { type: Schema.Types.ObjectId, ref: "Payment" },
     amount: { type: Number, required: true },
-    currency: { type: String, default: "USD" },
+    currency: { type: String, default: "usd" },
     balanceBefore: { type: Number },
     balanceAfter: { type: Number },
     metadata: { type: Schema.Types.Mixed },

@@ -1,5 +1,6 @@
 import Booking from "../models/BookingModel.js";
 import ProviderAvailability from "../models/ProviderAvailabilityModel.js";
+import User from "../models/UserModel.js";
 
 /**
  * Get provider's availability settings
@@ -106,5 +107,65 @@ export const getProviderBookingsForDate = async (req, res) => {
     res.status(200).json({ success: true, data: bookings });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+/**
+ * Change Provider Availability  
+ * @route PUT /user/changeAvailability
+ * @param {string} req.body.id - Provider ID
+ * @param {Object} req.body.workingHours - Working hours { start: "09:00", end: "18:00" }
+ * @param {number} req.body.slotDuration - Slot duration in minutes
+ * @param {Array<string>} req.body.workingDays - Working days ["Mon", "Tue", "Wed"]
+ * @returns {Object} 200 - Updated provider data
+ */
+export const changeAvailability = async (req, res) => {
+  try {
+    const { id, workingHours, slotDuration, workingDays } = req.body;
+
+    // Validate required fields
+    if (!id) {
+      return res.status(400).json({ message: "Provider ID is required" });
+    }
+
+    // Find provider
+    const provider = await User.findById(id);
+    if (!provider) {
+      return res.status(404).json({ message: "Provider not found" });
+    }
+
+    // Only update provider role
+    if (provider.role !== "provider") {
+      return res
+        .status(400)
+        .json({ message: "User is not a service provider" });
+    }
+
+    // Update fields if provided
+    if (workingHours) {
+      provider.workingHours = workingHours; // { start: "09:00", end: "18:00" }
+    }
+
+    if (slotDuration) {
+      provider.slotDuration = slotDuration; // in minutes
+    }
+
+    if (workingDays) {
+      provider.workingDays = workingDays; // ["Mon", "Tue", "Wed"]
+    }
+
+    // Save updates
+    const updatedProvider = await provider.save();
+
+    res.status(200).json({
+      message: "Availability updated successfully",
+      data: updatedProvider,
+    });
+  } catch (error) {
+    console.error("Error updating availability:", error);
+    res.status(500).json({
+      error,
+      message: error?.message,
+    });
   }
 };
