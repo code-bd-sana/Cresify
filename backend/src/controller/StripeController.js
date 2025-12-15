@@ -1,6 +1,7 @@
 import dotenv from "dotenv";
 import mongoose from "mongoose";
 import Stripe from "stripe";
+
 import Order from "../models/OrderModel.js";
 import Payment from "../models/PaymentModel.js";
 import Product from "../models/ProductModel.js";
@@ -26,12 +27,12 @@ export const stripeWebhook = async (req, res) => {
   try {
     event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
   } catch (err) {
-    console.error("❌ Webhook signature verification failed:", err.message);
+    console.error("Webhook signature failed:", err.message);
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
   // ─────────────────────────────────────
-  // Save webhook log (idempotency helper)
+  // Webhook Idempotency Log
   // ─────────────────────────────────────
   try {
     await WebhookLog.create({
@@ -41,8 +42,8 @@ export const stripeWebhook = async (req, res) => {
       payload: event.data.object,
       signature: sig,
     });
-  } catch (e) {
-    // duplicate webhook → safe to ignore
+  } catch (_) {
+    // duplicate webhook → ignore
   }
 
   // =========================================================
@@ -50,21 +51,21 @@ export const stripeWebhook = async (req, res) => {
   // =========================================================
   if (event.type === "checkout.session.completed") {
     const stripeSession = event.data.object;
-    const dbSession = await mongoose.startSession();
+    const session = await mongoose.startSession();
+    let committed = false;
 
     try {
-      dbSession.startTransaction();
+      session.startTransaction();
 
-      // 🔹 Find payment
       let payment = await Payment.findOne({
         stripeSessionId: stripeSession.id,
-      }).session(dbSession);
+      }).session(session);
 
-      // Fallback: create payment from metadata
+      // Fallback create payment
       if (!payment && stripeSession.metadata?.orderId) {
         const order = await Order.findById(
           stripeSession.metadata.orderId
-        ).session(dbSession);
+        ).session(session);
 
         if (order) {
           [payment] = await Payment.create(
@@ -74,10 +75,7 @@ export const stripeWebhook = async (req, res) => {
                 order: order._id,
                 buyer: stripeSession.metadata.userId,
                 amount: stripeSession.amount_total / 100,
-                currency:
-                  stripeSession.currency ||
-                  process.env.DEFAULT_CURRENCY ||
-                  "usd",
+                currency: stripeSession.currency || "usd",
                 status: "pending",
                 method: "stripe_checkout",
                 stripeSessionId: stripeSession.id,
@@ -89,55 +87,49 @@ export const stripeWebhook = async (req, res) => {
                 },
               },
             ],
-            { session: dbSession }
+            { session }
           );
         }
       }
 
-      if (!payment) {
-        await dbSession.commitTransaction();
+      // Idempotency guard
+      if (!payment || payment.status === "paid") {
+        await session.commitTransaction();
+        committed = true;
         return res.json({ received: true });
       }
 
-      // 🔒 Idempotency guard
-      if (payment.status === "paid") {
-        await dbSession.commitTransaction();
-        return res.json({ received: true });
-      }
-
-      // 🔹 Mark payment paid
+      // Mark payment paid
       payment.status = "paid";
       payment.capturedAt = new Date();
-      await payment.save({ session: dbSession });
+      await payment.save({ session });
 
-      // 🔹 Update order
-      const order = await Order.findById(payment.order).session(dbSession);
+      // Update order
+      const order = await Order.findById(payment.order).session(session);
       if (order) {
         order.paymentStatus = "paid";
         order.status = "processing";
-        await order.save({ session: dbSession });
+        await order.save({ session });
       }
 
-      // 🔹 Seller wallet hold
-      const breakdown = payment.metadata?.sellerBreakdown || [];
-
-      for (const b of breakdown) {
+      // Seller wallet hold
+      for (const b of payment.metadata?.sellerBreakdown || []) {
         const { sellerId, net } = b;
 
         let wallet = await Wallet.findOne({
           user: sellerId,
-        }).session(dbSession);
+        }).session(session);
 
         if (!wallet) {
           [wallet] = await Wallet.create(
             [{ user: sellerId, balance: 0, reserved: 0 }],
-            { session: dbSession }
+            { session }
           );
         }
 
-        const beforeReserved = wallet.reserved;
+        const before = wallet.reserved;
         wallet.reserved += net;
-        await wallet.save({ session: dbSession });
+        await wallet.save({ session });
 
         await WalletLedger.create(
           [
@@ -149,7 +141,7 @@ export const stripeWebhook = async (req, res) => {
               refId: order._id,
             },
           ],
-          { session: dbSession }
+          { session }
         );
 
         await Transaction.create(
@@ -163,24 +155,25 @@ export const stripeWebhook = async (req, res) => {
               payment: payment._id,
               amount: net,
               currency: payment.currency,
-              balanceBefore: beforeReserved,
+              balanceBefore: before,
               balanceAfter: wallet.reserved,
             },
           ],
-          { session: dbSession }
+          { session }
         );
       }
 
-      await dbSession.commitTransaction();
+      await session.commitTransaction();
+      committed = true;
       return res.json({ received: true });
     } catch (err) {
-      if (dbSession.inTransaction()) {
-        await dbSession.abortTransaction();
+      if (!committed && session.inTransaction()) {
+        await session.abortTransaction();
       }
-      console.error("❌ Webhook success handler error:", err);
+      console.error("Webhook success error:", err);
       return res.status(500).send();
     } finally {
-      dbSession.endSession();
+      session.endSession();
     }
   }
 
@@ -193,71 +186,63 @@ export const stripeWebhook = async (req, res) => {
     event.type === "payment_intent.payment_failed"
   ) {
     const payload = event.data.object;
-    const dbSession = await mongoose.startSession();
+    const session = await mongoose.startSession();
+    let committed = false;
 
     try {
-      dbSession.startTransaction();
+      session.startTransaction();
 
       let payment =
         (payload.id &&
           (await Payment.findOne({
             stripeSessionId: payload.id,
-          }).session(dbSession))) ||
+          }).session(session))) ||
         (payload.payment_intent &&
           (await Payment.findOne({
             stripePaymentIntentId: payload.payment_intent,
-          }).session(dbSession)));
-
-      if (!payment && payload.metadata?.orderId) {
-        payment = await Payment.findOne({
-          order: payload.metadata.orderId,
-        }).session(dbSession);
-      }
+          }).session(session)));
 
       if (!payment || payment.status === "paid") {
-        await dbSession.commitTransaction();
+        await session.commitTransaction();
+        committed = true;
         return res.json({ received: true });
       }
 
       payment.status = "failed";
-      await payment.save({ session: dbSession });
+      await payment.save({ session });
 
-      const order = await Order.findById(payment.order).session(dbSession);
+      const order = await Order.findById(payment.order).session(session);
       if (order) {
         order.paymentStatus = "failed";
         order.status = "canceled";
-        await order.save({ session: dbSession });
+        await order.save({ session });
 
-        // 🔁 Restore stock
-        const counts = {};
+        // Restore stock
         for (const pid of order.products) {
-          counts[pid.toString()] = (counts[pid.toString()] || 0) + 1;
-        }
-
-        for (const [pid, qty] of Object.entries(counts)) {
           await Product.updateOne(
             { _id: pid },
-            { $inc: { stock: qty } },
-            { session: dbSession }
+            { $inc: { stock: 1 } },
+            { session }
           );
         }
       }
 
-      await dbSession.commitTransaction();
+      await session.commitTransaction();
+      committed = true;
       return res.json({ received: true });
     } catch (err) {
-      if (dbSession.inTransaction()) {
-        await dbSession.abortTransaction();
+      if (!committed && session.inTransaction()) {
+        await session.abortTransaction();
       }
-      console.error("❌ Webhook failure handler error:", err);
+      console.error("Webhook failure error:", err);
       return res.status(500).send();
     } finally {
-      dbSession.endSession();
+      session.endSession();
     }
   }
 
   // =========================================================
-  // ℹ️ OTHER EVENTS
+  // OTHER EVENTS
   // =========================================================
   return res.json({ received: true });
 };
