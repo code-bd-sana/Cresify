@@ -6,13 +6,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { FaUser } from "react-icons/fa";
-import {
-  FiHeart,
-  FiMenu,
-  FiMessageCircle,
-  FiShoppingCart,
-  FiX,
-} from "react-icons/fi";
+import { FiMenu, FiMessageCircle, FiShoppingCart, FiX } from "react-icons/fi";
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -27,9 +21,9 @@ export default function Navbar() {
     { label: "Contact", href: "/contact" },
   ];
 
-  const {data} = useSession();
+  const { data } = useSession();
   console.log(data?.user, "kire mamaur beta");
-  const user = data?.user
+  const user = data?.user;
 
   return (
     <nav className='w-full bg-white border-b border-gray-100 sticky top-0 z-50'>
@@ -87,14 +81,18 @@ export default function Navbar() {
             <FiShoppingCart className='text-[22px] text-black cursor-pointer' />
           </Link>
 
-          {/* BUTTON */}
-      {
-        user.role === "buyer" ? <Link href={'/profile'}><FaUser className="text-2xl cursor-pointer"/></Link> :     <Link href='/dashboard'>
-            <button className='px-6 py-[10px] text-white font-medium rounded-md bg-linear-to-r from-[#9838E1] to-[#F68E44] cursor-pointer'>
-              Get started
-            </button>
-          </Link>
-      }
+          {/* BUTTON  */}
+          {user.role === "buyer" ? (
+            <Link href={"/profile"}>
+              <FaUser className='text-2xl cursor-pointer' />
+            </Link>
+          ) : (
+            <Link href='/dashboard'>
+              <button className='px-6 py-[10px] text-white font-medium rounded-md bg-linear-to-r from-[#9838E1] to-[#F68E44] cursor-pointer'>
+                Get started
+              </button>
+            </Link>
+          )}
         </div>
       </div>
 
@@ -168,12 +166,13 @@ export default function Navbar() {
           <div className='flex mt-4 items-center gap-4'>
             <FiMessageCircle className='text-[22px] text-black cursor-pointer' />
 
-   {
-    user.role === "buyer" ? <FaUser/> :
-             <button className='flex-1 px-5 py-[10px] text-white font-medium rounded-md bg-linear-to-r from-[#9838E1] to-[#F68E44] cursor-pointer'>
-              Get started
-            </button>
-   }
+            {user.role === "buyer" ? (
+              <FaUser />
+            ) : (
+              <button className='flex-1 px-5 py-[10px] text-white font-medium rounded-md bg-linear-to-r from-[#9838E1] to-[#F68E44] cursor-pointer'>
+                Get started
+              </button>
+            )}
           </div>
         </div>
       )}
