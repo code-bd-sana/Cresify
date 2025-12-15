@@ -19,12 +19,15 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
  * Stripe Webhook Handler
  */
 export const stripeWebhook = async (req, res) => {
+  console.log("Hit");
   const sig = req.headers["stripe-signature"];
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
   let event;
   try {
     event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
+
+    console.log("Hitted one");
   } catch (err) {
     console.error("Webhook signature failed:", err.message);
     return res.status(400).send(`Webhook Error: ${err.message}`);
@@ -34,6 +37,8 @@ export const stripeWebhook = async (req, res) => {
   // Webhook Idempotency Log (fire-and-forget on duplicate)
   // ─────────────────────────────────────
   try {
+    console.log("Hitted one");
+
     await WebhookLog.create({
       eventId: event.id,
       provider: "stripe",
@@ -49,6 +54,8 @@ export const stripeWebhook = async (req, res) => {
   // ✅ PAYMENT SUCCESS: checkout.session.completed
   // =========================================================
   if (event.type === "checkout.session.completed") {
+    console.log("Hitted one");
+
     const stripeSession = event.data.object;
     const session = await mongoose.startSession();
 
@@ -63,6 +70,9 @@ export const stripeWebhook = async (req, res) => {
           const order = await Order.findById(
             stripeSession.metadata.orderId
           ).session(session);
+
+          console.log("Web Hook: Order Place");
+
           if (order) {
             [payment] = await Payment.create(
               [
@@ -177,12 +187,14 @@ export const stripeWebhook = async (req, res) => {
   ) {
     const payload = event.data.object;
     const session = await mongoose.startSession();
+    console.log("Hitted one failed");
 
     try {
       await session.withTransaction(async () => {
         let payment = await Payment.findOne({
           stripeSessionId: payload.id,
         }).session(session);
+        console.log("Hitted one failed");
 
         // Idempotency guard
         if (!payment || payment.status === "paid") {
@@ -208,6 +220,7 @@ export const stripeWebhook = async (req, res) => {
           }
         }
       });
+      console.log("Hitted one failed");
 
       return res.json({ received: true });
     } catch (err) {
