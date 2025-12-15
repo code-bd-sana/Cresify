@@ -1,9 +1,11 @@
 "use client";
 
+import { useSession } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import { FaUser } from "react-icons/fa";
 import {
   FiHeart,
   FiMenu,
@@ -24,6 +26,10 @@ export default function Navbar() {
     { label: "About Us", href: "/about" },
     { label: "Contact", href: "/contact" },
   ];
+
+  const {data} = useSession();
+  console.log(data?.user, "kire mamaur beta");
+  const user = data?.user
 
   return (
     <nav className='w-full bg-white border-b border-gray-100 sticky top-0 z-50'>
@@ -76,17 +82,19 @@ export default function Navbar() {
 
           {/* ICONS */}
           <FiMessageCircle className='text-[22px] text-black cursor-pointer' />
-          <FiHeart className='text-[22px] text-black cursor-pointer' />
+          {/* <FiHeart className='text-[22px] text-black cursor-pointer' /> */}
           <Link href='/cart'>
             <FiShoppingCart className='text-[22px] text-black cursor-pointer' />
           </Link>
 
           {/* BUTTON */}
-          <Link href='/dashboard'>
+      {
+        user.role === "buyer" ? <Link href={'/profile'}><FaUser className="text-2xl cursor-pointer"/></Link> :     <Link href='/dashboard'>
             <button className='px-6 py-[10px] text-white font-medium rounded-md bg-linear-to-r from-[#9838E1] to-[#F68E44] cursor-pointer'>
               Get started
             </button>
           </Link>
+      }
         </div>
       </div>
 
@@ -103,7 +111,7 @@ export default function Navbar() {
 
         {/* ICONS + MENU BUTTON */}
         <div className='flex items-center gap-4'>
-          <FiHeart className='text-[22px] text-black cursor-pointer' />
+          {/* <FiHeart className='text-[22px] text-black cursor-pointer' /> */}
           <Link href='/cart'>
             <FiShoppingCart className='text-[22px] text-black cursor-pointer' />
           </Link>
@@ -160,9 +168,12 @@ export default function Navbar() {
           <div className='flex mt-4 items-center gap-4'>
             <FiMessageCircle className='text-[22px] text-black cursor-pointer' />
 
-            <button className='flex-1 px-5 py-[10px] text-white font-medium rounded-md bg-linear-to-r from-[#9838E1] to-[#F68E44] cursor-pointer'>
+   {
+    user.role === "buyer" ? <FaUser/> :
+             <button className='flex-1 px-5 py-[10px] text-white font-medium rounded-md bg-linear-to-r from-[#9838E1] to-[#F68E44] cursor-pointer'>
               Get started
             </button>
+   }
           </div>
         </div>
       )}

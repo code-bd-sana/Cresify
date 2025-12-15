@@ -66,9 +66,7 @@ export const stripeWebhook = async (req, res) => {
           if (order) {
             [payment] = await Payment.create(
               [
-                {
-                  paymentId: stripeSession.payment_intent || stripeSession.id,
-                  order: order._id,
+                {                  order: order._id,
                   buyer: stripeSession.metadata.userId,
                   amount: stripeSession.amount_total / 100,
                   currency: stripeSession.currency || "usd",

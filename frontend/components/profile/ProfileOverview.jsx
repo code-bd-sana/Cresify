@@ -1,5 +1,6 @@
 "use client";
 
+import { useMyProfileQuery } from "@/feature/UserApi";
 import {
   Camera,
   Mail,
@@ -10,8 +11,16 @@ import {
   Trash2,
   KeyRound,
 } from "lucide-react";
+import { useSession } from "next-auth/react";
 
 export default function ProfileOverviewPage() {
+
+    const {data} = useSession();
+
+    const user = data?.user;
+    const {data:profile, isLoading, loading} = useMyProfileQuery(user?.id);
+    console.log(profile, "Profile is ready to implement");
+  
   return (
     <div className="w-full bg-[#F7F7FA] pb-10 px-4 flex justify-center">
       <div className="w-full max-w-[900px]">
