@@ -268,6 +268,7 @@ export const placeOrder = async (req, res) => {
       orderId: orderReadableId,
     });
   } catch (error) {
+    console.log(error, "baler error");
     await session.abortTransaction();
     console.error("Place order failed:", error);
     return res.status(500).json({

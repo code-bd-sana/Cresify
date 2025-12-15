@@ -98,6 +98,8 @@ export default function CombinedCartCheckoutPage() {
     address: "",
     country: "",
     city: "",
+    state: "",
+    postalCode: "",
     paymentMethod: "card", // 'card' or 'cod'
     cardNumber: "",
     expiryDate: "",
@@ -197,62 +199,105 @@ export default function CombinedCartCheckoutPage() {
   }
 
   const handleConfirmAndPay = async() => {
-    // Prepare order data
-try {
-
-      const selectedCartItems = cartItems.filter((item) =>
-      selectedProducts.includes(item._id)
-    );
-
-    const orderData = {
-      // Customer info
-      fullName: checkoutData.fullName,
-      userId:id,
-      email: checkoutData.email,
-      phone: checkoutData.phone,
-      address: {
-        street: checkoutData.address,
-        city: checkoutData.city,
-        country: checkoutData.country,
-        fullName: checkoutData.fullName,
-      },
-      // Payment info
-      paymentMethod: checkoutData.paymentMethod,
-      paymentStatus: checkoutData.paymentMethod === "cod" ? "pending" : "paid",
-      // Order items
-      productIds: selectedCartItems.map((item) => item.product._id),
-      item: selectedCartItems.length,
-      amount: finalTotal,
-      // Card details (if card payment)
-      ...(checkoutData.paymentMethod === "card" && {
-        cardDetails: {
-          last4: checkoutData.cardNumber.slice(-4),
-          expiry: checkoutData.expiryDate,
-          holderName: checkoutData.cardHolderName,
-        },
-      }),
-    };
-
-    // Log to console based on payment method
-    if (checkoutData.paymentMethod === "cod") {
-      console.log("Cash on Delivery Order Data:", orderData);
-
-      await createOrder(orderData).unwrap
-      toast.success("Order created successfully")
-    
-    } else {
-      console.log("Card Payment Order Data:", orderData);
-      toast.success("Card payment processed! Check console for data.");
+    // Validate required fields
+    if (!checkoutData.fullName || !checkoutData.email || !checkoutData.phone || 
+        !checkoutData.address || !checkoutData.city || !checkoutData.country) {
+      toast.error("Please fill in all required shipping fields");
+      return;
     }
-  
-} catch (error) {
 
-  console.log(error);
+    if (checkoutData.paymentMethod === "card") {
+      if (!checkoutData.cardNumber || !checkoutData.expiryDate || 
+          !checkoutData.cvv || !checkoutData.cardHolderName) {
+        toast.error("Please fill in all card details");
+        return;
+      }
+    }
 
-}
+    try {
+      // Get selected cart items
+      const selectedCartItems = cartItems.filter((item) =>
+        selectedProducts.includes(item._id)
+      );
 
-    // Here you would typically send this data to your backend API
-    // Example: await createOrder(orderData);
+      if (selectedCartItems.length === 0) {
+        toast.error("No items selected for checkout");
+        return;
+      }
+
+      // Prepare order data
+      const orderData = {
+        userId: id,
+        // Send cart IDs, not product IDs
+        cartIds: selectedProducts, // This is the important fix
+        // You can also send product IDs if needed
+        productIds: selectedCartItems.map(item => item.product._id),
+        
+        address: {
+          street: checkoutData.address,
+          city: checkoutData.city,
+          state: checkoutData.state,
+          postalCode: checkoutData.postalCode,
+          country: checkoutData.country,
+        },
+
+        shippingInfo: {
+          fullName: checkoutData.fullName,
+          email: checkoutData.email,
+          phone: checkoutData.phone,
+        },
+
+        paymentMethod: checkoutData.paymentMethod,
+        
+        // Order summary
+        itemCount: selectedCartItems.length,
+        subtotal: subtotal,
+        shipping: shipping,
+        tax: tax,
+        totalAmount: finalTotal,
+
+        paymentStatus: checkoutData.paymentMethod === "cod" ? "pending" : "paid",
+
+        // Add individual item details
+        items: selectedCartItems.map(item => ({
+          productId: item.product._id,
+          productName: item.product.name,
+          quantity: item.count,
+          price: item.product.price,
+          totalPrice: item.product.price * item.count
+        })),
+
+        ...(checkoutData.paymentMethod === "card" && {
+          cardDetails: {
+            last4: checkoutData.cardNumber.slice(-4),
+            expiry: checkoutData.expiryDate,
+            holderName: checkoutData.cardHolderName,
+          },
+        }),
+      };
+
+      console.log("Order Data:", orderData);
+
+      // Call API
+      const result = await createOrder(orderData).unwrap();
+      
+      if (result.success) {
+        toast.success("Order created successfully!");
+        
+        // Clear selected items after successful order
+        clearSelected();
+        setSelectedProducts([]);
+        
+        // Optionally redirect to order confirmation page
+        // router.push(`/order-confirmation/${result.data.orderId}`);
+      } else {
+        toast.error(result.message || "Failed to create order");
+      }
+      
+    } catch (error) {
+      console.log("Order creation error:", error);
+      toast.error(error?.data?.message || "Something went wrong");
+    }
   };
 
   /* -------------------------------------------------------
@@ -308,7 +353,7 @@ try {
           <div className="flex items-center justify-between mb-6">
             <h1 className="text-2xl font-bold text-gray-800">Your Cart</h1>
             <button
-              onClick={() => setShowCheckout(true)}
+              onClick={handleProceedToCheckout}
               disabled={selectedProducts.length === 0}
               className="px-6 py-2 rounded-lg bg-gradient-to-r from-[#9838E1] to-[#F68E44] text-white font-medium disabled:opacity-40 cursor-pointer"
             >
@@ -629,6 +674,34 @@ try {
                       </div>
                     </div>
                   </div>
+
+                  {/* State + Postal Code */}
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div>
+                      <label className="block text-[#666] mb-[4px]">
+                        State/Province
+                      </label>
+                      <input
+                        name="state"
+                        value={checkoutData.state}
+                        onChange={handleCheckoutInputChange}
+                        className="w-full rounded-[8px] border border-[#E3E1ED] px-3 py-[9px] text-[12px] outline-none placeholder:text-[#B4B4C0]"
+                        placeholder="State or province"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[#666] mb-[4px]">
+                        Postal Code
+                      </label>
+                      <input
+                        name="postalCode"
+                        value={checkoutData.postalCode}
+                        onChange={handleCheckoutInputChange}
+                        className="w-full rounded-[8px] border border-[#E3E1ED] px-3 py-[9px] text-[12px] outline-none placeholder:text-[#B4B4C0]"
+                        placeholder="Postal code"
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -885,10 +958,12 @@ try {
               {/* Confirm button */}
               <button
                 onClick={handleConfirmAndPay}
+                disabled={orderLoading}
                 className="flex w-full items-center justify-center gap-2 rounded-[10px] bg-gradient-to-r from-[#9838E1] to-[#F68E44] py-[10px] text-[13px] font-medium text-white shadow-[0_4px_16px_rgba(0,0,0,0.20)] mb-3"
               >
                 <Lock className="h-4 w-4" />
-                {checkoutData.paymentMethod === "cod"
+                {orderLoading ? "Processing..." : 
+                  checkoutData.paymentMethod === "cod"
                   ? "Confirm Order"
                   : "Confirm and Pay"}
               </button>
