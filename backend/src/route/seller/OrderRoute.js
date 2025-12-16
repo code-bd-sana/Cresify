@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { getSellerOrders } from "../../controller/seller/orderController.js";
+import { getSellerOrders, orderStatusUpdate } from "../../controller/seller/orderController.js";
 
 const router = Router();
 
@@ -9,5 +9,6 @@ const router = Router();
  * Endpoint: seller/order
  */
 router.get("/", getSellerOrders);
+router.put('/', orderStatusUpdate)
 
 export default router;

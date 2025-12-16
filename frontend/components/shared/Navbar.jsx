@@ -82,7 +82,7 @@ export default function Navbar() {
           </Link>
 
           {/* BUTTON  */}
-          {user.role === "buyer" ? (
+          {user?.role === "buyer" ? (
             <Link href={"/profile"}>
               <FaUser className='text-2xl cursor-pointer' />
             </Link>
@@ -166,7 +166,7 @@ export default function Navbar() {
           <div className='flex mt-4 items-center gap-4'>
             <FiMessageCircle className='text-[22px] text-black cursor-pointer' />
 
-            {user.role === "buyer" ? (
+            {user?.role === "buyer" ? (
               <FaUser />
             ) : (
               <button className='flex-1 px-5 py-[10px] text-white font-medium rounded-md bg-linear-to-r from-[#9838E1] to-[#F68E44] cursor-pointer'>

@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import OrderVendorModel from "../../models/OrderVendorModel";
+import OrderVendorModel from "../../models/OrderVendorModel.js";
 
 /**
  * Get orders for a seller with pagination and search by order ID or customer name.
@@ -13,6 +13,8 @@ import OrderVendorModel from "../../models/OrderVendorModel";
  * @param {Object} res - Express response object
  */
 export const getSellerOrders = async (req, res) => {
+
+
   try {
     const { sellerId, search = "", page = 1, limit = 10 } = req.query;
 
@@ -148,3 +150,35 @@ export const getSellerOrders = async (req, res) => {
     });
   }
 };
+
+
+
+
+
+
+
+export const orderStatusUpdate = async(req, res)=>{
+
+
+  try {
+ 
+    const {status, id} = req.body;
+    const updated = await OrderVendorModel.updateOne({
+      _id:id
+    }, {$set:{
+      status:status
+    }});
+
+    res.status(200).json({
+      message:"Success",
+      data:updated
+    })
+    
+  } catch (error) {
+    console.log(error, "this is error kawa");
+    res.status(500).json({
+      error,
+      message:error?.message
+    })
+  }
+}

@@ -9,6 +9,7 @@ import { AdminUserApi } from "@/feature/admin/AdminUserApi";
 import { CartApi } from "@/feature/customer/CartApi";
 import { WishlistApi } from "@/feature/customer/WishlistApi";
 import { OrderApi } from "@/feature/customer/OrderApi";
+import { SellerApi } from "@/feature/seller/SellerApi";
 
 export const store = configureStore({
   reducer: {
@@ -21,7 +22,8 @@ export const store = configureStore({
     [AdminBlogApi.reducerPath]: AdminBlogApi.reducer,
     [AdminUserApi.reducerPath]: AdminUserApi.reducer,
     [AdminProductApi.reducerPath]: AdminProductApi.reducer,
-    [OrderApi.reducerPath]:OrderApi.reducer
+    [OrderApi.reducerPath]:OrderApi.reducer,
+    [SellerApi.reducerPath]: SellerApi.reducer
   },
 
   middleware: (getDefaultMiddleware) =>
@@ -34,6 +36,7 @@ export const store = configureStore({
       AdminBlogApi.middleware,
       AdminUserApi.middleware,
       AdminProductApi.middleware,
-      OrderApi.middleware
+      OrderApi.middleware,
+      SellerApi.middleware
     ]),
 });
