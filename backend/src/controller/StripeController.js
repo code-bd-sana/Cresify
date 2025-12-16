@@ -170,6 +170,8 @@ export const stripeWebhook = async (req, res) => {
 
     try {
       await session.withTransaction(async () => {
+        if (payload.metadata?.itemType !== "product") return;
+
         const payment = await Payment.findOne({
           stripeSessionId: payload.id,
         }).session(session);
