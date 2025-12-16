@@ -168,37 +168,58 @@ export const stripeWebhook = async (req, res) => {
     const payload = event.data.object;
     const session = await mongoose.startSession();
 
-    // TODO: quantity restore isn't done
     try {
       await session.withTransaction(async () => {
         const payment = await Payment.findOne({
           stripeSessionId: payload.id,
         }).session(session);
 
-        if (!payment || payment.status === "paid") return;
+        /* Idempotency */
+        if (!payment || payment.status === "failed") return;
 
+        /* If already paid, DO NOT revert */
+        if (payment.status === "paid") return;
+
+        /* 1️⃣ Mark payment failed */
         payment.status = "failed";
+        payment.failedAt = new Date();
         await payment.save({ session });
 
+        /* 2️⃣ Update order */
         const order = await Order.findById(payment.order).session(session);
         if (!order) return;
 
         order.paymentStatus = "failed";
         await order.save({ session });
 
-        /* Restore stock via OrderVendor */
+        /* 3️⃣ Cancel vendor orders */
         const vendors = await OrderVendor.find({
           order: order._id,
         }).session(session);
 
         for (const v of vendors) {
-          for (const p of v.products) {
-            await Product.updateOne(
-              { _id: p.product },
-              { $inc: { stock: p.quantity } },
-              { session }
-            );
+          if (v.status !== "canceled") {
+            v.status = "canceled";
+            await v.save({ session });
           }
+        }
+
+        /* 4️⃣ Restore stock (STRICT + SAFE) */
+        const stockRestoreOps = [];
+
+        for (const v of vendors) {
+          for (const p of v.products) {
+            stockRestoreOps.push({
+              updateOne: {
+                filter: { _id: p.product },
+                update: { $inc: { stock: p.quantity } },
+              },
+            });
+          }
+        }
+
+        if (stockRestoreOps.length) {
+          await Product.bulkWrite(stockRestoreOps, { session });
         }
       });
 
