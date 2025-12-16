@@ -54,7 +54,7 @@ const orderVendorSchema = new Schema(
       default: "pending",
     },
   },
-  { timestamps: true }l
+  { timestamps: true }
 );
 
 /* Indexes */
