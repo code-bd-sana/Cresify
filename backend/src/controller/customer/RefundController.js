@@ -7,22 +7,88 @@ import Refund from "../../models/RefundModel.js";
  */
 export const requestRefund = async (req, res) => {
   try {
-    const { paymentId, orderId, userId, amount, reason, evidence } = req.body;
+    const { paymentId, orderId, userId, reason, evidence } = req.body;
 
-    if (!paymentId || !orderId || !userId || !amount) {
+    if (!paymentId || !orderId || !userId) {
       return res.status(400).json({ message: "Missing required fields" });
+    }
+    /**
+     * Validate evidence format
+     */
+    if (evidence !== undefined) {
+      if (!Array.isArray(evidence)) {
+        return res.status(400).json({
+          message: "Evidence must be an array",
+        });
+      }
+
+      for (const [index, item] of evidence.entries()) {
+        if (typeof item !== "object" || item === null) {
+          return res.status(400).json({
+            message: `Evidence item at index ${index} must be an object`,
+          });
+        }
+
+        if (item.type !== undefined && typeof item.type !== "string") {
+          return res.status(400).json({
+            message: `Evidence.type at index ${index} must be a string`,
+          });
+        }
+
+        if (item.url !== undefined && typeof item.url !== "string") {
+          return res.status(400).json({
+            message: `Evidence.url at index ${index} must be a string`,
+          });
+        }
+
+        if (item.note !== undefined && typeof item.note !== "string") {
+          return res.status(400).json({
+            message: `Evidence.note at index ${index} must be a string`,
+          });
+        }
+
+        if (!item.type && !item.url && !item.note) {
+          return res.status(400).json({
+            message: `Evidence item at index ${index} must contain at least one field (type, url, or note)`,
+          });
+        }
+      }
     }
 
     const payment = await Payment.findOne({ paymentId });
     const order = await Order.findById(orderId);
+
     if (!payment || !order)
       return res.status(404).json({ message: "Payment or order not found" });
+
+    const existingRefund = await Refund.findOne({
+      payment: payment._id,
+      order: order._id,
+      requestedBy: userId,
+      status: {
+        $in: [
+          "requested",
+          "under_review",
+          "approved",
+          "partial_refunded",
+          "rejected",
+          "refunded_full",
+          "refunded_partial",
+        ],
+      },
+    });
+
+    if (existingRefund) {
+      return res.status(400).json({
+        message: `A refund request already exists for this order. Current status: ${existingRefund.status}.`,
+      });
+    }
 
     const refund = await Refund.create({
       payment: payment._id,
       order: order._id,
       requestedBy: userId,
-      amount,
+      amount: payment.amount,
       currency: payment.currency || "usd",
       reason,
       evidence,

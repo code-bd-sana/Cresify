@@ -18,6 +18,8 @@ const paymentSchema = new Schema(
       default: "stripe_checkout",
     },
     stripeSessionId: { type: String },
+    // Unique provider-side payment identifier (Stripe PaymentIntent id)
+    paymentId: { type: String, unique: true, sparse: true, trim: true },
     capturedAt: { type: Date },
     metadata: { type: Schema.Types.Mixed },
     refunds: [{ type: Schema.Types.ObjectId, ref: "Refund" }],

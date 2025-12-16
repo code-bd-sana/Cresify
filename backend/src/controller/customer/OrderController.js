@@ -48,19 +48,26 @@ export const placeOrder = async (req, res) => {
     session.startTransaction();
 
     /* --------------------------------------------------
-       STEP 1: UPSERT CART (BUY NOW + CART CHECKOUT)
+       STEP 1: UPSERT CART (BUY NOW + CART CHECKOUT) - batched
     -------------------------------------------------- */
 
+    const cartBulkOps = [];
     for (const item of items) {
       if (!item.productId || item.quantity < 1) {
         throw new Error("Invalid product or quantity");
       }
 
-      await Cart.findOneAndUpdate(
-        { user: userId, product: item.productId },
-        { $set: { count: Number(item.quantity) } },
-        { upsert: true, new: true, session }
-      );
+      cartBulkOps.push({
+        updateOne: {
+          filter: { user: userId, product: item.productId },
+          update: { $set: { count: Number(item.quantity) } },
+          upsert: true,
+        },
+      });
+    }
+
+    if (cartBulkOps.length) {
+      await Cart.bulkWrite(cartBulkOps, { session });
     }
 
     /* --------------------------------------------------
@@ -93,7 +100,7 @@ export const placeOrder = async (req, res) => {
           name: "$product.name",
           seller: "$product.seller",
           price: "$product.price",
-          quantity: { $toInt: "$count" }, // 🔥 ONLY SOURCE
+          quantity: { $toInt: "$count" }, // ONLY SOURCE
         },
       },
     ]);
@@ -127,29 +134,22 @@ export const placeOrder = async (req, res) => {
       process.env.PLATFORM_COMMISSION_PERCENT || 20
     );
 
-    const sellerMap = {};
-
-    for (const p of products) {
+    // Group products per seller and compute gross per seller
+    const sellerMap = products.reduce((map, p) => {
       const sellerId = p.seller.toString();
       const amount = p.price * p.quantity;
-
-      if (!sellerMap[sellerId]) {
-        sellerMap[sellerId] = {
-          seller: p.seller,
-          products: [],
-          gross: 0,
-        };
+      if (!map[sellerId]) {
+        map[sellerId] = { seller: p.seller, products: [], gross: 0 };
       }
-
-      sellerMap[sellerId].products.push({
+      map[sellerId].products.push({
         product: p._id,
         quantity: p.quantity,
         price: p.price,
         amount,
       });
-
-      sellerMap[sellerId].gross += amount;
-    }
+      map[sellerId].gross += amount;
+      return map;
+    }, {});
 
     const totalAmount = Object.values(sellerMap).reduce(
       (sum, s) => sum + s.gross,
@@ -246,7 +246,9 @@ export const placeOrder = async (req, res) => {
     await session.commitTransaction();
 
     res.status(201).json({
-      message: "Order placed successfully (COD)",
+      message: `Order placed successfully (${(
+        paymentMethod || "cod"
+      ).toUpperCase()})`,
       orderId: order._id,
     });
   } catch (err) {

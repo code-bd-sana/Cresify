@@ -42,7 +42,7 @@ export const stripeWebhook = async (req, res) => {
   }
 
   /* =====================================================
-     ✅ PAYMENT SUCCESS
+     PAYMENT SUCCESS
      ===================================================== */
   if (event.type === "checkout.session.completed") {
     const stripeSession = event.data.object;
@@ -98,54 +98,83 @@ export const stripeWebhook = async (req, res) => {
         order.paymentStatus = "paid";
         await order.save({ session });
 
-        /* Hold seller funds */
-        for (const b of payment.metadata?.sellerBreakdown || []) {
-          const { sellerId, net } = b;
+        /* Hold seller funds — optimized: batch wallet creation, updates, ledgers, and transactions */
+        const sellers = payment.metadata?.sellerBreakdown || [];
+        if (sellers.length) {
+          const sellerIds = sellers.map((s) => s.sellerId);
 
-          let wallet = await Wallet.findOne({ user: sellerId }).session(
-            session
+          // Load existing wallets
+          const wallets = await Wallet.find({
+            user: { $in: sellerIds },
+          }).session(session);
+          const walletByUser = new Map(
+            wallets.map((w) => [w.user.toString(), w])
           );
-          if (!wallet) {
-            [wallet] = await Wallet.create(
-              [{ user: sellerId, balance: 0, reserved: 0 }],
-              { session }
-            );
+
+          // Create missing wallets in bulk
+          const missing = sellerIds.filter(
+            (id) => !walletByUser.has(id?.toString ? id.toString() : String(id))
+          );
+          if (missing.length) {
+            const createDocs = missing.map((id) => ({
+              user: id,
+              balance: 0,
+              reserved: 0,
+            }));
+            const created = await Wallet.insertMany(createDocs, { session });
+            for (const w of created) walletByUser.set(w.user.toString(), w);
           }
 
-          const before = wallet.reserved;
-          wallet.reserved += net;
-          await wallet.save({ session });
+          // Prepare bulk operations and docs
+          const walletBulkOps = [];
+          const ledgerDocs = [];
+          const txDocs = [];
 
-          await WalletLedger.create(
-            [
-              {
-                seller: sellerId,
-                type: "credit",
-                amount: net,
-                reason: "sale_hold",
-                refId: order._id,
-              },
-            ],
-            { session }
-          );
+          for (const b of sellers) {
+            const { sellerId, net } = b;
+            const key = sellerId?.toString
+              ? sellerId.toString()
+              : String(sellerId);
+            const wallet = walletByUser.get(key);
+            if (!wallet) continue;
 
-          await Transaction.create(
-            [
-              {
-                transactionId: `hold-${payment._id}-${sellerId}`,
-                type: "hold",
-                wallet: wallet._id,
-                user: sellerId,
-                order: order._id,
-                payment: payment._id,
-                amount: net,
-                currency: payment.currency,
-                balanceBefore: before,
-                balanceAfter: wallet.reserved,
+            const before = wallet.reserved || 0;
+            const after = before + net;
+
+            walletBulkOps.push({
+              updateOne: {
+                filter: { _id: wallet._id },
+                update: { $set: { reserved: after } },
               },
-            ],
-            { session }
-          );
+            });
+
+            ledgerDocs.push({
+              user: sellerId,
+              type: "credit",
+              amount: net,
+              reason: "sale_hold",
+              refId: order._id,
+            });
+
+            txDocs.push({
+              transactionId: `hold-${payment._id}-${sellerId}-${Date.now()}`,
+              type: "hold",
+              wallet: wallet._id,
+              user: sellerId,
+              order: order._id,
+              payment: payment._id,
+              amount: net,
+              currency: payment.currency,
+              balanceBefore: before,
+              balanceAfter: after,
+            });
+          }
+
+          if (walletBulkOps.length)
+            await Wallet.bulkWrite(walletBulkOps, { session });
+          if (ledgerDocs.length)
+            await WalletLedger.insertMany(ledgerDocs, { session });
+          if (txDocs.length) await Transaction.insertMany(txDocs, { session });
         }
       });
 
@@ -179,22 +208,24 @@ export const stripeWebhook = async (req, res) => {
         /* Idempotency */
         if (!payment || payment.status === "failed") return;
 
-        /* If already paid, DO NOT revert */
-        if (payment.status === "paid") return;
-
-        /* 1️⃣ Mark payment failed */
+        // Mark payment as paid and record provider payment id
+        payment.status = "paid";
+        payment.capturedAt = new Date();
+        // Ensure we store the provider payment identifier (PaymentIntent)
+        payment.paymentId = stripeSession.payment_intent || stripeSession.id;
+        await payment.save({ session });
         payment.status = "failed";
         payment.failedAt = new Date();
         await payment.save({ session });
 
-        /* 2️⃣ Update order */
+        /* Update order */
         const order = await Order.findById(payment.order).session(session);
         if (!order) return;
 
         order.paymentStatus = "failed";
         await order.save({ session });
 
-        /* 3️⃣ Cancel vendor orders */
+        /* Cancel vendor orders */
         const vendors = await OrderVendor.find({
           order: order._id,
         }).session(session);
@@ -206,7 +237,7 @@ export const stripeWebhook = async (req, res) => {
           }
         }
 
-        /* 4️⃣ Restore stock (STRICT + SAFE) */
+        /* Restore stock (STRICT + SAFE) */
         const stockRestoreOps = [];
 
         for (const v of vendors) {
