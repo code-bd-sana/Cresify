@@ -1,4 +1,4 @@
-import Order from "../../models/OrderModel.js";
+import OrderVendorModel from "../../models/OrderVendorModel.js";
 import Payment from "../../models/PaymentModel.js";
 import Refund from "../../models/RefundModel.js";
 
@@ -7,11 +7,18 @@ import Refund from "../../models/RefundModel.js";
  */
 export const requestRefund = async (req, res) => {
   try {
-    const { paymentId, orderId, userId, reason, evidence } = req.body;
+    const { paymentId, orderId, userId, sellerIds, reason, evidence } = req.body;
 
-    if (!paymentId || !orderId || !userId) {
+    if (!paymentId || !orderId || !userId || ) {
       return res.status(400).json({ message: "Missing required fields" });
     }
+
+    if(sellerIds && !Array.isArray(sellerIds)) {
+      return res.status(400).json({ message: "sellerIds must be an array" });
+    }
+
+
+
     /**
      * Validate evidence format
      */
@@ -56,10 +63,15 @@ export const requestRefund = async (req, res) => {
     }
 
     const payment = await Payment.findOne({ paymentId });
-    const order = await Order.findById(orderId);
 
-    if (!payment || !order)
-      return res.status(404).json({ message: "Payment or order not found" });
+
+    const orderVendors = await OrderVendorModel.find({
+      order: orderId,
+      seller: { $in: sellerIds || []},
+    });
+
+    if (!payment || !orderVendors.length)
+      return res.status(404).json({ message: "Payment or order vendors not found" });
 
     const existingRefund = await Refund.findOne({
       payment: payment._id,
@@ -83,6 +95,8 @@ export const requestRefund = async (req, res) => {
         message: `A refund request already exists for this order. Current status: ${existingRefund.status}.`,
       });
     }
+
+    
 
     const refund = await Refund.create({
       payment: payment._id,
