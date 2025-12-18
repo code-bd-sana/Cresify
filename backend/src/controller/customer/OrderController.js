@@ -256,3 +256,33 @@ export const placeOrder = async (req, res) => {
     session.endSession();
   }
 };
+
+
+
+export const MyOrder = async(req, res)=>{
+  try {
+    const id = req.params.id;
+const result = await Order.find({ customer: id })
+  .populate({
+    path: "orderVendors",
+    populate: {
+      path: "products.product",
+      model: "Product", // model name exactly যেটা define করা
+    },
+  });
+
+    res.status(200).json({
+      message:"Success",
+      data:result
+
+    })
+    
+  } catch (error) {
+    res.status(500).json({
+      error,
+      message:error?.message
+
+    })
+    
+  }
+}

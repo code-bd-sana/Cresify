@@ -15,8 +15,17 @@ export const OrderApi = createApi({
             method:"POST",
             body:data
 
-        })
+        }),
+        invalidatesTags:['Order']
     }),
+
+    myOrder: builder.query({
+      query:(id)=> `/customer/order/myOrder/${id}`,
+      providesTags:['Order']
+    }),
+    
+    
+  
 
 
   
@@ -29,4 +38,4 @@ export const OrderApi = createApi({
 
 
 
-export const {useCreateOrderMutation} = OrderApi
+export const {useCreateOrderMutation, useMyOrderQuery} = OrderApi
