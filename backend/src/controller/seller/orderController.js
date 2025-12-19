@@ -13,8 +13,6 @@ import OrderVendorModel from "../../models/OrderVendorModel.js";
  * @param {Object} res - Express response object
  */
 export const getSellerOrders = async (req, res) => {
-
-
   try {
     const { sellerId, search = "", page = 1, limit = 10 } = req.query;
 
@@ -151,34 +149,29 @@ export const getSellerOrders = async (req, res) => {
   }
 };
 
-
-
-
-
-
-
-export const orderStatusUpdate = async(req, res)=>{
-
-
+export const orderStatusUpdate = async (req, res) => {
   try {
- 
-    const {status, id} = req.body;
-    const updated = await OrderVendorModel.updateOne({
-      _id:id
-    }, {$set:{
-      status:status
-    }});
+    const { status, id } = req.body;
+    const updated = await OrderVendorModel.updateOne(
+      {
+        _id: id,
+      },
+      {
+        $set: {
+          status: status,
+        },
+      }
+    );
 
     res.status(200).json({
-      message:"Success",
-      data:updated
-    })
-    
+      message: "Success",
+      data: updated,
+    });
   } catch (error) {
     console.log(error, "this is error kawa");
     res.status(500).json({
       error,
-      message:error?.message
-    })
+      message: error?.message,
+    });
   }
-}
+};

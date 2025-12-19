@@ -57,6 +57,7 @@ export const editProduct = async (req, res) => {
           description: data?.description,
           status: data?.status,
           image: data?.image,
+          shippingCost: data?.shippingCost,
         },
       }
     );
@@ -162,9 +163,6 @@ export const getSingleProduct = async (req, res) => {
   }
 };
 
-
-
-
 // controllers/productController.js
 export const allProduct = async (req, res) => {
   console.log("All query params:", req.query);
@@ -179,20 +177,20 @@ export const allProduct = async (req, res) => {
     const sortBy = req.query.sortBy || "createdAt";
     const sortOrder = req.query.sortOrder === "asc" ? 1 : -1;
 
-    console.log("Parsed filters:", { 
-      search, 
-      category, 
-      location, 
-      minPrice, 
-      maxPrice, 
-      sortBy, 
+    console.log("Parsed filters:", {
+      search,
+      category,
+      location,
+      minPrice,
+      maxPrice,
+      sortBy,
       sortOrder,
       skip,
-      limit
+      limit,
     });
 
     // Build query object
-    const query = {status:"active"};
+    const query = { status: "active" };
 
     // Search filter
     if (search && search.trim() !== "") {
@@ -200,15 +198,15 @@ export const allProduct = async (req, res) => {
         { name: { $regex: search, $options: "i" } },
         { category: { $regex: search, $options: "i" } },
         { description: { $regex: search, $options: "i" } },
-        { location: { $regex: search, $options: "i" } }
+        { location: { $regex: search, $options: "i" } },
       ];
 
       // Try to search in seller info
-      query.$or.push({ 
-        "seller.name": { $regex: search, $options: "i" } 
+      query.$or.push({
+        "seller.name": { $regex: search, $options: "i" },
       });
-      query.$or.push({ 
-        "seller.email": { $regex: search, $options: "i" } 
+      query.$or.push({
+        "seller.email": { $regex: search, $options: "i" },
       });
 
       // If search looks like an ObjectId
@@ -225,7 +223,10 @@ export const allProduct = async (req, res) => {
 
     // Category filter
     if (category && category.trim() !== "") {
-      const categories = category.split(',').map(c => c.trim()).filter(c => c !== "");
+      const categories = category
+        .split(",")
+        .map((c) => c.trim())
+        .filter((c) => c !== "");
       if (categories.length > 0) {
         query.category = { $in: categories };
       }
@@ -233,7 +234,10 @@ export const allProduct = async (req, res) => {
 
     // Location filter
     if (location && location.trim() !== "") {
-      const locations = location.split(',').map(l => l.trim()).filter(l => l !== "");
+      const locations = location
+        .split(",")
+        .map((l) => l.trim())
+        .filter((l) => l !== "");
       if (locations.length > 0) {
         query.location = { $in: locations };
       }
@@ -288,7 +292,7 @@ export const allProduct = async (req, res) => {
         minPrice,
         maxPrice,
         sortBy,
-        sortOrder: sortOrder === 1 ? "asc" : "desc"
+        sortOrder: sortOrder === 1 ? "asc" : "desc",
       },
       data: allProducts,
     });

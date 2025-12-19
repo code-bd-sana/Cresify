@@ -21,6 +21,9 @@ const payoutSchema = new Schema(
     processedAt: { type: Date },
     stripeTransferId: { type: String },
     metadata: { type: Schema.Types.Mixed },
+    // Totals for reporting: commission VAT included in this payout period
+    commissionTotal: { type: Number, default: 0 },
+    commissionVATTotal: { type: Number, default: 0 },
   },
   { timestamps: true }
 );

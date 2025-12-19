@@ -2,6 +2,12 @@ import mongoose, { Schema } from "mongoose";
 
 const orderSchema = new Schema(
   {
+    orderId: {
+      type: String,
+      unique: true,
+      required: true,
+      trim: true,
+    },
     customer: {
       type: Schema.Types.ObjectId,
       ref: "User",
@@ -51,3 +57,16 @@ orderSchema.index({ customer: 1, createdAt: -1 });
 orderSchema.index({ createdAt: -1 });
 
 export default mongoose.model("Order", orderSchema);
+
+/**
+ * Generate unique order ID after order creation
+ */
+orderSchema.post("save", async function (doc) {
+  if (!doc.orderId) {
+    const year = new Date().getFullYear();
+    const random = Math.floor(100000 + Math.random() * 900000);
+    const orderId = `ORD-${year}-${random}`;
+    doc.orderId = orderId;
+    await doc.save();
+  }
+});

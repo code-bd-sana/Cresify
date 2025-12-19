@@ -129,37 +129,32 @@ export const getWishList = async (req, res) => {
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
-    // Fetch wishlist with optimized lean queries
-    const wishlists = await WishList.find({ user: userId })
+    // Build the list query (limit returned wishlist fields)
+    const listQuery = WishList.find({ user: userId })
+      .select("_id product user createdAt")
       .populate({
         path: "product",
-        select: "title price image seller stock status", // return only required fields
-        populate: {
-          path: "seller",
-          select: "name shopName", // fetch seller name only
-        },
+        select: "title price image seller stock status",
+        populate: { path: "seller", select: "name shopName" },
       })
-      .populate({
-        path: "user",
-        select: "name email", // reduce payload
-      })
+      .populate({ path: "user", select: "name email" })
+      .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
-      .sort({ createdAt: -1 })
-      .lean(); // faster response
+      .lean();
 
-    const total = await WishList.countDocuments({ user: userId });
+    // Run list and count in parallel to reduce latency
+    const [wishlists, total] = await Promise.all([
+      listQuery.exec(),
+      WishList.countDocuments({ user: userId }),
+    ]);
+
     const hasMore = skip + wishlists.length < total;
 
     res.status(200).json({
       message: "Success",
       data: wishlists,
-      pagination: {
-        page,
-        limit,
-        total,
-        hasMore,
-      },
+      pagination: { page, limit, total, hasMore },
     });
   } catch (error) {
     res.status(500).json({

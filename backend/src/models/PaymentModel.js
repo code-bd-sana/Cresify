@@ -18,9 +18,15 @@ const paymentSchema = new Schema(
       default: "stripe_checkout",
     },
     stripeSessionId: { type: String },
+    // Unique provider-side payment identifier (Stripe PaymentIntent id)
+    paymentId: { type: String, unique: true, sparse: true, trim: true },
     capturedAt: { type: Date },
     metadata: { type: Schema.Types.Mixed },
     refunds: [{ type: Schema.Types.ObjectId, ref: "Refund" }],
+    // Commission snapshot for this payment (if applicable)
+    commissionAmount: { type: Number, default: 0 },
+    commissionVATAmount: { type: Number, default: 0 },
+    commissionVATRate: { type: Number, default: 0 },
   },
   { timestamps: true }
 );
