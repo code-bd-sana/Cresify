@@ -64,6 +64,20 @@ export const stripeWebhook = async (req, res) => {
 
           if (!order) return;
 
+          // Parse seller breakdown from session metadata and compute commission totals
+          const parsedSellerBreakdown = stripeSession.metadata?.sellerBreakdown
+            ? JSON.parse(stripeSession.metadata.sellerBreakdown)
+            : [];
+
+          const totalCommissionAmount = parsedSellerBreakdown.reduce(
+            (sum, s) => sum + (s.commissionAmount || 0),
+            0
+          );
+          const totalCommissionVATAmount = parsedSellerBreakdown.reduce(
+            (sum, s) => sum + (s.commissionVATAmount || 0),
+            0
+          );
+
           [payment] = await Payment.create(
             [
               {
@@ -74,11 +88,9 @@ export const stripeWebhook = async (req, res) => {
                 status: "pending",
                 method: "stripe_checkout",
                 stripeSessionId: stripeSession.id,
-                metadata: {
-                  sellerBreakdown: stripeSession.metadata?.sellerBreakdown
-                    ? JSON.parse(stripeSession.metadata.sellerBreakdown)
-                    : [],
-                },
+                metadata: { sellerBreakdown: parsedSellerBreakdown },
+                commissionAmount: totalCommissionAmount,
+                commissionVATAmount: totalCommissionVATAmount,
               },
             ],
             { session }
