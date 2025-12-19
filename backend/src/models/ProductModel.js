@@ -38,6 +38,12 @@ const productSchema = new Schema(
 
     description: String,
     image: String,
+    // Shipping configuration per product
+    shippingCost: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
   },
   { timestamps: true }
 );

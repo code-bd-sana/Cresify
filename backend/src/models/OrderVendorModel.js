@@ -32,8 +32,15 @@ const orderVendorSchema = new Schema(
           type: Number,
           required: true,
         },
+        // Unit price for this product
         price: { type: Number, required: true },
+        // total amount for this product (price * quantity)
         amount: { type: Number, required: true },
+        // Tax for this product (amount), and taxRate applied (e.g., VAT %)
+        taxRate: { type: Number, default: 0 },
+        taxAmount: { type: Number, default: 0 },
+        // Shipping portion attributable to this product (if seller charges per product)
+        shippingAmount: { type: Number, default: 0 },
       },
     ],
 
@@ -43,17 +50,22 @@ const orderVendorSchema = new Schema(
       min: 0,
     },
 
-    commission: {
-      type: Number,
-      required: true,
-      min: 0,
-    },
+    // Shipping total for this vendor (sum of shipping for vendor's products)
+    shippingAmount: { type: Number, default: 0, min: 0 },
 
-    netAmount: {
-      type: Number,
-      required: true,
-      min: 0,
-    },
+    // Commission snapshot (platform commission on product subtotal only, percentage and amounts)
+    commissionPercentage: { type: Number, default: 0 },
+    commissionAmount: { type: Number, default: 0, min: 0 },
+
+    // VAT applied on commission (stored so it is NOT shown to buyer but visible in seller reports)
+    commissionVATRate: { type: Number, default: 0 },
+    commissionVATAmount: { type: Number, default: 0, min: 0 },
+
+    // Total commission charged (commissionAmount + commissionVATAmount)
+    commissionTotal: { type: Number, default: 0, min: 0 },
+
+    // Amount payable to seller after commission and shipping (snapshot)
+    sellerPayout: { type: Number, default: 0, min: 0 },
 
     status: {
       type: String,

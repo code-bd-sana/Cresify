@@ -23,6 +23,10 @@ const paymentSchema = new Schema(
     capturedAt: { type: Date },
     metadata: { type: Schema.Types.Mixed },
     refunds: [{ type: Schema.Types.ObjectId, ref: "Refund" }],
+    // Commission snapshot for this payment (if applicable)
+    commissionAmount: { type: Number, default: 0 },
+    commissionVATAmount: { type: Number, default: 0 },
+    commissionVATRate: { type: Number, default: 0 },
   },
   { timestamps: true }
 );
