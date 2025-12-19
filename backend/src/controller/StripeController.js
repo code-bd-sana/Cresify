@@ -62,6 +62,8 @@ export const stripeWebhook = async (req, res) => {
             new mongoose.Types.ObjectId(stripeSession.metadata.orderId)
           ).session(session);
 
+          console.log(order);
+
           if (!order) return;
 
           // Parse seller breakdown from session metadata and compute commission totals
@@ -110,6 +112,8 @@ export const stripeWebhook = async (req, res) => {
         if (!order) return;
 
         order.paymentStatus = "paid";
+
+        console.log(order);
         await order.save({ session });
 
         /* Hold seller funds — optimized: batch wallet creation, updates, ledgers, and transactions */
