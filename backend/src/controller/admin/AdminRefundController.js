@@ -117,7 +117,7 @@ export const reviewRefund = async (req, res) => {
           totalStripeFee = 0;
         }
 
-        const feePolicy = process.env.REFUND_STRIPE_FEES_POLICY || "platform"; // 'seller'|'platform'
+        const feePolicy = process.env.REFUND_STRIPE_FEES_POLICY || "platform";
 
         for (const b of sellers) {
           const { sellerId, net } = b;
@@ -310,4 +310,29 @@ export const reviewRefund = async (req, res) => {
   }
 };
 
-export default { listRefunds, reviewRefund };
+export const getRefund = async (req, res) => {
+  try {
+    const id = req.params.id;
+    if (!id) return res.status(400).json({ message: "refund id required" });
+
+    const refund = await Refund.findById(id)
+      .populate("order")
+      .populate({
+        path: "orderVendor",
+        populate: { path: "seller", select: "name shopName shopLogo" },
+      })
+      .populate("payment")
+      .populate("requestedBy")
+      .populate("processedBy")
+      .populate({ path: "items.product", select: "name price image" });
+
+    if (!refund) return res.status(404).json({ message: "Refund not found" });
+
+    return res.json({ refund });
+  } catch (err) {
+    console.error("getRefund error", err);
+    return res
+      .status(500)
+      .json({ message: "Failed to fetch refund", error: err.message });
+  }
+};
