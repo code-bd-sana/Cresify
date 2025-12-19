@@ -1,10 +1,11 @@
 import { io } from "socket.io-client";
+import { root_url } from "./utils";
 
 let socket;
 
 export const initSocket = (userId) => {
   if (!socket) {
-    socket = io("http://localhost:5000", { 
+    socket = io(root_url, { 
       query: { userId },
     });
 

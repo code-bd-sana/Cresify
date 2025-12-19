@@ -6,6 +6,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useProviderChatListQuery, useSellerChatListQuery } from "@/feature/chat/ChatApi";
 import { io } from "socket.io-client";
+import { base_url, root_url } from "@/utils/utils";
 
 export default function ChatUI() {
   const { data: session } = useSession();
@@ -82,7 +83,7 @@ export default function ChatUI() {
 
     console.log("Initializing socket connection for user:", userId);
     
-    const socketInstance = io("http://localhost:5000", {
+    const socketInstance = io(root_url, {
       query: { userId },
       withCredentials: true,
       transports: ["websocket", "polling"],
@@ -189,7 +190,7 @@ export default function ChatUI() {
       console.log("Loading messages for conversation:", conversationId);
       
       const response = await fetch(
-        `http://localhost:5000/api/chat/messages/${conversationId}`,
+        `${base_url}/chat/messages/${conversationId}`,
         {
           credentials: "include",
         }
@@ -222,7 +223,7 @@ export default function ChatUI() {
         
         // First, try to get existing conversations
         const convResponse = await fetch(
-          `http://localhost:5000/api/chat/conversations/${userId}`,
+          `${base_url}/chat/conversations/${userId}`,
           {
             credentials: "include",
           }
@@ -260,7 +261,7 @@ export default function ChatUI() {
           console.log("No existing conversation found, creating new one");
           // Create new conversation
           const openConvResponse = await fetch(
-            "http://localhost:5000/api/chat/openConversation",
+            `${base_url}/chat/openConversation`,
             {
               method: "POST",
               headers: {
