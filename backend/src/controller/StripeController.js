@@ -59,7 +59,7 @@ export const stripeWebhook = async (req, res) => {
         /* Fallback create (edge case) */
         if (!payment && stripeSession.metadata?.orderId) {
           const order = await Order.findById(
-            stripeSession.metadata.orderId
+            new mongoose.Types.ObjectId(stripeSession.metadata.orderId)
           ).session(session);
 
           if (!order) return;
@@ -104,7 +104,9 @@ export const stripeWebhook = async (req, res) => {
         payment.capturedAt = new Date();
         await payment.save({ session });
 
-        const order = await Order.findById(payment.order).session(session);
+        const order = await Order.findById(
+          new mongoose.Types.ObjectId(payment.order)
+        ).session(session);
         if (!order) return;
 
         order.paymentStatus = "paid";
@@ -231,7 +233,9 @@ export const stripeWebhook = async (req, res) => {
         await payment.save({ session });
 
         /* Update order */
-        const order = await Order.findById(payment.order).session(session);
+        const order = await Order.findById(
+          new mongoose.Types.ObjectId(payment.order)
+        ).session(session);
         if (!order) return;
 
         order.paymentStatus = "failed";
