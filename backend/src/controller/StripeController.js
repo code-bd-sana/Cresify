@@ -62,8 +62,6 @@ export const stripeWebhook = async (req, res) => {
             new mongoose.Types.ObjectId(stripeSession.metadata.orderId)
           ).session(session);
 
-          console.log(order);
-
           if (!order) return;
 
           // Parse seller breakdown from session metadata and compute commission totals
@@ -113,7 +111,6 @@ export const stripeWebhook = async (req, res) => {
 
         order.paymentStatus = "paid";
 
-        console.log(order);
         await order.save({ session });
 
         /* Hold seller funds — optimized: batch wallet creation, updates, ledgers, and transactions */
@@ -167,20 +164,20 @@ export const stripeWebhook = async (req, res) => {
             });
 
             ledgerDocs.push({
-              user: sellerId,
+              seller: new mongoose.Types.ObjectId(sellerId),
               type: "credit",
               amount: net,
-              reason: "sale_hold",
-              refId: order._id,
+              reason: "sale",
+              refId: new mongoose.Types.ObjectId(order._id),
             });
 
             txDocs.push({
               transactionId: `hold-${payment._id}-${sellerId}-${Date.now()}`,
               type: "hold",
-              wallet: wallet._id,
-              user: sellerId,
-              order: order._id,
-              payment: payment._id,
+              wallet: new mongoose.Types.ObjectId(wallet._id),
+              user: new mongoose.Types.ObjectId(sellerId),
+              order: new mongoose.Types.ObjectId(order._id),
+              payment: new mongoose.Types.ObjectId(payment._id),
               amount: net,
               currency: payment.currency,
               balanceBefore: before,
