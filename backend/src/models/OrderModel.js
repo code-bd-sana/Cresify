@@ -2,6 +2,12 @@ import mongoose, { Schema } from "mongoose";
 
 const orderSchema = new Schema(
   {
+    orderId: {
+      type: String,
+      unique: true,
+      index: true,
+    },
+
     customer: {
       type: Schema.Types.ObjectId,
       ref: "User",
@@ -46,7 +52,19 @@ const orderSchema = new Schema(
   { timestamps: true }
 );
 
+/* 🔑 Auto-generate orderId before validation so validators pass */
+orderSchema.pre("validate", function () {
+  if (this.orderId) return;
+
+  const date = new Date();
+  const ymd = date.toISOString().slice(0, 10).replace(/-/g, "");
+  const random = Math.random().toString(36).substring(2, 8).toUpperCase();
+
+  this.orderId = `ORD-${ymd}-${random}`;
+});
+
 /* Indexes */
+orderSchema.index({ orderId: 1 }, { unique: true });
 orderSchema.index({ customer: 1, createdAt: -1 });
 orderSchema.index({ createdAt: -1 });
 

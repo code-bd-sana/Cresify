@@ -12,6 +12,9 @@ export default function Topbar({ onMenuClick }) {
 
 
   const { data: profile, isLoading, error } = useMyProfileQuery(id);
+  console.log(profile?.data, "na na nananad sfhb");
+
+  
 
 
 
@@ -39,8 +42,8 @@ export default function Topbar({ onMenuClick }) {
           </div>
           <div className="w-9 h-9 rounded-full border border-[#E5E4F0] overflow-hidden bg-white">
           {
-            profile?.data?.image ?   <Image
-              src={profile?.data?.image}
+            profile?.data?.image ||profile?.data?.shopLogo  ?   <Image
+              src={profile?.data?.image || profile?.data?.shopLogo}
               alt="User avatar"
               width={36}
               height={36}

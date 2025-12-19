@@ -14,8 +14,28 @@ const refundSchema = new Schema(
     refundId: { type: String, trim: true }, // Stripe refund ID once processed
     payment: { type: Schema.Types.ObjectId, ref: "Payment", required: true },
     order: { type: Schema.Types.ObjectId, ref: "order", required: true },
+    // If refund is for a specific vendor's part of an order
+    orderVendor: { type: Schema.Types.ObjectId, ref: "OrderVendor" },
+
+    // Seller responsible for the refunded item(s)
+    seller: { type: Schema.Types.ObjectId, ref: "User" },
+
     requestedBy: { type: Schema.Types.ObjectId, ref: "User", required: true },
+    // Refund total amount (sum of refunded items + related shipping + taxes)
     amount: { type: Number, required: true, min: 0 },
+    // Breakdown of items being refunded (supports partial-order refunds)
+    items: [
+      {
+        product: { type: Schema.Types.ObjectId, ref: "Product" },
+        quantity: { type: Number },
+        price: { type: Number },
+        amount: { type: Number },
+        // Shipping portion to refund for this item
+        shippingAmount: { type: Number, default: 0 },
+        // Tax portion to refund for this item
+        taxAmount: { type: Number, default: 0 },
+      },
+    ],
     currency: { type: String, default: "usd" },
     reason: { type: String },
     evidence: [evidenceSchema],

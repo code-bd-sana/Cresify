@@ -10,9 +10,11 @@ import BookingList from "@/components/profile/BookingList";
 import Wishlist from "@/components/profile/Wishlist";
 import ProfileHeader from "@/components/profile/ProfileHeader";
 import PaymentMethods from "@/components/profile/PaymentMethods";
+import Chat from "@/components/profile/Chat";
 
 export default function ProfileLayout() {
   const [active, setActive] = useState("overview");
+
 
   const renderContent = () => {
     switch (active) {
@@ -28,6 +30,8 @@ export default function ProfileLayout() {
         return <Wishlist />;
       case "payments":
         return <PaymentMethods />;
+      case "chat":
+        return <Chat />;
       //   default:
       //     return <ProfileOverview />;
     }
