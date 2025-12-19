@@ -2,6 +2,7 @@ import dotenv from "dotenv";
 import mongoose from "mongoose";
 import Stripe from "stripe";
 import Order from "../../models/OrderModel.js";
+import OrderVendor from "../../models/OrderVendorModel.js";
 import Payment from "../../models/PaymentModel.js";
 import Refund from "../../models/RefundModel.js";
 import Transaction from "../../models/TransactionModel.js";
@@ -95,14 +96,32 @@ export const reviewRefund = async (req, res) => {
         const walletByUser = new Map(
           wallets.map((w) => [w.user.toString(), w])
         );
-
         const walletBulkOps = [];
         const ledgerDocs = [];
         const txDocs = [];
 
+        // compute total net to proportionally distribute potential stripe fees later
+        const totalNet = sellers.reduce((s, x) => s + (x.net || 0), 0) || 1;
+
+        // compute stripe fee (if any) and allocate per seller after refund created
+        let totalStripeFee = 0;
+        try {
+          if (stripeRefund && stripeRefund.balance_transaction) {
+            const bt = await stripe.balanceTransactions.retrieve(
+              stripeRefund.balance_transaction
+            );
+            totalStripeFee = Math.abs(bt.fee || 0) / 100; // fee in cents
+          }
+        } catch (e) {
+          // ignore fee retrieval errors
+          totalStripeFee = 0;
+        }
+
+        const feePolicy = process.env.REFUND_STRIPE_FEES_POLICY || "platform"; // 'seller'|'platform'
+
         for (const b of sellers) {
           const { sellerId, net } = b;
-          const deduct = net * ratio;
+          const desiredDeduct = net * ratio;
 
           const wallet = walletByUser.get(
             sellerId?.toString ? sellerId.toString() : String(sellerId)
@@ -110,35 +129,154 @@ export const reviewRefund = async (req, res) => {
           if (!wallet) continue;
 
           const beforeReserved = wallet.reserved || 0;
-          const newReserved = Math.max(0, beforeReserved - deduct);
+          const beforeCurrent = wallet.currentBalance || 0;
+
+          // Deduct from reserved first
+          const deductFromReserved = Math.min(beforeReserved, desiredDeduct);
+          const remaining = Math.max(0, desiredDeduct - deductFromReserved);
+
+          const newReserved = beforeReserved - deductFromReserved;
+          const newCurrent = beforeCurrent - remaining; // may become negative
 
           walletBulkOps.push({
             updateOne: {
               filter: { _id: wallet._id },
-              update: { $set: { reserved: newReserved } },
+              update: {
+                $set: { reserved: newReserved, currentBalance: newCurrent },
+              },
             },
           });
 
-          ledgerDocs.push({
-            user: sellerId,
-            type: "debit",
-            amount: deduct,
-            reason: "refund",
-            refId: order._id,
-          });
+          // ledger entries: debit reserved portion and debit current portion (if any)
+          if (deductFromReserved > 0) {
+            ledgerDocs.push({
+              user: sellerId,
+              type: "debit",
+              amount: deductFromReserved,
+              reason: "refund",
+              refId: order._id,
+            });
 
-          txDocs.push({
-            transactionId: `${payment._id}-refund-${sellerId}-${Date.now()}`,
-            type: "refund",
-            wallet: wallet._id,
-            user: sellerId,
-            order: order._id,
-            payment: payment._id,
-            amount: deduct,
-            currency: payment.currency,
-            balanceBefore: beforeReserved,
-            balanceAfter: newReserved,
-          });
+            txDocs.push({
+              transactionId: `${payment._id}-refund-${sellerId}-${Date.now()}`,
+              type: "refund",
+              wallet: wallet._id,
+              user: sellerId,
+              order: order._id,
+              payment: payment._id,
+              amount: deductFromReserved,
+              currency: payment.currency,
+              balanceBefore: beforeReserved,
+              balanceAfter: newReserved,
+            });
+          }
+
+          if (remaining > 0) {
+            ledgerDocs.push({
+              user: sellerId,
+              type: "debit",
+              amount: remaining,
+              reason: "refund",
+              refId: order._id,
+            });
+
+            txDocs.push({
+              transactionId: `${
+                payment._id
+              }-refund-${sellerId}-curr-${Date.now()}`,
+              type: "refund",
+              wallet: wallet._id,
+              user: sellerId,
+              order: order._id,
+              payment: payment._id,
+              amount: remaining,
+              currency: payment.currency,
+              balanceBefore: beforeCurrent,
+              balanceAfter: newCurrent,
+            });
+          }
+
+          // Handle stripe fees allocation if seller absorbs fees
+          if (feePolicy === "seller" && totalStripeFee > 0) {
+            const sellerShareFee = (totalStripeFee * (net || 0)) / totalNet;
+            // Deduct sellerShareFee from currentBalance
+            const beforeCurr = newCurrent;
+            const afterCurr = beforeCurr - sellerShareFee;
+
+            walletBulkOps.push({
+              updateOne: {
+                filter: { _id: wallet._id },
+                update: { $set: { currentBalance: afterCurr } },
+              },
+            });
+
+            ledgerDocs.push({
+              user: sellerId,
+              type: "debit",
+              amount: sellerShareFee,
+              reason: "refund_fee",
+              refId: order._id,
+            });
+
+            txDocs.push({
+              transactionId: `${
+                payment._id
+              }-refund-fee-${sellerId}-${Date.now()}`,
+              type: "fee",
+              wallet: wallet._id,
+              user: sellerId,
+              order: order._id,
+              payment: payment._id,
+              amount: sellerShareFee,
+              currency: payment.currency,
+              balanceBefore: beforeCurr,
+              balanceAfter: afterCurr,
+            });
+          }
+
+          // Also update corresponding OrderVendor to reflect proportional reduction
+          try {
+            const ov = await OrderVendor.findOne({
+              order: order._id,
+              seller: sellerId,
+            }).session(session);
+            if (ov) {
+              const amountDeduct = (ov.amount || 0) * ratio;
+              const shippingDeduct = (ov.shippingAmount || 0) * ratio;
+              const commissionDeduct = (ov.commissionAmount || 0) * ratio;
+              const commissionVATDeduct = (ov.commissionVATAmount || 0) * ratio;
+
+              ov.amount = Math.max(0, (ov.amount || 0) - amountDeduct);
+              ov.shippingAmount = Math.max(
+                0,
+                (ov.shippingAmount || 0) - shippingDeduct
+              );
+              ov.commissionAmount = Math.max(
+                0,
+                (ov.commissionAmount || 0) - commissionDeduct
+              );
+              ov.commissionVATAmount = Math.max(
+                0,
+                (ov.commissionVATAmount || 0) - commissionVATDeduct
+              );
+              ov.commissionTotal = Math.max(
+                0,
+                (ov.commissionTotal || 0) -
+                  (commissionDeduct + commissionVATDeduct)
+              );
+              ov.sellerPayout = Math.max(
+                -9999999,
+                (ov.sellerPayout || 0) -
+                  (amountDeduct +
+                    shippingDeduct -
+                    (commissionDeduct + commissionVATDeduct))
+              );
+              await ov.save({ session });
+            }
+          } catch (e) {
+            // ignore orderVendor update failures for now
+            console.error("OrderVendor update failed", e.message);
+          }
         }
 
         if (walletBulkOps.length) {
