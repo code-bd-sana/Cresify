@@ -191,7 +191,7 @@ export const requestRefund = async (req, res) => {
 
 export const listMyRefunds = async (req, res) => {
   try {
-    const userId = req.query.userId || req.user?.id;
+    const userId = req.query.userId;
     if (!userId) return res.status(400).json({ message: "userId required" });
 
     const refunds = await Refund.find({ requestedBy: userId })
@@ -215,7 +215,7 @@ export const listMyRefunds = async (req, res) => {
 export const getRefund = async (req, res) => {
   try {
     const id = req.params.id;
-    const userId = req.query.userId || req.user?.id;
+    const userId = req.query.userId;
     if (!userId) return res.status(400).json({ message: "userId required" });
 
     const refund = await Refund.findById(id)
@@ -242,5 +242,3 @@ export const getRefund = async (req, res) => {
       .json({ message: "Failed to get refund", error: err.message });
   }
 };
-
-export default { requestRefund, listMyRefunds, getRefund };
