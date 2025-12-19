@@ -7,6 +7,7 @@ import Order from "../../models/OrderModel.js";
 import OrderVendor from "../../models/OrderVendorModel.js";
 import Payment from "../../models/PaymentModel.js";
 import Product from "../../models/ProductModel.js";
+import User from "../../models/UserModel.js";
 
 dotenv.config();
 
@@ -48,19 +49,29 @@ export const placeOrder = async (req, res) => {
     session.startTransaction();
 
     /* --------------------------------------------------
-       STEP 1: UPSERT CART (BUY NOW + CART CHECKOUT)
+       STEP 1: UPSERT CART (BUY NOW + CART CHECKOUT) - batched
     -------------------------------------------------- */
 
+    const cartBulkOps = [];
     for (const item of items) {
       if (!item.productId || item.quantity < 1) {
         throw new Error("Invalid product or quantity");
       }
 
-      await Cart.findOneAndUpdate(
-        { user: userId, product: item.productId },
-        { $set: { count: Number(item.quantity) } },
-        { upsert: true, new: true, session }
-      );
+      cartBulkOps.push({
+        updateOne: {
+          filter: {
+            user: new mongoose.Types.ObjectId(userId),
+            product: new mongoose.Types.ObjectId(item.productId),
+          },
+          update: { $set: { count: Number(item.quantity) } },
+          upsert: true,
+        },
+      });
+    }
+
+    if (cartBulkOps.length) {
+      await Cart.bulkWrite(cartBulkOps, { session });
     }
 
     /* --------------------------------------------------
@@ -93,7 +104,7 @@ export const placeOrder = async (req, res) => {
           name: "$product.name",
           seller: "$product.seller",
           price: "$product.price",
-          quantity: { $toInt: "$count" }, // 🔥 ONLY SOURCE
+          quantity: { $toInt: "$count" }, // ONLY SOURCE
         },
       },
     ]);
@@ -124,20 +135,38 @@ export const placeOrder = async (req, res) => {
     -------------------------------------------------- */
 
     const commissionPercent = Number(
-      process.env.PLATFORM_COMMISSION_PERCENT || 20
+      process.env.PLATFORM_COMMISSION_PERCENT || 10
+    );
+    const commissionVATRate = Number(
+      process.env.PLATFORM_COMMISSION_VAT_PERCENT || 19
     );
 
+    // Group products per seller and compute gross and shipping per seller
     const sellerMap = {};
+    let totalProductAmount = 0;
+    let totalShippingAmount = 0;
 
     for (const p of products) {
       const sellerId = p.seller.toString();
-      const amount = p.price * p.quantity;
+      const productAmount = p.price * p.quantity;
+
+      // Determine product-level shipping
+      let productShipping = 0;
+      // We didn't include shippingType/cost in the aggregation projection earlier; attempt to load product details
+      const prodDoc = await Product.findById(p._id)
+        .select("shippingType shippingCost")
+        .session(session)
+        .lean();
+      if (prodDoc?.shippingType === "fixed") {
+        productShipping = (prodDoc.shippingCost || 0) * p.quantity;
+      }
 
       if (!sellerMap[sellerId]) {
         sellerMap[sellerId] = {
           seller: p.seller,
           products: [],
           gross: 0,
+          shipping: 0,
         };
       }
 
@@ -145,16 +174,17 @@ export const placeOrder = async (req, res) => {
         product: p._id,
         quantity: p.quantity,
         price: p.price,
-        amount,
+        amount: productAmount,
+        shipping: productShipping,
       });
 
-      sellerMap[sellerId].gross += amount;
+      sellerMap[sellerId].gross += productAmount;
+      sellerMap[sellerId].shipping += productShipping;
+      totalProductAmount += productAmount;
+      totalShippingAmount += productShipping;
     }
 
-    const totalAmount = Object.values(sellerMap).reduce(
-      (sum, s) => sum + s.gross,
-      0
-    );
+    const totalAmount = totalProductAmount + totalShippingAmount;
 
     /* --------------------------------------------------
        STEP 5: CREATE ORDER
@@ -176,18 +206,56 @@ export const placeOrder = async (req, res) => {
        STEP 6: CREATE ORDER VENDORS
     -------------------------------------------------- */
 
-    const vendorDocs = Object.values(sellerMap).map((s) => {
-      const commission = (s.gross * commissionPercent) / 100;
+    // Build vendor docs and seller breakdown for payment metadata
+    const vendorDocs = [];
+    const sellerBreakdown = [];
+    let totalCommissionAmount = 0;
+    let totalCommissionVATAmount = 0;
 
-      return {
+    // load seller user details for shipping line item names
+    const sellerIds = Object.keys(sellerMap).map(
+      (id) => new mongoose.Types.ObjectId(id)
+    );
+    const sellers = await User.find({ _id: { $in: sellerIds } }).lean();
+    const sellerById = new Map(sellers.map((s) => [s._id.toString(), s]));
+
+    for (const [sellerId, s] of Object.entries(sellerMap)) {
+      const commissionAmount = (s.gross * commissionPercent) / 100;
+      const commissionVATAmount = (commissionAmount * commissionVATRate) / 100;
+      const commissionTotal = commissionAmount + commissionVATAmount;
+      const sellerPayout = s.gross - commissionTotal - s.shipping;
+
+      totalCommissionAmount += commissionAmount;
+      totalCommissionVATAmount += commissionVATAmount;
+
+      vendorDocs.push({
         order: order._id,
+        orderId: order.orderId,
         seller: s.seller,
         products: s.products,
         amount: s.gross,
-        commission,
-        netAmount: s.gross - commission,
-      };
-    });
+        shippingAmount: s.shipping || 0,
+        commissionPercentage: commissionPercent,
+        commissionAmount,
+        commissionVATRate,
+        commissionVATAmount: commissionVATAmount,
+        commissionTotal,
+        sellerPayout,
+        netAmount: sellerPayout,
+      });
+
+      sellerBreakdown.push({
+        sellerId,
+        gross: s.gross,
+        shipping: s.shipping || 0,
+        commissionPercentage: commissionPercent,
+        commissionAmount,
+        commissionVATRate,
+        commissionVATAmount,
+        commissionTotal,
+        net: sellerPayout,
+      });
+    }
 
     const vendors = await OrderVendor.insertMany(vendorDocs, { session });
 
@@ -199,22 +267,47 @@ export const placeOrder = async (req, res) => {
     -------------------------------------------------- */
 
     if (paymentMethod === "card") {
-      const checkoutSession = await stripe.checkout.sessions.create({
-        mode: "payment",
-        payment_method_types: ["card"],
-        line_items: products.map((p) => ({
+      // build line items including shipping per seller
+      const lineItems = [];
+      for (const p of products) {
+        lineItems.push({
           price_data: {
             currency: "usd",
             product_data: { name: p.name },
             unit_amount: Math.round(p.price * 100),
           },
           quantity: p.quantity,
-        })),
+        });
+      }
+
+      // add shipping lines grouped per seller
+      for (const sb of sellerBreakdown) {
+        if (sb.shipping && sb.shipping > 0) {
+          const shop = sellerById.get(sb.sellerId);
+          lineItems.push({
+            price_data: {
+              currency: "usd",
+              product_data: {
+                name: `Shipping - ${shop?.shopName || sb.sellerId}`,
+              },
+              unit_amount: Math.round(sb.shipping * 100),
+            },
+            quantity: 1,
+          });
+        }
+      }
+
+      const checkoutSession = await stripe.checkout.sessions.create({
+        mode: "payment",
+        payment_method_types: ["card"],
+        line_items: lineItems,
         success_url: `${process.env.FRONTEND_URL}/payment-success`,
         cancel_url: `${process.env.FRONTEND_URL}/payment-cancel`,
         metadata: {
           orderId: order._id.toString(),
           userId,
+          itemType: "product",
+          sellerBreakdown: JSON.stringify(sellerBreakdown),
         },
       });
 
@@ -224,9 +317,14 @@ export const placeOrder = async (req, res) => {
             order: order._id,
             buyer: userId,
             amount: totalAmount,
+            currency: "usd",
             status: "pending",
             method: "stripe_checkout",
             stripeSessionId: checkoutSession.id,
+            metadata: { sellerBreakdown },
+            commissionAmount: totalCommissionAmount,
+            commissionVATAmount: totalCommissionVATAmount,
+            commissionVATRate: commissionVATRate,
           },
         ],
         { session }
@@ -246,7 +344,9 @@ export const placeOrder = async (req, res) => {
     await session.commitTransaction();
 
     res.status(201).json({
-      message: "Order placed successfully (COD)",
+      message: `Order placed successfully (${(
+        paymentMethod || "cod"
+      ).toUpperCase()})`,
       orderId: order._id,
     });
   } catch (err) {
@@ -256,3 +356,33 @@ export const placeOrder = async (req, res) => {
     session.endSession();
   }
 };
+
+
+
+export const MyOrder = async(req, res)=>{
+  try {
+    const id = req.params.id;
+const result = await Order.find({ customer: id })
+  .populate({
+    path: "orderVendors",
+    populate: {
+      path: "products.product",
+      model: "Product", // model name exactly যেটা define করা
+    },
+  });
+
+    res.status(200).json({
+      message:"Success",
+      data:result
+
+    })
+    
+  } catch (error) {
+    res.status(500).json({
+      error,
+      message:error?.message
+
+    })
+    
+  }
+}

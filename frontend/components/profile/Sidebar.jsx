@@ -9,6 +9,8 @@ import {
   CreditCard,
   LogOut,
 } from "lucide-react";
+import { signOut } from "next-auth/react";
+import { CiChat2 } from "react-icons/ci";
 
 export default function Sidebar({ active, setActive }) {
   const menu = [
@@ -17,6 +19,7 @@ export default function Sidebar({ active, setActive }) {
     { key: "orders", label: "My Orders", icon: ShoppingBag },
     { key: "booking", label: "My Booking", icon: CalendarCheck2 },
     { key: "wishlist", label: "Wishlist", icon: Heart },
+    { key: "chat", label: "chat", icon:  CiChat2 },
     // { key: "payments", label: "Payment Methods", icon: CreditCard },
   ];
 
@@ -59,6 +62,9 @@ export default function Sidebar({ active, setActive }) {
 
       {/* LOGOUT */}
       <button
+      onClick={()=>{
+        signOut();
+      }}
         className="flex items-center gap-3 px-4 py-[10px] w-full text-left text-[14px]
         text-[#F78D25] font-medium hover:bg-orange-50 rounded-[10px]"
       >

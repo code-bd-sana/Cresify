@@ -24,6 +24,7 @@ export default function Navbar() {
   const { data } = useSession();
   console.log(data?.user, "kire mamaur beta");
   const user = data?.user;
+  
 
   return (
     <nav className='w-full bg-white border-b border-gray-100 sticky top-0 z-50'>

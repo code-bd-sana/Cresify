@@ -27,54 +27,8 @@ export const getAllProducts = async (req, res) => {
       matchStage.$or = [{ name: { $regex: search, $options: "i" } }];
     }
 
-    const aggregationPipeline = [
-      {
-        $lookup: {
-          from: "users", // collection name for User model
-          localField: "seller",
-          foreignField: "_id",
-          as: "seller",
-        },
-      },
-      { $unwind: "$seller" },
-      ...(search
-        ? [
-            {
-              $match: {
-                $or: [
-                  { name: { $regex: search, $options: "i" } },
-                  { "seller.name": { $regex: search, $options: "i" } },
-                ],
-                ...(category ? { category } : {}),
-              },
-            },
-          ]
-        : category
-        ? [{ $match: { category } }]
-        : []),
-      { $sort: { createdAt: -1 } },
-      { $skip: Number(skip) },
-      { $limit: Number(limit) },
-      {
-        $project: {
-          _id: 1,
-          name: 1,
-          category: 1,
-          price: 1,
-          stock: 1,
-          status: 1,
-          image: 1,
-          description: 1,
-          seller: { _id: 1, name: 1, email: 1 },
-          createdAt: 1,
-        },
-      },
-    ];
-
-    const products = await Product.aggregate(aggregationPipeline);
-
-    // Get total count (without skip/limit)
-    const countPipeline = [
+    // Build common stages once then use $facet to fetch paginated data + total count in one aggregation
+    const commonStages = [
       {
         $lookup: {
           from: "users",
@@ -84,26 +38,52 @@ export const getAllProducts = async (req, res) => {
         },
       },
       { $unwind: "$seller" },
-      ...(search
-        ? [
-            {
-              $match: {
-                $or: [
-                  { name: { $regex: search, $options: "i" } },
-                  { "seller.name": { $regex: search, $options: "i" } },
-                ],
-                ...(category ? { category } : {}),
-              },
-            },
-          ]
-        : category
-        ? [{ $match: { category } }]
-        : []),
-      { $count: "total" },
     ];
 
-    const totalResult = await Product.aggregate(countPipeline);
-    const total = totalResult[0]?.total || 0;
+    if (search || category) {
+      const match = {};
+      if (category) match.category = category;
+      if (search)
+        match.$or = [
+          { name: { $regex: search, $options: "i" } },
+          { "seller.name": { $regex: search, $options: "i" } },
+        ];
+      commonStages.push({ $match: match });
+    }
+
+    const projectStage = {
+      $project: {
+        _id: 1,
+        name: 1,
+        category: 1,
+        price: 1,
+        stock: 1,
+        status: 1,
+        image: 1,
+        description: 1,
+        seller: { _id: 1, name: 1, email: 1 },
+        createdAt: 1,
+      },
+    };
+
+    const agg = [
+      ...commonStages,
+      { $sort: { createdAt: -1 } },
+      {
+        $facet: {
+          data: [
+            { $skip: Number(skip) },
+            { $limit: Number(limit) },
+            projectStage,
+          ],
+          total: [{ $count: "total" }],
+        },
+      },
+    ];
+
+    const aggResult = await Product.aggregate(agg);
+    const products = aggResult[0]?.data || [];
+    const total = aggResult[0]?.total?.[0]?.total || 0;
 
     return res.status(200).json({
       success: true,
@@ -232,7 +212,7 @@ export const changeProductStatus = async (req, res) => {
 /**
  * @function getProductById
  * @description Retrieves detailed information of a specific product by its ID.
- * 
+ *
  * @param {Object} req - The request object
  * @param {Object} res - The response object
  * @params id - Product ID

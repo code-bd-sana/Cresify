@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import Cart from "../../models/CartModel.js";
 import WishList from "../../models/WishListModel.js";
 
@@ -163,18 +164,113 @@ export const decreaseCount = async (req, res) => {
 export const myCart = async (req, res) => {
   try {
     const id = req.params.id;
-    const myCarts = await Cart.find({ user: id }).populate({
-      path: "product",
-      populate: {
-        path: "seller",
-        select: "name",
-      },
-    }).select("-user");
+    const userObjectId = new mongoose.Types.ObjectId(id);
 
-    res.status(200).json({
-      message: "Success",
-      data: myCarts,
-    });
+    // Aggregation: join product and seller, compute per-item subtotal and shipping, then facet
+    const pipeline = [
+      { $match: { user: userObjectId } },
+      {
+        $lookup: {
+          from: "products",
+          localField: "product",
+          foreignField: "_id",
+          as: "product",
+        },
+      },
+      { $unwind: "$product" },
+      {
+        $lookup: {
+          from: "users",
+          localField: "product.seller",
+          foreignField: "_id",
+          as: "seller",
+        },
+      },
+      { $unwind: { path: "$seller", preserveNullAndEmptyArrays: true } },
+      {
+        $addFields: {
+          quantity: { $ifNull: ["$count", 1] },
+          price: { $ifNull: ["$product.price", 0] },
+          itemSubtotal: {
+            $multiply: ["$count", { $ifNull: ["$product.price", 0] }],
+          },
+          itemShipping: {
+            $cond: [
+              { $eq: ["$product.shippingType", "fixed"] },
+              {
+                $multiply: [
+                  { $ifNull: ["$product.shippingCost", 0] },
+                  "$count",
+                ],
+              },
+              0,
+            ],
+          },
+        },
+      },
+      {
+        $facet: {
+          groupedBySeller: [
+            {
+              $group: {
+                _id: "$seller._id",
+                seller: {
+                  $first: {
+                    _id: "$seller._id",
+                    name: "$seller.name",
+                    shopName: "$seller.shopName",
+                    shopLogo: "$seller.shopLogo",
+                  },
+                },
+                items: {
+                  $push: {
+                    cartId: "$_id",
+                    product: "$product",
+                    quantity: "$quantity",
+                    price: "$price",
+                    subtotal: "$itemSubtotal",
+                    shipping: "$itemShipping",
+                  },
+                },
+                subtotal: { $sum: "$itemSubtotal" },
+                shipping: { $sum: "$itemShipping" },
+              },
+            },
+            { $addFields: { total: { $add: ["$subtotal", "$shipping"] } } },
+            { $sort: { "seller.name": 1 } },
+          ],
+          totals: [
+            {
+              $group: {
+                _id: null,
+                productSubtotal: { $sum: "$itemSubtotal" },
+                shipping: { $sum: "$itemShipping" },
+              },
+            },
+            {
+              $project: {
+                _id: 0,
+                productSubtotal: 1,
+                shipping: 1,
+                total: { $add: ["$productSubtotal", "$shipping"] },
+              },
+            },
+          ],
+        },
+      },
+    ];
+
+    const result = await Cart.aggregate(pipeline);
+    const groupedBySeller = result[0]?.groupedBySeller || [];
+    const totals = (result[0]?.totals && result[0].totals[0]) || {
+      productSubtotal: 0,
+      shipping: 0,
+      total: 0,
+    };
+
+    res
+      .status(200)
+      .json({ message: "Success", data: { groupedBySeller, totals } });
   } catch (error) {
     res.status(500).json({
       error,
