@@ -189,4 +189,58 @@ export const requestRefund = async (req, res) => {
   }
 };
 
-export default { requestRefund };
+export const listMyRefunds = async (req, res) => {
+  try {
+    const userId = req.query.userId || req.user?.id;
+    if (!userId) return res.status(400).json({ message: "userId required" });
+
+    const refunds = await Refund.find({ requestedBy: userId })
+      .sort({ createdAt: -1 })
+      .populate("order")
+      .populate({
+        path: "orderVendor",
+        populate: { path: "seller", select: "name shopName shopLogo" },
+      })
+      .populate({ path: "items.product", select: "name price image" });
+
+    return res.json({ refunds });
+  } catch (err) {
+    console.error("listMyRefunds error", err);
+    return res
+      .status(500)
+      .json({ message: "Failed to list refunds", error: err.message });
+  }
+};
+
+export const getRefund = async (req, res) => {
+  try {
+    const id = req.params.id;
+    const userId = req.query.userId || req.user?.id;
+    if (!userId) return res.status(400).json({ message: "userId required" });
+
+    const refund = await Refund.findById(id)
+      .populate("order")
+      .populate({
+        path: "orderVendor",
+        populate: { path: "seller", select: "name shopName shopLogo" },
+      })
+      .populate({ path: "items.product", select: "name price image" });
+
+    if (!refund) return res.status(404).json({ message: "Refund not found" });
+
+    if (refund.requestedBy?.toString() !== userId.toString()) {
+      return res
+        .status(403)
+        .json({ message: "Not authorized to view this refund" });
+    }
+
+    return res.json({ refund });
+  } catch (err) {
+    console.error("getRefund error", err);
+    return res
+      .status(500)
+      .json({ message: "Failed to get refund", error: err.message });
+  }
+};
+
+export default { requestRefund, listMyRefunds, getRefund };
