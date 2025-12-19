@@ -111,7 +111,7 @@ export default function CombinedCartCheckoutPage() {
     city: "",
     state: "",
     postalCode: "",
-    paymentMethod: "card", // 'card' or 'cod'
+    paymentMethod: "card", // only 'card' now
     cardNumber: "",
     expiryDate: "",
     cvv: "",
@@ -194,13 +194,6 @@ export default function CombinedCartCheckoutPage() {
     });
   };
 
-  const handlePaymentMethodChange = (method) => {
-    setCheckoutData({
-      ...checkoutData,
-      paymentMethod: method,
-    });
-  };
-
   const handleProceedToCheckout = () => {
     if (selectedProducts.length === 0) {
       toast.error("Please select at least one product");
@@ -228,16 +221,15 @@ export default function CombinedCartCheckoutPage() {
       return;
     }
 
-    if (checkoutData.paymentMethod === "card") {
-      if (
-        !checkoutData.cardNumber ||
-        !checkoutData.expiryDate ||
-        !checkoutData.cvv ||
-        !checkoutData.cardHolderName
-      ) {
-        toast.error("Please fill in all card details");
-        return;
-      }
+    // Validate card details
+    if (
+      !checkoutData.cardNumber ||
+      !checkoutData.expiryDate ||
+      !checkoutData.cvv ||
+      !checkoutData.cardHolderName
+    ) {
+      toast.error("Please fill in all card details");
+      return;
     }
 
     try {
@@ -287,8 +279,7 @@ export default function CombinedCartCheckoutPage() {
         shipping: shipping,
         totalAmount: finalTotal,
 
-        paymentStatus:
-          checkoutData.paymentMethod === "cod" ? "pending" : "paid",
+        paymentStatus: "paid",
 
         // Add individual item details
         items: selectedCartItems.map((item) => ({
@@ -299,13 +290,11 @@ export default function CombinedCartCheckoutPage() {
           totalPrice: item.product.price * item.quantity,
         })),
 
-        ...(checkoutData.paymentMethod === "card" && {
-          cardDetails: {
-            last4: checkoutData.cardNumber.slice(-4),
-            expiry: checkoutData.expiryDate,
-            holderName: checkoutData.cardHolderName,
-          },
-        }),
+        cardDetails: {
+          last4: checkoutData.cardNumber.slice(-4),
+          expiry: checkoutData.expiryDate,
+          holderName: checkoutData.cardHolderName,
+        },
       };
 
       console.log("Order Data:", orderData);
@@ -320,8 +309,8 @@ export default function CombinedCartCheckoutPage() {
         clearSelected();
       }
 
-      if (result.message === "Order placed with Cash on Delivery") {
-        toast.success("Order placed with Cash on Delivery");
+      if (result.message === "Order placed successfully") {
+        toast.success("Order placed successfully");
         setOrderSuccess(true);
 
         // Clear selected items after successful order
@@ -906,7 +895,7 @@ export default function CombinedCartCheckoutPage() {
                   </div>
                 </div>
 
-                {/* PAYMENT METHOD */}
+                {/* PAYMENT METHOD - Card Only */}
                 <div className='bg-white rounded-[16px] border border-[#ECE6F7] shadow-[0_4px_20px_rgba(0,0,0,0.06)] px-6 py-5'>
                   <div className='flex items-center gap-2 mb-4'>
                     <span className='inline-flex h-7 w-7 items-center justify-center rounded-full bg-[#F4ECFF]'>
@@ -917,22 +906,10 @@ export default function CombinedCartCheckoutPage() {
                     </h3>
                   </div>
 
-                  {/* Method list */}
+                  {/* Only Card Method */}
                   <div className='space-y-3 text-[12px] mb-4'>
-                    {/* Card */}
-                    <div
-                      className={`rounded-[10px] ${
-                        checkoutData.paymentMethod === "card"
-                          ? "bg-gradient-to-r from-[#9838E1] to-[#F68E44] p-[1px]"
-                          : ""
-                      }`}>
-                      <div
-                        className={`flex items-center justify-between rounded-[9px] ${
-                          checkoutData.paymentMethod === "card"
-                            ? "bg-[#FAF7FF]"
-                            : "border border-[#E3E1ED] bg-white"
-                        } px-3 py-[9px] cursor-pointer`}
-                        onClick={() => handlePaymentMethodChange("card")}>
+                    <div className='rounded-[10px] bg-gradient-to-r from-[#9838E1] to-[#F68E44] p-[1px]'>
+                      <div className='flex items-center justify-between rounded-[9px] bg-[#FAF7FF] px-3 py-[9px]'>
                         <div className='flex items-center gap-2'>
                           <span className='inline-flex h-6 w-6 items-center justify-center rounded-full bg-white'>
                             <CreditCard className='h-3.5 w-3.5 text-[#9B51E0]' />
@@ -946,151 +923,111 @@ export default function CombinedCartCheckoutPage() {
                             </p>
                           </div>
                         </div>
-                        <span
-                          className={`h-[14px] w-[14px] rounded-full ${
-                            checkoutData.paymentMethod === "card"
-                              ? "border-2 border-white bg-gradient-to-r from-[#9838E1] to-[#F68E44] shadow-[0_0_0_2px_rgba(152,56,225,0.25)]"
-                              : "border border-[#D3D3E6]"
-                          }`}
-                        />
-                      </div>
-                    </div>
-
-                    {/* Cash on delivery */}
-                    <div
-                      className={`rounded-[10px] ${
-                        checkoutData.paymentMethod === "cod"
-                          ? "bg-gradient-to-r from-[#9838E1] to-[#F68E44] p-[1px]"
-                          : ""
-                      }`}>
-                      <div
-                        className={`flex items-center justify-between rounded-[9px] ${
-                          checkoutData.paymentMethod === "cod"
-                            ? "bg-[#FAF7FF]"
-                            : "border border-[#E3E1ED] bg-white"
-                        } px-3 py-[9px] cursor-pointer`}
-                        onClick={() => handlePaymentMethodChange("cod")}>
-                        <div className='flex items-center gap-2'>
-                          <span className='inline-flex h-6 w-6 items-center justify-center rounded-full bg-[#F4ECFF]'>
-                            <ShieldCheck className='h-3.5 w-3.5 text-[#9B51E0]' />
-                          </span>
-                          <p className='text-[12px] text-[#4A4A4A]'>
-                            Cash On Delivery
-                          </p>
-                        </div>
-                        <span
-                          className={`h-[14px] w-[14px] rounded-full ${
-                            checkoutData.paymentMethod === "cod"
-                              ? "border-2 border-white bg-gradient-to-r from-[#9838E1] to-[#F68E44] shadow-[0_0_0_2px_rgba(152,56,225,0.25)]"
-                              : "border border-[#D3D3E6]"
-                          }`}
-                        />
+                        <span className='h-[14px] w-[14px] rounded-full border-2 border-white bg-gradient-to-r from-[#9838E1] to-[#F68E44] shadow-[0_0_0_2px_rgba(152,56,225,0.25)]' />
                       </div>
                     </div>
                   </div>
 
-                  {/* Card fields - Only show if card payment selected */}
-                  {checkoutData.paymentMethod === "card" && (
-                    <div className='space-y-3 text-[12px]'>
-                      {/* Card number */}
-                      <div>
-                        <label className='block text-[#666] mb-[4px]'>
-                          Card number*
-                        </label>
-                        <div className='flex items-center gap-2 rounded-[8px] border border-[#E3E1ED] px-3 py-[9px] bg-white'>
-                          <CreditCard className='h-4 w-4 text-[#C2B7EB]' />
-                          <input
-                            name='cardNumber'
-                            value={checkoutData.cardNumber}
-                            onChange={handleCheckoutInputChange}
-                            className='w-full text-[12px] outline-none placeholder:text-[#B4B4C0]'
-                            placeholder='2950 1533 8297 8890'
-                          />
-                        </div>
-                      </div>
-
-                      {/* Expiration + CVV */}
-                      <div className='grid gap-4 md:grid-cols-2'>
-                        <div>
-                          <label className='block text-[#666] mb-[4px]'>
-                            Expiration Date*
-                          </label>
-                          <input
-                            name='expiryDate'
-                            value={checkoutData.expiryDate}
-                            onChange={handleCheckoutInputChange}
-                            className='w-full rounded-[8px] border border-[#E3E1ED] px-3 py-[9px] text-[12px] outline-none placeholder:text-[#B4B4C0]'
-                            placeholder='MM/YY'
-                          />
-                        </div>
-                        <div>
-                          <label className='block text-[#666] mb-[4px]'>
-                            CVV*
-                          </label>
-                          <input
-                            name='cvv'
-                            value={checkoutData.cvv}
-                            onChange={handleCheckoutInputChange}
-                            className='w-full rounded-[8px] border border-[#E3E1ED] px-3 py-[9px] text-[12px] outline-none placeholder:text-[#B4B4C0]'
-                            placeholder='•••'
-                          />
-                        </div>
-                      </div>
-
-                      {/* Name + City select */}
-                      <div className='grid gap-4 md:grid-cols-2'>
-                        <div>
-                          <label className='block text-[#666] mb-[4px]'>
-                            Name of the Holder*
-                          </label>
-                          <input
-                            name='cardHolderName'
-                            value={checkoutData.cardHolderName}
-                            onChange={handleCheckoutInputChange}
-                            className='w-full rounded-[8px] border border-[#E3E1ED] px-3 py-[9px] text-[12px] outline-none placeholder:text-[#B4B4C0]'
-                            placeholder='Name on the card'
-                          />
-                        </div>
-                        <div>
-                          <label className='block text-[#666] mb-[4px]'>
-                            City*
-                          </label>
-                          <input
-                            name='billingCity'
-                            value={checkoutData.billingCity}
-                            onChange={handleCheckoutInputChange}
-                            className='w-full rounded-[8px] border border-[#E3E1ED] px-3 py-[9px] text-[12px] outline-none placeholder:text-[#B4B4C0]'
-                            placeholder='Billing city'
-                          />
-                        </div>
-                      </div>
-
-                      {/* Stripe note + checkbox */}
-                      <div className='mt-3 space-y-2'>
-                        <div className='flex items-start gap-2 text-[11px] text-[#7F7F90]'>
-                          <ShieldCheck className='mt-[1px] h-4 w-4 text-[#52B788]' />
-                          <p>
-                            Your payment is protected by Stripe, <br />
-                            <span className='text-[#9B51E0]'>
-                              256-bit SSL encryption
-                            </span>
-                            .
-                          </p>
-                        </div>
-
-                        <label className='flex items-center gap-2 text-[11px] text-[#7F7F90]'>
-                          <input
-                            type='checkbox'
-                            name='sameAsShipping'
-                            checked={checkoutData.sameAsShipping}
-                            onChange={handleCheckoutInputChange}
-                            className='h-[12px] w-[12px]'
-                          />
-                          My billing address is the same as my shipping address
-                        </label>
+                  {/* Card fields - Always shown since only card payment */}
+                  <div className='space-y-3 text-[12px]'>
+                    {/* Card number */}
+                    <div>
+                      <label className='block text-[#666] mb-[4px]'>
+                        Card number*
+                      </label>
+                      <div className='flex items-center gap-2 rounded-[8px] border border-[#E3E1ED] px-3 py-[9px] bg-white'>
+                        <CreditCard className='h-4 w-4 text-[#C2B7EB]' />
+                        <input
+                          name='cardNumber'
+                          value={checkoutData.cardNumber}
+                          onChange={handleCheckoutInputChange}
+                          className='w-full text-[12px] outline-none placeholder:text-[#B4B4C0]'
+                          placeholder='2950 1533 8297 8890'
+                        />
                       </div>
                     </div>
-                  )}
+
+                    {/* Expiration + CVV */}
+                    <div className='grid gap-4 md:grid-cols-2'>
+                      <div>
+                        <label className='block text-[#666] mb-[4px]'>
+                          Expiration Date*
+                        </label>
+                        <input
+                          name='expiryDate'
+                          value={checkoutData.expiryDate}
+                          onChange={handleCheckoutInputChange}
+                          className='w-full rounded-[8px] border border-[#E3E1ED] px-3 py-[9px] text-[12px] outline-none placeholder:text-[#B4B4C0]'
+                          placeholder='MM/YY'
+                        />
+                      </div>
+                      <div>
+                        <label className='block text-[#666] mb-[4px]'>
+                          CVV*
+                        </label>
+                        <input
+                          name='cvv'
+                          value={checkoutData.cvv}
+                          onChange={handleCheckoutInputChange}
+                          className='w-full rounded-[8px] border border-[#E3E1ED] px-3 py-[9px] text-[12px] outline-none placeholder:text-[#B4B4C0]'
+                          placeholder='•••'
+                        />
+                      </div>
+                    </div>
+
+                    {/* Name + City select */}
+                    <div className='grid gap-4 md:grid-cols-2'>
+                      <div>
+                        <label className='block text-[#666] mb-[4px]'>
+                          Name of the Holder*
+                        </label>
+                        <input
+                          name='cardHolderName'
+                          value={checkoutData.cardHolderName}
+                          onChange={handleCheckoutInputChange}
+                          className='w-full rounded-[8px] border border-[#E3E1ED] px-3 py-[9px] text-[12px] outline-none placeholder:text-[#B4B4C0]'
+                          placeholder='Name on the card'
+                        />
+                      </div>
+                      <div>
+                        <label className='block text-[#666] mb-[4px]'>
+                          City*
+                        </label>
+                        <input
+                          name='billingCity'
+                          value={checkoutData.billingCity}
+                          onChange={handleCheckoutInputChange}
+                          className='w-full rounded-[8px] border border-[#E3E1ED] px-3 py-[9px] text-[12px] outline-none placeholder:text-[#B4B4C0]'
+                          placeholder='Billing city'
+                        />
+                      </div>
+                    </div>
+
+                    {/* Stripe note + checkbox */}
+                    <div className='mt-3 space-y-2'>
+                      <div className='flex items-start gap-2 text-[11px] text-[#7F7F90]'>
+                        <ShieldCheck className='mt-[1px] h-4 w-4 text-[#52B788]' />
+                        <p>
+                          Your payment is protected by Stripe, <br />
+                          <span className='text-[#9B51E0]'>
+                            256-bit SSL encryption
+                          </span>
+                          .
+                        </p>
+                      </div>
+
+                      <label className='flex items-center gap-2 text-[11px] text-[#7F7F90]'>
+                        <input
+                          type='checkbox'
+                          name='sameAsShipping'
+                          checked={checkoutData.sameAsShipping}
+                          onChange={handleCheckoutInputChange}
+                          className='h-[12px] w-[12px]'
+                        />
+                        My billing address is the same as my shipping address
+                      </label>
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -1167,11 +1104,7 @@ export default function CombinedCartCheckoutPage() {
                   disabled={orderLoading || selectedItems.length === 0}
                   className='flex w-full items-center justify-center gap-2 rounded-[10px] bg-gradient-to-r from-[#9838E1] to-[#F68E44] py-[10px] text-[13px] font-medium text-white shadow-[0_4px_16px_rgba(0,0,0,0.20)] mb-3 disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 transition-all'>
                   <Lock className='h-4 w-4' />
-                  {orderLoading
-                    ? "Processing..."
-                    : checkoutData.paymentMethod === "cod"
-                    ? "Confirm Order"
-                    : "Confirm and Pay"}
+                  {orderLoading ? "Processing..." : "Confirm and Pay"}
                 </button>
 
                 {/* Security line */}
@@ -1262,15 +1195,11 @@ export default function CombinedCartCheckoutPage() {
                 <p className='text-gray-600 mb-2'>
                   Payment Method:{" "}
                   <span className='font-semibold capitalize'>
-                    {checkoutData.paymentMethod === "cod"
-                      ? "Cash on Delivery"
-                      : "Credit/Debit Card"}
+                    Credit/Debit Card
                   </span>
                 </p>
                 <p className='text-gray-500 text-sm'>
-                  {checkoutData.paymentMethod === "cod"
-                    ? "You'll pay when your order arrives"
-                    : "Your payment has been processed successfully"}
+                  Your payment has been processed successfully
                 </p>
               </div>
 
