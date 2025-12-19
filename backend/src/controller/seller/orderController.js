@@ -126,6 +126,8 @@ export const getSellerOrders = async (req, res) => {
 
     const result = await OrderVendorModel.aggregate(pipeline);
 
+
+
     const orders = result[0]?.data || [];
     const total = result[0]?.metadata[0]?.total || 0;
 
@@ -150,6 +152,7 @@ export const getSellerOrders = async (req, res) => {
 };
 
 export const orderStatusUpdate = async (req, res) => {
+  console.log(req.body, "asoasdf sohn g");
   try {
     const { status, id } = req.body;
     const updated = await OrderVendorModel.updateOne(

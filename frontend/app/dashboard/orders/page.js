@@ -47,6 +47,8 @@ export default function OrdersPage() {
     limit,
   });
 
+  console.log(data, "allah please");
+
   // const [updateOrderStatus, { isLoading: isUpdating }] = useUpdateOrderStatusMutation();
 
   const [updateOrderStatus, {isLoading:updateLoading}] = useUpdateOrderStatusMutation()
@@ -91,7 +93,7 @@ export default function OrdersPage() {
     try {
       console.log(selectedOrder, newStatus, "In sha allah");
       const data = {
-        id:selectedOrder,
+        id:selectedOrder?._id,
         status: newStatus
       }
 
