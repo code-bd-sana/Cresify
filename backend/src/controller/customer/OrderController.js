@@ -190,10 +190,6 @@ export const placeOrder = async (req, res) => {
        STEP 5: CREATE ORDER
     -------------------------------------------------- */
 
-    const date = new Date();
-    const ymd = date.toISOString().slice(0, 10).replace(/-/g, "");
-    const random = Math.random().toString(36).substring(2, 8).toUpperCase();
-
     const [order] = await Order.create(
       [
         {
@@ -201,7 +197,6 @@ export const placeOrder = async (req, res) => {
           amount: totalAmount,
           address,
           paymentMethod,
-          orderId: `ORD-${ymd}-${random}`,
         },
       ],
       { session }
@@ -235,6 +230,7 @@ export const placeOrder = async (req, res) => {
 
       vendorDocs.push({
         order: order._id,
+        orderId: order.orderId,
         seller: s.seller,
         products: s.products,
         amount: s.gross,
