@@ -51,13 +51,25 @@ export default function ChatUI() {
   const socketRef = useRef(null);
   const conversationRef = useRef(null);
   const messagesRef = useRef([]);
-  const sentMessageIdsRef = useRef(new Set()); // Track sent message IDs
 
   // Refs to prevent infinite loops
   useEffect(() => {
     conversationRef.current = conversation;
     messagesRef.current = messages;
   }, [conversation, messages]);
+
+  // Helper function to check if message is from me
+  const isMessageFromMe = useCallback((message) => {
+    if (!message || !userId) return false;
+    
+    // Check different formats of sender
+    if (typeof message.sender === 'string') {
+      return message.sender === userId;
+    } else if (message.sender && typeof message.sender === 'object') {
+      return message.sender._id === userId;
+    }
+    return false;
+  }, [userId]);
 
   // Scroll to bottom
   const scrollToBottom = () => {
@@ -104,13 +116,11 @@ export default function ChatUI() {
     socketInstance.on("receive_message", (message) => {
       console.log("📥 New message received (receive_message):", message);
       
-      // Use refs instead of state to avoid re-renders
       const currentConversation = conversationRef.current;
       const currentMessages = messagesRef.current;
-      const sentMessageIds = sentMessageIdsRef.current;
       
-      // Skip if this is our own message (already handled by message_sent)
-      if (message.sender?._id === userId) {
+      // Skip if this is our own message
+      if (isMessageFromMe(message)) {
         console.log("Skipping receive_message - this is our own message");
         return;
       }
@@ -132,19 +142,11 @@ export default function ChatUI() {
     socketInstance.on("message_sent", (message) => {
       console.log("✅ Message sent confirmation (message_sent):", message);
       
-      // Add to sent messages tracking
-      if (message._id) {
-        sentMessageIdsRef.current.add(message._id);
-      }
-      
       // Replace temp message with real message
       setMessages(prev => {
-        // Filter out temp messages from same sender with same content
+        // Remove temp messages
         const filtered = prev.filter(msg => 
-          !(msg._id?.startsWith('temp-') && 
-            msg.sender?._id === message.sender?._id && 
-            msg.message === message.message &&
-            Math.abs(new Date(msg.createdAt).getTime() - new Date(message.createdAt).getTime()) < 10000)
+          !(msg._id?.startsWith('temp-') && isMessageFromMe(msg))
         );
         
         // Check if message already exists
@@ -167,27 +169,6 @@ export default function ChatUI() {
       setOnlineUsers((prev) => ({ ...prev, [offlineUserId]: false }));
     });
 
-    socketInstance.on("new_message", (message) => {
-      console.log("📨 New message in conversation (new_message):", message);
-      const currentConversation = conversationRef.current;
-      const currentMessages = messagesRef.current;
-      const sentMessageIds = sentMessageIdsRef.current;
-      
-      // Skip if this is our own message
-      if (message.sender?._id === userId || sentMessageIds.has(message._id)) {
-        console.log("Skipping new_message - already processed");
-        return;
-      }
-      
-      if (currentConversation && message.conversationId === currentConversation._id) {
-        const messageExists = currentMessages.some(msg => msg._id === message._id);
-        if (!messageExists) {
-          console.log("Adding new_message to UI");
-          setMessages(prev => [...prev, message]);
-        }
-      }
-    });
-
     return () => {
       console.log("Cleaning up socket connection");
       if (socketInstance) {
@@ -197,7 +178,7 @@ export default function ChatUI() {
         setConnectionStatus("disconnected");
       }
     };
-  }, [userId, userRole]); // Only depend on userId and userRole
+  }, [userId, userRole, isMessageFromMe]);
 
   // Load messages function
   const loadMessages = useCallback(async (conversationId) => {
@@ -319,7 +300,7 @@ export default function ChatUI() {
     };
 
     loadOrCreateConversation();
-  }, [selectedChat, userId, loadMessages]); // Remove socket from dependencies
+  }, [selectedChat, userId, loadMessages]);
 
   // Send message function
   const handleSendMessage = useCallback(async () => {
@@ -341,7 +322,7 @@ export default function ChatUI() {
     console.log("Sending message:", messageData);
 
     // Generate unique temp ID
-    const tempId = `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const tempId = `temp-${Date.now()}`;
     
     // Optimistic update with sender as the current user
     const tempMessage = {
@@ -365,37 +346,38 @@ export default function ChatUI() {
     setMessages((prev) => [...prev, tempMessage]);
     setNewMessage("");
 
-    try {
-      // Send via socket
-      currentSocket.emit("send_message", messageData);
-
-      // Also save to database via API (as backup)
-      const apiResponse = await fetch("http://localhost:5000/api/chat/sendMessage", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify(messageData),
+    // Send via socket only - no API call needed
+    currentSocket.emit("send_message", messageData);
+    
+    // Handle send failure
+    const errorTimeout = setTimeout(() => {
+      setMessages(prev => {
+        const msgExists = prev.some(msg => msg._id === tempId && msg._id?.startsWith('temp-'));
+        if (msgExists) {
+          console.log("Message sending timed out, removing temp message");
+          return prev.filter(msg => msg._id !== tempId);
+        }
+        return prev;
       });
+    }, 5000);
 
-
-
-      const savedMessage = await apiResponse.json();
-      console.log("Message saved to database:", savedMessage);
-      
-      // Update sent message tracking
-      if (savedMessage._id) {
-        sentMessageIdsRef.current.add(savedMessage._id);
+    // Clear timeout if message is confirmed
+    const clearErrorTimeout = () => clearTimeout(errorTimeout);
+    
+    // Listen for message confirmation
+    const handleMessageSent = (confirmedMessage) => {
+      if (isMessageFromMe(confirmedMessage) && confirmedMessage.message === newMessage.trim()) {
+        clearErrorTimeout();
       }
+    };
 
-    } catch (error) {
-      console.error("Error sending message:", error);
-      // Remove optimistic update on error
-      setMessages((prev) => prev.filter(msg => msg._id !== tempId));
-      alert("Failed to send message. Please try again.");
-    }
-  }, [newMessage, userId, otherParticipant, userName, userImage, userRole]);
+    currentSocket.once("message_sent", handleMessageSent);
+
+    return () => {
+      clearErrorTimeout();
+      currentSocket.off("message_sent", handleMessageSent);
+    };
+  }, [newMessage, userId, otherParticipant, userName, userImage, userRole, isMessageFromMe]);
 
   // Handle Enter key press
   const handleKeyPress = useCallback((e) => {
@@ -424,7 +406,7 @@ export default function ChatUI() {
           return true;
         });
       });
-    }, 10000); // Check every 10 seconds
+    }, 10000);
 
     return () => clearInterval(interval);
   }, []);
@@ -438,9 +420,6 @@ export default function ChatUI() {
     setNewMessage("");
     setSelectedChat(chat);
     
-    // Reset sent message tracking for new conversation
-    sentMessageIdsRef.current.clear();
-    
     // Leave previous conversation room if exists
     const currentSocket = socketRef.current;
     const currentConversation = conversationRef.current;
@@ -448,13 +427,6 @@ export default function ChatUI() {
       currentSocket.emit("leave_conversation", currentConversation._id);
     }
   }, []);
-
-  // Clear sent message IDs when conversation changes
-  useEffect(() => {
-    if (conversation) {
-      sentMessageIdsRef.current.clear();
-    }
-  }, [conversation]);
 
   return (
     <div className="w-full h-screen flex bg-[#F6F6F9]">
@@ -604,8 +576,10 @@ export default function ChatUI() {
               ) : (
                 messages.map((msg, index) => {
                   const showAvatar =
-                    index === 0 || messages[index - 1].sender?._id !== msg.sender?._id;
-                  const isMe = msg.sender?._id === userId;
+                    index === 0 || 
+                    (isMessageFromMe(messages[index - 1]) !== isMessageFromMe(msg));
+                  
+                  const isMe = isMessageFromMe(msg);
 
                   return (
                     <div
@@ -642,7 +616,14 @@ export default function ChatUI() {
                             isMe ? "text-purple-200" : "text-gray-500"
                           }`}
                         >
-                         
+                          {msg._id?.startsWith("temp-") ? (
+                            <span className="italic text-yellow-600">Sending...</span>
+                          ) : (
+                            new Date(msg.createdAt).toLocaleTimeString([], {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })
+                          )}
                         </div>
                       </div>
 
