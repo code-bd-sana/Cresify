@@ -11,6 +11,10 @@ import express from "express";
 import index from "../src/route/index.js";
 import connectDB from "./configure/db.js";
 import { stripeWebhook } from "./controller/StripeController.js";
+import { Server } from "socket.io";
+import Message from "./models/MessageSchema.js";
+import Conversation from "./models/ConversationModel.js";
+import { createServer } from "http";
 
 /**
  * Express application instance
@@ -20,10 +24,6 @@ export const app = express();
 
 /**
  * CORS Configuration
- * Allows cross-origin requests from specified origins.
- * Enables credentials (cookies, authorization headers) to be sent with requests.
- *
- * @see {@link https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS}
  */
 app.use(
   cors({
@@ -33,7 +33,7 @@ app.use(
 );
 
 // Stripe webhook must receive the raw request body so the Stripe signature
-// can be verified. Register the webhook route(s) before the JSON body parser.
+// can be verified.
 app.post(
   "/api/webhook",
   express.raw({ type: "application/json" }),
@@ -42,75 +42,146 @@ app.post(
 
 /**
  * Body Parser Middleware
- * Parses incoming JSON requests with a limit of 50MB to support base64-encoded images.
- * Base64 encoding increases file size by ~33%, so 15MB images become ~20MB.
- *
- * @see {@link https://expressjs.com/en/api.html#express.json}
  */
 app.use(express.json({ limit: "50mb" }));
 
 /**
  * URL-Encoded Parser Middleware
- * Parses incoming URL-encoded requests (form data) with a limit of 50MB.
- * Extended mode allows for rich objects and arrays to be encoded.
- *
- * @see {@link https://expressjs.com/en/api.html#express.urlencoded}
  */
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 
 /**
  * Cookie Parser Middleware
- * Parses Cookie header and populates req.cookies with an object keyed by cookie names.
- * Used for session management and authentication.
- *
- * @see {@link https://www.npmjs.com/package/cookie-parser}
  */
 app.use(cookieParser());
 
 /**
  * API Routes
- * All application routes are prefixed with /api
- * Routes are defined in the index router which aggregates all route modules.
- *
- * @example
- * GET  /api/admin/blog
- * POST /api/admin/blog/save
- * PUT  /api/admin/blog/edit
  */
 app.use("/api", index);
 
-/**
- * Global Error Handling Middleware
- * Catches and handles all errors thrown in the application.
- * Provides specific handling for PayloadTooLargeError (413) and generic error handling.
- *
- * @param {Error} err - Error object
- * @param {express.Request} req - Express request object
- * @param {express.Response} res - Express response object
- * @param {express.NextFunction} next - Express next middleware function
- *
- * @returns {express.Response} JSON response with error details
- *
- * @example
- * // PayloadTooLargeError response
- * {
- *   success: false,
- *   message: "File size too large. Please upload an image smaller than 15MB.",
- *   error: "PayloadTooLargeError"
- * }
- *
- * @example
- * // Generic error response
- * {
- *   success: false,
- *   message: "Error message",
- *   error: "ErrorName"
- * }
- */
+/** HTTP server needed for Socket.IO */
+const server = createServer(app);
+
+/** Socket.IO setup */
+const io = new Server(server, { 
+  cors: { 
+    origin: ["http://localhost:3000", "https://cresify.vercel.app"],
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+  },
+  transports: ["websocket", "polling"],
+  allowEIO3: true,
+  // Add path configuration
+  path: "/socket.io/"
+});
+
+/** Online users map */
+const onlineUsers = new Map();
+
+/** Socket.IO connection */
+io.on("connection", (socket) => {
+  console.log("✅ New socket connection:", socket.id);
+  
+  const userId = socket.handshake.query.userId;
+  console.log("User ID from query:", userId);
+  
+  if (!userId) {
+    console.log("❌ No userId provided, disconnecting");
+    return socket.disconnect();
+  }
+
+  // Add user to online users
+  onlineUsers.set(userId, socket.id);
+  console.log(`✅ User ${userId} is now online (socket: ${socket.id})`);
+  
+  // Notify others about this user's online status
+  socket.broadcast.emit("user_online", userId);
+
+  // Handle join conversation
+  socket.on("join_conversation", (conversationId) => {
+    socket.join(`conversation_${conversationId}`);
+    console.log(`User ${userId} joined conversation ${conversationId}`);
+  });
+
+  // Handle leave conversation
+  socket.on("leave_conversation", (conversationId) => {
+    socket.leave(`conversation_${conversationId}`);
+    console.log(`User ${userId} left conversation ${conversationId}`);
+  });
+
+  // Handle send message
+  socket.on("send_message", async (data) => {
+    console.log("message to pahtalam dkeho nana vai");
+    console.log("📩 Message received:", data);
+    
+    try {
+      const { conversationId, sender, receiver, message } = data;
+
+      // Save message to DB
+      const msg = await Message.create({ 
+        conversationId, 
+        sender, 
+        receiver, 
+        message 
+      });
+
+      // Update lastMessage in Conversation
+      await Conversation.findByIdAndUpdate(conversationId, { 
+        lastMessage: message,
+        lastMessageAt: new Date()
+      });
+
+      // Emit to receiver if online
+      const receiverSocket = onlineUsers.get(receiver);
+      if (receiverSocket) {
+        console.log(`📤 Sending to receiver ${receiver} (socket: ${receiverSocket})`);
+        io.to(receiverSocket).emit("receive_message", msg);
+      }
+
+      // Emit to sender to confirm delivery
+      socket.emit("message_sent", msg);
+      
+      // Emit to conversation room
+      io.to(`conversation_${conversationId}`).emit("new_message", msg);
+      
+      console.log(`✅ Message saved and sent: ${message.substring(0, 50)}...`);
+
+    } catch (error) {
+      console.error("❌ Socket send_message error:", error.message);
+      socket.emit("message_error", { error: error.message });
+    }
+  });
+
+  socket.on("disconnect", () => {
+    console.log(`❌ User ${userId} disconnected (socket: ${socket.id})`);
+    onlineUsers.delete(userId);
+    socket.broadcast.emit("user_offline", userId);
+  });
+});
+
+// Socket connection test endpoint
+app.get("/api/socket-test", (req, res) => {
+  res.json({ 
+    success: true, 
+    message: "Socket server is running",
+    onlineUsers: Array.from(onlineUsers.keys())
+  });
+});
+
+// Add health check endpoint
+app.get("/health", (req, res) => {
+  res.json({ 
+    status: "OK", 
+    timestamp: new Date().toISOString(),
+    socketUsers: onlineUsers.size
+  });
+});
+
+/** Global error handler */
 app.use((err, req, res, next) => {
   console.error(err.stack);
 
-  // Handle PayloadTooLargeError
   if (err.type === "entity.too.large") {
     return res.status(413).json({
       success: false,
@@ -119,7 +190,6 @@ app.use((err, req, res, next) => {
     });
   }
 
-  // Handle other errors
   res.status(err.status || 500).json({
     success: false,
     message: err.message || "An unexpected error occurred",
@@ -129,9 +199,19 @@ app.use((err, req, res, next) => {
 
 /**
  * Initialize Database Connection
- * Establishes connection to MongoDB database.
- * Connection details are configured in the connectDB module.
- *
- * @see {@link ./configure/db.js}
  */
 connectDB();
+
+// Start server
+const PORT = process.env.PORT || 5000;
+
+// Only start server if not in test mode
+if (process.env.NODE_ENV !== 'test') {
+  server.listen(PORT, () => {
+    console.log(`🚀 Server running on port ${PORT}`);
+    console.log(`🔌 Socket.IO running on path /socket.io/`);
+  });
+}
+
+/** Export server for main entry file to listen */
+export { server, io };
