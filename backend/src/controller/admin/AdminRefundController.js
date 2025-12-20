@@ -67,7 +67,7 @@ export const reviewRefund = async (req, res) => {
       const refundAmount = toTwo(refund.amount);
 
       let stripeRefund = null;
-      if (payment.method === "stripe_checkout" || && payment.paymentId) {
+      if (payment.method === "stripe_checkout" || payment.paymentId) {
         // Create Stripe refund (amount in cents)
         try {
           stripeRefund = await stripe.refunds.create({
