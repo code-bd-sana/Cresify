@@ -14,6 +14,12 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
   apiVersion: "2025-10-29.clover",
 });
 
+/**
+ * List all refunds (admin)
+ * Query params: page, limit
+ *
+ * Returns up to 100 most recent refunds
+ */
 export const listRefunds = async (req, res) => {
   try {
     const refunds = await Refund.find()
@@ -315,6 +321,11 @@ export const reviewRefund = async (req, res) => {
   }
 };
 
+/**
+ * Get refund detail for admin
+ *
+ * params: { id }
+ */
 export const getRefund = async (req, res) => {
   try {
     const id = req.params.id;

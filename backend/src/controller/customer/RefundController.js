@@ -210,6 +210,9 @@ export const requestRefund = async (req, res) => {
   }
 };
 
+/*
+ * List refunds requested by the logged-in customer
+ */
 export const listMyRefunds = async (req, res) => {
   try {
     const userId = req.query.userId;
@@ -237,6 +240,9 @@ export const listMyRefunds = async (req, res) => {
   }
 };
 
+/**
+ * Get refund detail for a customer
+ */
 export const getRefund = async (req, res) => {
   try {
     const id = req.params.id;
