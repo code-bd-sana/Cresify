@@ -109,7 +109,7 @@ export const requestRefund = async (req, res) => {
           payment: payment._id,
           order: order._id,
           orderVendor: ov._id,
-          requestedBy: userId,
+          requestedBy: new mongoose.Types.ObjectId(userId),
           amount: refundAmount,
           currency: payment.currency || "usd",
           reason: its[0].reason || reason,
@@ -189,7 +189,7 @@ export const requestRefund = async (req, res) => {
       const refundDoc = await Refund.create({
         payment: payment._id,
         order: order._id,
-        requestedBy: userId,
+        requestedBy: new mongoose.Types.ObjectId(userId),
         amount: payment.amount,
         currency: payment.currency || "usd",
         reason,
@@ -218,7 +218,9 @@ export const listMyRefunds = async (req, res) => {
     const userId = req.query.userId;
     if (!userId) return res.status(400).json({ message: "userId required" });
 
-    const refunds = await Refund.find({ requestedBy: userId })
+    const refunds = await Refund.find({
+      requestedBy: new mongoose.Types.ObjectId(userId),
+    })
       .sort({ createdAt: -1 })
       .populate("order")
       .populate({
