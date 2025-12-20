@@ -1,16 +1,15 @@
+// SellerApi.js - FIXED VERSION
 import { base_url } from "@/utils/utils";
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
 export const SellerApi = createApi({
   reducerPath: "SellerApi",
   baseQuery: fetchBaseQuery({ baseUrl: base_url }),
-  tagTypes: ["SellerOrders"],
+  tagTypes: ["SellerOrders", "PaymentHistory"],
 
   endpoints: (builder) => ({
-    // GET seller orders with query parameters
     getSellerOrders: builder.query({
       query: (params) => {
-        // Build query string from params
         const queryParams = new URLSearchParams();
         
         if (params.sellerId) queryParams.append('sellerId', params.sellerId);
@@ -27,27 +26,45 @@ export const SellerApi = createApi({
     }),
 
     updateOrderStatus: builder.mutation({
-        query:(data)=>({
-            url:`/seller/order`,
-            method:"PUT",
-            body:data
-        })
-    })
+      query: (data) => ({
+        url: `/seller/order`,
+        method: "PUT",
+        body: data
+      })
+    }),
+    paymentHistory: builder.query({
+      query: (id) => `/seller/order/paymentHistory/${id}`
+    }),
 
-    // Or if you want a mutation (for actions that modify data):
-    // updateOrderStatus: builder.mutation({
-    //   query: (data) => ({
-    //     url: `/seller/order/status`,
-    //     method: "PUT",
-    //     body: data,
-    //   }),
-    //   invalidatesTags: ["SellerOrders"],
-    // }),
+    // Method 2: With pagination (new)
+    paymentHistoryPaginated: builder.query({
+      query: (params) => {
+        const { sellerId, page = 0, limit = 10, search = "" } = params || {};
+        const queryParams = new URLSearchParams();
+        
+        if (sellerId) queryParams.append('sellerId', sellerId);
+        if (page) queryParams.append('page', page);
+        if (limit) queryParams.append('limit', limit);
+        if (search) queryParams.append('search', search);
+        
+        return {
+          url: `/seller/order/paymentHistory?${queryParams.toString()}`,
+          method: "GET",
+        };
+      },
+      providesTags: ["PaymentHistory"],
+    }),
+
+    getOverview:builder.query({
+      query:(id)=>`/seller/overview/${id}`
+    })
   }),
 });
 
 export const {
   useGetSellerOrdersQuery,
-  useUpdateOrderStatusMutation
-  // useUpdateOrderStatusMutation,
+  useUpdateOrderStatusMutation,
+  usePaymentHistoryQuery,
+  usePaymentHistoryPaginatedQuery,
+  useGetOverviewQuery 
 } = SellerApi;

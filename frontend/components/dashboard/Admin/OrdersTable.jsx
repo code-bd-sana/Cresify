@@ -1,5 +1,7 @@
 "use client";
 
+import RecentOrders from "@/components/RecentOrders";
+
 const orders = [
   {
     id: "#ORD-2501",
@@ -66,65 +68,9 @@ const statusColors = {
 
 export default function OrdersTable() {
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-[#F0ECFF] p-4 md:p-5">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-[15px] font-semibold text-gray-900">
-          Recent Orders
-        </h3>
-        <button className="text-xs border rounded-lg px-3 py-1 text-gray-600 bg-gray-50">
-          View All Orders
-        </button>
-      </div>
+   <div>
 
-      <div className="overflow-x-auto">
-        <table className="min-w-full text-left text-sm">
-          <thead>
-            <tr className="text-[12px] text-[#A3A3B5] border-b bg-[#F9F6FF]">
-              <th className="py-3 px-3">ORDER ID</th>
-              <th className="py-3 px-3">Buyer</th>
-              <th className="py-3 px-3">Seller</th>
-              <th className="py-3 px-3">PRODUCT</th>
-              <th className="py-3 px-3">AMOUNT</th>
-              <th className="py-3 px-3">STATUS</th>
-              <th className="py-3 px-3">DATE</th>
-              <th className="py-3 px-3 text-right">ACTIONS</th>
-            </tr>
-          </thead>
-          <tbody>
-            {orders.map((row, idx) => (
-              <tr
-                key={row.id}
-                className={`text-[13px] ${
-                  idx !== orders.length - 1 ? "border-b" : ""
-                }`}
-              >
-                <td className="py-3 px-3 text-[#9C6BFF] font-medium">
-                  {row.id}
-                </td>
-                <td className="py-3 px-3 text-gray-700">{row.buyer}</td>
-                <td className="py-3 px-3 text-gray-700">{row.seller}</td>
-                <td className="py-3 px-3 text-gray-700">{row.product}</td>
-                <td className="py-3 px-3 text-gray-700">{row.amount}</td>
-                <td className="py-3 px-3">
-                  <span
-                    className={`px-3 py-1 rounded-full text-xs font-medium ${
-                      statusColors[row.status]
-                    }`}
-                  >
-                    {row.status}
-                  </span>
-                </td>
-                <td className="py-3 px-3 text-gray-700">{row.date}</td>
-                <td className="py-3 px-3 text-right">
-                  <button className="text-xs border rounded-lg px-3 py-1 text-[#9C6BFF] border-[#E2D4FF] bg-[#F9F6FF]">
-                    View
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
+    <RecentOrders/>
+   </div>
   );
 }

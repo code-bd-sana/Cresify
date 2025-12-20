@@ -8,7 +8,7 @@ export const AdminUserApi = createApi({
 
   endpoints: (builder) => ({
     getAdminOverview: builder.query({
-      query: () => "/admin/users/overview",
+      query: () => "/admin/overview",
       providesTags: ["AdminUsers"],
     }),
 

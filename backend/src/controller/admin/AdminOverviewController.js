@@ -1,4 +1,5 @@
 import Order from "../../models/OrderModel.js";
+import OrderVendorModel from "../../models/OrderVendorModel.js";
 import Product from "../../models/ProductModel.js";
 import User from "../../models/UserModel.js";
 
@@ -24,14 +25,33 @@ export const adminOverview = async (req, res) => {
   try {
     const totalBuyers = await User.countDocuments({ role: "buyer" });
     const totalSellers = await User.countDocuments({ role: "seller" });
-    const totalServiceProviders = await User.countDocuments({
-      role: "provider",
-    });
+    const totalServiceProviders = await User.countDocuments({ role: "provider" });
     const totalProduct = await Product.countDocuments({});
-    const totalServices = 0;
-    const totalBookedServices = 0;
-    const totalOrders = await Order.countDocuments({});
-    const totalPlatformRevenue = 0;
+    const totalOrders = await OrderVendorModel.countDocuments({});
+
+    // 🔥 Monthly sales chart data (amount based)
+    const monthlyAmount = await OrderVendorModel.aggregate([
+      {
+        $group: {
+          _id: { $month: "$createdAt" }, // 1 = Jan
+          totalAmount: { $sum: "$amount" }
+        }
+      },
+      { $sort: { "_id": 1 } }
+    ]);
+
+    const months = [
+      "JAN", "FEB", "MAR", "APR", "MAY", "JUN",
+      "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"
+    ];
+
+    const chartData = months.map((month, index) => {
+      const found = monthlyAmount.find(m => m._id === index + 1);
+      return {
+        name: month,
+        value: found ? Number(found.totalAmount.toFixed(2)) : 0
+      };
+    });
 
     return res.status(200).json({
       success: true,
@@ -40,17 +60,16 @@ export const adminOverview = async (req, res) => {
         totalSellers,
         totalServiceProviders,
         totalProduct,
-        totalServices,
-        totalBookedServices,
         totalOrders,
-        totalPlatformRevenue: totalPlatformRevenue.toFixed(2),
-      },
+        chartData // 👈 exactly your required format
+      }
     });
+
   } catch (error) {
     return res.status(500).json({
       success: false,
-      message: "Server error while generating overview",
-      error: error.message,
+      message: "Server error while generating admin overview",
+      error: error.message
     });
   }
 };

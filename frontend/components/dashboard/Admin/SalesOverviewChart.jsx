@@ -10,16 +10,16 @@ import {
   CartesianGrid,
 } from "recharts";
 
-const data = [
-  { name: "JAN", value: 2500 },
-  { name: "FEB", value: 4800 },
-  { name: "MAR", value: 7200 },
-  { name: "APR", value: 4800 },
-  { name: "MAY", value: 8500 },
-  { name: "JUN", value: 9600 },
-];
+// const data = [
+//   { name: "JAN", value: 2500 },
+//   { name: "FEB", value: 4800 },
+//   { name: "MAR", value: 7200 },
+//   { name: "APR", value: 4800 },
+//   { name: "MAY", value: 8500 },
+//   { name: "JUN", value: 9600 },
+// ];
 
-export default function SalesOverviewChart() {
+export default function SalesOverviewChart({data}) {
   return (
     <div className="bg-white rounded-xl shadow-sm border border-[#EEEAF8] p-4">
       {/* Header */}

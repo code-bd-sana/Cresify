@@ -1,11 +1,30 @@
+import Product from "../models/ProductModel.js";
 import Review from "../models/ReviewModel.js";
 
 export const saveReview = async(req, res)=>{
+
+    console.log(req.body, "reviw preview");
     try {
 
         const data = req.body;
+        console.log(data, "data re data kaga");
 
-        const newReview = new Review(data);
+        const sellerId = await Product.findOne({_id:data?.review?.productId})
+
+
+        const reviewData = {
+            user:data?.id,
+            rating:data?.ratng,
+            review:data?.reviewText,
+             product:data?.review?.productId,
+             seller:sellerId?.seller
+
+
+
+        };
+
+
+        const newReview = new Review(reviewData);
         const saved = await newReview.save();
         res.status(200).json({
             message:"Success",
@@ -60,5 +79,43 @@ export const postReview = async(req, res)=>{
             message:error?.message
         })
  
+    }
+
+};
+
+
+
+export const getReviewByProducts = async(req, res)=>{
+    try {
+        const id  = req.params.id;
+        const reviews = await Review.find({product:id}).populate('user');
+        res.status(200).json({
+            message:"Success",
+            data:reviews
+
+        })
+        
+    } catch (error) {
+        res.status(500).json({
+            error,
+            message:error?.message
+        })
+    }
+};
+
+export const getReviewBySellerId = async(req, res)=>{
+    try {
+        const id = req.params.id;
+        const reviews = await Review.find({seller:id}).populate('user product');
+        res.status(200).json({
+            message:"Success",
+            data:reviews
+        })
+        
+    } catch (error) {
+        res.status(500).json({
+            error,
+            message:error?.message
+        })
     }
 }

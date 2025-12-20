@@ -16,6 +16,7 @@ import review from "./reviewRoute.js";
 import sellerOrderRoute from "./seller/OrderRoute.js";
 import sellerPayoutRoute from "./seller/PayoutRoute.js";
 import chat from './chat/ChatRoute.js'
+import sellerOverview from './SellerOverview.js'
 const router = Router();
 
 router.use("/user", user);
@@ -38,5 +39,6 @@ router.use("/admin/refund", adminRefundRoute);
 router.use("/seller/wallet", sellerPayoutRoute);
 router.use("/seller/order", sellerOrderRoute);
 router.use('/chat', chat)
+router.use('/seller/overview', sellerOverview)
 
 export default router;

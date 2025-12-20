@@ -21,9 +21,13 @@ import {
   ArrowRight,
   ChevronLeft,
   ChevronRight as ChevronRightIcon,
+  Star,
+  MessageSquare,
+  StarIcon,
 } from "lucide-react";
 import { useMyOrderQuery } from "@/feature/customer/OrderApi";
 import { useSession } from "next-auth/react";
+import { useSaveReviewMutation } from "@/feature/review/ReviewApi";
 
 export default function OrdersPage() {
   const tabs = [
@@ -38,15 +42,23 @@ export default function OrdersPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [trackingOrder, setTrackingOrder] = useState(null);
   const [isTrackModalOpen, setIsTrackModalOpen] = useState(false);
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+  const [selectedProductForReview, setSelectedProductForReview] = useState(null);
+  const [rating, setRating] = useState(0);
+  const [reviewText, setReviewText] = useState("");
+  const [isCancelConfirmOpen, setIsCancelConfirmOpen] = useState(false);
+  const [orderToCancel, setOrderToCancel] = useState(null);
 
   const { data: user } = useSession();
   const id = user?.user?.id;
   const { data: MyOrder, isLoading, isError } = useMyOrderQuery(id);
+  const [saveReview, {isLoading:reviewLoading}] = useSaveReviewMutation();
+
 
   // API থেকে আসা ডেটা
   const apiOrders = MyOrder?.data || [];
 
-  // স্ট্যাটাস কাউন্ট ক্যালকুলেট
+
   const calculateStatusCounts = () => {
     let allCount = 0;
     let processingCount = 0;
@@ -59,18 +71,22 @@ export default function OrdersPage() {
       const vendorStatuses = order.orderVendors.map((v) => v.status);
       const paymentStatus = order.paymentStatus;
 
-      // সব ভেন্ডরের স্ট্যাটাস চেক
+ 
       const allDelivered = vendorStatuses.every((s) => s === "delivered");
-      const anyShipped = vendorStatuses.some((s) => s === "shipped");
-      const allPending = vendorStatuses.every(
-        (s) => s === "pending" || paymentStatus === "pending"
+
+      const anyShipped = vendorStatuses.some((s) => s === "shipping");
+
+      const allProcessingOrPending = vendorStatuses.every(
+        (s) => s === "processing" || s === "pending"
       );
+      // কোনো ভেন্ডর ক্যান্সেল হলে
+      const anyCancelled = vendorStatuses.some((s) => s === "canceled");
 
       if (allDelivered) {
         deliveredCount++;
       } else if (anyShipped) {
         shippedCount++;
-      } else if (allPending) {
+      } else if (allProcessingOrPending && !anyCancelled) {
         processingCount++;
       }
     });
@@ -81,7 +97,6 @@ export default function OrdersPage() {
   const { allCount, processingCount, shippedCount, deliveredCount } =
     calculateStatusCounts();
 
-  // ট্যাবস আপডেট
   const updatedTabs = tabs.map((tab) => {
     switch (tab.id) {
       case "all":
@@ -127,7 +142,7 @@ export default function OrdersPage() {
     });
   };
 
-  // অর্ডারের স্ট্যাটাস ডিটারমাইন
+  // অর্ডারের স্ট্যাটাস ডিটারমাইন - FIXED
   const getOrderStatus = (order) => {
     const vendorStatuses = order.orderVendors.map((v) => v.status);
     const paymentStatus = order.paymentStatus;
@@ -143,8 +158,8 @@ export default function OrdersPage() {
       };
     }
 
-    // কোনো ভেন্ডর shipped হলে
-    const anyShipped = vendorStatuses.some((s) => s === "shipped");
+    // কোনো ভেন্ডর shipping হলে
+    const anyShipped = vendorStatuses.some((s) => s === "shipping");
     if (anyShipped) {
       return {
         status: "Shipped",
@@ -154,11 +169,11 @@ export default function OrdersPage() {
       };
     }
 
-    // সব ভেন্ডর pending বা payment pending
-    const allPending = vendorStatuses.every(
-      (s) => s === "pending" || paymentStatus === "pending"
+    // সব ভেন্ডর processing বা pending
+    const allProcessingOrPending = vendorStatuses.every(
+      (s) => s === "processing" || s === "pending"
     );
-    if (allPending) {
+    if (allProcessingOrPending) {
       // ডেলিভারি তারিখ ক্যালকুলেট (3-5 দিন পর)
       const orderDate = new Date(order.createdAt);
       const deliveryDate = new Date(orderDate);
@@ -181,11 +196,9 @@ export default function OrdersPage() {
       };
     }
 
-    // কোনো ফেইলড বা ক্যান্সেল স্ট্যাটাস
-    const anyFailed = vendorStatuses.some(
-      (s) => s === "failed" || s === "cancelled" || paymentStatus === "failed"
-    );
-    if (anyFailed) {
+    // কোনো ক্যান্সেল স্ট্যাটাস
+    const anyCancelled = vendorStatuses.some((s) => s === "canceled");
+    if (anyCancelled) {
       return {
         status: "Canceled",
         statusColor: "#EB5757",
@@ -224,6 +237,10 @@ export default function OrdersPage() {
           productId: product.product?._id,
           description: product.product?.description,
           category: product.product?.category,
+          sellerId: vendor.vendorId?._id,
+          sellerName: vendor.vendorId?.name,
+          // Check if product is delivered for review eligibility
+          canReview: vendor.status === "delivered",
         });
       });
     });
@@ -307,31 +324,73 @@ export default function OrdersPage() {
   const handleTrackOrder = (order) => {
     setTrackingOrder(order);
     setIsTrackModalOpen(true);
-
-    console.log("=== TRACK ORDER ===");
-    console.log("Order ID:", order.id);
-    console.log(
-      "All Vendor IDs to track:",
-      order.vendors.map((v) => v._id)
-    );
-
-    // প্রত্যেক ভেন্ডরের ডিটেইলস
-    order.vendors.forEach((vendor, index) => {
-      console.log(`\nVendor ${index + 1}:`);
-      console.log("Vendor ID:", vendor._id);
-      console.log("Status:", vendor.status);
-      console.log(
-        "Products:",
-        vendor.products.map((p) => p.product.name)
-      );
-    });
-    console.log("===================");
   };
 
+  // Cancel Order বাটন ক্লিক হ্যান্ডলার
   const handleCancelOrder = (order) => {
     console.log("=== CANCEL ORDER ===");
     console.log("Order ID to cancel:", order.fullId);
     console.log("====================");
+    setOrderToCancel(order);
+    setIsCancelConfirmOpen(true);
+  };
+
+  // Confirm Cancel Order
+  const handleConfirmCancel = () => {
+    if (orderToCancel) {
+      console.log("=== CONFIRM CANCEL ORDER ===");
+      console.log("Cancelling Order ID:", orderToCancel.fullId);
+      console.log("============================");
+      // এখানে API কল করতে হবে
+    }
+    setIsCancelConfirmOpen(false);
+    setOrderToCancel(null);
+  };
+
+  // Review Product বাটন ক্লিক হ্যান্ডলার
+  const handleReviewProduct = (product) => {
+    setSelectedProductForReview(product);
+    setRating(0);
+    setReviewText("");
+    setIsReviewModalOpen(true);
+  };
+
+  // Submit Review
+  const handleSubmitReview = async() => {
+    if (!selectedProductForReview) return;
+
+    console.log("=== SUBMIT REVIEW ===");
+    console.log("User ID:", id);
+    console.log("Product ID:", selectedProductForReview.productId);
+    console.log("Seller ID:", selectedProductForReview);
+    console.log("Rating:", rating);
+    console.log("Review:", reviewText);
+    console.log("====================");
+
+    try {
+
+      const reviewData = {
+        id,
+        product: selectedProductForReview.productId,
+        review:selectedProductForReview,
+        ratng:rating,
+        reviewText:reviewText
+      };
+
+      const result = await saveReview(reviewData);
+      console.log(result, "aso he result aso aso");
+
+
+
+         setIsReviewModalOpen(false);
+    setSelectedProductForReview(null);
+      
+    } catch (error) {
+      console.log(error);
+    }
+
+    // এখানে API কল করতে হবে
+ 
   };
 
   // ট্র্যাকিং স্ট্যাটাস স্টেপস জেনারেট
@@ -426,18 +485,22 @@ export default function OrdersPage() {
     return steps;
   };
 
-  // কারেন্ট স্ট্যাটাস ইন্ডেক্স
+  // কারেন্ট স্ট্যাটাস ইন্ডেক্স - FIXED
   const getCurrentStatusIndex = (order) => {
     const status = order.status.toLowerCase();
-    switch (status) {
-      case "processing":
-        return 2;
-      case "shipped":
-        return 3;
-      case "delivered":
-        return 5;
-      default:
-        return 0;
+    const vendorStatuses = order.rawData?.orderVendors?.map(v => v.status) || [];
+
+    // Check if any vendor is shipped
+    const anyShipped = vendorStatuses.some(s => s === "shipping");
+    // Check if all vendors are delivered
+    const allDelivered = vendorStatuses.every(s => s === "delivered");
+
+    if (allDelivered) {
+      return 5; // Delivered
+    } else if (anyShipped) {
+      return 3; // Shipped
+    } else {
+      return 2; // Processing
     }
   };
 
@@ -467,16 +530,18 @@ export default function OrdersPage() {
     }
   };
 
-  // ভেন্ডর স্ট্যাটাস টেক্সট
+  // ভেন্ডর স্ট্যাটাস টেক্সট - FIXED
   const getVendorStatusText = (status) => {
     switch (status) {
       case "pending":
+        return "Pending";
+      case "processing":
         return "Processing";
-      case "shipped":
+      case "shipping":
         return "Shipped";
       case "delivered":
         return "Delivered";
-      case "cancelled":
+      case "canceled":
         return "Cancelled";
       default:
         return status;
@@ -905,7 +970,17 @@ export default function OrdersPage() {
                                 <span className="text-sm text-gray-500">
                                   Category: {product.category}
                                 </span>
-                                <span className="text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-800">
+                                <span
+                                  className={`text-xs px-2 py-1 rounded-full ${
+                                    product.vendorStatus === "delivered"
+                                      ? "bg-green-100 text-green-800"
+                                      : product.vendorStatus === "shipping"
+                                      ? "bg-blue-100 text-blue-800"
+                                      : product.vendorStatus === "processing"
+                                      ? "bg-orange-100 text-orange-800"
+                                      : "bg-gray-100 text-gray-800"
+                                  }`}
+                                >
                                   {getVendorStatusText(product.vendorStatus)}
                                 </span>
                               </div>
@@ -925,18 +1000,31 @@ export default function OrdersPage() {
                             </div>
                           </div>
 
-                          {/* Vendor Info */}
+                          {/* Vendor Info and Review Button */}
                           <div className="mt-3 pt-3 border-t border-dashed">
-                            <div className="flex items-center gap-2 text-sm text-gray-500">
-                              <User size={14} />
-                              <span>
-                                Vendor ID: {product.vendorId.substring(0, 8)}...
-                              </span>
-                              <ChevronRight size={14} />
-                              <span>
-                                Product ID: {product.productId?.substring(0, 8)}
-                                ...
-                              </span>
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2 text-sm text-gray-500">
+                                <User size={14} />
+                                <span>
+                                  Vendor: {product.sellerName || "Unknown"}
+                                </span>
+                                <ChevronRight size={14} />
+                                <span>
+                                  Product ID: {product.productId?.substring(0, 8)}
+                                  ...
+                                </span>
+                              </div>
+                              
+                              {/* Review Button - Only show for delivered products */}
+                              {product.canReview && (
+                                <button
+                                  onClick={() => handleReviewProduct(product)}
+                                  className="flex items-center gap-2 px-3 py-1.5 text-sm bg-green-50 text-green-700 border border-green-200 rounded-lg hover:bg-green-100 transition"
+                                >
+                                  <Star size={14} />
+                                  Write Review
+                                </button>
+                              )}
                             </div>
                           </div>
                         </div>
@@ -966,22 +1054,24 @@ export default function OrdersPage() {
                           <div>
                             <div className="flex items-center gap-2">
                               <span className="font-medium">
-                                Vendor {index + 1}
+                                Vendor {index + 1}: {vendor.vendorId?.name || "Unknown"}
                               </span>
                               <span
                                 className={`text-xs px-2 py-1 rounded-full ${
                                   vendor.status === "delivered"
                                     ? "bg-green-100 text-green-800"
-                                    : vendor.status === "shipped"
+                                    : vendor.status === "shipping"
                                     ? "bg-blue-100 text-blue-800"
-                                    : "bg-orange-100 text-orange-800"
+                                    : vendor.status === "processing"
+                                    ? "bg-orange-100 text-orange-800"
+                                    : "bg-gray-100 text-gray-800"
                                 }`}
                               >
                                 {getVendorStatusText(vendor.status)}
                               </span>
                             </div>
                             <p className="text-sm text-gray-500 mt-1">
-                              ID: {vendor._id}
+                              ID: {vendor._id.substring(0, 8)}...
                             </p>
                           </div>
 
@@ -1027,7 +1117,7 @@ export default function OrdersPage() {
                 </div>
               )}
 
-              {/* Order Summary - SABTOTAL ঠিক করা হয়েছে */}
+              {/* Order Summary */}
               <div className="bg-gray-50 rounded-xl p-5">
                 <h4 className="font-bold text-gray-800 mb-4">Order Summary</h4>
                 <div className="space-y-3">
@@ -1125,8 +1215,52 @@ export default function OrdersPage() {
             {/* Modal Content */}
             <div className="p-6 space-y-6">
               {/* Order Status Summary */}
+              <div className="bg-gradient-to-r from-purple-50 to-orange-50 rounded-xl p-5">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="flex items-center gap-3">
+                      <div
+                        className="w-3 h-3 rounded-full"
+                        style={{ backgroundColor: trackingOrder.statusColor }}
+                      />
+                      <h3 className="font-bold text-lg">
+                        {trackingOrder.status}
+                      </h3>
+                    </div>
+                    <p className="text-gray-600 text-sm mt-1">
+                      {trackingOrder.date}
+                    </p>
+                    {trackingOrder.expected && (
+                      <p className="text-orange-500 text-sm font-medium mt-1">
+                        {trackingOrder.expected}
+                      </p>
+                    )}
+                  </div>
+                  <div className="text-right">
+                    <p className="text-2xl font-bold text-purple-700">
+                      ${trackingOrder.price}
+                    </p>
+                    <p className="text-sm text-gray-500">Total Amount</p>
+                  </div>
+                </div>
+              </div>
 
               {/* Delivery Address */}
+              <div className="border rounded-xl p-5">
+                <div className="flex items-center gap-2 mb-3">
+                  <MapPin size={20} className="text-purple-600" />
+                  <h4 className="font-bold text-gray-800">Delivery Address</h4>
+                </div>
+                <div className="space-y-1 text-sm">
+                  <p className="font-medium">{trackingOrder.address?.street}</p>
+                  <p>
+                    {trackingOrder.address?.city},{" "}
+                    {trackingOrder.address?.state}
+                  </p>
+                  <p>{trackingOrder.address?.postalCode}</p>
+                  <p>{trackingOrder.address?.country}</p>
+                </div>
+              </div>
 
               {/* Tracking Progress */}
               <div className="border rounded-xl p-5">
@@ -1320,8 +1454,6 @@ export default function OrdersPage() {
                   </div>
                 </div>
               </div>
-
-   
             </div>
 
             {/* Modal Footer */}
@@ -1356,6 +1488,248 @@ export default function OrdersPage() {
                   </button>
                 )}
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ------------------- REVIEW MODAL ------------------- */}
+      {isReviewModalOpen && selectedProductForReview && (
+        <div className="fixed inset-0 backdrop-blur-sm bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full">
+            {/* Modal Header */}
+            <div className="sticky top-0 bg-white border-b p-6 flex justify-between items-center">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-full bg-gradient-to-r from-green-500 to-emerald-600 flex items-center justify-center">
+                  <Star size={20} className="text-white" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-gray-800">
+                    Write a Review
+                  </h2>
+                  <p className="text-sm text-gray-600">
+                    {selectedProductForReview.name}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsReviewModalOpen(false)}
+                className="p-2 hover:bg-gray-100 rounded-full transition"
+              >
+                <X size={24} className="text-gray-500" />
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-6 space-y-6">
+              {/* Product Info */}
+              <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl">
+                <img
+                  src={selectedProductForReview.image}
+                  alt={selectedProductForReview.name}
+                  className="w-16 h-16 rounded-lg object-cover"
+                />
+                <div>
+                  <h3 className="font-bold text-gray-800">
+                    {selectedProductForReview.name}
+                  </h3>
+                  <p className="text-sm text-gray-600">
+                    Seller: {selectedProductForReview.sellerName || "Unknown"}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    Product ID: {selectedProductForReview.productId?.substring(0, 8)}...
+                  </p>
+                </div>
+              </div>
+
+              {/* Rating */}
+              <div className="space-y-3">
+                <h4 className="font-medium text-gray-800">Your Rating</h4>
+                <div className="flex gap-2">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      key={star}
+                      onClick={() => setRating(star)}
+                      className="p-1"
+                    >
+                      <StarIcon
+                        size={32}
+                        className={
+                          star <= rating
+                            ? "text-yellow-500 fill-yellow-500"
+                            : "text-gray-300"
+                        }
+                      />
+                    </button>
+                  ))}
+                </div>
+                <p className="text-sm text-gray-600">
+                  {rating === 0
+                    ? "Select a rating"
+                    : rating === 1
+                    ? "Poor"
+                    : rating === 2
+                    ? "Fair"
+                    : rating === 3
+                    ? "Good"
+                    : rating === 4
+                    ? "Very Good"
+                    : "Excellent"}
+                </p>
+              </div>
+
+              {/* Review Text */}
+              <div className="space-y-3">
+                <h4 className="font-medium text-gray-800">Your Review</h4>
+                <textarea
+                  value={reviewText}
+                  onChange={(e) => setReviewText(e.target.value)}
+                  placeholder="Share your experience with this product..."
+                  className="w-full h-32 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+                  rows={4}
+                />
+              </div>
+
+              {/* Review Guidelines */}
+              <div className="p-4 bg-blue-50 rounded-lg">
+                <h4 className="font-medium text-blue-800 mb-2">Review Guidelines</h4>
+                <ul className="text-sm text-blue-700 space-y-1">
+                  <li className="flex items-start gap-2">
+                    <div className="w-1 h-1 rounded-full bg-blue-600 mt-2"></div>
+                    <span>Be honest and objective</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <div className="w-1 h-1 rounded-full bg-blue-600 mt-2"></div>
+                    <span>Focus on the product quality and features</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <div className="w-1 h-1 rounded-full bg-blue-600 mt-2"></div>
+                    <span>Share your genuine experience</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="sticky bottom-0 bg-white border-t p-6 flex justify-end gap-3">
+              <button
+                onClick={() => setIsReviewModalOpen(false)}
+                className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSubmitReview}
+                disabled={rating === 0 || !reviewText.trim()}
+                className={`px-6 py-3 rounded-lg font-medium transition flex items-center gap-2 ${
+                  rating === 0 || !reviewText.trim()
+                    ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                    : "bg-gradient-to-r from-green-500 to-emerald-600 text-white hover:opacity-90"
+                }`}
+              >
+                <MessageSquare size={16} />
+                Submit Review
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ------------------- CANCEL CONFIRMATION MODAL ------------------- */}
+      {isCancelConfirmOpen && orderToCancel && (
+        <div className="fixed inset-0 backdrop-blur-sm bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full">
+            {/* Modal Header */}
+            <div className="sticky top-0 bg-white border-b p-6 flex justify-between items-center">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-full bg-gradient-to-r from-red-500 to-orange-500 flex items-center justify-center">
+                  <X size={20} className="text-white" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-gray-800">
+                    Cancel Order
+                  </h2>
+                  <p className="text-sm text-gray-600">
+                    Order #{orderToCancel.id}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsCancelConfirmOpen(false)}
+                className="p-2 hover:bg-gray-100 rounded-full transition"
+              >
+                <X size={24} className="text-gray-500" />
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-6 space-y-6">
+              {/* Warning Message */}
+              <div className="p-4 bg-red-50 border border-red-200 rounded-xl">
+                <div className="flex items-start gap-3">
+                  <div className="mt-0.5">
+                    <div className="h-6 w-6 rounded-full bg-red-100 flex items-center justify-center">
+                      <X size={14} className="text-red-600" />
+                    </div>
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-red-800">Warning</h4>
+                    <p className="text-sm text-red-700 mt-1">
+                      Are you sure you want to cancel this order? This action cannot be undone.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Order Details */}
+              <div className="space-y-3">
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Order ID:</span>
+                  <span className="font-medium">{orderToCancel.id}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Order Date:</span>
+                  <span className="font-medium">{orderToCancel.date}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Total Amount:</span>
+                  <span className="font-bold text-red-600">${orderToCancel.price}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Items:</span>
+                  <span className="font-medium">{orderToCancel.totalItems} items</span>
+                </div>
+              </div>
+
+              {/* Reason Selection */}
+              <div className="space-y-3">
+                <h4 className="font-medium text-gray-800">Reason for Cancellation</h4>
+                <select className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent">
+                  <option value="">Select a reason</option>
+                  <option value="change-mind">Changed my mind</option>
+                  <option value="price-issue">Found better price</option>
+                  <option value="delivery-time">Delivery time too long</option>
+                  <option value="wrong-item">Ordered wrong item</option>
+                  <option value="other">Other reason</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="sticky bottom-0 bg-white border-t p-6 flex justify-end gap-3">
+              <button
+                onClick={() => setIsCancelConfirmOpen(false)}
+                className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition"
+              >
+                Go Back
+              </button>
+              <button
+                onClick={handleConfirmCancel}
+                className="px-6 py-3 bg-gradient-to-r from-red-500 to-orange-500 rounded-lg text-white font-medium hover:opacity-90 transition flex items-center gap-2"
+              >
+                <X size={16} />
+                Confirm Cancel
+              </button>
             </div>
           </div>
         </div>

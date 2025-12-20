@@ -89,16 +89,16 @@ import {
   Dot,
 } from "recharts";
 
-const data = [
-  { month: "JAN", value: 2500 },
-  { month: "FEB", value: 5000 },
-  { month: "MAR", value: 6800 },
-  { month: "APR", value: 4800 },
-  { month: "MAY", value: 8200 },
-  { month: "JUN", value: 9000 },
-];
+// const data = [
+//   { month: "JAN", value: 2500 },
+//   { month: "FEB", value: 5000 },
+//   { month: "MAR", value: 6800 },
+//   { month: "APR", value: 4800 },
+//   { month: "MAY", value: 8200 },
+//   { month: "JUN", value: 9000 },
+// ];
 
-export default function SalesAnalyticsChart() {
+export default function SalesAnalyticsChart({data}) {
   return (
     <div className="bg-white rounded-xl p-6 w-full">
       <h2 className="text-xl font-semibold text-gray-800 mb-4">
