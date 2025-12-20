@@ -95,6 +95,10 @@ export const getSellerRefund = async (req, res) => {
         path: "orderVendor",
         populate: { path: "seller", select: "name shopName shopLogo" },
       })
+      .populate({
+        path: "evidence",
+        populate: { path: "evidence.uploadedBy", select: "firstName lastName" },
+      })
       .populate("requestedBy")
       .populate({ path: "items.product", select: "name price image" });
 
@@ -122,7 +126,12 @@ export const respondToRefund = async (req, res) => {
     if (!id || !sellerId || !action)
       return res.status(400).json({ message: "Missing fields" });
 
-    const refund = await Refund.findById(id);
+    const refund = await Refund.findById(id)
+      .populate("seller")
+      .populate({
+        path: "evidence",
+        populate: { path: "evidence.uploadedBy", select: "firstName lastName" },
+      });
     if (!refund) return res.status(404).json({ message: "Refund not found" });
     if (refund.seller?.toString() !== sellerId.toString())
       return res.status(403).json({ message: "Not authorized" });
@@ -134,12 +143,18 @@ export const respondToRefund = async (req, res) => {
         try {
           const base64 = extractBase64FromDataURL(e.url || e);
           const up = await uploadImageToImgBB(base64);
-          uploaded.push({ type: e.type || "image", url: up.url, note: e.note });
+          uploaded.push({
+            type: e.type || "image",
+            url: up.url,
+            note: e.note,
+            uploadedBy: new mongoose.Types.ObjectId(sellerId),
+          });
         } catch (err) {
           uploaded.push({
             type: e.type || "image",
             url: e.url || null,
             note: e.note,
+            uploadedBy: new mongoose.Types.ObjectId(sellerId),
           });
         }
       }
@@ -148,15 +163,17 @@ export const respondToRefund = async (req, res) => {
     if (action === "provide_proof") {
       refund.evidence = [...(refund.evidence || []), ...uploaded];
       refund.status = "under_review";
-      refund.adminNotes = note || refund.adminNotes;
+      refund.sellerNotes = note || refund.sellerNotes;
+      refund.adminNotes = refund.adminNotes;
       await refund.save();
       return res.json({ message: "Proof uploaded", refund });
     }
 
     if (action === "accept") {
       refund.status = "approved";
-      refund.adminNotes = note || refund.adminNotes;
-      refund.processedBy = refund.seller; // mark seller as responder (note: final processing still admin)
+      refund.sellerNotes = note || refund.sellerNotes;
+      refund.adminNotes = refund.adminNotes;
+      refund.processedBy = new mongoose.Types.ObjectId(refund.seller); // mark seller as responder (note: final processing still admin)
       refund.processedAt = new Date();
       await refund.save();
       return res.json({
@@ -167,8 +184,9 @@ export const respondToRefund = async (req, res) => {
 
     if (action === "reject") {
       refund.status = "rejected";
-      refund.adminNotes = note || refund.adminNotes;
-      refund.processedBy = refund.seller;
+      refund.sellerNotes = note || refund.sellerNotes;
+      refund.adminNotes = refund.adminNotes;
+      refund.processedBy = new mongoose.Types.ObjectId(refund.seller);
       refund.processedAt = new Date();
       await refund.save();
       return res.json({ message: "Seller rejected refund", refund });

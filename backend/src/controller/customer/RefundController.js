@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import Order from "../../models/OrderModel.js";
 import OrderVendorModel from "../../models/OrderVendorModel.js";
 import Payment from "../../models/PaymentModel.js";
@@ -7,6 +8,8 @@ import {
   extractBase64FromDataURL,
   uploadImageToImgBB,
 } from "../../utils/imageUpload.js";
+
+const toTwo = (v) => Number(Number(v || 0).toFixed(2));
 
 /**
  * Customer submits a refund request for an order/payment
@@ -63,16 +66,16 @@ export const requestRefund = async (req, res) => {
           const prod = await Product.findById(it.productId).lean();
           const qty = Number(it.quantity || 1);
           const price = prod?.price || 0;
-          const itemAmount = price * qty;
+          const itemAmount = toTwo(price * qty);
           let itemShipping = 0;
           if (prod?.shippingType === "fixed")
-            itemShipping = (prod.shippingCost || 0) * qty;
+            itemShipping = toTwo((prod.shippingCost || 0) * qty);
 
-          refundAmount += itemAmount + itemShipping;
+          refundAmount = toTwo(refundAmount + itemAmount + itemShipping);
           refundItems.push({
             product: it.productId,
             quantity: qty,
-            price,
+            price: toTwo(price),
             amount: itemAmount,
             shippingAmount: itemShipping,
           });
@@ -90,6 +93,7 @@ export const requestRefund = async (req, res) => {
                 type: e.type || "image",
                 url: uploaded.url,
                 note: e.note,
+                uploadedBy: new mongoose.Types.ObjectId(userId),
               });
             } catch (err) {
               // ignore image upload failure for now, keep original url if present
@@ -97,6 +101,7 @@ export const requestRefund = async (req, res) => {
                 type: e.type || "image",
                 url: e.url || null,
                 note: e.note,
+                uploadedBy: new mongoose.Types.ObjectId(userId),
               });
             }
           }
@@ -106,8 +111,8 @@ export const requestRefund = async (req, res) => {
           payment: payment._id,
           order: order._id,
           orderVendor: ov._id,
-          requestedBy: userId,
-          amount: refundAmount,
+          requestedBy: new mongoose.Types.ObjectId(userId),
+          amount: toTwo(refundAmount),
           currency: payment.currency || "usd",
           reason: its[0].reason || reason,
           evidence: uploadedEvidence,
@@ -125,7 +130,7 @@ export const requestRefund = async (req, res) => {
         seller: { $in: sellerIds },
       });
       for (const ov of orderVendors) {
-        const refundAmount = ov.amount + (ov.shippingAmount || 0);
+        const refundAmount = toTwo(ov.amount + (ov.shippingAmount || 0));
 
         // upload evidence if any
         let uploadedEvidence = [];
@@ -138,23 +143,25 @@ export const requestRefund = async (req, res) => {
                 type: e.type || "image",
                 url: uploaded.url,
                 note: e.note,
+                uploadedBy: new mongoose.Types.ObjectId(userId),
               });
             } catch (err) {
               uploadedEvidence.push({
                 type: e.type || "image",
                 url: e.url || null,
                 note: e.note,
+                uploadedBy: new mongoose.Types.ObjectId(userId),
               });
             }
           }
         }
 
         const refundDoc = await Refund.create({
-          payment: payment._id,
-          order: order._id,
-          orderVendor: ov._id,
-          requestedBy: userId,
-          amount: refundAmount,
+          payment: new mongoose.Types.ObjectId(payment._id),
+          order: new mongoose.Types.ObjectId(order._id),
+          orderVendor: new mongoose.Types.ObjectId(ov._id),
+          requestedBy: new mongoose.Types.ObjectId(userId),
+          amount: toTwo(refundAmount),
           currency: payment.currency || "usd",
           reason,
           evidence: uploadedEvidence,
@@ -165,14 +172,30 @@ export const requestRefund = async (req, res) => {
       }
     } else {
       // Generic full order refund request
+      // normalize evidence to ensure uploadedBy is present
+      let finalEvidence = [];
+      if (Array.isArray(evidence) && evidence.length) {
+        for (const e of evidence) {
+          if (typeof e === "string") {
+            finalEvidence.push({
+              type: "image",
+              url: e,
+              uploadedBy: new mongoose.Types.ObjectId(userId),
+            });
+          } else {
+            finalEvidence.push({ ...e, uploadedBy: e.uploadedBy || userId });
+          }
+        }
+      }
+
       const refundDoc = await Refund.create({
         payment: payment._id,
         order: order._id,
-        requestedBy: userId,
-        amount: payment.amount,
+        requestedBy: new mongoose.Types.ObjectId(userId),
+        amount: toTwo(payment.amount),
         currency: payment.currency || "usd",
         reason,
-        evidence: evidence || [],
+        evidence: finalEvidence,
         status: "requested",
       });
       createdRefunds.push(refundDoc);
@@ -189,17 +212,26 @@ export const requestRefund = async (req, res) => {
   }
 };
 
+/*
+ * List refunds requested by the logged-in customer
+ */
 export const listMyRefunds = async (req, res) => {
   try {
     const userId = req.query.userId;
     if (!userId) return res.status(400).json({ message: "userId required" });
 
-    const refunds = await Refund.find({ requestedBy: userId })
+    const refunds = await Refund.find({
+      requestedBy: new mongoose.Types.ObjectId(userId),
+    })
       .sort({ createdAt: -1 })
       .populate("order")
       .populate({
         path: "orderVendor",
         populate: { path: "seller", select: "name shopName shopLogo" },
+      })
+      .populate({
+        path: "evidence",
+        populate: { path: "evidence.uploadedBy", select: "firstName lastName" },
       })
       .populate({ path: "items.product", select: "name price image" });
 
@@ -212,6 +244,9 @@ export const listMyRefunds = async (req, res) => {
   }
 };
 
+/**
+ * Get refund detail for a customer
+ */
 export const getRefund = async (req, res) => {
   try {
     const id = req.params.id;
