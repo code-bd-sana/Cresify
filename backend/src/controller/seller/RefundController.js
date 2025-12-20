@@ -157,14 +157,16 @@ export const respondToRefund = async (req, res) => {
     if (action === "provide_proof") {
       refund.evidence = [...(refund.evidence || []), ...uploaded];
       refund.status = "under_review";
-      refund.adminNotes = note || refund.adminNotes;
+      refund.sellerNotes = note || refund.sellerNotes;
+      refund.adminNotes = refund.adminNotes;
       await refund.save();
       return res.json({ message: "Proof uploaded", refund });
     }
 
     if (action === "accept") {
       refund.status = "approved";
-      refund.adminNotes = note || refund.adminNotes;
+      refund.sellerNotes = note || refund.sellerNotes;
+      refund.adminNotes = refund.adminNotes;
       refund.processedBy = refund.seller; // mark seller as responder (note: final processing still admin)
       refund.processedAt = new Date();
       await refund.save();
@@ -176,7 +178,8 @@ export const respondToRefund = async (req, res) => {
 
     if (action === "reject") {
       refund.status = "rejected";
-      refund.adminNotes = note || refund.adminNotes;
+      refund.sellerNotes = note || refund.sellerNotes;
+      refund.adminNotes = refund.adminNotes;
       refund.processedBy = refund.seller;
       refund.processedAt = new Date();
       await refund.save();

@@ -53,6 +53,7 @@ const refundSchema = new Schema(
       ],
       default: "requested",
     },
+    sellerNotes: { type: String },
     adminNotes: { type: String },
     processedBy: { type: Schema.Types.ObjectId, ref: "User" },
     processedAt: { type: Date },
