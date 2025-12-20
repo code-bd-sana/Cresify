@@ -126,7 +126,7 @@ export const requestRefund = async (req, res) => {
     } else if (Array.isArray(sellerIds) && sellerIds.length) {
       // Full vendor refunds requested
       const orderVendors = await OrderVendorModel.find({
-        order: orderId,
+        order: new mongoose.Types.ObjectId(orderId),
         seller: { $in: sellerIds },
       });
       for (const ov of orderVendors) {
