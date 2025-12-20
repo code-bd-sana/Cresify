@@ -23,6 +23,9 @@ export const OrderApi = createApi({
       query:(id)=> `/customer/order/myOrder/${id}`,
       providesTags:['Order']
     }),
+    orderOverview:builder.query({
+      query:(id)=>`/customer/order/orderOverview/${id}`
+    })
     
     
   
@@ -38,4 +41,4 @@ export const OrderApi = createApi({
 
 
 
-export const {useCreateOrderMutation, useMyOrderQuery} = OrderApi
+export const {useCreateOrderMutation, useMyOrderQuery, useOrderOverviewQuery} = OrderApi

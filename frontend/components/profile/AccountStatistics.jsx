@@ -1,8 +1,15 @@
 "use client";
 
+import { useOrderOverviewQuery } from "@/feature/customer/OrderApi";
 import { ShoppingBag, Heart, Bookmark } from "lucide-react";
+import { useSession } from "next-auth/react";
 
 export default function AccountStatistics() {
+  const { data: session } = useSession();
+      const userId = session?.user?.id;
+  const {data} = useOrderOverviewQuery(userId);
+
+  console.log(data, "overview haha");
   return (
     <div className="bg-white rounded-[12px] border border-[#ECE6F7] shadow-[0_4px_20px_rgba(0,0,0,0.06)] p-5 w-full">
       {/* Title */}
@@ -25,7 +32,7 @@ export default function AccountStatistics() {
           </div>
 
           <p className="text-[20px] font-semibold text-[#1B1B1B] leading-none">
-            24
+            {data?.totalOrders}
           </p>
           <p className="text-[12px] text-[#6B6B6B]">Total Orders</p>
         </div>
@@ -42,7 +49,7 @@ export default function AccountStatistics() {
           </div>
 
           <p className="text-[20px] font-semibold text-[#1B1B1B] leading-none">
-            12
+           {data?.totalWishList}
           </p>
           <p className="text-[12px] text-[#6B6B6B]">Wishlist Items</p>
         </div>
@@ -59,7 +66,7 @@ export default function AccountStatistics() {
           </div>
 
           <p className="text-[20px] font-semibold text-[#1B1B1B] leading-none">
-            6
+         {data?.totalBooking}
           </p>
           <p className="text-[12px] text-[#6B6B6B]">My Book Services</p>
         </div>
