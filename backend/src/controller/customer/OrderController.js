@@ -366,32 +366,99 @@ export const placeOrder = async (req, res) => {
   }
 };
 
-
-
-export const MyOrder = async(req, res)=>{
+export const MyOrder = async (req, res) => {
   try {
     const id = req.params.id;
-const result = await Order.find({ customer: id })
-  .populate({
-    path: "orderVendors",
-    populate: {
-      path: "products.product",
-      model: "Product", // model name exactly যেটা define করা
-    },
-  });
+    const objectId = new mongoose.Types.ObjectId(id);
 
-    res.status(200).json({
-      message:"Success",
-      data:result
+    const agg = await Order.aggregate([
+      { $match: { customer: objectId } },
 
-    })
-    
+      // lookup payments for each order (only _id needed)
+      {
+        $lookup: {
+          from: "payments",
+          let: { orderId: "$_id" },
+          pipeline: [
+            { $match: { $expr: { $eq: ["$order", "$$orderId"] } } },
+            { $project: { _id: 1 } },
+          ],
+          as: "payments",
+        },
+      },
+
+      // lookup orderVendors and populate product docs inside each vendor
+      {
+        $lookup: {
+          from: "ordervendors",
+          let: { ovIds: "$orderVendors" },
+          pipeline: [
+            { $match: { $expr: { $in: ["$_id", "$$ovIds"] } } },
+            {
+              $unwind: { path: "$products", preserveNullAndEmptyArrays: true },
+            },
+            {
+              $lookup: {
+                from: "products",
+                localField: "products.product",
+                foreignField: "_id",
+                as: "products.productDoc",
+              },
+            },
+            {
+              $set: {
+                "products.product": {
+                  $arrayElemAt: ["$products.productDoc", 0],
+                },
+              },
+            },
+            { $project: { "products.productDoc": 0 } },
+            {
+              $group: {
+                _id: "$_id",
+                order: { $first: "$order" },
+                orderId: { $first: "$orderId" },
+                seller: { $first: "$seller" },
+                amount: { $first: "$amount" },
+                shippingAmount: { $first: "$shippingAmount" },
+                commissionPercentage: { $first: "$commissionPercentage" },
+                commissionAmount: { $first: "$commissionAmount" },
+                commissionVATRate: { $first: "$commissionVATRate" },
+                commissionVATAmount: { $first: "$commissionVATAmount" },
+                commissionTotal: { $first: "$commissionTotal" },
+                sellerPayout: { $first: "$sellerPayout" },
+                netAmount: { $first: "$netAmount" },
+                products: { $push: "$products" },
+              },
+            },
+          ],
+          as: "orderVendors",
+        },
+      },
+
+      // expose first paymentId for convenience
+      {
+        $addFields: {
+          paymentId: {
+            $arrayElemAt: [
+              { $map: { input: "$payments", as: "p", in: "$$p._id" } },
+              0,
+            ],
+          },
+        },
+      },
+
+      { $project: { payments: 0, paymentIds: 0 } },
+      { $sort: { createdAt: -1 } },
+    ]);
+
+    console.log(agg);
+
+    res.status(200).json({ message: "Success", data: agg });
   } catch (error) {
     res.status(500).json({
       error,
-      message:error?.message
-
-    })
-    
+      message: error?.message,
+    });
   }
-}
+};
