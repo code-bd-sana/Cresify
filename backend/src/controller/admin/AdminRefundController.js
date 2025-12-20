@@ -297,7 +297,7 @@ export const reviewRefund = async (req, res) => {
               );
               ov.sellerPayout = toTwo(
                 Math.max(
-                  -9999999,
+                  -9999999, // allow negative payouts
                   toTwo(
                     (ov.sellerPayout || 0) -
                       toTwo(
