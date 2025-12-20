@@ -47,7 +47,7 @@ export const reviewRefund = async (req, res) => {
 
       if (action === "reject") {
         refund.status = "rejected";
-        refund.processedBy = adminId;
+        refund.processedBy = new mongoose.Types.ObjectId(adminId);
         refund.processedAt = new Date();
         await refund.save({ session });
         return res.json({ message: "Refund rejected", refund });
@@ -78,7 +78,7 @@ export const reviewRefund = async (req, res) => {
       // Update refund record
       refund.status =
         refundAmount >= payment.amount ? "refunded_full" : "refunded_partial";
-      refund.processedBy = adminId;
+      refund.processedBy = new mongoose.Types.ObjectId(adminId);
       refund.processedAt = new Date();
       await refund.save({ session });
 

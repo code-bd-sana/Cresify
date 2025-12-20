@@ -173,7 +173,7 @@ export const respondToRefund = async (req, res) => {
       refund.status = "approved";
       refund.sellerNotes = note || refund.sellerNotes;
       refund.adminNotes = refund.adminNotes;
-      refund.processedBy = refund.seller; // mark seller as responder (note: final processing still admin)
+      refund.processedBy = new mongoose.Types.ObjectId(refund.seller); // mark seller as responder (note: final processing still admin)
       refund.processedAt = new Date();
       await refund.save();
       return res.json({
@@ -186,7 +186,7 @@ export const respondToRefund = async (req, res) => {
       refund.status = "rejected";
       refund.sellerNotes = note || refund.sellerNotes;
       refund.adminNotes = refund.adminNotes;
-      refund.processedBy = refund.seller;
+      refund.processedBy = new mongoose.Types.ObjectId(refund.seller);
       refund.processedAt = new Date();
       await refund.save();
       return res.json({ message: "Seller rejected refund", refund });
