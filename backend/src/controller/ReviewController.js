@@ -14,7 +14,7 @@ export const saveReview = async(req, res)=>{
 
         const reviewData = {
             user:data?.id,
-            rating:data?.ratng,
+            rating:data?.rating,
             review:data?.reviewText,
              product:data?.review?.productId,
              seller:sellerId?.seller

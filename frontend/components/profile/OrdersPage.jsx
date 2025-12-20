@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   Package,
   Truck,
@@ -17,30 +17,31 @@ import {
   Clock,
   PackageCheck,
   Home,
+  Calendar,
   ArrowRight,
   ChevronLeft,
   ChevronRight as ChevronRightIcon,
   Star,
   MessageSquare,
   StarIcon,
-  RotateCcw,
-  Image as ImageIcon,
+  FileText,
   Upload,
+  Image as ImageIcon,
   AlertCircle,
+  CheckCircle2,
+  Plus,
 } from "lucide-react";
 import { useMyOrderQuery } from "@/feature/customer/OrderApi";
 import { useSession } from "next-auth/react";
 import { useSaveReviewMutation } from "@/feature/review/ReviewApi";
+import { useCreateRefundMutation } from "@/feature/refund/RefundApi";
 
 export default function OrdersPage() {
-  // Tabs updated according to your enum
   const tabs = [
     { id: "all", label: "All Orders", count: 0 },
-    { id: "pending", label: "Pending", count: 0 },
     { id: "processing", label: "Processing", count: 0 },
-    { id: "shipping", label: "Shipping", count: 0 },
+    { id: "shipped", label: "Shipped", count: 0 },
     { id: "delivered", label: "Delivered", count: 0 },
-    { id: "canceled", label: "Canceled", count: 0 },
   ];
 
   const [activeTab, setActiveTab] = useState("all");
@@ -50,153 +51,81 @@ export default function OrdersPage() {
   const [isTrackModalOpen, setIsTrackModalOpen] = useState(false);
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [selectedProductForReview, setSelectedProductForReview] = useState(null);
-  const [isRefundModalOpen, setIsRefundModalOpen] = useState(false);
-  const [selectedProductForRefund, setSelectedProductForRefund] = useState(null);
-  const [selectedVendorForRefund, setSelectedVendorForRefund] = useState(null);
-  const [refundType, setRefundType] = useState("full");
-  const [refundReason, setRefundReason] = useState("");
-  const [refundEvidence, setRefundEvidence] = useState([]);
   const [rating, setRating] = useState(0);
   const [reviewText, setReviewText] = useState("");
   const [isCancelConfirmOpen, setIsCancelConfirmOpen] = useState(false);
   const [orderToCancel, setOrderToCancel] = useState(null);
+  const [isRefundModalOpen, setIsRefundModalOpen] = useState(false);
+  const [selectedProductForRefund, setSelectedProductForRefund] = useState(null);
+  const [refundType, setRefundType] = useState("full");
+  const [selectedVendors, setSelectedVendors] = useState([]);
+  const [selectedItems, setSelectedItems] = useState([]);
+  const [refundReason, setRefundReason] = useState("");
+  const [evidenceFiles, setEvidenceFiles] = useState([]);
+  const [isSubmittingRefund, setIsSubmittingRefund] = useState(false);
 
   const { data: user } = useSession();
   const id = user?.user?.id;
   const { data: MyOrder, isLoading, isError } = useMyOrderQuery(id);
   const [saveReview, { isLoading: reviewLoading }] = useSaveReviewMutation();
+  const [createRefund, {isError:refundError, error:refundErr}] = useCreateRefundMutation()
+
+  console.log(MyOrder, "egolo amar peronal");
+
+  if(!isError){
+    console.log(refundErr, "this i srefund error");
+  }
 
   // API থেকে আসা ডেটা
   const apiOrders = MyOrder?.data || [];
 
-  // Check if order has delivered items for refund
-  const hasDeliveredItems = (order) => {
-    return order.orderVendors.some(vendor => 
-      vendor.status === 'delivered' && 
-      vendor.products.length > 0
-    );
-  };
-
-  // Calculate status counts based on your enum
   const calculateStatusCounts = () => {
     let allCount = 0;
-    let pendingCount = 0;
     let processingCount = 0;
-    let shippingCount = 0;
+    let shippedCount = 0;
     let deliveredCount = 0;
-    let canceledCount = 0;
 
     apiOrders.forEach((order) => {
       allCount++;
 
-      console.log(order, "order tui ay");
-
       const vendorStatuses = order.orderVendors.map((v) => v.status);
-      console.log(vendorStatuses, "sobai vendor status");
-      
-      // Priority logic: canceled > delivered > shipping > processing > pending
-            const allPending = vendorStatuses.some((s) => s === "pending");
-      const anyCanceled = vendorStatuses.some((s) => s === "canceled");
+      const allDelivered = vendorStatuses.every((s) => s === "delivered");
+      const anyShipped = vendorStatuses.some((s) => s === "shipping");
+      const allProcessingOrPending = vendorStatuses.every(
+        (s) => s === "processing" || s === "pending"
+      );
+      const anyCancelled = vendorStatuses.some((s) => s === "canceled");
 
-      const anyShipping = vendorStatuses.some((s) => s === "shipping");
-      const anyProcessing = vendorStatuses.some((s) => s === "processing");
-
-            const allDelivered = vendorStatuses.every((s) => s === "delivered");
-
-      if (anyCanceled) {
-        canceledCount++;
-      } 
-      else if (allDelivered) {
+      if (allDelivered) {
         deliveredCount++;
-      }
-      else if (anyShipping) {
-        shippingCount++;
-      }
-      else if (anyProcessing) {
+      } else if (anyShipped) {
+        shippedCount++;
+      } else if (allProcessingOrPending && !anyCancelled) {
         processingCount++;
-      }
-      else if (allPending) {
-        pendingCount++;
-      }
-      else {
-        // Mixed status - use the "worst" status
-        const statusPriority = {
-          'pending': 1,
-          'processing': 2,
-          'shipping': 3,
-          'delivered': 4,
-          'canceled': 5
-        };
-        
-        let worstStatus = 'pending';
-        let worstPriority = 5;
-        
-        vendorStatuses.forEach(status => {
-          const priority = statusPriority[status] || 1;
-          if (priority > worstPriority) {
-            worstPriority = priority;
-            worstStatus = status;
-          }
-        });
-        
-        switch (worstStatus) {
-          case 'canceled':
-            canceledCount++;
-            break;
-          case 'delivered':
-            deliveredCount++;
-            break;
-          case 'shipping':
-            shippingCount++;
-            break;
-          case 'processing':
-            processingCount++;
-            break;
-          default:
-            pendingCount++;
-        }
       }
     });
 
-    return { 
-      allCount, 
-      pendingCount, 
-      processingCount, 
-      shippingCount, 
-      deliveredCount,
-      canceledCount 
-    };
+    return { allCount, processingCount, shippedCount, deliveredCount };
   };
 
-  const { 
-    allCount, 
-    pendingCount, 
-    processingCount, 
-    shippingCount, 
-    deliveredCount,
-    canceledCount 
-  } = calculateStatusCounts();
+  const { allCount, processingCount, shippedCount, deliveredCount } =
+    calculateStatusCounts();
 
   const updatedTabs = tabs.map((tab) => {
     switch (tab.id) {
       case "all":
         return { ...tab, count: allCount };
-      case "pending":
-        return { ...tab, count: pendingCount };
       case "processing":
         return { ...tab, count: processingCount };
-      case "shipping":
-        return { ...tab, count: shippingCount };
+      case "shipped":
+        return { ...tab, count: shippedCount };
       case "delivered":
         return { ...tab, count: deliveredCount };
-      case "canceled":
-        return { ...tab, count: canceledCount };
       default:
         return tab;
     }
   });
 
-  // Format helpers
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     return date.toLocaleDateString("en-US", {
@@ -224,26 +153,10 @@ export default function OrdersPage() {
     });
   };
 
-  // Get order status based on vendor statuses
   const getOrderStatus = (order) => {
     const vendorStatuses = order.orderVendors.map((v) => v.status);
-    
-    // Priority order for display
-    const anyCanceled = vendorStatuses.some((s) => s === "canceled");
+
     const allDelivered = vendorStatuses.every((s) => s === "delivered");
-    const anyShipping = vendorStatuses.some((s) => s === "shipping");
-    const anyProcessing = vendorStatuses.some((s) => s === "processing");
-    const allPending = vendorStatuses.every((s) => s === "pending");
-
-    if (anyCanceled) {
-      return {
-        status: "Canceled",
-        statusColor: "#EB5757",
-        expected: "",
-        actions: "view",
-      };
-    }
-
     if (allDelivered) {
       return {
         status: "Delivered",
@@ -253,87 +166,59 @@ export default function OrdersPage() {
       };
     }
 
-    if (anyShipping) {
+    const anyShipped = vendorStatuses.some((s) => s === "shipping");
+    if (anyShipped) {
       return {
-        status: "Shipping",
+        status: "Shipped",
         statusColor: "#5A3DF6",
         expected: "",
         actions: "track",
       };
     }
 
-    if (anyProcessing) {
+    const allProcessingOrPending = vendorStatuses.every(
+      (s) => s === "processing" || s === "pending"
+    );
+    if (allProcessingOrPending) {
       const orderDate = new Date(order.createdAt);
       const deliveryDate = new Date(orderDate);
-      deliveryDate.setDate(deliveryDate.getDate() + Math.floor(Math.random() * 3) + 3);
+      deliveryDate.setDate(
+        deliveryDate.getDate() + Math.floor(Math.random() * 3) + 3
+      );
 
       return {
         status: "Processing",
         statusColor: "#F7A500",
-        expected: `Expected Delivery: ${deliveryDate.toLocaleDateString("en-US", {
-          month: "short",
-          day: "numeric",
-          year: "numeric",
-        })}`,
+        expected: `Expected Delivery: ${deliveryDate.toLocaleDateString(
+          "en-US",
+          {
+            month: "short",
+            day: "numeric",
+            year: "numeric",
+          }
+        )}`,
         actions: "full",
       };
     }
 
-    if (allPending) {
+    const anyCancelled = vendorStatuses.some((s) => s === "canceled");
+    if (anyCancelled) {
       return {
-        status: "Pending",
-        statusColor: "#9CA3AF",
-        expected: "Waiting for seller confirmation",
-        actions: "full",
+        status: "Canceled",
+        statusColor: "#EB5757",
+        expected: "",
+        actions: "view",
       };
     }
-
-    // Mixed status - use the "worst" status
-    const statusPriority = {
-      'pending': 1,
-      'processing': 2,
-      'shipping': 3,
-      'delivered': 4,
-      'canceled': 5
-    };
-    
-    let worstStatus = 'pending';
-    let worstPriority = 1;
-    
-    vendorStatuses.forEach(status => {
-      const priority = statusPriority[status] || 1;
-      if (priority > worstPriority) {
-        worstPriority = priority;
-        worstStatus = status;
-      }
-    });
-
-    const statusColors = {
-      'pending': "#9CA3AF",
-      'processing': "#F7A500",
-      'shipping': "#5A3DF6",
-      'delivered': "#00C363",
-      'canceled': "#EB5757"
-    };
-
-    const statusLabels = {
-      'pending': "Pending",
-      'processing': "Processing",
-      'shipping': "Shipping",
-      'delivered': "Delivered",
-      'canceled': "Canceled"
-    };
 
     return {
-      status: statusLabels[worstStatus] || "Processing",
-      statusColor: statusColors[worstStatus] || "#F7A500",
+      status: "Processing",
+      statusColor: "#F7A500",
       expected: "",
-      actions: worstStatus === "shipping" ? "track" : 
-               worstStatus === "processing" || worstStatus === "pending" ? "full" : "view",
+      actions: "full",
     };
   };
 
-  // Get all products from order
   const getAllProductsFromOrder = (order) => {
     const allProducts = [];
 
@@ -354,11 +239,11 @@ export default function OrdersPage() {
           productId: product.product?._id,
           description: product.product?.description,
           category: product.product?.category,
-          sellerId: vendor.seller || vendor.vendorId?._id,
-          sellerName: vendor.vendorId?.name || "Unknown Seller",
+          sellerId: vendor.vendorId?._id,
+          sellerName: vendor.vendorId?.name,
           canReview: vendor.status === "delivered",
-          canRefund: vendor.status === "delivered",
-          orderVendorData: vendor,
+          rawData: order,
+          orderId: order.orderId,
         });
       });
     });
@@ -366,26 +251,22 @@ export default function OrdersPage() {
     return allProducts;
   };
 
-  // Get total product count
   const getTotalProductCount = (order) => {
     return order.orderVendors.reduce((total, vendor) => {
       return total + vendor.products.length;
     }, 0);
   };
 
-  // Calculate order total
   const calculateOrderTotal = (order) => {
-    return (order.amount / 100).toFixed(2);
+    return (order.amount).toFixed(2);
   };
 
-  // Calculate subtotal
   const calculateSubtotal = (allProducts) => {
     return allProducts.reduce((total, product) => {
       return total + product.subtotal;
     }, 0);
   };
 
-  // Convert API data to component format
   const orders = apiOrders.map((order) => {
     const statusInfo = getOrderStatus(order);
     const allProducts = getAllProductsFromOrder(order);
@@ -396,7 +277,6 @@ export default function OrdersPage() {
     return {
       id: order._id.substring(order._id.length - 8).toUpperCase(),
       fullId: order._id,
-      paymentId: order.paymentId,
       status: statusInfo.status,
       statusColor: statusInfo.statusColor,
       date: formatDate(order.createdAt),
@@ -414,48 +294,51 @@ export default function OrdersPage() {
       paymentStatus: order.paymentStatus,
       createdAt: order.createdAt,
       updatedAt: order.updatedAt,
-      hasDeliveredItems: hasDeliveredItems(order),
     };
   });
 
-  // Filter orders by tab
   const filteredOrders =
     activeTab === "all"
       ? orders
       : orders.filter((order) => {
-          if (activeTab === "pending") {
-            return order.status === "Pending";
-          } else if (activeTab === "processing") {
+          if (activeTab === "processing") {
             return order.status === "Processing";
-          } else if (activeTab === "shipping") {
-            return order.status === "Shipping";
+          } else if (activeTab === "shipped") {
+            return order.status === "Shipped";
           } else if (activeTab === "delivered") {
             return order.status === "Delivered";
-          } else if (activeTab === "canceled") {
-            return order.status === "Canceled";
           }
           return false;
         });
 
-  // View Details button handler
   const handleViewDetails = (order) => {
     setSelectedOrder(order);
     setIsModalOpen(true);
   };
 
-  // Track Order button handler
   const handleTrackOrder = (order) => {
     setTrackingOrder(order);
     setIsTrackModalOpen(true);
   };
 
-  // Cancel Order button handler
   const handleCancelOrder = (order) => {
+    console.log("=== CANCEL ORDER ===");
+    console.log("Order ID to cancel:", order.fullId);
+    console.log("====================");
     setOrderToCancel(order);
     setIsCancelConfirmOpen(true);
   };
 
-  // Review Product button handler
+  const handleConfirmCancel = () => {
+    if (orderToCancel) {
+      console.log("=== CONFIRM CANCEL ORDER ===");
+      console.log("Cancelling Order ID:", orderToCancel.fullId);
+      console.log("============================");
+    }
+    setIsCancelConfirmOpen(false);
+    setOrderToCancel(null);
+  };
+
   const handleReviewProduct = (product) => {
     setSelectedProductForReview(product);
     setRating(0);
@@ -463,110 +346,28 @@ export default function OrdersPage() {
     setIsReviewModalOpen(true);
   };
 
-  // Refund Product button handler
-  const handleRefundProduct = (product, vendor = null) => {
-    setSelectedProductForRefund(product);
-    setSelectedVendorForRefund(vendor);
-    setRefundType("partial");
-    setRefundReason("");
-    setRefundEvidence([]);
-    setIsRefundModalOpen(true);
-  };
-
-  // Refund Full Vendor button handler
-  const handleRefundVendor = (vendor) => {
-    setSelectedProductForRefund(null);
-    setSelectedVendorForRefund(vendor);
-    setRefundType("full");
-    setRefundReason("");
-    setRefundEvidence([]);
-    setIsRefundModalOpen(true);
-  };
-
-  // Handle evidence upload
-  const handleEvidenceUpload = (e) => {
-    const files = Array.from(e.target.files);
-    
-    files.forEach((file) => {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const evidence = {
-          url: reader.result,
-          type: file.type.startsWith('image/') ? 'image' : 
-                file.type.startsWith('video/') ? 'video' : 'document',
-          note: file.name
-        };
-        setRefundEvidence(prev => [...prev, evidence]);
-      };
-      reader.readAsDataURL(file);
-    });
-  };
-
-  // Remove evidence
-  const removeEvidence = (index) => {
-    setRefundEvidence(prev => prev.filter((_, i) => i !== index));
-  };
-
-  // Submit refund request
-  const handleSubmitRefund = async () => {
-    if (!selectedOrder) return;
-
-    const refundData = {
-      paymentId: selectedOrder.paymentId,
-      orderId: selectedOrder.fullId,
-      userId: id,
-      reason: refundReason,
-      evidence: refundEvidence,
-    };
-
-    if (refundType === "full" && selectedVendorForRefund) {
-      refundData.sellerIds = [selectedVendorForRefund.seller];
-    } else if (refundType === "partial" && selectedProductForRefund) {
-      refundData.items = [{
-        orderVendorId: selectedProductForRefund.vendorId,
-        productId: selectedProductForRefund.productId,
-        quantity: selectedProductForRefund.qty,
-        reason: refundReason,
-        evidence: refundEvidence
-      }];
-    }
-
-    console.log("=== SUBMITTING REFUND REQUEST ===");
-    console.log("Refund Data:", refundData);
-
-    try {
-      // Here you would call your refund API
-      // const result = await createRefundRequest(refundData);
-      console.log("Refund Request Result:", "Mock result - API call commented");
-      
-      setIsRefundModalOpen(false);
-      setSelectedProductForRefund(null);
-      setSelectedVendorForRefund(null);
-      setRefundReason("");
-      setRefundEvidence([]);
-      
-      alert("Refund request submitted successfully!");
-    } catch (error) {
-      console.error("Refund submission error:", error);
-      alert("Failed to submit refund request. Please try again.");
-    }
-  };
-
-  // Submit review
   const handleSubmitReview = async () => {
     if (!selectedProductForReview) return;
+
+    console.log("=== SUBMIT REVIEW ===");
+    console.log("User ID:", id);
+    console.log("Product ID:", selectedProductForReview.productId);
+    console.log("Seller ID:", selectedProductForReview);
+    console.log("Rating:", rating);
+    console.log("Review:", reviewText);
+    console.log("====================");
 
     try {
       const reviewData = {
         id,
         product: selectedProductForReview.productId,
         review: selectedProductForReview,
-        rating: rating,
-        reviewText: reviewText
+        ratng: rating,
+        reviewText: reviewText,
       };
 
       const result = await saveReview(reviewData);
-      console.log(result, "Review submitted successfully");
+      console.log(result, "aso he result aso aso");
 
       setIsReviewModalOpen(false);
       setSelectedProductForReview(null);
@@ -575,7 +376,175 @@ export default function OrdersPage() {
     }
   };
 
-  // Get tracking steps
+  const handleRefundRequest = (product) => {
+    setSelectedProductForRefund(product);
+    setRefundType("full");
+    setSelectedVendors([]);
+    setSelectedItems([]);
+    setRefundReason("");
+    setEvidenceFiles([]);
+    setIsRefundModalOpen(true);
+  };
+
+  const handleVendorSelect = (vendorId) => {
+    if (selectedVendors.includes(vendorId)) {
+      setSelectedVendors(selectedVendors.filter((id) => id !== vendorId));
+    } else {
+      setSelectedVendors([...selectedVendors, vendorId]);
+    }
+  };
+
+  const handleItemSelect = (item) => {
+    const existingItemIndex = selectedItems.findIndex(
+      (selected) =>
+        selected.productId === item.productId &&
+        selected.orderVendorId === item.vendorId
+    );
+
+    if (existingItemIndex >= 0) {
+      const newSelectedItems = [...selectedItems];
+      newSelectedItems.splice(existingItemIndex, 1);
+      setSelectedItems(newSelectedItems);
+    } else {
+      setSelectedItems([
+        ...selectedItems,
+        {
+          orderVendorId: item.vendorId,
+          productId: item.productId,
+          quantity: item.qty,
+          reason: "",
+          evidence: [],
+        },
+      ]);
+    }
+  };
+
+  const handleEvidenceUpload = (e) => {
+    const files = Array.from(e.target.files);
+
+    const newEvidenceFiles = [];
+
+    files.forEach((file) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        newEvidenceFiles.push({
+          url: reader.result,
+          type: file.type.startsWith("image/") ? "image" : "document",
+          note: "",
+          file: file,
+        });
+
+        if (newEvidenceFiles.length === files.length) {
+          setEvidenceFiles([...evidenceFiles, ...newEvidenceFiles]);
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const removeEvidenceFile = (index) => {
+    const newFiles = [...evidenceFiles];
+    newFiles.splice(index, 1);
+    setEvidenceFiles(newFiles);
+  };
+
+const handleSubmitRefund = async() => {
+  if (!selectedProductForRefund) return;
+
+  const refundData = {
+    paymentId: selectedProductForRefund.rawData?.paymentId || "",
+    orderId: selectedProductForRefund._id || selectedProductForRefund.rawData?._id || "",
+    userId: id,
+    reason: refundReason,
+    evidence: evidenceFiles
+      .filter(e => e.url.trim()) 
+      .map((file) => ({
+        url: file.url,
+        type: file.type,
+        note: file.note,
+      })),
+  };
+
+  // Partial refund হলে items যোগ করব
+  if (refundType === "partial" && selectedItems.length > 0) {
+    refundData.items = selectedItems.map((item) => ({
+      orderVendorId: item.orderVendorId,
+      productId: item.productId,
+      quantity: item.quantity,
+      reason: item.reason || refundReason,
+    }));
+  }
+
+  console.log("=== REFUND REQUEST DATA ===");
+  console.log("Refund Data:", refundData);
+  console.log("Refund Type:", refundType);
+  console.log("Selected Items:", selectedItems);
+  console.log("Evidence Links:", evidenceFiles.filter(e => e.url.trim()));
+  console.log("========================");
+
+  try {
+    const result = createRefund(refundData);
+    console.log(result, "result is here");
+    
+  } catch (error) {
+    console.log(error);
+  }
+
+  setIsSubmittingRefund(true);
+
+  // এখানে আপনার API কল করবেন
+  setTimeout(() => {
+    console.log("Refund request submitted successfully");
+    setIsSubmittingRefund(false);
+    setIsRefundModalOpen(false);
+    // Reset states
+    setSelectedProductForRefund(null);
+    setRefundType("full");
+    setSelectedVendors([]);
+    setSelectedItems([]);
+    setRefundReason("");
+    setEvidenceFiles([{ url: "", type: "link", note: "" }]); // একটি খালি লিঙ্ক ফিল্ড
+  }, 2000);
+};
+
+
+
+
+
+
+
+
+
+
+  const getAllVendorsForRefund = () => {
+    if (!selectedProductForRefund || !selectedProductForRefund.rawData)
+      return [];
+
+    return selectedProductForRefund.rawData.orderVendors.map((vendor) => ({
+      id: vendor._id,
+      name: vendor.seller?.firstName  || "Unknown Vendor",
+      sellerId: vendor.seller,
+      status: vendor.status,
+      amount: (vendor.amount / 100).toFixed(2),
+    }));
+  };
+
+  const getAllItemsForRefund = () => {
+    if (!selectedProductForRefund || !selectedProductForRefund.allProducts)
+      return [];
+
+    return selectedProductForRefund.allProducts.map((product) => ({
+      orderVendorId: product.vendorId,
+      productId: product.productId,
+      name: product.name,
+      quantity: product.qty,
+      price: product.price,
+      subtotal: product.subtotal,
+      vendorName: product.sellerName,
+      canRefund: product.vendorStatus === "delivered",
+    }));
+  };
+
   const getTrackingSteps = (order) => {
     const orderDate = new Date(order.createdAt);
     const currentStatus = order.status.toLowerCase();
@@ -598,7 +567,7 @@ export default function OrdersPage() {
         icon: PackageCheck,
         status:
           currentStatus === "processing" ||
-          currentStatus === "shipping" ||
+          currentStatus === "shipped" ||
           currentStatus === "delivered"
             ? "completed"
             : "pending",
@@ -613,11 +582,13 @@ export default function OrdersPage() {
         icon: Package,
         status:
           currentStatus === "processing" ||
-          currentStatus === "shipping" ||
+          currentStatus === "shipped" ||
           currentStatus === "delivered"
             ? "completed"
             : "pending",
-        date: formatShortDate(new Date(orderDate.getTime() + 2 * 60 * 60 * 1000)),
+        date: formatShortDate(
+          new Date(orderDate.getTime() + 2 * 60 * 60 * 1000)
+        ),
         time: formatTime(new Date(orderDate.getTime() + 2 * 60 * 60 * 1000)),
         color: "#F7A500",
       },
@@ -627,10 +598,12 @@ export default function OrdersPage() {
         description: "Your order has been shipped",
         icon: Truck,
         status:
-          currentStatus === "shipping" || currentStatus === "delivered"
+          currentStatus === "shipped" || currentStatus === "delivered"
             ? "completed"
             : "pending",
-        date: formatShortDate(new Date(orderDate.getTime() + 24 * 60 * 60 * 1000)),
+        date: formatShortDate(
+          new Date(orderDate.getTime() + 24 * 60 * 60 * 1000)
+        ),
         time: formatTime(new Date(orderDate.getTime() + 24 * 60 * 60 * 1000)),
         color: "#5A3DF6",
       },
@@ -640,7 +613,9 @@ export default function OrdersPage() {
         description: "Your order is out for delivery",
         icon: Home,
         status: currentStatus === "delivered" ? "completed" : "pending",
-        date: formatShortDate(new Date(orderDate.getTime() + 48 * 60 * 60 * 1000)),
+        date: formatShortDate(
+          new Date(orderDate.getTime() + 48 * 60 * 60 * 1000)
+        ),
         time: formatTime(new Date(orderDate.getTime() + 48 * 60 * 60 * 1000)),
         color: "#9838E1",
       },
@@ -650,7 +625,9 @@ export default function OrdersPage() {
         description: "Your order has been delivered",
         icon: CheckCircle,
         status: currentStatus === "delivered" ? "completed" : "pending",
-        date: formatShortDate(new Date(orderDate.getTime() + 72 * 60 * 60 * 1000)),
+        date: formatShortDate(
+          new Date(orderDate.getTime() + 72 * 60 * 60 * 1000)
+        ),
         time: formatTime(new Date(orderDate.getTime() + 72 * 60 * 60 * 1000)),
         color: "#00C363",
       },
@@ -659,23 +636,21 @@ export default function OrdersPage() {
     return steps;
   };
 
-  // Get current status index
   const getCurrentStatusIndex = (order) => {
-    const status = order.status.toLowerCase();
-    const vendorStatuses = order.rawData?.orderVendors?.map(v => v.status) || [];
-    const anyShipping = vendorStatuses.some(s => s === "shipping");
-    const allDelivered = vendorStatuses.every(s => s === "delivered");
+    const vendorStatuses = order.rawData?.orderVendors?.map((v) => v.status) || [];
+
+    const anyShipped = vendorStatuses.some((s) => s === "shipping");
+    const allDelivered = vendorStatuses.every((s) => s === "delivered");
 
     if (allDelivered) {
       return 5;
-    } else if (anyShipping) {
+    } else if (anyShipped) {
       return 3;
     } else {
       return 2;
     }
   };
 
-  // Get payment method text
   const getPaymentMethodText = (method) => {
     switch (method) {
       case "card":
@@ -687,7 +662,6 @@ export default function OrdersPage() {
     }
   };
 
-  // Get payment status text
   const getPaymentStatusText = (status) => {
     switch (status) {
       case "pending":
@@ -701,7 +675,6 @@ export default function OrdersPage() {
     }
   };
 
-  // Get vendor status text
   const getVendorStatusText = (status) => {
     switch (status) {
       case "pending":
@@ -709,17 +682,16 @@ export default function OrdersPage() {
       case "processing":
         return "Processing";
       case "shipping":
-        return "Shipping";
+        return "Shipped";
       case "delivered":
         return "Delivered";
       case "canceled":
-        return "Canceled";
+        return "Cancelled";
       default:
         return status;
     }
   };
 
-  // Loading state
   if (isLoading) {
     return (
       <section className="w-full bg-[#F7F7FA] min-h-screen flex items-center justify-center">
@@ -731,7 +703,6 @@ export default function OrdersPage() {
     );
   }
 
-  // Error state
   if (isError) {
     return (
       <section className="w-full bg-[#F7F7FA] min-h-screen flex items-center justify-center">
@@ -744,7 +715,6 @@ export default function OrdersPage() {
     );
   }
 
-  // No orders state
   if (orders.length === 0) {
     return (
       <section className="w-full bg-[#F7F7FA] min-h-screen pb-10 px-4">
@@ -767,7 +737,7 @@ export default function OrdersPage() {
     <>
       <section className="w-full bg-[#F7F7FA] pb-10 px-4">
         <div className="max-w-[850px] mx-auto">
-          {/* ------------------- TOP FILTER TABS ------------------- */}
+          {/* TOP FILTER TABS */}
           <div className="flex justify-center mb-10">
             <div className="flex items-center gap-6 bg-white px-4 py-3 rounded-[20px] shadow-[0_4px_14px_rgba(0,0,0,0.04)] w-fit">
               {updatedTabs.map((tab) => (
@@ -800,7 +770,7 @@ export default function OrdersPage() {
             </div>
           </div>
 
-          {/* ------------------- ORDER CARDS ------------------- */}
+          {/* ORDER CARDS */}
           <div className="space-y-6">
             {filteredOrders.map((order, index) => (
               <div
@@ -886,7 +856,6 @@ export default function OrdersPage() {
 
                 {/* ACTION BUTTONS */}
                 <div className="flex flex-wrap gap-3 mt-4">
-                  {/* View Details */}
                   <button
                     onClick={() => handleViewDetails(order)}
                     className="
@@ -903,7 +872,6 @@ export default function OrdersPage() {
                     View Details
                   </button>
 
-                  {/* Track Order */}
                   {(order.actions === "track" || order.actions === "full") && (
                     <button
                       onClick={() => handleTrackOrder(order)}
@@ -920,7 +888,6 @@ export default function OrdersPage() {
                     </button>
                   )}
 
-                  {/* Cancel Order - শুধু Processing/Pending স্ট্যাটাসে দেখাবে */}
                   {order.actions === "full" && (
                     <button
                       onClick={() => handleCancelOrder(order)}
@@ -938,33 +905,12 @@ export default function OrdersPage() {
                       Cancel Order
                     </button>
                   )}
-
-                  {/* Refund Button - শুধু Delivered স্ট্যাটাসে দেখাবে */}
-                  {order.hasDeliveredItems && (
-                    <button
-                      onClick={() => {
-                        handleViewDetails(order);
-                      }}
-                      className="
-                        flex-1 flex items-center justify-center gap-2
-                        text-[13px] font-medium
-                        text-[#EB5757]
-                        py-[10px] rounded-[10px]
-                        border border-[#FFC9C9]
-                        bg-[#FFECEC]
-                        hover:bg-[#FFE2E2] transition
-                      "
-                    >
-                      <RotateCcw size={16} className="text-[#EB5757]" />
-                      Request Refund
-                    </button>
-                  )}
                 </div>
               </div>
             ))}
           </div>
 
-          {/* Help Section */}
+          {/* HELP SECTION */}
           <div className="mt-10 flex justify-center">
             <div className="w-full max-w-[350px] bg-white rounded-[16px] border border-[#EEEAF7] shadow-[0_6px_18px_rgba(0,0,0,0.06)] p-6 text-center">
               <div className="h-[55px] w-[55px] mx-auto rounded-full bg-gradient-to-r from-[#9838E1] to-[#F68E44] flex items-center justify-center">
@@ -1000,7 +946,7 @@ export default function OrdersPage() {
         </div>
       </section>
 
-      {/* ------------------- ORDER DETAILS MODAL ------------------- */}
+      {/* ORDER DETAILS MODAL */}
       {isModalOpen && selectedOrder && (
         <div className="fixed inset-0 backdrop-blur-sm bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
@@ -1165,10 +1111,6 @@ export default function OrdersPage() {
                                       ? "bg-blue-100 text-blue-800"
                                       : product.vendorStatus === "processing"
                                       ? "bg-orange-100 text-orange-800"
-                                      : product.vendorStatus === "pending"
-                                      ? "bg-gray-100 text-gray-800"
-                                      : product.vendorStatus === "canceled"
-                                      ? "bg-red-100 text-red-800"
                                       : "bg-gray-100 text-gray-800"
                                   }`}
                                 >
@@ -1191,7 +1133,7 @@ export default function OrdersPage() {
                             </div>
                           </div>
 
-                          {/* Vendor Info and Review Button */}
+                          {/* Vendor Info and Action Buttons */}
                           <div className="mt-3 pt-3 border-t border-dashed">
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-2 text-sm text-gray-500">
@@ -1201,21 +1143,35 @@ export default function OrdersPage() {
                                 </span>
                                 <ChevronRight size={14} />
                                 <span>
-                                  Product ID: {product.productId?.substring(0, 8)}
-                                  ...
+                                  Product ID:{" "}
+                                  {product.productId?.substring(0, 8)}...
                                 </span>
                               </div>
-                              
-                              {/* Review Button - Only show for delivered products */}
-                              {product.canReview && (
-                                <button
-                                  onClick={() => handleReviewProduct(product)}
-                                  className="flex items-center gap-2 px-3 py-1.5 text-sm bg-green-50 text-green-700 border border-green-200 rounded-lg hover:bg-green-100 transition"
-                                >
-                                  <Star size={14} />
-                                  Write Review
-                                </button>
-                              )}
+
+                              {/* Action Buttons */}
+                              <div className="flex gap-2">
+                                {/* Review Button */}
+                                {product.canReview && (
+                                  <button
+                                    onClick={() => handleReviewProduct(product)}
+                                    className="flex items-center gap-2 px-3 py-1.5 text-sm bg-green-50 text-green-700 border border-green-200 rounded-lg hover:bg-green-100 transition"
+                                  >
+                                    <Star size={14} />
+                                    Write Review
+                                  </button>
+                                )}
+
+                                {/* Refund Button */}
+                                {product.canReview && (
+                                  <button
+                                    onClick={() => handleRefundRequest(product)}
+                                    className="flex items-center gap-2 px-3 py-1.5 text-sm bg-amber-50 text-amber-700 border border-amber-200 rounded-lg hover:bg-amber-100 transition"
+                                  >
+                                    <FileText size={14} />
+                                    Refund Request
+                                  </button>
+                                )}
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -1245,7 +1201,8 @@ export default function OrdersPage() {
                           <div>
                             <div className="flex items-center gap-2">
                               <span className="font-medium">
-                                Vendor {index + 1}: {vendor.vendorId?.name || "Unknown"}
+                                Vendor {index + 1}:{" "}
+                                {vendor.vendorId?.name || "Unknown"}
                               </span>
                               <span
                                 className={`text-xs px-2 py-1 rounded-full ${
@@ -1255,10 +1212,6 @@ export default function OrdersPage() {
                                     ? "bg-blue-100 text-blue-800"
                                     : vendor.status === "processing"
                                     ? "bg-orange-100 text-orange-800"
-                                    : vendor.status === "pending"
-                                    ? "bg-gray-100 text-gray-800"
-                                    : vendor.status === "canceled"
-                                    ? "bg-red-100 text-red-800"
                                     : "bg-gray-100 text-gray-800"
                                 }`}
                               >
@@ -1380,7 +1333,427 @@ export default function OrdersPage() {
         </div>
       )}
 
-      {/* ------------------- TRACK ORDER MODAL ------------------- */}
+      {/* REFUND REQUEST MODAL */}
+{isRefundModalOpen && selectedProductForRefund && (
+  <div className="fixed inset-0 backdrop-blur-sm bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+      {/* Modal Header */}
+      <div className="sticky top-0 bg-white border-b p-6 flex justify-between items-center z-10">
+        <div className="flex items-center gap-3">
+          <div className="h-10 w-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
+            <FileText size={20} className="text-white" />
+          </div>
+          <div>
+            <h2 className="text-xl font-bold text-gray-800">
+              Request Refund
+            </h2>
+            <p className="text-sm text-gray-600">
+              Order #
+              {selectedProductForRefund.orderId ||
+                selectedProductForRefund.rawData?.orderId}
+            </p>
+          </div>
+        </div>
+        <button
+          onClick={() => setIsRefundModalOpen(false)}
+          className="p-2 hover:bg-gray-100 rounded-full transition"
+          disabled={isSubmittingRefund}
+        >
+          <X size={24} className="text-gray-500" />
+        </button>
+      </div>
+
+      {/* Modal Content */}
+      <div className="p-6 space-y-6">
+        {/* Order Information */}
+        <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-5">
+          <div className="flex items-start gap-4">
+            <img
+              src={selectedProductForRefund.image}
+              alt={selectedProductForRefund.name}
+              className="w-20 h-20 rounded-lg object-cover border"
+            />
+            <div className="flex-1">
+              <h3 className="font-bold text-gray-800 text-lg">
+                {selectedProductForRefund.name}
+              </h3>
+              <div className="grid grid-cols-2 gap-4 mt-2">
+                <div>
+                  <p className="text-sm text-gray-600">Order ID</p>
+                  <p className="font-medium">
+                    {selectedProductForRefund.orderId ||
+                      selectedProductForRefund.rawData?.orderId}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Payment ID</p>
+                  <p className="font-medium">
+                    {selectedProductForRefund.rawData?.paymentId?.substring(
+                      0,
+                      12
+                    )}
+                    ...
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Order Date</p>
+                  <p className="font-medium">
+                    {new Date(
+                      selectedProductForRefund.rawData?.createdAt
+                    ).toLocaleDateString()}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Payment Status</p>
+                  <span
+                    className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                      selectedProductForRefund.rawData?.paymentStatus === "paid"
+                        ? "bg-green-100 text-green-800"
+                        : "bg-yellow-100 text-yellow-800"
+                    }`}
+                  >
+                    {selectedProductForRefund.rawData?.paymentStatus || "Unknown"}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Refund Type Selection */}
+        <div className="border rounded-xl p-5">
+          <h4 className="font-bold text-gray-800 mb-4">Refund Type</h4>
+          <div className="grid grid-cols-2 gap-4">
+            <button
+              onClick={() => {
+                setRefundType("full");
+                setSelectedItems([]); // Full refund হলে আইটেম সিলেকশন ক্লিয়ার
+              }}
+              className={`p-4 border-2 rounded-lg transition-all ${
+                refundType === "full"
+                  ? "border-blue-500 bg-blue-50"
+                  : "border-gray-200 hover:border-blue-300"
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <div
+                  className={`h-6 w-6 rounded-full border-2 flex items-center justify-center ${
+                    refundType === "full"
+                      ? "border-blue-500 bg-blue-500"
+                      : "border-gray-300"
+                  }`}
+                >
+                  {refundType === "full" && (
+                    <CheckCircle2 size={14} className="text-white" />
+                  )}
+                </div>
+                <div className="text-left">
+                  <p className="font-semibold text-gray-800">Full Refund</p>
+                  <p className="text-sm text-gray-600 mt-1">
+                    Refund the entire order amount
+                  </p>
+                  <p className="text-xs text-blue-600 mt-1">
+                    ${(selectedProductForRefund.rawData?.amount  || 0).toFixed(2)}
+                  </p>
+                </div>
+              </div>
+            </button>
+
+            <button
+              onClick={() => setRefundType("partial")}
+              className={`p-4 border-2 rounded-lg transition-all ${
+                refundType === "partial"
+                  ? "border-blue-500 bg-blue-50"
+                  : "border-gray-200 hover:border-blue-300"
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <div
+                  className={`h-6 w-6 rounded-full border-2 flex items-center justify-center ${
+                    refundType === "partial"
+                      ? "border-blue-500 bg-blue-500"
+                      : "border-gray-300"
+                  }`}
+                >
+                  {refundType === "partial" && (
+                    <CheckCircle2 size={14} className="text-white" />
+                  )}
+                </div>
+                <div className="text-left">
+                  <p className="font-semibold text-gray-800">Partial Refund</p>
+                  <p className="text-sm text-gray-600 mt-1">
+                    Refund specific items from your order
+                  </p>
+                </div>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        {/* Partial Item Selection - শুধু partial হলে দেখাবে */}
+     
+
+        {/* Refund Reason */}
+        <div className="border rounded-xl p-5">
+          <h4 className="font-bold text-gray-800 mb-4">Refund Reason</h4>
+          <div className="space-y-3">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {[
+                "Item Damaged",
+                "Wrong Item",
+                "Not as Described",
+                "Late Delivery",
+                "Quality Issue",
+                "Changed Mind",
+                "Other",
+              ].map((reason) => (
+                <button
+                  key={reason}
+                  onClick={() => setRefundReason(reason)}
+                  className={`px-4 py-2 border rounded-lg text-sm transition-all ${
+                    refundReason === reason
+                      ? "border-blue-500 bg-blue-50 text-blue-700"
+                      : "border-gray-200 text-gray-700 hover:border-blue-300"
+                  }`}
+                >
+                  {reason}
+                </button>
+              ))}
+            </div>
+            <textarea
+              value={refundReason}
+              onChange={(e) => setRefundReason(e.target.value)}
+              placeholder="Please provide detailed reason for your refund request..."
+              className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              rows={4}
+            />
+          </div>
+        </div>
+
+        {/* Evidence Links */}
+        <div className="border rounded-xl p-5">
+          <h4 className="font-bold text-gray-800 mb-4">Evidence Links (Optional)</h4>
+          <p className="text-sm text-gray-600 mb-4">
+            Add links to photos, documents, or any supporting evidence for your refund request.
+            You can add multiple links.
+          </p>
+
+          {/* Evidence Links Input */}
+          <div className="space-y-3">
+            {evidenceFiles.map((evidence, index) => (
+              <div key={index} className="flex gap-2">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="h-2 w-2 rounded-full bg-blue-500"></div>
+                    <span className="text-sm font-medium text-gray-700">
+                      Evidence Link {index + 1}
+                    </span>
+                  </div>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={evidence.url}
+                      onChange={(e) => {
+                        const newFiles = [...evidenceFiles];
+                        newFiles[index].url = e.target.value;
+                        setEvidenceFiles(newFiles);
+                      }}
+                      placeholder="https://example.com/evidence.jpg"
+                      className="flex-1 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                    <input
+                      type="text"
+                      value={evidence.note}
+                      onChange={(e) => {
+                        const newFiles = [...evidenceFiles];
+                        newFiles[index].note = e.target.value;
+                        setEvidenceFiles(newFiles);
+                      }}
+                      placeholder="Description (optional)"
+                      className="flex-1 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+                </div>
+                {evidenceFiles.length > 1 && (
+                  <button
+                    onClick={() => removeEvidenceFile(index)}
+                    className="mt-7 p-2 text-red-600 hover:bg-red-50 rounded-lg transition"
+                  >
+                    <X size={18} />
+                  </button>
+                )}
+              </div>
+            ))}
+
+            {/* Add More Evidence Link Button */}
+            <button
+              onClick={() => {
+                if (evidenceFiles.length < 5) {
+                  setEvidenceFiles([
+                    ...evidenceFiles,
+                    { url: "", type: "link", note: "" }
+                  ]);
+                }
+              }}
+              disabled={evidenceFiles.length >= 5}
+              className={`w-full py-3 border-2 border-dashed rounded-lg flex items-center justify-center gap-2 transition ${
+                evidenceFiles.length >= 5
+                  ? "border-gray-200 text-gray-400 cursor-not-allowed"
+                  : "border-blue-300 text-blue-600 hover:border-blue-400 hover:bg-blue-50"
+              }`}
+            >
+              <Plus size={18} />
+              Add Another Evidence Link
+              <span className="text-xs text-gray-500">
+                ({evidenceFiles.length}/5)
+              </span>
+            </button>
+          </div>
+
+          {/* File Upload Tips */}
+          <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+            <div className="flex items-start gap-3">
+              <AlertCircle
+                size={20}
+                className="text-blue-600 flex-shrink-0 mt-0.5"
+              />
+              <div>
+                <h5 className="font-medium text-blue-800">
+                  Tips for Evidence Links
+                </h5>
+                <ul className="text-sm text-blue-700 mt-1 space-y-1">
+                  <li>• Google Drive, Dropbox, or Imgur links for photos</li>
+                  <li>• Direct links to images (jpg, png, etc.)</li>
+                  <li>• Document links (PDF, Google Docs, etc.)</li>
+                  <li>• YouTube or video links showing the issue</li>
+                  <li>• Make sure links are publicly accessible</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Refund Summary */}
+        <div className="border rounded-xl p-5">
+          <h4 className="font-bold text-gray-800 mb-4">Refund Summary</h4>
+          <div className="space-y-3">
+            <div className="flex justify-between">
+              <span className="text-gray-600">Refund Type:</span>
+              <span className="font-medium capitalize">{refundType} Refund</span>
+            </div>
+
+        
+
+            <div className="flex justify-between">
+              <span className="text-gray-600">Evidence Links:</span>
+              <span className="font-medium">
+                {evidenceFiles.filter(e => e.url.trim()).length} link(s)
+              </span>
+            </div>
+
+            {/* <div className="pt-3 border-t">
+              <div className="flex justify-between text-lg font-bold">
+                <span>Estimated Refund Amount</span>
+                <span className="text-green-600">
+                  $
+                  {(() => {
+                    if (refundType === "full") {
+                      // Full refund হলে পুরো অর্ডারের টাকা
+                      return (selectedProductForRefund.rawData?.amount  || 0).toFixed(2);
+                    } else {
+                      // Partial refund হলে শুধু সিলেক্টেড আইটেমের টাকা
+                      return '--';
+                    }
+                  })()}
+                </span>
+              </div>
+              <p className="text-sm text-gray-600 mt-1">
+                * Actual refund amount may vary based on seller approval and platform policies
+              </p>
+            </div> */}
+          </div>
+        </div>
+      </div>
+
+      {/* Modal Footer */}
+      <div className="sticky bottom-0 bg-white border-t p-6 flex justify-between gap-3">
+        <button
+          onClick={() => setIsRefundModalOpen(false)}
+          className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition"
+          disabled={isSubmittingRefund}
+        >
+          Cancel
+        </button>
+        <div className="flex gap-3">
+          <button
+            onClick={() => {
+              const refundData = {
+                paymentId: selectedProductForRefund.rawData?.paymentId,
+                orderId:
+                  selectedProductForRefund.orderId ||
+                  selectedProductForRefund.rawData?.orderId,
+                userId: id,
+                items:
+                  refundType === "partial" && selectedItems.length > 0
+                    ? selectedItems.map((item) => ({
+                        orderVendorId: item.orderVendorId,
+                        productId: item.productId,
+                        quantity: item.quantity,
+                        reason: refundReason,
+                      }))
+                    : undefined,
+                reason: refundReason,
+                evidence: evidenceFiles
+                  .filter(e => e.url.trim()) // শুধু ভরাট লিঙ্কগুলো
+                  .map((file) => ({
+                    url: file.url,
+                    type: file.type,
+                    note: file.note,
+                  })),
+              };
+              console.log("Refund Request Preview:", refundData);
+              console.log("Selected Items Details:", selectedItems);
+            }}
+            className="px-6 py-3 border border-blue-500 text-blue-600 rounded-lg font-medium hover:bg-blue-50 transition flex items-center gap-2"
+            disabled={isSubmittingRefund}
+          >
+            <FileText size={16} />
+            Preview Data
+          </button>
+          <button
+            onClick={handleSubmitRefund}
+            disabled={
+              isSubmittingRefund ||
+              !refundReason.trim() 
+            
+            }
+            className={`px-6 py-3 rounded-lg font-medium transition flex items-center gap-2 ${
+              isSubmittingRefund ||
+              !refundReason.trim() ||
+              (refundType === "partial" && selectedItems.length === 0)
+                ? "bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:opacity-9"
+                : "bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:opacity-90"
+            }`}
+          >
+            {isSubmittingRefund ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                Submitting...
+              </>
+            ) : (
+              <>
+                <Upload size={16} />
+                Submit Refund Request
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+)}
+
+      {/* TRACK ORDER MODAL */}
       {isTrackModalOpen && trackingOrder && (
         <div className="fixed inset-0 backdrop-blur-sm bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
@@ -1688,7 +2061,7 @@ export default function OrdersPage() {
         </div>
       )}
 
-      {/* ------------------- REVIEW MODAL ------------------- */}
+      {/* REVIEW MODAL */}
       {isReviewModalOpen && selectedProductForReview && (
         <div className="fixed inset-0 backdrop-blur-sm bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl max-w-md w-full">
@@ -1732,7 +2105,8 @@ export default function OrdersPage() {
                     Seller: {selectedProductForReview.sellerName || "Unknown"}
                   </p>
                   <p className="text-xs text-gray-500">
-                    Product ID: {selectedProductForReview.productId?.substring(0, 8)}...
+                    Product ID:{" "}
+                    {selectedProductForReview.productId?.substring(0, 8)}...
                   </p>
                 </div>
               </div>
@@ -1787,7 +2161,9 @@ export default function OrdersPage() {
 
               {/* Review Guidelines */}
               <div className="p-4 bg-blue-50 rounded-lg">
-                <h4 className="font-medium text-blue-800 mb-2">Review Guidelines</h4>
+                <h4 className="font-medium text-blue-800 mb-2">
+                  Review Guidelines
+                </h4>
                 <ul className="text-sm text-blue-700 space-y-1">
                   <li className="flex items-start gap-2">
                     <div className="w-1 h-1 rounded-full bg-blue-600 mt-2"></div>
@@ -1830,7 +2206,7 @@ export default function OrdersPage() {
         </div>
       )}
 
-      {/* ------------------- CANCEL CONFIRMATION MODAL ------------------- */}
+      {/* CANCEL CONFIRMATION MODAL */}
       {isCancelConfirmOpen && orderToCancel && (
         <div className="fixed inset-0 backdrop-blur-sm bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl max-w-md w-full">
@@ -1870,7 +2246,8 @@ export default function OrdersPage() {
                   <div>
                     <h4 className="font-bold text-red-800">Warning</h4>
                     <p className="text-sm text-red-700 mt-1">
-                      Are you sure you want to cancel this order? This action cannot be undone.
+                      Are you sure you want to cancel this order? This action
+                      cannot be undone.
                     </p>
                   </div>
                 </div>
@@ -1888,17 +2265,23 @@ export default function OrdersPage() {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Total Amount:</span>
-                  <span className="font-bold text-red-600">${orderToCancel.price}</span>
+                  <span className="font-bold text-red-600">
+                    ${orderToCancel.price}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Items:</span>
-                  <span className="font-medium">{orderToCancel.totalItems} items</span>
+                  <span className="font-medium">
+                    {orderToCancel.totalItems} items
+                  </span>
                 </div>
               </div>
 
               {/* Reason Selection */}
               <div className="space-y-3">
-                <h4 className="font-medium text-gray-800">Reason for Cancellation</h4>
+                <h4 className="font-medium text-gray-800">
+                  Reason for Cancellation
+                </h4>
                 <select className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent">
                   <option value="">Select a reason</option>
                   <option value="change-mind">Changed my mind</option>
