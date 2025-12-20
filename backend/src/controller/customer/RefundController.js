@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import Order from "../../models/OrderModel.js";
 import OrderVendorModel from "../../models/OrderVendorModel.js";
 import Payment from "../../models/PaymentModel.js";
@@ -90,6 +91,7 @@ export const requestRefund = async (req, res) => {
                 type: e.type || "image",
                 url: uploaded.url,
                 note: e.note,
+                uploadedBy: new mongoose.Types.ObjectId(userId),
               });
             } catch (err) {
               // ignore image upload failure for now, keep original url if present
@@ -97,6 +99,7 @@ export const requestRefund = async (req, res) => {
                 type: e.type || "image",
                 url: e.url || null,
                 note: e.note,
+                uploadedBy: new mongoose.Types.ObjectId(userId),
               });
             }
           }
@@ -138,22 +141,24 @@ export const requestRefund = async (req, res) => {
                 type: e.type || "image",
                 url: uploaded.url,
                 note: e.note,
+                uploadedBy: new mongoose.Types.ObjectId(userId),
               });
             } catch (err) {
               uploadedEvidence.push({
                 type: e.type || "image",
                 url: e.url || null,
                 note: e.note,
+                uploadedBy: new mongoose.Types.ObjectId(userId),
               });
             }
           }
         }
 
         const refundDoc = await Refund.create({
-          payment: payment._id,
-          order: order._id,
-          orderVendor: ov._id,
-          requestedBy: userId,
+          payment: new mongoose.Types.ObjectId(payment._id),
+          order: new mongoose.Types.ObjectId(order._id),
+          orderVendor: new mongoose.Types.ObjectId(ov._id),
+          requestedBy: new mongoose.Types.ObjectId(userId),
           amount: refundAmount,
           currency: payment.currency || "usd",
           reason,
@@ -165,6 +170,22 @@ export const requestRefund = async (req, res) => {
       }
     } else {
       // Generic full order refund request
+      // normalize evidence to ensure uploadedBy is present
+      let finalEvidence = [];
+      if (Array.isArray(evidence) && evidence.length) {
+        for (const e of evidence) {
+          if (typeof e === "string") {
+            finalEvidence.push({
+              type: "image",
+              url: e,
+              uploadedBy: new mongoose.Types.ObjectId(userId),
+            });
+          } else {
+            finalEvidence.push({ ...e, uploadedBy: e.uploadedBy || userId });
+          }
+        }
+      }
+
       const refundDoc = await Refund.create({
         payment: payment._id,
         order: order._id,
@@ -172,7 +193,7 @@ export const requestRefund = async (req, res) => {
         amount: payment.amount,
         currency: payment.currency || "usd",
         reason,
-        evidence: evidence || [],
+        evidence: finalEvidence,
         status: "requested",
       });
       createdRefunds.push(refundDoc);
@@ -227,10 +248,6 @@ export const getRefund = async (req, res) => {
       .populate({
         path: "orderVendor",
         populate: { path: "seller", select: "name shopName shopLogo" },
-      })
-      .populate({
-        path: "evidence",
-        populate: { path: "evidence.uploadedBy", select: "firstName lastName" },
       })
       .populate({ path: "items.product", select: "name price image" });
 

@@ -143,12 +143,18 @@ export const respondToRefund = async (req, res) => {
         try {
           const base64 = extractBase64FromDataURL(e.url || e);
           const up = await uploadImageToImgBB(base64);
-          uploaded.push({ type: e.type || "image", url: up.url, note: e.note });
+          uploaded.push({
+            type: e.type || "image",
+            url: up.url,
+            note: e.note,
+            uploadedBy: new mongoose.Types.ObjectId(sellerId),
+          });
         } catch (err) {
           uploaded.push({
             type: e.type || "image",
             url: e.url || null,
             note: e.note,
+            uploadedBy: new mongoose.Types.ObjectId(sellerId),
           });
         }
       }
