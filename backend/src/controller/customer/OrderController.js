@@ -425,6 +425,7 @@ export const MyOrder = async (req, res) => {
                 orderId: { $first: "$orderId" },
                 seller: { $first: "$seller" },
                 amount: { $first: "$amount" },
+                status: { $first: "$status" },
                 shippingAmount: { $first: "$shippingAmount" },
                 commissionPercentage: { $first: "$commissionPercentage" },
                 commissionAmount: { $first: "$commissionAmount" },
