@@ -35,8 +35,10 @@ export const requestRefund = async (req, res) => {
     }
 
     // Load payment and order
-    const payment = await Payment.findOne({ paymentId });
-    const order = await Order.findById(orderId);
+    const payment = await Payment.findById(
+      new mongoose.Types.ObjectId(paymentId)
+    );
+    const order = await Order.findById(new mongoose.Types.ObjectId(orderId));
 
     if (!payment || !order) {
       return res.status(404).json({ message: "Payment or order not found" });
