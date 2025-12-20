@@ -2,6 +2,7 @@ import mongoose, { Schema } from "mongoose";
 
 const evidenceSchema = new Schema(
   {
+    uploadedBy: { type: Schema.Types.ObjectId, ref: "User" },
     type: { type: String },
     url: { type: String },
     note: { type: String },

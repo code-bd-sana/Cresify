@@ -95,6 +95,10 @@ export const getSellerRefund = async (req, res) => {
         path: "orderVendor",
         populate: { path: "seller", select: "name shopName shopLogo" },
       })
+      .populate({
+        path: "evidence",
+        populate: { path: "evidence.uploadedBy", select: "firstName lastName" },
+      })
       .populate("requestedBy")
       .populate({ path: "items.product", select: "name price image" });
 
@@ -122,7 +126,12 @@ export const respondToRefund = async (req, res) => {
     if (!id || !sellerId || !action)
       return res.status(400).json({ message: "Missing fields" });
 
-    const refund = await Refund.findById(id);
+    const refund = await Refund.findById(id)
+      .populate("seller")
+      .populate({
+        path: "evidence",
+        populate: { path: "evidence.uploadedBy", select: "firstName lastName" },
+      });
     if (!refund) return res.status(404).json({ message: "Refund not found" });
     if (refund.seller?.toString() !== sellerId.toString())
       return res.status(403).json({ message: "Not authorized" });

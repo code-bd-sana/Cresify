@@ -16,7 +16,10 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
 
 export const listRefunds = async (req, res) => {
   try {
-    const refunds = await Refund.find().sort({ createdAt: -1 }).limit(100);
+    const refunds = await Refund.find()
+      .populate("requestedBy processedBy seller")
+      .sort({ createdAt: -1 })
+      .limit(100);
     return res.json({ refunds });
   } catch (err) {
     console.error(err);
@@ -37,7 +40,9 @@ export const reviewRefund = async (req, res) => {
   const session = await mongoose.startSession();
   try {
     await session.withTransaction(async () => {
-      const refund = await Refund.findById(refundId).session(session);
+      const refund = await Refund.findById(refundId)
+        .populate("requestedBy processedBy seller evidence.uploadedBy")
+        .session(session);
       if (!refund) throw new Error("Refund not found");
 
       if (action === "reject") {

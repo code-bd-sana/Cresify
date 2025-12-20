@@ -201,6 +201,10 @@ export const listMyRefunds = async (req, res) => {
         path: "orderVendor",
         populate: { path: "seller", select: "name shopName shopLogo" },
       })
+      .populate({
+        path: "evidence",
+        populate: { path: "evidence.uploadedBy", select: "firstName lastName" },
+      })
       .populate({ path: "items.product", select: "name price image" });
 
     return res.json({ refunds });
@@ -223,6 +227,10 @@ export const getRefund = async (req, res) => {
       .populate({
         path: "orderVendor",
         populate: { path: "seller", select: "name shopName shopLogo" },
+      })
+      .populate({
+        path: "evidence",
+        populate: { path: "evidence.uploadedBy", select: "firstName lastName" },
       })
       .populate({ path: "items.product", select: "name price image" });
 
