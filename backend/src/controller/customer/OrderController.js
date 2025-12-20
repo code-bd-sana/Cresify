@@ -452,8 +452,6 @@ export const MyOrder = async (req, res) => {
       { $sort: { createdAt: -1 } },
     ]);
 
-    console.log(agg);
-
     res.status(200).json({ message: "Success", data: agg });
   } catch (error) {
     res.status(500).json({
