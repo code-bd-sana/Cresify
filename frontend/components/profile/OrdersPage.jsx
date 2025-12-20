@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Package,
   Truck,
@@ -17,24 +17,30 @@ import {
   Clock,
   PackageCheck,
   Home,
-  Calendar,
   ArrowRight,
   ChevronLeft,
   ChevronRight as ChevronRightIcon,
   Star,
   MessageSquare,
   StarIcon,
+  RotateCcw,
+  Image as ImageIcon,
+  Upload,
+  AlertCircle,
 } from "lucide-react";
 import { useMyOrderQuery } from "@/feature/customer/OrderApi";
 import { useSession } from "next-auth/react";
 import { useSaveReviewMutation } from "@/feature/review/ReviewApi";
 
 export default function OrdersPage() {
+  // Tabs updated according to your enum
   const tabs = [
     { id: "all", label: "All Orders", count: 0 },
+    { id: "pending", label: "Pending", count: 0 },
     { id: "processing", label: "Processing", count: 0 },
-    { id: "shipped", label: "Shipped", count: 0 },
+    { id: "shipping", label: "Shipping", count: 0 },
     { id: "delivered", label: "Delivered", count: 0 },
+    { id: "canceled", label: "Canceled", count: 0 },
   ];
 
   const [activeTab, setActiveTab] = useState("all");
@@ -44,6 +50,12 @@ export default function OrdersPage() {
   const [isTrackModalOpen, setIsTrackModalOpen] = useState(false);
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [selectedProductForReview, setSelectedProductForReview] = useState(null);
+  const [isRefundModalOpen, setIsRefundModalOpen] = useState(false);
+  const [selectedProductForRefund, setSelectedProductForRefund] = useState(null);
+  const [selectedVendorForRefund, setSelectedVendorForRefund] = useState(null);
+  const [refundType, setRefundType] = useState("full");
+  const [refundReason, setRefundReason] = useState("");
+  const [refundEvidence, setRefundEvidence] = useState([]);
   const [rating, setRating] = useState(0);
   const [reviewText, setReviewText] = useState("");
   const [isCancelConfirmOpen, setIsCancelConfirmOpen] = useState(false);
@@ -52,67 +64,139 @@ export default function OrdersPage() {
   const { data: user } = useSession();
   const id = user?.user?.id;
   const { data: MyOrder, isLoading, isError } = useMyOrderQuery(id);
-  const [saveReview, {isLoading:reviewLoading}] = useSaveReviewMutation();
-
+  const [saveReview, { isLoading: reviewLoading }] = useSaveReviewMutation();
 
   // API থেকে আসা ডেটা
   const apiOrders = MyOrder?.data || [];
 
+  // Check if order has delivered items for refund
+  const hasDeliveredItems = (order) => {
+    return order.orderVendors.some(vendor => 
+      vendor.status === 'delivered' && 
+      vendor.products.length > 0
+    );
+  };
 
+  // Calculate status counts based on your enum
   const calculateStatusCounts = () => {
     let allCount = 0;
+    let pendingCount = 0;
     let processingCount = 0;
-    let shippedCount = 0;
+    let shippingCount = 0;
     let deliveredCount = 0;
+    let canceledCount = 0;
 
     apiOrders.forEach((order) => {
       allCount++;
 
+      console.log(order, "order tui ay");
+
       const vendorStatuses = order.orderVendors.map((v) => v.status);
-      const paymentStatus = order.paymentStatus;
+      console.log(vendorStatuses, "sobai vendor status");
+      
+      // Priority logic: canceled > delivered > shipping > processing > pending
+            const allPending = vendorStatuses.some((s) => s === "pending");
+      const anyCanceled = vendorStatuses.some((s) => s === "canceled");
 
- 
-      const allDelivered = vendorStatuses.every((s) => s === "delivered");
+      const anyShipping = vendorStatuses.some((s) => s === "shipping");
+      const anyProcessing = vendorStatuses.some((s) => s === "processing");
 
-      const anyShipped = vendorStatuses.some((s) => s === "shipping");
+            const allDelivered = vendorStatuses.every((s) => s === "delivered");
 
-      const allProcessingOrPending = vendorStatuses.every(
-        (s) => s === "processing" || s === "pending"
-      );
-      // কোনো ভেন্ডর ক্যান্সেল হলে
-      const anyCancelled = vendorStatuses.some((s) => s === "canceled");
-
-      if (allDelivered) {
+      if (anyCanceled) {
+        canceledCount++;
+      } 
+      else if (allDelivered) {
         deliveredCount++;
-      } else if (anyShipped) {
-        shippedCount++;
-      } else if (allProcessingOrPending && !anyCancelled) {
+      }
+      else if (anyShipping) {
+        shippingCount++;
+      }
+      else if (anyProcessing) {
         processingCount++;
+      }
+      else if (allPending) {
+        pendingCount++;
+      }
+      else {
+        // Mixed status - use the "worst" status
+        const statusPriority = {
+          'pending': 1,
+          'processing': 2,
+          'shipping': 3,
+          'delivered': 4,
+          'canceled': 5
+        };
+        
+        let worstStatus = 'pending';
+        let worstPriority = 5;
+        
+        vendorStatuses.forEach(status => {
+          const priority = statusPriority[status] || 1;
+          if (priority > worstPriority) {
+            worstPriority = priority;
+            worstStatus = status;
+          }
+        });
+        
+        switch (worstStatus) {
+          case 'canceled':
+            canceledCount++;
+            break;
+          case 'delivered':
+            deliveredCount++;
+            break;
+          case 'shipping':
+            shippingCount++;
+            break;
+          case 'processing':
+            processingCount++;
+            break;
+          default:
+            pendingCount++;
+        }
       }
     });
 
-    return { allCount, processingCount, shippedCount, deliveredCount };
+    return { 
+      allCount, 
+      pendingCount, 
+      processingCount, 
+      shippingCount, 
+      deliveredCount,
+      canceledCount 
+    };
   };
 
-  const { allCount, processingCount, shippedCount, deliveredCount } =
-    calculateStatusCounts();
+  const { 
+    allCount, 
+    pendingCount, 
+    processingCount, 
+    shippingCount, 
+    deliveredCount,
+    canceledCount 
+  } = calculateStatusCounts();
 
   const updatedTabs = tabs.map((tab) => {
     switch (tab.id) {
       case "all":
         return { ...tab, count: allCount };
+      case "pending":
+        return { ...tab, count: pendingCount };
       case "processing":
         return { ...tab, count: processingCount };
-      case "shipped":
-        return { ...tab, count: shippedCount };
+      case "shipping":
+        return { ...tab, count: shippingCount };
       case "delivered":
         return { ...tab, count: deliveredCount };
+      case "canceled":
+        return { ...tab, count: canceledCount };
       default:
         return tab;
     }
   });
 
-  // ফরম্যাট করার জন্য হেল্পার ফাংশন
+  // Format helpers
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     return date.toLocaleDateString("en-US", {
@@ -124,7 +208,6 @@ export default function OrdersPage() {
     });
   };
 
-  // শর্ট তারিখ ফরম্যাট
   const formatShortDate = (dateString) => {
     const date = new Date(dateString);
     return date.toLocaleDateString("en-US", {
@@ -133,7 +216,6 @@ export default function OrdersPage() {
     });
   };
 
-  // টাইম ফরম্যাট
   const formatTime = (dateString) => {
     const date = new Date(dateString);
     return date.toLocaleTimeString("en-US", {
@@ -142,13 +224,26 @@ export default function OrdersPage() {
     });
   };
 
-  // অর্ডারের স্ট্যাটাস ডিটারমাইন - FIXED
+  // Get order status based on vendor statuses
   const getOrderStatus = (order) => {
     const vendorStatuses = order.orderVendors.map((v) => v.status);
-    const paymentStatus = order.paymentStatus;
-
-    // সব ভেন্ডর ডেলিভার্ড হলে
+    
+    // Priority order for display
+    const anyCanceled = vendorStatuses.some((s) => s === "canceled");
     const allDelivered = vendorStatuses.every((s) => s === "delivered");
+    const anyShipping = vendorStatuses.some((s) => s === "shipping");
+    const anyProcessing = vendorStatuses.some((s) => s === "processing");
+    const allPending = vendorStatuses.every((s) => s === "pending");
+
+    if (anyCanceled) {
+      return {
+        status: "Canceled",
+        statusColor: "#EB5757",
+        expected: "",
+        actions: "view",
+      };
+    }
+
     if (allDelivered) {
       return {
         status: "Delivered",
@@ -158,65 +253,87 @@ export default function OrdersPage() {
       };
     }
 
-    // কোনো ভেন্ডর shipping হলে
-    const anyShipped = vendorStatuses.some((s) => s === "shipping");
-    if (anyShipped) {
+    if (anyShipping) {
       return {
-        status: "Shipped",
+        status: "Shipping",
         statusColor: "#5A3DF6",
         expected: "",
         actions: "track",
       };
     }
 
-    // সব ভেন্ডর processing বা pending
-    const allProcessingOrPending = vendorStatuses.every(
-      (s) => s === "processing" || s === "pending"
-    );
-    if (allProcessingOrPending) {
-      // ডেলিভারি তারিখ ক্যালকুলেট (3-5 দিন পর)
+    if (anyProcessing) {
       const orderDate = new Date(order.createdAt);
       const deliveryDate = new Date(orderDate);
-      deliveryDate.setDate(
-        deliveryDate.getDate() + Math.floor(Math.random() * 3) + 3
-      );
+      deliveryDate.setDate(deliveryDate.getDate() + Math.floor(Math.random() * 3) + 3);
 
       return {
         status: "Processing",
         statusColor: "#F7A500",
-        expected: `Expected Delivery: ${deliveryDate.toLocaleDateString(
-          "en-US",
-          {
-            month: "short",
-            day: "numeric",
-            year: "numeric",
-          }
-        )}`,
+        expected: `Expected Delivery: ${deliveryDate.toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+        })}`,
         actions: "full",
       };
     }
 
-    // কোনো ক্যান্সেল স্ট্যাটাস
-    const anyCancelled = vendorStatuses.some((s) => s === "canceled");
-    if (anyCancelled) {
+    if (allPending) {
       return {
-        status: "Canceled",
-        statusColor: "#EB5757",
-        expected: "",
-        actions: "view",
+        status: "Pending",
+        statusColor: "#9CA3AF",
+        expected: "Waiting for seller confirmation",
+        actions: "full",
       };
     }
 
-    // ডিফল্ট
+    // Mixed status - use the "worst" status
+    const statusPriority = {
+      'pending': 1,
+      'processing': 2,
+      'shipping': 3,
+      'delivered': 4,
+      'canceled': 5
+    };
+    
+    let worstStatus = 'pending';
+    let worstPriority = 1;
+    
+    vendorStatuses.forEach(status => {
+      const priority = statusPriority[status] || 1;
+      if (priority > worstPriority) {
+        worstPriority = priority;
+        worstStatus = status;
+      }
+    });
+
+    const statusColors = {
+      'pending': "#9CA3AF",
+      'processing': "#F7A500",
+      'shipping': "#5A3DF6",
+      'delivered': "#00C363",
+      'canceled': "#EB5757"
+    };
+
+    const statusLabels = {
+      'pending': "Pending",
+      'processing': "Processing",
+      'shipping': "Shipping",
+      'delivered': "Delivered",
+      'canceled': "Canceled"
+    };
+
     return {
-      status: "Processing",
-      statusColor: "#F7A500",
+      status: statusLabels[worstStatus] || "Processing",
+      statusColor: statusColors[worstStatus] || "#F7A500",
       expected: "",
-      actions: "full",
+      actions: worstStatus === "shipping" ? "track" : 
+               worstStatus === "processing" || worstStatus === "pending" ? "full" : "view",
     };
   };
 
-  // সব ভেন্ডরের প্রডাক্ট একসাথে সংগ্রহ
+  // Get all products from order
   const getAllProductsFromOrder = (order) => {
     const allProducts = [];
 
@@ -237,10 +354,11 @@ export default function OrdersPage() {
           productId: product.product?._id,
           description: product.product?.description,
           category: product.product?.category,
-          sellerId: vendor.vendorId?._id,
-          sellerName: vendor.vendorId?.name,
-          // Check if product is delivered for review eligibility
+          sellerId: vendor.seller || vendor.vendorId?._id,
+          sellerName: vendor.vendorId?.name || "Unknown Seller",
           canReview: vendor.status === "delivered",
+          canRefund: vendor.status === "delivered",
+          orderVendorData: vendor,
         });
       });
     });
@@ -248,27 +366,26 @@ export default function OrdersPage() {
     return allProducts;
   };
 
-  // মোট প্রডাক্ট কাউন্ট
+  // Get total product count
   const getTotalProductCount = (order) => {
     return order.orderVendors.reduce((total, vendor) => {
       return total + vendor.products.length;
     }, 0);
   };
 
-  // অর্ডার টোটাল ক্যালকুলেট (সঠিকভাবে)
+  // Calculate order total
   const calculateOrderTotal = (order) => {
-    // API-তে amount ফিল্ডে সেন্টে আছে (ডেটা দেখে), তাই 100 দিয়ে ভাগ করছি
     return (order.amount / 100).toFixed(2);
   };
 
-  // সব প্রোডাক্টের টোটাল সাবটোটাল ক্যালকুলেট
+  // Calculate subtotal
   const calculateSubtotal = (allProducts) => {
     return allProducts.reduce((total, product) => {
       return total + product.subtotal;
     }, 0);
   };
 
-  // API ডেটাকে কম্পোনেন্টের ফরম্যাটে কনভার্ট
+  // Convert API data to component format
   const orders = apiOrders.map((order) => {
     const statusInfo = getOrderStatus(order);
     const allProducts = getAllProductsFromOrder(order);
@@ -279,75 +396,66 @@ export default function OrdersPage() {
     return {
       id: order._id.substring(order._id.length - 8).toUpperCase(),
       fullId: order._id,
+      paymentId: order.paymentId,
       status: statusInfo.status,
       statusColor: statusInfo.statusColor,
       date: formatDate(order.createdAt),
       expected: statusInfo.expected,
       price: orderTotal,
-      items: allProducts.slice(0, 2), // প্রথম ২টা প্রডাক্ট দেখাবে
+      items: allProducts.slice(0, 2),
       totalItems: totalProducts,
-      allProducts: allProducts, // সব প্রোডাক্ট
+      allProducts: allProducts,
       subtotal: subtotal,
       actions: statusInfo.actions,
       rawData: order,
-      vendors: order.orderVendors, // সব ভেন্ডর
+      vendors: order.orderVendors,
       address: order.address,
       paymentMethod: order.paymentMethod,
       paymentStatus: order.paymentStatus,
       createdAt: order.createdAt,
       updatedAt: order.updatedAt,
+      hasDeliveredItems: hasDeliveredItems(order),
     };
   });
 
-  // ট্যাব ফিল্টারিং
+  // Filter orders by tab
   const filteredOrders =
     activeTab === "all"
       ? orders
       : orders.filter((order) => {
-          if (activeTab === "processing") {
+          if (activeTab === "pending") {
+            return order.status === "Pending";
+          } else if (activeTab === "processing") {
             return order.status === "Processing";
-          } else if (activeTab === "shipped") {
-            return order.status === "Shipped";
+          } else if (activeTab === "shipping") {
+            return order.status === "Shipping";
           } else if (activeTab === "delivered") {
             return order.status === "Delivered";
+          } else if (activeTab === "canceled") {
+            return order.status === "Canceled";
           }
           return false;
         });
 
-  // View Details বাটন ক্লিক হ্যান্ডলার
+  // View Details button handler
   const handleViewDetails = (order) => {
     setSelectedOrder(order);
     setIsModalOpen(true);
   };
 
-  // Track Order বাটন ক্লিক হ্যান্ডলার
+  // Track Order button handler
   const handleTrackOrder = (order) => {
     setTrackingOrder(order);
     setIsTrackModalOpen(true);
   };
 
-  // Cancel Order বাটন ক্লিক হ্যান্ডলার
+  // Cancel Order button handler
   const handleCancelOrder = (order) => {
-    console.log("=== CANCEL ORDER ===");
-    console.log("Order ID to cancel:", order.fullId);
-    console.log("====================");
     setOrderToCancel(order);
     setIsCancelConfirmOpen(true);
   };
 
-  // Confirm Cancel Order
-  const handleConfirmCancel = () => {
-    if (orderToCancel) {
-      console.log("=== CONFIRM CANCEL ORDER ===");
-      console.log("Cancelling Order ID:", orderToCancel.fullId);
-      console.log("============================");
-      // এখানে API কল করতে হবে
-    }
-    setIsCancelConfirmOpen(false);
-    setOrderToCancel(null);
-  };
-
-  // Review Product বাটন ক্লিক হ্যান্ডলার
+  // Review Product button handler
   const handleReviewProduct = (product) => {
     setSelectedProductForReview(product);
     setRating(0);
@@ -355,45 +463,119 @@ export default function OrdersPage() {
     setIsReviewModalOpen(true);
   };
 
-  // Submit Review
-  const handleSubmitReview = async() => {
-    if (!selectedProductForReview) return;
+  // Refund Product button handler
+  const handleRefundProduct = (product, vendor = null) => {
+    setSelectedProductForRefund(product);
+    setSelectedVendorForRefund(vendor);
+    setRefundType("partial");
+    setRefundReason("");
+    setRefundEvidence([]);
+    setIsRefundModalOpen(true);
+  };
 
-    console.log("=== SUBMIT REVIEW ===");
-    console.log("User ID:", id);
-    console.log("Product ID:", selectedProductForReview.productId);
-    console.log("Seller ID:", selectedProductForReview);
-    console.log("Rating:", rating);
-    console.log("Review:", reviewText);
-    console.log("====================");
+  // Refund Full Vendor button handler
+  const handleRefundVendor = (vendor) => {
+    setSelectedProductForRefund(null);
+    setSelectedVendorForRefund(vendor);
+    setRefundType("full");
+    setRefundReason("");
+    setRefundEvidence([]);
+    setIsRefundModalOpen(true);
+  };
+
+  // Handle evidence upload
+  const handleEvidenceUpload = (e) => {
+    const files = Array.from(e.target.files);
+    
+    files.forEach((file) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const evidence = {
+          url: reader.result,
+          type: file.type.startsWith('image/') ? 'image' : 
+                file.type.startsWith('video/') ? 'video' : 'document',
+          note: file.name
+        };
+        setRefundEvidence(prev => [...prev, evidence]);
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  // Remove evidence
+  const removeEvidence = (index) => {
+    setRefundEvidence(prev => prev.filter((_, i) => i !== index));
+  };
+
+  // Submit refund request
+  const handleSubmitRefund = async () => {
+    if (!selectedOrder) return;
+
+    const refundData = {
+      paymentId: selectedOrder.paymentId,
+      orderId: selectedOrder.fullId,
+      userId: id,
+      reason: refundReason,
+      evidence: refundEvidence,
+    };
+
+    if (refundType === "full" && selectedVendorForRefund) {
+      refundData.sellerIds = [selectedVendorForRefund.seller];
+    } else if (refundType === "partial" && selectedProductForRefund) {
+      refundData.items = [{
+        orderVendorId: selectedProductForRefund.vendorId,
+        productId: selectedProductForRefund.productId,
+        quantity: selectedProductForRefund.qty,
+        reason: refundReason,
+        evidence: refundEvidence
+      }];
+    }
+
+    console.log("=== SUBMITTING REFUND REQUEST ===");
+    console.log("Refund Data:", refundData);
 
     try {
+      // Here you would call your refund API
+      // const result = await createRefundRequest(refundData);
+      console.log("Refund Request Result:", "Mock result - API call commented");
+      
+      setIsRefundModalOpen(false);
+      setSelectedProductForRefund(null);
+      setSelectedVendorForRefund(null);
+      setRefundReason("");
+      setRefundEvidence([]);
+      
+      alert("Refund request submitted successfully!");
+    } catch (error) {
+      console.error("Refund submission error:", error);
+      alert("Failed to submit refund request. Please try again.");
+    }
+  };
 
+  // Submit review
+  const handleSubmitReview = async () => {
+    if (!selectedProductForReview) return;
+
+    try {
       const reviewData = {
         id,
         product: selectedProductForReview.productId,
-        review:selectedProductForReview,
-        ratng:rating,
-        reviewText:reviewText
+        review: selectedProductForReview,
+        rating: rating,
+        reviewText: reviewText
       };
 
       const result = await saveReview(reviewData);
-      console.log(result, "aso he result aso aso");
+      console.log(result, "Review submitted successfully");
 
-
-
-         setIsReviewModalOpen(false);
-    setSelectedProductForReview(null);
-      
+      setIsReviewModalOpen(false);
+      setSelectedProductForReview(null);
     } catch (error) {
       console.log(error);
     }
-
-    // এখানে API কল করতে হবে
- 
   };
 
-  // ট্র্যাকিং স্ট্যাটাস স্টেপস জেনারেট
+  // Get tracking steps
   const getTrackingSteps = (order) => {
     const orderDate = new Date(order.createdAt);
     const currentStatus = order.status.toLowerCase();
@@ -416,11 +598,11 @@ export default function OrdersPage() {
         icon: PackageCheck,
         status:
           currentStatus === "processing" ||
-          currentStatus === "shipped" ||
+          currentStatus === "shipping" ||
           currentStatus === "delivered"
             ? "completed"
             : "pending",
-        date: formatShortDate(new Date(orderDate.getTime() + 30 * 60 * 1000)), // 30 minutes later
+        date: formatShortDate(new Date(orderDate.getTime() + 30 * 60 * 1000)),
         time: formatTime(new Date(orderDate.getTime() + 30 * 60 * 1000)),
         color: "#5A3DF6",
       },
@@ -431,13 +613,11 @@ export default function OrdersPage() {
         icon: Package,
         status:
           currentStatus === "processing" ||
-          currentStatus === "shipped" ||
+          currentStatus === "shipping" ||
           currentStatus === "delivered"
             ? "completed"
             : "pending",
-        date: formatShortDate(
-          new Date(orderDate.getTime() + 2 * 60 * 60 * 1000)
-        ), // 2 hours later
+        date: formatShortDate(new Date(orderDate.getTime() + 2 * 60 * 60 * 1000)),
         time: formatTime(new Date(orderDate.getTime() + 2 * 60 * 60 * 1000)),
         color: "#F7A500",
       },
@@ -447,12 +627,10 @@ export default function OrdersPage() {
         description: "Your order has been shipped",
         icon: Truck,
         status:
-          currentStatus === "shipped" || currentStatus === "delivered"
+          currentStatus === "shipping" || currentStatus === "delivered"
             ? "completed"
             : "pending",
-        date: formatShortDate(
-          new Date(orderDate.getTime() + 24 * 60 * 60 * 1000)
-        ), // 1 day later
+        date: formatShortDate(new Date(orderDate.getTime() + 24 * 60 * 60 * 1000)),
         time: formatTime(new Date(orderDate.getTime() + 24 * 60 * 60 * 1000)),
         color: "#5A3DF6",
       },
@@ -462,9 +640,7 @@ export default function OrdersPage() {
         description: "Your order is out for delivery",
         icon: Home,
         status: currentStatus === "delivered" ? "completed" : "pending",
-        date: formatShortDate(
-          new Date(orderDate.getTime() + 48 * 60 * 60 * 1000)
-        ), // 2 days later
+        date: formatShortDate(new Date(orderDate.getTime() + 48 * 60 * 60 * 1000)),
         time: formatTime(new Date(orderDate.getTime() + 48 * 60 * 60 * 1000)),
         color: "#9838E1",
       },
@@ -474,9 +650,7 @@ export default function OrdersPage() {
         description: "Your order has been delivered",
         icon: CheckCircle,
         status: currentStatus === "delivered" ? "completed" : "pending",
-        date: formatShortDate(
-          new Date(orderDate.getTime() + 72 * 60 * 60 * 1000)
-        ), // 3 days later
+        date: formatShortDate(new Date(orderDate.getTime() + 72 * 60 * 60 * 1000)),
         time: formatTime(new Date(orderDate.getTime() + 72 * 60 * 60 * 1000)),
         color: "#00C363",
       },
@@ -485,26 +659,23 @@ export default function OrdersPage() {
     return steps;
   };
 
-  // কারেন্ট স্ট্যাটাস ইন্ডেক্স - FIXED
+  // Get current status index
   const getCurrentStatusIndex = (order) => {
     const status = order.status.toLowerCase();
     const vendorStatuses = order.rawData?.orderVendors?.map(v => v.status) || [];
-
-    // Check if any vendor is shipped
-    const anyShipped = vendorStatuses.some(s => s === "shipping");
-    // Check if all vendors are delivered
+    const anyShipping = vendorStatuses.some(s => s === "shipping");
     const allDelivered = vendorStatuses.every(s => s === "delivered");
 
     if (allDelivered) {
-      return 5; // Delivered
-    } else if (anyShipped) {
-      return 3; // Shipped
+      return 5;
+    } else if (anyShipping) {
+      return 3;
     } else {
-      return 2; // Processing
+      return 2;
     }
   };
 
-  // পেমেন্ট মেথড টেক্সট
+  // Get payment method text
   const getPaymentMethodText = (method) => {
     switch (method) {
       case "card":
@@ -516,7 +687,7 @@ export default function OrdersPage() {
     }
   };
 
-  // পেমেন্ট স্ট্যাটাস টেক্সট
+  // Get payment status text
   const getPaymentStatusText = (status) => {
     switch (status) {
       case "pending":
@@ -530,7 +701,7 @@ export default function OrdersPage() {
     }
   };
 
-  // ভেন্ডর স্ট্যাটাস টেক্সট - FIXED
+  // Get vendor status text
   const getVendorStatusText = (status) => {
     switch (status) {
       case "pending":
@@ -538,17 +709,17 @@ export default function OrdersPage() {
       case "processing":
         return "Processing";
       case "shipping":
-        return "Shipped";
+        return "Shipping";
       case "delivered":
         return "Delivered";
       case "canceled":
-        return "Cancelled";
+        return "Canceled";
       default:
         return status;
     }
   };
 
-  // লোডিং স্টেট
+  // Loading state
   if (isLoading) {
     return (
       <section className="w-full bg-[#F7F7FA] min-h-screen flex items-center justify-center">
@@ -560,7 +731,7 @@ export default function OrdersPage() {
     );
   }
 
-  // এরর স্টেট
+  // Error state
   if (isError) {
     return (
       <section className="w-full bg-[#F7F7FA] min-h-screen flex items-center justify-center">
@@ -573,7 +744,7 @@ export default function OrdersPage() {
     );
   }
 
-  // নো অর্ডার স্টেট
+  // No orders state
   if (orders.length === 0) {
     return (
       <section className="w-full bg-[#F7F7FA] min-h-screen pb-10 px-4">
@@ -611,10 +782,7 @@ export default function OrdersPage() {
                     }
                   `}
                 >
-                  {/* LABEL */}
                   {tab.label}
-
-                  {/* COUNT BADGE */}
                   <span
                     className={`
                       text-[11px] w-[22px] h-[22px] flex items-center justify-center rounded-full font-semibold
@@ -669,7 +837,7 @@ export default function OrdersPage() {
                   <p className="text-[11px] text-[#F78D25]">{order.expected}</p>
                 )}
 
-                {/* Products - একই অর্ডারে সব প্রডাক্ট দেখাবে */}
+                {/* Products */}
                 <div className="mt-4">
                   <div className="flex flex-wrap gap-4">
                     {order.items.map((item, i) => (
@@ -690,7 +858,6 @@ export default function OrdersPage() {
                       </div>
                     ))}
 
-                    {/* এক্সট্রা আইটেমস কাউন্ট */}
                     {order.totalItems > 2 && (
                       <div className="flex items-center ml-2">
                         <div className="h-[45px] w-[45px] rounded-[10px] bg-purple-50 flex items-center justify-center">
@@ -710,7 +877,6 @@ export default function OrdersPage() {
                     )}
                   </div>
 
-                  {/* ভেন্ডর কাউন্ট */}
                   {order.vendors.length > 1 && (
                     <div className="mt-2 text-[10px] text-gray-500">
                       Multiple vendors in this order
@@ -754,7 +920,7 @@ export default function OrdersPage() {
                     </button>
                   )}
 
-                  {/* Cancel Order - শুধু Processing স্ট্যাটাসে দেখাবে */}
+                  {/* Cancel Order - শুধু Processing/Pending স্ট্যাটাসে দেখাবে */}
                   {order.actions === "full" && (
                     <button
                       onClick={() => handleCancelOrder(order)}
@@ -772,12 +938,33 @@ export default function OrdersPage() {
                       Cancel Order
                     </button>
                   )}
+
+                  {/* Refund Button - শুধু Delivered স্ট্যাটাসে দেখাবে */}
+                  {order.hasDeliveredItems && (
+                    <button
+                      onClick={() => {
+                        handleViewDetails(order);
+                      }}
+                      className="
+                        flex-1 flex items-center justify-center gap-2
+                        text-[13px] font-medium
+                        text-[#EB5757]
+                        py-[10px] rounded-[10px]
+                        border border-[#FFC9C9]
+                        bg-[#FFECEC]
+                        hover:bg-[#FFE2E2] transition
+                      "
+                    >
+                      <RotateCcw size={16} className="text-[#EB5757]" />
+                      Request Refund
+                    </button>
+                  )}
                 </div>
               </div>
             ))}
           </div>
 
-          {/* ------------------- HELP SECTION ------------------- */}
+          {/* Help Section */}
           <div className="mt-10 flex justify-center">
             <div className="w-full max-w-[350px] bg-white rounded-[16px] border border-[#EEEAF7] shadow-[0_6px_18px_rgba(0,0,0,0.06)] p-6 text-center">
               <div className="h-[55px] w-[55px] mx-auto rounded-full bg-gradient-to-r from-[#9838E1] to-[#F68E44] flex items-center justify-center">
@@ -978,6 +1165,10 @@ export default function OrdersPage() {
                                       ? "bg-blue-100 text-blue-800"
                                       : product.vendorStatus === "processing"
                                       ? "bg-orange-100 text-orange-800"
+                                      : product.vendorStatus === "pending"
+                                      ? "bg-gray-100 text-gray-800"
+                                      : product.vendorStatus === "canceled"
+                                      ? "bg-red-100 text-red-800"
                                       : "bg-gray-100 text-gray-800"
                                   }`}
                                 >
@@ -1064,6 +1255,10 @@ export default function OrdersPage() {
                                     ? "bg-blue-100 text-blue-800"
                                     : vendor.status === "processing"
                                     ? "bg-orange-100 text-orange-800"
+                                    : vendor.status === "pending"
+                                    ? "bg-gray-100 text-gray-800"
+                                    : vendor.status === "canceled"
+                                    ? "bg-red-100 text-red-800"
                                     : "bg-gray-100 text-gray-800"
                                 }`}
                               >

@@ -2,16 +2,18 @@ import dotenv from "dotenv";
 import mongoose from "mongoose";
 import Stripe from "stripe";
 
+import Booking from "../../models/BookingModel.js";
 import Cart from "../../models/CartModel.js";
-import Order from "../../models/OrderModel.js";
+import {
+  default as Order,
+  default as OrderModel,
+} from "../../models/OrderModel.js";
 import OrderVendor from "../../models/OrderVendorModel.js";
 import Payment from "../../models/PaymentModel.js";
 import Product from "../../models/ProductModel.js";
 import User from "../../models/UserModel.js";
-import { toTwo } from "../../utils/money.js";
-import OrderModel from "../../models/OrderModel.js";
 import WishList from "../../models/WishListModel.js";
-import Booking from "../../models/BookingModel.js";
+import { toTwo } from "../../utils/money.js";
 
 dotenv.config();
 
@@ -462,4 +464,25 @@ export const MyOrder = async (req, res) => {
       message: error?.message,
     });
   }
-}
+};
+
+export const orderOverview = async (req, res) => {
+  try {
+    const id = req.params.id;
+    const totalOrders = await OrderModel.countDocuments({ customer: id });
+    const totalWishList = await WishList.countDocuments({ user: id });
+    const totalBooking = await Booking.countDocuments({ customer: id });
+
+    res.status(200).json({
+      message: "Success",
+      totalOrders,
+      totalWishList,
+      totalBooking,
+    });
+  } catch (error) {
+    res.status(500).json({
+      error,
+      message: error?.message,
+    });
+  }
+};
