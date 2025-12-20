@@ -9,6 +9,8 @@ import {
   uploadImageToImgBB,
 } from "../../utils/imageUpload.js";
 
+const toTwo = (v) => Number(Number(v || 0).toFixed(2));
+
 /**
  * Customer submits a refund request for an order/payment
  */
@@ -64,16 +66,16 @@ export const requestRefund = async (req, res) => {
           const prod = await Product.findById(it.productId).lean();
           const qty = Number(it.quantity || 1);
           const price = prod?.price || 0;
-          const itemAmount = price * qty;
+          const itemAmount = toTwo(price * qty);
           let itemShipping = 0;
           if (prod?.shippingType === "fixed")
-            itemShipping = (prod.shippingCost || 0) * qty;
+            itemShipping = toTwo((prod.shippingCost || 0) * qty);
 
-          refundAmount += itemAmount + itemShipping;
+          refundAmount = toTwo(refundAmount + itemAmount + itemShipping);
           refundItems.push({
             product: it.productId,
             quantity: qty,
-            price,
+            price: toTwo(price),
             amount: itemAmount,
             shippingAmount: itemShipping,
           });
@@ -110,7 +112,7 @@ export const requestRefund = async (req, res) => {
           order: order._id,
           orderVendor: ov._id,
           requestedBy: new mongoose.Types.ObjectId(userId),
-          amount: refundAmount,
+          amount: toTwo(refundAmount),
           currency: payment.currency || "usd",
           reason: its[0].reason || reason,
           evidence: uploadedEvidence,
@@ -128,7 +130,7 @@ export const requestRefund = async (req, res) => {
         seller: { $in: sellerIds },
       });
       for (const ov of orderVendors) {
-        const refundAmount = ov.amount + (ov.shippingAmount || 0);
+        const refundAmount = toTwo(ov.amount + (ov.shippingAmount || 0));
 
         // upload evidence if any
         let uploadedEvidence = [];
@@ -159,7 +161,7 @@ export const requestRefund = async (req, res) => {
           order: new mongoose.Types.ObjectId(order._id),
           orderVendor: new mongoose.Types.ObjectId(ov._id),
           requestedBy: new mongoose.Types.ObjectId(userId),
-          amount: refundAmount,
+          amount: toTwo(refundAmount),
           currency: payment.currency || "usd",
           reason,
           evidence: uploadedEvidence,
@@ -190,7 +192,7 @@ export const requestRefund = async (req, res) => {
         payment: payment._id,
         order: order._id,
         requestedBy: new mongoose.Types.ObjectId(userId),
-        amount: payment.amount,
+        amount: toTwo(payment.amount),
         currency: payment.currency || "usd",
         reason,
         evidence: finalEvidence,

@@ -8,6 +8,7 @@ import OrderVendor from "../../models/OrderVendorModel.js";
 import Payment from "../../models/PaymentModel.js";
 import Product from "../../models/ProductModel.js";
 import User from "../../models/UserModel.js";
+import { toTwo } from "../../utils/money.js";
 
 dotenv.config();
 
@@ -148,7 +149,7 @@ export const placeOrder = async (req, res) => {
 
     for (const p of products) {
       const sellerId = p.seller.toString();
-      const productAmount = p.price * p.quantity;
+      const productAmount = toTwo(p.price * p.quantity);
 
       // Determine product-level shipping
       let productShipping = 0;
@@ -158,7 +159,7 @@ export const placeOrder = async (req, res) => {
         .session(session)
         .lean();
       if (prodDoc?.shippingType === "fixed") {
-        productShipping = (prodDoc.shippingCost || 0) * p.quantity;
+        productShipping = toTwo((prodDoc.shippingCost || 0) * p.quantity);
       }
 
       if (!sellerMap[sellerId]) {
@@ -173,18 +174,22 @@ export const placeOrder = async (req, res) => {
       sellerMap[sellerId].products.push({
         product: p._id,
         quantity: p.quantity,
-        price: p.price,
+        price: toTwo(p.price),
         amount: productAmount,
         shipping: productShipping,
       });
 
-      sellerMap[sellerId].gross += productAmount;
-      sellerMap[sellerId].shipping += productShipping;
-      totalProductAmount += productAmount;
-      totalShippingAmount += productShipping;
+      sellerMap[sellerId].gross = toTwo(
+        sellerMap[sellerId].gross + productAmount
+      );
+      sellerMap[sellerId].shipping = toTwo(
+        sellerMap[sellerId].shipping + productShipping
+      );
+      totalProductAmount = toTwo(totalProductAmount + productAmount);
+      totalShippingAmount = toTwo(totalShippingAmount + productShipping);
     }
 
-    const totalAmount = totalProductAmount + totalShippingAmount;
+    const totalAmount = toTwo(totalProductAmount + totalShippingAmount);
 
     /* --------------------------------------------------
        STEP 5: CREATE ORDER
@@ -220,39 +225,43 @@ export const placeOrder = async (req, res) => {
     const sellerById = new Map(sellers.map((s) => [s._id.toString(), s]));
 
     for (const [sellerId, s] of Object.entries(sellerMap)) {
-      const commissionAmount = (s.gross * commissionPercent) / 100;
-      const commissionVATAmount = (commissionAmount * commissionVATRate) / 100;
-      const commissionTotal = commissionAmount + commissionVATAmount;
-      const sellerPayout = s.gross - commissionTotal - s.shipping;
+      const commissionAmount = toTwo((s.gross * commissionPercent) / 100);
+      const commissionVATAmount = toTwo(
+        (commissionAmount * commissionVATRate) / 100
+      );
+      const commissionTotal = toTwo(commissionAmount + commissionVATAmount);
+      const sellerPayout = toTwo(s.gross - commissionTotal - s.shipping);
 
-      totalCommissionAmount += commissionAmount;
-      totalCommissionVATAmount += commissionVATAmount;
+      totalCommissionAmount = toTwo(totalCommissionAmount + commissionAmount);
+      totalCommissionVATAmount = toTwo(
+        totalCommissionVATAmount + commissionVATAmount
+      );
 
       vendorDocs.push({
         order: order._id,
         orderId: order.orderId,
         seller: s.seller,
         products: s.products,
-        amount: s.gross,
-        shippingAmount: s.shipping || 0,
+        amount: toTwo(s.gross),
+        shippingAmount: toTwo(s.shipping || 0),
         commissionPercentage: commissionPercent,
-        commissionAmount,
+        commissionAmount: commissionAmount,
         commissionVATRate,
         commissionVATAmount: commissionVATAmount,
         commissionTotal,
-        sellerPayout,
+        sellerPayout: sellerPayout,
         netAmount: sellerPayout,
       });
 
       sellerBreakdown.push({
         sellerId,
-        gross: s.gross,
-        shipping: s.shipping || 0,
+        gross: toTwo(s.gross),
+        shipping: toTwo(s.shipping || 0),
         commissionPercentage: commissionPercent,
-        commissionAmount,
+        commissionAmount: commissionAmount,
         commissionVATRate,
-        commissionVATAmount,
-        commissionTotal,
+        commissionVATAmount: commissionVATAmount,
+        commissionTotal: commissionTotal,
         net: sellerPayout,
       });
     }
@@ -316,14 +325,14 @@ export const placeOrder = async (req, res) => {
           {
             order: order._id,
             buyer: userId,
-            amount: totalAmount,
+            amount: toTwo(totalAmount),
             currency: "usd",
             status: "pending",
             method: "stripe_checkout",
             stripeSessionId: checkoutSession.id,
             metadata: { sellerBreakdown },
-            commissionAmount: totalCommissionAmount,
-            commissionVATAmount: totalCommissionVATAmount,
+            commissionAmount: toTwo(totalCommissionAmount),
+            commissionVATAmount: toTwo(totalCommissionVATAmount),
             commissionVATRate: commissionVATRate,
           },
         ],

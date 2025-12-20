@@ -8,6 +8,7 @@ import Refund from "../../models/RefundModel.js";
 import Transaction from "../../models/TransactionModel.js";
 import WalletLedger from "../../models/WalletLedgerModel.js";
 import Wallet from "../../models/WalletModel.js";
+import { toTwo } from "../../utils/money.js";
 
 dotenv.config();
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
@@ -63,7 +64,7 @@ export const reviewRefund = async (req, res) => {
       const order = await Order.findById(refund.order).session(session);
       if (!payment || !order) throw new Error("Payment or order not found");
 
-      const refundAmount = Number(refund.amount);
+      const refundAmount = toTwo(refund.amount);
 
       let stripeRefund = null;
       if (payment.method === "stripe_checkout" && payment.paymentId) {
@@ -132,22 +133,26 @@ export const reviewRefund = async (req, res) => {
 
         for (const b of sellers) {
           const { sellerId, net } = b;
-          const desiredDeduct = net * ratio;
+          const desiredDeduct = toTwo(net * ratio);
 
           const wallet = walletByUser.get(
             sellerId?.toString ? sellerId.toString() : String(sellerId)
           );
           if (!wallet) continue;
 
-          const beforeReserved = wallet.reserved || 0;
-          const beforeCurrent = wallet.currentBalance || 0;
+          const beforeReserved = toTwo(wallet.reserved || 0);
+          const beforeCurrent = toTwo(wallet.currentBalance || 0);
 
           // Deduct from reserved first
-          const deductFromReserved = Math.min(beforeReserved, desiredDeduct);
-          const remaining = Math.max(0, desiredDeduct - deductFromReserved);
+          const deductFromReserved = toTwo(
+            Math.min(beforeReserved, desiredDeduct)
+          );
+          const remaining = toTwo(
+            Math.max(0, desiredDeduct - deductFromReserved)
+          );
 
-          const newReserved = beforeReserved - deductFromReserved;
-          const newCurrent = beforeCurrent - remaining; // may become negative
+          const newReserved = toTwo(beforeReserved - deductFromReserved);
+          const newCurrent = toTwo(beforeCurrent - remaining); // may become negative
 
           walletBulkOps.push({
             updateOne: {
@@ -163,7 +168,7 @@ export const reviewRefund = async (req, res) => {
             ledgerDocs.push({
               user: sellerId,
               type: "debit",
-              amount: deductFromReserved,
+              amount: toTwo(deductFromReserved),
               reason: "refund",
               refId: order._id,
             });
@@ -175,7 +180,7 @@ export const reviewRefund = async (req, res) => {
               user: sellerId,
               order: order._id,
               payment: payment._id,
-              amount: deductFromReserved,
+              amount: toTwo(deductFromReserved),
               currency: payment.currency,
               balanceBefore: beforeReserved,
               balanceAfter: newReserved,
@@ -186,7 +191,7 @@ export const reviewRefund = async (req, res) => {
             ledgerDocs.push({
               user: sellerId,
               type: "debit",
-              amount: remaining,
+              amount: toTwo(remaining),
               reason: "refund",
               refId: order._id,
             });
@@ -200,7 +205,7 @@ export const reviewRefund = async (req, res) => {
               user: sellerId,
               order: order._id,
               payment: payment._id,
-              amount: remaining,
+              amount: toTwo(remaining),
               currency: payment.currency,
               balanceBefore: beforeCurrent,
               balanceAfter: newCurrent,
@@ -209,7 +214,9 @@ export const reviewRefund = async (req, res) => {
 
           // Handle stripe fees allocation if seller absorbs fees
           if (feePolicy === "seller" && totalStripeFee > 0) {
-            const sellerShareFee = (totalStripeFee * (net || 0)) / totalNet;
+            const sellerShareFee = toTwo(
+              (totalStripeFee * (net || 0)) / totalNet
+            );
             // Deduct sellerShareFee from currentBalance
             const beforeCurr = newCurrent;
             const afterCurr = beforeCurr - sellerShareFee;
@@ -224,7 +231,7 @@ export const reviewRefund = async (req, res) => {
             ledgerDocs.push({
               user: sellerId,
               type: "debit",
-              amount: sellerShareFee,
+              amount: toTwo(sellerShareFee),
               reason: "refund_fee",
               refId: order._id,
             });
@@ -238,7 +245,7 @@ export const reviewRefund = async (req, res) => {
               user: sellerId,
               order: order._id,
               payment: payment._id,
-              amount: sellerShareFee,
+              amount: toTwo(sellerShareFee),
               currency: payment.currency,
               balanceBefore: beforeCurr,
               balanceAfter: afterCurr,
@@ -252,35 +259,54 @@ export const reviewRefund = async (req, res) => {
               seller: sellerId,
             }).session(session);
             if (ov) {
-              const amountDeduct = (ov.amount || 0) * ratio;
-              const shippingDeduct = (ov.shippingAmount || 0) * ratio;
-              const commissionDeduct = (ov.commissionAmount || 0) * ratio;
-              const commissionVATDeduct = (ov.commissionVATAmount || 0) * ratio;
+              const amountDeduct = toTwo((ov.amount || 0) * ratio);
+              const shippingDeduct = toTwo((ov.shippingAmount || 0) * ratio);
+              const commissionDeduct = toTwo(
+                (ov.commissionAmount || 0) * ratio
+              );
+              const commissionVATDeduct = toTwo(
+                (ov.commissionVATAmount || 0) * ratio
+              );
 
-              ov.amount = Math.max(0, (ov.amount || 0) - amountDeduct);
-              ov.shippingAmount = Math.max(
-                0,
-                (ov.shippingAmount || 0) - shippingDeduct
+              ov.amount = toTwo(
+                Math.max(0, toTwo((ov.amount || 0) - amountDeduct))
               );
-              ov.commissionAmount = Math.max(
-                0,
-                (ov.commissionAmount || 0) - commissionDeduct
+              ov.shippingAmount = toTwo(
+                Math.max(0, toTwo((ov.shippingAmount || 0) - shippingDeduct))
               );
-              ov.commissionVATAmount = Math.max(
-                0,
-                (ov.commissionVATAmount || 0) - commissionVATDeduct
+              ov.commissionAmount = toTwo(
+                Math.max(
+                  0,
+                  toTwo((ov.commissionAmount || 0) - commissionDeduct)
+                )
               );
-              ov.commissionTotal = Math.max(
-                0,
-                (ov.commissionTotal || 0) -
-                  (commissionDeduct + commissionVATDeduct)
+              ov.commissionVATAmount = toTwo(
+                Math.max(
+                  0,
+                  toTwo((ov.commissionVATAmount || 0) - commissionVATDeduct)
+                )
               );
-              ov.sellerPayout = Math.max(
-                -9999999,
-                (ov.sellerPayout || 0) -
-                  (amountDeduct +
-                    shippingDeduct -
-                    (commissionDeduct + commissionVATDeduct))
+              ov.commissionTotal = toTwo(
+                Math.max(
+                  0,
+                  toTwo(
+                    (ov.commissionTotal || 0) -
+                      toTwo(commissionDeduct + commissionVATDeduct)
+                  )
+                )
+              );
+              ov.sellerPayout = toTwo(
+                Math.max(
+                  -9999999,
+                  toTwo(
+                    (ov.sellerPayout || 0) -
+                      toTwo(
+                        amountDeduct +
+                          shippingDeduct -
+                          (commissionDeduct + commissionVATDeduct)
+                      )
+                  )
+                )
               );
               await ov.save({ session });
             }

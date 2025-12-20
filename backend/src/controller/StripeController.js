@@ -10,6 +10,7 @@ import Transaction from "../models/TransactionModel.js";
 import WalletLedger from "../models/WalletLedgerModel.js";
 import Wallet from "../models/WalletModel.js";
 import WebhookLog from "../models/WebhookLogModel.js";
+import { toTwo } from "../utils/money.js";
 
 dotenv.config();
 
@@ -69,13 +70,17 @@ export const stripeWebhook = async (req, res) => {
             ? JSON.parse(stripeSession.metadata.sellerBreakdown)
             : [];
 
-          const totalCommissionAmount = parsedSellerBreakdown.reduce(
-            (sum, s) => sum + (s.commissionAmount || 0),
-            0
+          const totalCommissionAmount = toTwo(
+            parsedSellerBreakdown.reduce(
+              (sum, s) => sum + (s.commissionAmount || 0),
+              0
+            )
           );
-          const totalCommissionVATAmount = parsedSellerBreakdown.reduce(
-            (sum, s) => sum + (s.commissionVATAmount || 0),
-            0
+          const totalCommissionVATAmount = toTwo(
+            parsedSellerBreakdown.reduce(
+              (sum, s) => sum + (s.commissionVATAmount || 0),
+              0
+            )
           );
 
           [payment] = await Payment.create(
@@ -83,14 +88,14 @@ export const stripeWebhook = async (req, res) => {
               {
                 order: order._id,
                 buyer: stripeSession.metadata.userId,
-                amount: stripeSession.amount_total / 100,
+                amount: toTwo(stripeSession.amount_total / 100),
                 currency: stripeSession.currency || "usd",
                 status: "pending",
                 method: "stripe_checkout",
                 stripeSessionId: stripeSession.id,
                 metadata: { sellerBreakdown: parsedSellerBreakdown },
-                commissionAmount: totalCommissionAmount,
-                commissionVATAmount: totalCommissionVATAmount,
+                commissionAmount: toTwo(totalCommissionAmount),
+                commissionVATAmount: toTwo(totalCommissionVATAmount),
               },
             ],
             { session }
@@ -153,8 +158,8 @@ export const stripeWebhook = async (req, res) => {
             const wallet = walletByUser.get(key);
             if (!wallet) continue;
 
-            const before = wallet.reserved || 0;
-            const after = before + net;
+            const before = toTwo(wallet.reserved || 0);
+            const after = toTwo(before + net);
 
             walletBulkOps.push({
               updateOne: {
@@ -166,7 +171,7 @@ export const stripeWebhook = async (req, res) => {
             ledgerDocs.push({
               seller: new mongoose.Types.ObjectId(sellerId),
               type: "credit",
-              amount: net,
+              amount: toTwo(net),
               reason: "sale",
               refId: new mongoose.Types.ObjectId(order._id),
             });
@@ -178,10 +183,10 @@ export const stripeWebhook = async (req, res) => {
               user: new mongoose.Types.ObjectId(sellerId),
               order: new mongoose.Types.ObjectId(order._id),
               payment: new mongoose.Types.ObjectId(payment._id),
-              amount: net,
+              amount: toTwo(net),
               currency: payment.currency,
-              balanceBefore: before,
-              balanceAfter: after,
+              balanceBefore: toTwo(before),
+              balanceAfter: toTwo(after),
             });
           }
 
