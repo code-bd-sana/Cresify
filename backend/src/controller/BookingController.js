@@ -3,7 +3,9 @@ import mongoose from "mongoose";
 import Stripe from "stripe";
 import Booking from "../models/BookingModel.js";
 import Payment from "../models/PaymentModel.js";
+import Transaction from "../models/TransactionModel.js";
 import User from "../models/UserModel.js";
+import Wallet from "../models/WalletModel.js";
 import { toTwo } from "../utils/money.js";
 
 dotenv.config();
@@ -347,36 +349,207 @@ export const saveBooking = async (req, res) => {
 };
 
 /**
- * Change the status of a booking
+ * Update booking status (provider accepts/rejects)
+ *
  * @route PUT /booking
- * @param {string} req.body.id - Booking ID
- * @param {string} req.body.status - New status
- * @returns {Object} 200 - Success message and update result
+ * @param {string} req.params.bookingId - Booking ID
+ * @param {string} req.body.status - New
+ * status: 'accept' or 'rejected'
+ * @returns {Object} 200 - Success message and updated booking
  */
-export const changeStatus = async (req, res) => {
+export const updateBookingStatus = async (req, res) => {
+  const session = await mongoose.startSession();
+
   try {
-    const { id, status } = req.body;
+    const { bookingId } = req.params;
+    const { status } = req.body;
+    const providerId = req.user?.userId; // Assuming user ID from auth middleware
 
-    const updated = await Booking.updateOne(
-      {
-        _id: id,
-      },
-      {
-        $set: {
-          status: status,
-        },
+    if (!["accept", "rejected"].includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid status",
+      });
+    }
+
+    session.startTransaction();
+
+    const booking = await Booking.findOne({
+      _id: bookingId,
+      provider: providerId,
+    }).session(session);
+
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: "Booking not found",
+      });
+    }
+
+    if (booking.status !== "pending") {
+      return res.status(400).json({
+        success: false,
+        message: "Booking status cannot be changed",
+      });
+    }
+
+    // If rejecting a paid booking, need to process refund
+    if (status === "rejected" && booking.paymentStatus === "completed") {
+      const payment = await Payment.findOne({
+        booking: bookingId,
+        status: "paid",
+      }).session(session);
+
+      if (payment) {
+        // Process refund through Stripe
+        if (payment.stripePaymentIntent) {
+          const refund = await stripe.refunds.create({
+            payment_intent: payment.stripePaymentIntent,
+          });
+
+          payment.status = "refunded";
+          payment.metadata = {
+            ...payment.metadata,
+            refundId: refund.id,
+            refundedAt: new Date(),
+          };
+          await payment.save({ session });
+
+          // Update wallet balance (remove reserved amount)
+          await Wallet.findOneAndUpdate(
+            { user: payment.provider },
+            { $inc: { reserved: -payment.providerPayout } },
+            { session }
+          );
+
+          // Create refund transaction
+          await Transaction.create(
+            [
+              {
+                transactionId: `refund_${Date.now()}_${payment._id}`,
+                type: "refund",
+                user: payment.provider,
+                payment: payment._id,
+                amount: -payment.providerPayout,
+                currency: payment.currency,
+                metadata: {
+                  bookingId: booking._id,
+                  refundId: refund.id,
+                  reason: "provider_rejection",
+                },
+              },
+            ],
+            { session }
+          );
+        }
       }
-    );
+    }
 
-    res.status(200).json({
-      message: "Success",
-      data: updated,
+    booking.status = status;
+    await booking.save({ session });
+
+    await session.commitTransaction();
+
+    return res.json({
+      success: true,
+      message: `Booking ${status} successfully`,
+      booking,
     });
   } catch (error) {
-    res.status(500).json({
-      error,
-      message: error?.message,
+    console.error("Update booking status error:", error);
+    await session.abortTransaction();
+
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+      error: error.message,
     });
+  } finally {
+    session.endSession();
+  }
+};
+
+/**
+ * Complete service and release provider payout
+ */
+export const completeService = async (req, res) => {
+  const session = await mongoose.startSession();
+
+  try {
+    const { bookingId } = req.params;
+    const providerId = req.user?.userId;
+
+    session.startTransaction();
+
+    const booking = await Booking.findOne({
+      _id: bookingId,
+      provider: providerId,
+      status: "accept",
+    }).session(session);
+
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: "Booking not found or not accepted",
+      });
+    }
+
+    const payment = await Payment.findOne({
+      booking: bookingId,
+      status: "paid",
+    }).session(session);
+
+    if (!payment) {
+      return res.status(400).json({
+        success: false,
+        message: "Payment not found or not paid",
+      });
+    }
+
+    // Release reserved funds to available balance
+    await Wallet.findOneAndUpdate(
+      { user: payment.provider },
+      { $inc: { reserved: -payment.providerPayout } },
+      { session }
+    );
+
+    // Create transaction for released funds
+    await Transaction.create(
+      [
+        {
+          transactionId: `release_${Date.now()}_${payment._id}`,
+          type: "release",
+          user: payment.provider,
+          payment: payment._id,
+          amount: payment.providerPayout,
+          currency: payment.currency,
+          metadata: {
+            bookingId: booking._id,
+            serviceCompleted: true,
+            releasedAt: new Date(),
+          },
+        },
+      ],
+      { session }
+    );
+
+    await session.commitTransaction();
+
+    return res.json({
+      success: true,
+      message: "Service completed and funds released",
+    });
+  } catch (error) {
+    console.error("Complete service error:", error);
+    await session.abortTransaction();
+
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+      error: error.message,
+    });
+  } finally {
+    session.endSession();
   }
 };
 
