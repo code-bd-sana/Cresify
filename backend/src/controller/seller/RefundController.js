@@ -85,11 +85,15 @@ export const listSellerRefunds = async (req, res) => {
  */
 export const getSellerRefund = async (req, res) => {
   try {
+    const refundId = req.params.refundId;
     const sellerId = req.params.sellerId;
-    if (!sellerId)
-      return res.status(400).json({ message: " sellerId required" });
 
-    const refund = await Refund.findById(id)
+    if (!refundId || !sellerId)
+      return res
+        .status(400)
+        .json({ message: "refundId and sellerId required" });
+
+    const refund = await Refund.findById(refundId)
       .populate({
         path: "orderVendor",
         populate: { path: "seller", select: "name shopName shopLogo" },
