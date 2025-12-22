@@ -121,8 +121,10 @@ export const requestRefund = async (req, res) => {
       // Full vendor refunds requested
       const orderVendors = await OrderVendorModel.find({
         order: new mongoose.Types.ObjectId(orderId),
-        seller: { $in: sellerIds },
+        // seller: { $in: sellerIds.map((id) => new mongoose.Types.ObjectId(id)) },
       });
+      
+
       for (const ov of orderVendors) {
         const refundAmount = toTwo(ov.amount + (ov.shippingAmount || 0));
 
