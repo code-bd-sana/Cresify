@@ -11,6 +11,7 @@ import Wishlist from "@/components/profile/Wishlist";
 import ProfileHeader from "@/components/profile/ProfileHeader";
 import PaymentMethods from "@/components/profile/PaymentMethods";
 import Chat from "@/components/profile/Chat";
+import RefundRequest from "@/components/profile/RefundRequest";
 
 export default function ProfileLayout() {
   const [active, setActive] = useState("overview");
@@ -32,6 +33,8 @@ export default function ProfileLayout() {
         return <PaymentMethods />;
       case "chat":
         return <Chat />;
+      case "refund":
+        return <RefundRequest />;
       //   default:
       //     return <ProfileOverview />;
     }

@@ -215,34 +215,37 @@ export default function ProductsPage({ searchTerm = "" }) {
               </div>
 
               {/* Real Range Slider */}
-              <Range
-                step={1}
-                min={0}
-                max={1000}
-                values={price}
-                onChange={setPrice}
-                renderTrack={({ props, children }) => (
-                  <div
-                    {...props}
-                    className="h-[7px] rounded-full bg-[#E7DFFF] relative mb-3"
-                  >
-                    <div
-                      className="absolute h-full rounded-full bg-gradient-to-r from-[#9838E1] to-[#F68E44]"
-                      style={{
-                        left: `${(price[0] / 1000) * 100}%`,
-                        width: `${((price[1] - price[0]) / 1000) * 100}%`,
-                      }}
-                    />
-                    {children}
-                  </div>
-                )}
-                renderThumb={({ props }) => (
-                  <div
-                    {...props}
-                    className="h-[16px] w-[16px] bg-white border border-[#9838E1] rounded-full shadow-[0_2px_6px_rgba(0,0,0,0.15)]"
-                  />
-                )}
-              />
+             <div className="w-full overflow-hidden px-1">
+  <Range
+    step={1}
+    min={0}
+    max={1000}
+    values={price}
+    onChange={setPrice}
+    renderTrack={({ props, children }) => (
+      <div
+        {...props}
+        className="h-[7px] w-full rounded-full bg-[#E7DFFF] relative mb-3"
+      >
+        <div
+          className="absolute h-full rounded-full bg-gradient-to-r from-[#9838E1] to-[#F68E44]"
+          style={{
+            left: `${(price[0] / 1000) * 100}%`,
+            width: `${((price[1] - price[0]) / 1000) * 100}%`,
+          }}
+        />
+        {children}
+      </div>
+    )}
+    renderThumb={({ props }) => (
+      <div
+        {...props}
+        className="h-[16px] w-[16px] bg-white border border-[#9838E1] rounded-full shadow-[0_2px_6px_rgba(0,0,0,0.15)]"
+      />
+    )}
+  />
+</div>
+
 
               {/* Inputs */}
               <div className="flex items-center gap-3">
@@ -262,7 +265,7 @@ export default function ProductsPage({ searchTerm = "" }) {
             </div>
 
             {/* Qualification */}
-            <div className="mb-8">
+            {/* <div className="mb-8">
               <p className="text-[14px] font-semibold text-[#1B1B1B] mb-3">
                 Qualification
               </p>
@@ -298,7 +301,7 @@ export default function ProductsPage({ searchTerm = "" }) {
                   </div>
                 ))}
               </div>
-            </div>
+            </div> */}
 
             {/* Location */}
             <div className="mb-7">

@@ -17,6 +17,7 @@ import {
   FiStar,
 } from "react-icons/fi";
 import { SlCalender } from "react-icons/sl";
+import { TbReceiptRefund } from "react-icons/tb";
 
 export default function Sidebar({ open, onClose }) {
   const pathname = usePathname();
@@ -55,7 +56,7 @@ export default function Sidebar({ open, onClose }) {
     { label: "Content", icon: FiCreditCard, path: "/dashboard/content" },
 
     // { label: "Reviews", icon: FiStar, path: "/dashboard/reviews" },
-    { label: "Messages", icon: FiMessageSquare, path: "/dashboard/messages" },
+    { label: "Refund", icon: TbReceiptRefund, path: "/dashboard/adminRefund" },
     { label: "Settings", icon: FiSettings, path: "/dashboard/settings" },
   ];
 
@@ -66,6 +67,7 @@ export default function Sidebar({ open, onClose }) {
     { label: "Orders", icon: FiShoppingCart, path: "/dashboard/orders" },
     { label: "Store Profile", icon: FiUser, path: "/dashboard/store-profile" },
     { label: "Payments", icon: FiCreditCard, path: "/dashboard/payments" },
+    { label: "refund", icon: TbReceiptRefund, path: "/dashboard/refund" },
 
     // { label: "Analytics", icon: FiBarChart2, path: "/dashboard/analytics" },
     { label: "Reviews", icon: FiStar, path: "/dashboard/reviews" },

@@ -597,7 +597,7 @@ export default function CombinedCartCheckoutPage() {
                                   stroke='#FFC107'
                                 />
                                 <span className='text-gray-700 text-sm'>
-                                  {item.product.rating.toFixed(1)} (0 reviews)
+                                  {item?.product?.rating?.toFixed(1)} (0 reviews)
                                 </span>
                               </div>
 

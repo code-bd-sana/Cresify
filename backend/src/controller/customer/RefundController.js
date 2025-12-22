@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import Order from "../../models/OrderModel.js";
 import OrderVendorModel from "../../models/OrderVendorModel.js";
 import Payment from "../../models/PaymentModel.js";
@@ -7,6 +8,9 @@ import {
   extractBase64FromDataURL,
   uploadImageToImgBB,
 } from "../../utils/imageUpload.js";
+import OrderModel from "../../models/OrderModel.js";
+
+const toTwo = (v) => Number(Number(v || 0).toFixed(2));
 
 /**
  * Customer submits a refund request for an order/payment
@@ -24,16 +28,32 @@ export const requestRefund = async (req, res) => {
       return res.status(400).json({ message: "sellerIds must be an array" });
     }
 
-    /**
-     * Validate evidence format
-     */
-    if (evidence !== undefined && !Array.isArray(evidence)) {
-      return res.status(400).json({ message: "Evidence must be an array" });
+    // If sellerIds provided and non-empty, require evidence to be a non-empty array
+    if (Array.isArray(sellerIds) && sellerIds.length) {
+      if (!Array.isArray(evidence) || evidence.length === 0) {
+        return res.status(400).json({
+          message:
+            "Evidence is required and must be a non-empty array when requesting per-seller refunds",
+        });
+      }
+    }
+
+    // If items provided, require each item to include a non-empty evidence array
+    if (Array.isArray(items) && items.length) {
+      for (const it of items) {
+        if (!Array.isArray(it.evidence) || it.evidence.length === 0) {
+          return res.status(400).json({
+            message: "Each item must include a non-empty evidence array",
+          });
+        }
+      }
     }
 
     // Load payment and order
-    const payment = await Payment.findOne({ paymentId });
-    const order = await Order.findById(orderId);
+    const payment = await Payment.findById(
+      new mongoose.Types.ObjectId(paymentId)
+    );
+    const order = await Order.findById(new mongoose.Types.ObjectId(orderId));
 
     if (!payment || !order) {
       return res.status(404).json({ message: "Payment or order not found" });
@@ -63,24 +83,36 @@ export const requestRefund = async (req, res) => {
           const prod = await Product.findById(it.productId).lean();
           const qty = Number(it.quantity || 1);
           const price = prod?.price || 0;
-          const itemAmount = price * qty;
+          const itemAmount = toTwo(price * qty);
           let itemShipping = 0;
           if (prod?.shippingType === "fixed")
-            itemShipping = (prod.shippingCost || 0) * qty;
+            itemShipping = toTwo((prod.shippingCost || 0) * qty);
 
-          refundAmount += itemAmount + itemShipping;
+          refundAmount = toTwo(refundAmount + itemAmount + itemShipping);
           refundItems.push({
             product: it.productId,
             quantity: qty,
-            price,
+            price: toTwo(price),
             amount: itemAmount,
             shippingAmount: itemShipping,
           });
         }
 
-        // handle evidence upload if provided (evidence may be base64 data URLs)
+        // handle evidence upload: collect evidence from all items for this vendor
         let uploadedEvidence = [];
-        const ev = its[0].evidence || evidence || [];
+        // Each item is required to have an `evidence` array per validation above.
+        // Aggregate all item evidence entries for this vendor.
+        let ev = its.flatMap((i) =>
+          Array.isArray(i.evidence) ? i.evidence : []
+        );
+        // As a safety fallback, include global `evidence` if present and ev is empty
+        if (
+          (!Array.isArray(ev) || ev.length === 0) &&
+          Array.isArray(evidence)
+        ) {
+          ev = ev.concat(evidence);
+        }
+
         if (Array.isArray(ev) && ev.length) {
           for (const e of ev) {
             try {
@@ -90,6 +122,7 @@ export const requestRefund = async (req, res) => {
                 type: e.type || "image",
                 url: uploaded.url,
                 note: e.note,
+                uploadedBy: new mongoose.Types.ObjectId(userId),
               });
             } catch (err) {
               // ignore image upload failure for now, keep original url if present
@@ -97,6 +130,7 @@ export const requestRefund = async (req, res) => {
                 type: e.type || "image",
                 url: e.url || null,
                 note: e.note,
+                uploadedBy: new mongoose.Types.ObjectId(userId),
               });
             }
           }
@@ -106,8 +140,8 @@ export const requestRefund = async (req, res) => {
           payment: payment._id,
           order: order._id,
           orderVendor: ov._id,
-          requestedBy: userId,
-          amount: refundAmount,
+          requestedBy: new mongoose.Types.ObjectId(userId),
+          amount: toTwo(refundAmount),
           currency: payment.currency || "usd",
           reason: its[0].reason || reason,
           evidence: uploadedEvidence,
@@ -119,15 +153,19 @@ export const requestRefund = async (req, res) => {
         createdRefunds.push(refundDoc);
       }
     } else if (Array.isArray(sellerIds) && sellerIds.length) {
-      // Full vendor refunds requested
+      // Full vendor refunds requested for specific sellers
+      // const sellerObjectIds = sellerIds.map(
+      //   (s) => new mongoose.Types.ObjectId(s)
+      // );
       const orderVendors = await OrderVendorModel.find({
-        order: orderId,
-        seller: { $in: sellerIds },
+        order: new mongoose.Types.ObjectId(orderId),
+        // seller: { $in: sellerObjectIds },
       });
-      for (const ov of orderVendors) {
-        const refundAmount = ov.amount + (ov.shippingAmount || 0);
 
-        // upload evidence if any
+      for (const ov of orderVendors) {
+        const refundAmount = toTwo(ov.amount + (ov.shippingAmount || 0));
+
+        // upload evidence (evidence is required when sellerIds provided per validation above)
         let uploadedEvidence = [];
         if (Array.isArray(evidence) && evidence.length) {
           for (const e of evidence) {
@@ -138,23 +176,25 @@ export const requestRefund = async (req, res) => {
                 type: e.type || "image",
                 url: uploaded.url,
                 note: e.note,
+                uploadedBy: new mongoose.Types.ObjectId(userId),
               });
             } catch (err) {
               uploadedEvidence.push({
                 type: e.type || "image",
                 url: e.url || null,
                 note: e.note,
+                uploadedBy: new mongoose.Types.ObjectId(userId),
               });
             }
           }
         }
 
         const refundDoc = await Refund.create({
-          payment: payment._id,
-          order: order._id,
-          orderVendor: ov._id,
-          requestedBy: userId,
-          amount: refundAmount,
+          payment: new mongoose.Types.ObjectId(payment._id),
+          order: new mongoose.Types.ObjectId(order._id),
+          orderVendor: new mongoose.Types.ObjectId(ov._id),
+          requestedBy: new mongoose.Types.ObjectId(userId),
+          amount: toTwo(refundAmount),
           currency: payment.currency || "usd",
           reason,
           evidence: uploadedEvidence,
@@ -165,14 +205,30 @@ export const requestRefund = async (req, res) => {
       }
     } else {
       // Generic full order refund request
+      // normalize evidence to ensure uploadedBy is present
+      let finalEvidence = [];
+      if (Array.isArray(evidence) && evidence.length) {
+        for (const e of evidence) {
+          if (typeof e === "string") {
+            finalEvidence.push({
+              type: "image",
+              url: e,
+              uploadedBy: new mongoose.Types.ObjectId(userId),
+            });
+          } else {
+            finalEvidence.push({ ...e, uploadedBy: e.uploadedBy || userId });
+          }
+        }
+      }
+
       const refundDoc = await Refund.create({
         payment: payment._id,
         order: order._id,
-        requestedBy: userId,
-        amount: payment.amount,
+        requestedBy: new mongoose.Types.ObjectId(userId),
+        amount: toTwo(payment.amount),
         currency: payment.currency || "usd",
         reason,
-        evidence: evidence || [],
+        evidence: finalEvidence,
         status: "requested",
       });
       createdRefunds.push(refundDoc);
@@ -189,19 +245,31 @@ export const requestRefund = async (req, res) => {
   }
 };
 
+/*
+ * List refunds requested by the logged-in customer
+ */
 export const listMyRefunds = async (req, res) => {
   try {
     const userId = req.query.userId;
     if (!userId) return res.status(400).json({ message: "userId required" });
 
-    const refunds = await Refund.find({ requestedBy: userId })
+    const refunds = await Refund.find({
+      requestedBy: new mongoose.Types.ObjectId(userId),
+    })
       .sort({ createdAt: -1 })
-      .populate("order")
+      .populate("order", "amount paymentMethod paymentStatus orderId")
       .populate({
         path: "orderVendor",
         populate: { path: "seller", select: "name shopName shopLogo" },
       })
+      .populate({
+        path: "evidence",
+        populate: { path: "evidence.uploadedBy", select: "firstName lastName" },
+      })
       .populate({ path: "items.product", select: "name price image" });
+
+
+      console.log(refunds);
 
     return res.json({ refunds });
   } catch (err) {
@@ -212,6 +280,9 @@ export const listMyRefunds = async (req, res) => {
   }
 };
 
+/**
+ * Get refund detail for a customer
+ */
 export const getRefund = async (req, res) => {
   try {
     const id = req.params.id;

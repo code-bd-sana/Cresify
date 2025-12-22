@@ -1,50 +1,102 @@
 "use client";
 
-import { useState } from "react";
-import { FiChevronLeft, FiChevronRight, FiClock } from "react-icons/fi";
+import { useEffect, useState } from "react";
+import { FiClock } from "react-icons/fi";
 
 export default function AvailabilityPage() {
-  // simple UI states (for highlight only)
-  const [selectedDate, setSelectedDate] = useState("7");
+  // Calendar state - only current month
+  const [selectedDate, setSelectedDate] = useState(new Date());
   const [selectedDuration, setSelectedDuration] = useState("60m");
+  const [calendarDays, setCalendarDays] = useState([]);
 
-  const calendarDays = [
-    { label: "30", muted: true },
-    { label: "31", muted: true },
-    { label: "1", highlight: true },
-    { label: "2" },
-    { label: "3", highlight: true },
-    { label: "4", highlight: true },
-    { label: "5" },
-    { label: "6" },
-    { label: "7", highlight: true },
-    { label: "8", highlight: true },
-    { label: "9", highlight: true },
-    { label: "10" },
-    { label: "11" },
-    { label: "12" },
-    { label: "13" },
-    { label: "14" },
-    { label: "15" },
-    { label: "16" },
-    { label: "17" },
-    { label: "18" },
-    { label: "19" },
-    { label: "20" },
-    { label: "21" },
-    { label: "22" },
-    { label: "23" },
-    { label: "24" },
-    { label: "7", isSecondRow: true }, // outlined one in screenshot
-    { label: "26" },
-    { label: "27" },
-    { label: "28" },
-    { label: "29", highlight: true },
-    { label: "30" },
-    { label: "01", muted: true },
-    { label: "02", muted: true },
-    { label: "03", muted: true },
-  ];
+  // Get current date
+  const today = new Date();
+  const currentYear = today.getFullYear();
+  const currentMonth = today.getMonth();
+
+  // Generate calendar days for current month only
+  useEffect(() => {
+    generateCalendarDays();
+  }, [selectedDate]);
+
+  // Calendar functions
+  const getDaysInMonth = (year, month) => {
+    return new Date(year, month + 1, 0).getDate();
+  };
+
+  const getFirstDayOfMonth = (year, month) => {
+    return new Date(year, month, 1).getDay();
+  };
+
+  const generateCalendarDays = () => {
+    const daysInMonth = getDaysInMonth(currentYear, currentMonth);
+    const firstDayOfMonth = getFirstDayOfMonth(currentYear, currentMonth);
+
+    const days = [];
+
+    // Add empty cells for days before the 1st of the month
+    for (let i = 0; i < firstDayOfMonth; i++) {
+      days.push({
+        label: "",
+        isCurrentMonth: false,
+        isEmpty: true,
+      });
+    }
+
+    // Add current month days
+    for (let i = 1; i <= daysInMonth; i++) {
+      const isToday =
+        today.getDate() === i &&
+        today.getMonth() === currentMonth &&
+        today.getFullYear() === currentYear;
+
+      const isSelected =
+        selectedDate.getDate() === i &&
+        selectedDate.getMonth() === currentMonth &&
+        selectedDate.getFullYear() === currentYear;
+
+      days.push({
+        label: String(i),
+        isCurrentMonth: true,
+        isToday,
+        isSelected,
+        isEmpty: false,
+      });
+    }
+
+    // Add highlight for specific days (for demo purposes)
+    const highlightedDays = [7]; // Days to highlight
+    days.forEach((day) => {
+      if (day.isCurrentMonth && highlightedDays.includes(parseInt(day.label))) {
+        day.isHighlighted = true;
+      }
+    });
+
+    setCalendarDays(days);
+  };
+
+  const handleDateSelect = (day) => {
+    if (day.isCurrentMonth) {
+      const newSelectedDate = new Date(
+        currentYear,
+        currentMonth,
+        parseInt(day.label)
+      );
+      setSelectedDate(newSelectedDate);
+    }
+  };
+
+  // Format month and year for display
+  const formatMonthYear = () => {
+    const options = { month: "long", year: "numeric" };
+    return today.toLocaleDateString("en-US", options);
+  };
+
+  // Format selected date for display
+  const formatSelectedDate = () => {
+    const options = { weekday: "long", month: "short", day: "numeric" };
+    return selectedDate.toLocaleDateString("en-US", options);
+  };
 
   const slots = [
     { time: "09:00 AM", name: "Makbul Hossain Tamim", status: "Booked" },
@@ -70,15 +122,11 @@ export default function AvailabilityPage() {
               Select Date &amp; Time
             </h2>
 
-            {/* Month header */}
-            <div className='flex items-center justify-between mb-3'>
-              <button className='w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100'>
-                <FiChevronLeft className='text-gray-500' />
-              </button>
-              <p className='text-sm font-medium text-gray-800'>October 2024</p>
-              <button className='w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100'>
-                <FiChevronRight className='text-gray-500' />
-              </button>
+            {/* Month header - Only current month, no navigation */}
+            <div className='flex items-center justify-center mb-3'>
+              <p className='text-sm font-medium text-gray-800'>
+                {formatMonthYear()}
+              </p>
             </div>
 
             {/* Week days header */}
@@ -92,32 +140,37 @@ export default function AvailabilityPage() {
               <span>Sa</span>
             </div>
 
-            {/* Calendar days */}
+            {/* Calendar days - Only current month */}
             <div className='grid grid-cols-7 gap-y-2 text-[13px]'>
-              {calendarDays.map((d, idx) => {
-                const isSelected =
-                  d.label === selectedDate &&
-                  !d.muted &&
-                  !d.highlight &&
-                  !d.isSecondRow;
-                const isOutline = d.label === "7" && d.isSecondRow;
-                const isPurpleDot = d.highlight;
+              {calendarDays.map((day, idx) => {
+                if (day.isEmpty) {
+                  return (
+                    <div
+                      key={idx}
+                      className='flex items-center justify-center h-10'></div>
+                  );
+                }
 
                 return (
                   <button
                     key={idx}
                     type='button'
-                    onClick={() => setSelectedDate(d.label)}
+                    onClick={() => handleDateSelect(day)}
                     className={[
                       "flex items-center justify-center h-10 rounded-xl transition",
-                      d.muted ? "text-[#F97316]" : "text-gray-800",
-                      isPurpleDot ? "text-white bg-[#8B5CF6]" : "",
-                      isOutline ? "border border-[#C4B5FD] text-[#8B5CF6]" : "",
-                      !isPurpleDot && !isOutline && !d.muted
+                      "text-gray-800",
+                      day.isHighlighted ? "text-white bg-[#8B5CF6]" : "",
+                      day.isSelected
+                        ? "bg-purple-600 text-white font-semibold"
+                        : "",
+                      day.isToday && !day.isSelected
+                        ? "ring-2 ring-purple-400"
+                        : "",
+                      !day.isSelected && !day.isHighlighted
                         ? "hover:bg-gray-100"
                         : "",
                     ].join(" ")}>
-                    {d.label}
+                    {day.label}
                   </button>
                 );
               })}
@@ -127,7 +180,7 @@ export default function AvailabilityPage() {
           {/* RIGHT: SLOTS CARD */}
           <div className='bg-white rounded-2xl border border-[#EFE9FF] shadow-sm p-5 flex flex-col'>
             <h2 className='text-[18px] font-semibold text-gray-900 mb-4'>
-              Friday, Oct 07
+              {formatSelectedDate()}
             </h2>
 
             <div className='space-y-2 flex-1'>

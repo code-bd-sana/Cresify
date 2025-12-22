@@ -2,6 +2,7 @@ import mongoose, { Schema } from "mongoose";
 
 const evidenceSchema = new Schema(
   {
+    uploadedBy: { type: Schema.Types.ObjectId, ref: "User" },
     type: { type: String },
     url: { type: String },
     note: { type: String },
@@ -13,7 +14,7 @@ const refundSchema = new Schema(
   {
     refundId: { type: String, trim: true }, // Stripe refund ID once processed
     payment: { type: Schema.Types.ObjectId, ref: "Payment", required: true },
-    order: { type: Schema.Types.ObjectId, ref: "order", required: true },
+    order: { type: Schema.Types.ObjectId, ref: "Order", required: true },
     // If refund is for a specific vendor's part of an order
     orderVendor: { type: Schema.Types.ObjectId, ref: "OrderVendor" },
 
@@ -52,6 +53,7 @@ const refundSchema = new Schema(
       ],
       default: "requested",
     },
+    sellerNotes: { type: String },
     adminNotes: { type: String },
     processedBy: { type: Schema.Types.ObjectId, ref: "User" },
     processedAt: { type: Date },

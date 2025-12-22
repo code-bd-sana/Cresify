@@ -1,5 +1,5 @@
 "use client";
-import { useGetSellerOrdersQuery, useUpdateOrderStatusMutation } from "@/feature/seller/SellerApi";
+import {  useGetSellerOrdersQuery, useUpdateOrderStatusMutation } from "@/feature/seller/SellerApi";
 import { useSession } from "next-auth/react";
 import {
   FiSearch,
@@ -47,6 +47,8 @@ export default function OrdersPage() {
     limit,
   });
 
+  console.log(data, "allah please");
+
   // const [updateOrderStatus, { isLoading: isUpdating }] = useUpdateOrderStatusMutation();
 
   const [updateOrderStatus, {isLoading:updateLoading}] = useUpdateOrderStatusMutation()
@@ -91,7 +93,7 @@ export default function OrdersPage() {
     try {
       console.log(selectedOrder, newStatus, "In sha allah");
       const data = {
-        id:selectedOrder,
+        id:selectedOrder?._id,
         status: newStatus
       }
 
@@ -598,6 +600,23 @@ export default function OrdersPage() {
                         )}
                       </span>
                     </div>
+                  </div>
+                </div>
+              </div>
+           <div className="bg-gray-50 p-4 rounded-lg">
+                <h3 className="font-semibold text-gray-900 mb-3">Seller Information</h3>
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Name</span>
+                    <span className="font-medium">{selectedOrder.seller?.name}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Email</span>
+                    <span className="font-medium">{selectedOrder.seller?.email}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Phone</span>
+                    <span className="font-medium">{selectedOrder.seller?.phoneNumber}</span>
                   </div>
                 </div>
               </div>

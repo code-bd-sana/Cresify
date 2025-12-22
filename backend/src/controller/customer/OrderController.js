@@ -2,12 +2,18 @@ import dotenv from "dotenv";
 import mongoose from "mongoose";
 import Stripe from "stripe";
 
+import Booking from "../../models/BookingModel.js";
 import Cart from "../../models/CartModel.js";
-import Order from "../../models/OrderModel.js";
+import {
+  default as Order,
+  default as OrderModel,
+} from "../../models/OrderModel.js";
 import OrderVendor from "../../models/OrderVendorModel.js";
 import Payment from "../../models/PaymentModel.js";
 import Product from "../../models/ProductModel.js";
 import User from "../../models/UserModel.js";
+import WishList from "../../models/WishListModel.js";
+import { toTwo } from "../../utils/money.js";
 
 dotenv.config();
 
@@ -148,7 +154,7 @@ export const placeOrder = async (req, res) => {
 
     for (const p of products) {
       const sellerId = p.seller.toString();
-      const productAmount = p.price * p.quantity;
+      const productAmount = toTwo(p.price * p.quantity);
 
       // Determine product-level shipping
       let productShipping = 0;
@@ -158,7 +164,7 @@ export const placeOrder = async (req, res) => {
         .session(session)
         .lean();
       if (prodDoc?.shippingType === "fixed") {
-        productShipping = (prodDoc.shippingCost || 0) * p.quantity;
+        productShipping = toTwo((prodDoc.shippingCost || 0) * p.quantity);
       }
 
       if (!sellerMap[sellerId]) {
@@ -173,18 +179,22 @@ export const placeOrder = async (req, res) => {
       sellerMap[sellerId].products.push({
         product: p._id,
         quantity: p.quantity,
-        price: p.price,
+        price: toTwo(p.price),
         amount: productAmount,
         shipping: productShipping,
       });
 
-      sellerMap[sellerId].gross += productAmount;
-      sellerMap[sellerId].shipping += productShipping;
-      totalProductAmount += productAmount;
-      totalShippingAmount += productShipping;
+      sellerMap[sellerId].gross = toTwo(
+        sellerMap[sellerId].gross + productAmount
+      );
+      sellerMap[sellerId].shipping = toTwo(
+        sellerMap[sellerId].shipping + productShipping
+      );
+      totalProductAmount = toTwo(totalProductAmount + productAmount);
+      totalShippingAmount = toTwo(totalShippingAmount + productShipping);
     }
 
-    const totalAmount = totalProductAmount + totalShippingAmount;
+    const totalAmount = toTwo(totalProductAmount + totalShippingAmount);
 
     /* --------------------------------------------------
        STEP 5: CREATE ORDER
@@ -220,39 +230,43 @@ export const placeOrder = async (req, res) => {
     const sellerById = new Map(sellers.map((s) => [s._id.toString(), s]));
 
     for (const [sellerId, s] of Object.entries(sellerMap)) {
-      const commissionAmount = (s.gross * commissionPercent) / 100;
-      const commissionVATAmount = (commissionAmount * commissionVATRate) / 100;
-      const commissionTotal = commissionAmount + commissionVATAmount;
-      const sellerPayout = s.gross - commissionTotal - s.shipping;
+      const commissionAmount = toTwo((s.gross * commissionPercent) / 100);
+      const commissionVATAmount = toTwo(
+        (commissionAmount * commissionVATRate) / 100
+      );
+      const commissionTotal = toTwo(commissionAmount + commissionVATAmount);
+      const sellerPayout = toTwo(s.gross - commissionTotal - s.shipping);
 
-      totalCommissionAmount += commissionAmount;
-      totalCommissionVATAmount += commissionVATAmount;
+      totalCommissionAmount = toTwo(totalCommissionAmount + commissionAmount);
+      totalCommissionVATAmount = toTwo(
+        totalCommissionVATAmount + commissionVATAmount
+      );
 
       vendorDocs.push({
         order: order._id,
         orderId: order.orderId,
         seller: s.seller,
         products: s.products,
-        amount: s.gross,
-        shippingAmount: s.shipping || 0,
+        amount: toTwo(s.gross),
+        shippingAmount: toTwo(s.shipping || 0),
         commissionPercentage: commissionPercent,
-        commissionAmount,
+        commissionAmount: commissionAmount,
         commissionVATRate,
         commissionVATAmount: commissionVATAmount,
         commissionTotal,
-        sellerPayout,
+        sellerPayout: sellerPayout,
         netAmount: sellerPayout,
       });
 
       sellerBreakdown.push({
         sellerId,
-        gross: s.gross,
-        shipping: s.shipping || 0,
+        gross: toTwo(s.gross),
+        shipping: toTwo(s.shipping || 0),
         commissionPercentage: commissionPercent,
-        commissionAmount,
+        commissionAmount: commissionAmount,
         commissionVATRate,
-        commissionVATAmount,
-        commissionTotal,
+        commissionVATAmount: commissionVATAmount,
+        commissionTotal: commissionTotal,
         net: sellerPayout,
       });
     }
@@ -316,14 +330,14 @@ export const placeOrder = async (req, res) => {
           {
             order: order._id,
             buyer: userId,
-            amount: totalAmount,
+            amount: toTwo(totalAmount),
             currency: "usd",
             status: "pending",
             method: "stripe_checkout",
             stripeSessionId: checkoutSession.id,
             metadata: { sellerBreakdown },
-            commissionAmount: totalCommissionAmount,
-            commissionVATAmount: totalCommissionVATAmount,
+            commissionAmount: toTwo(totalCommissionAmount),
+            commissionVATAmount: toTwo(totalCommissionVATAmount),
             commissionVATRate: commissionVATRate,
           },
         ],
@@ -357,32 +371,119 @@ export const placeOrder = async (req, res) => {
   }
 };
 
-
-
-export const MyOrder = async(req, res)=>{
+export const MyOrder = async (req, res) => {
   try {
     const id = req.params.id;
-const result = await Order.find({ customer: id })
-  .populate({
-    path: "orderVendors",
-    populate: {
-      path: "products.product",
-      model: "Product", // model name exactly যেটা define করা
-    },
-  });
+    const objectId = new mongoose.Types.ObjectId(id);
 
-    res.status(200).json({
-      message:"Success",
-      data:result
+    const agg = await Order.aggregate([
+      { $match: { customer: objectId } },
 
-    })
-    
+      // lookup payments for each order (only _id needed)
+      {
+        $lookup: {
+          from: "payments",
+          let: { orderId: "$_id" },
+          pipeline: [
+            { $match: { $expr: { $eq: ["$order", "$$orderId"] } } },
+            { $project: { _id: 1 } },
+          ],
+          as: "payments",
+        },
+      },
+
+      // lookup orderVendors and populate product docs inside each vendor
+      {
+        $lookup: {
+          from: "ordervendors",
+          let: { ovIds: "$orderVendors" },
+          pipeline: [
+            { $match: { $expr: { $in: ["$_id", "$$ovIds"] } } },
+            {
+              $unwind: { path: "$products", preserveNullAndEmptyArrays: true },
+            },
+            {
+              $lookup: {
+                from: "products",
+                localField: "products.product",
+                foreignField: "_id",
+                as: "products.productDoc",
+              },
+            },
+            {
+              $set: {
+                "products.product": {
+                  $arrayElemAt: ["$products.productDoc", 0],
+                },
+              },
+            },
+            { $project: { "products.productDoc": 0 } },
+            {
+              $group: {
+                _id: "$_id",
+                order: { $first: "$order" },
+                orderId: { $first: "$orderId" },
+                seller: { $first: "$seller" },
+                amount: { $first: "$amount" },
+                status: { $first: "$status" },
+                shippingAmount: { $first: "$shippingAmount" },
+                commissionPercentage: { $first: "$commissionPercentage" },
+                commissionAmount: { $first: "$commissionAmount" },
+                commissionVATRate: { $first: "$commissionVATRate" },
+                commissionVATAmount: { $first: "$commissionVATAmount" },
+                commissionTotal: { $first: "$commissionTotal" },
+                sellerPayout: { $first: "$sellerPayout" },
+                netAmount: { $first: "$netAmount" },
+                products: { $push: "$products" },
+              },
+            },
+          ],
+          as: "orderVendors",
+        },
+      },
+
+      // expose first paymentId for convenience
+      {
+        $addFields: {
+          paymentId: {
+            $arrayElemAt: [
+              { $map: { input: "$payments", as: "p", in: "$$p._id" } },
+              0,
+            ],
+          },
+        },
+      },
+
+      { $project: { payments: 0, paymentIds: 0 } },
+      { $sort: { createdAt: -1 } },
+    ]);
+
+    res.status(200).json({ message: "Success", data: agg });
   } catch (error) {
     res.status(500).json({
       error,
-      message:error?.message
-
-    })
-    
+      message: error?.message,
+    });
   }
-}
+};
+
+export const orderOverview = async (req, res) => {
+  try {
+    const id = req.params.id;
+    const totalOrders = await OrderModel.countDocuments({ customer: id });
+    const totalWishList = await WishList.countDocuments({ user: id });
+    const totalBooking = await Booking.countDocuments({ customer: id });
+
+    res.status(200).json({
+      message: "Success",
+      totalOrders,
+      totalWishList,
+      totalBooking,
+    });
+  } catch (error) {
+    res.status(500).json({
+      error,
+      message: error?.message,
+    });
+  }
+};
