@@ -45,7 +45,6 @@ export const listRefunds = async (req, res) => {
 
     // Get total count for pagination metadata
     const totalCount = await Refund.countDocuments();
-    const totalPages = Math.ceil(totalCount / limit);
 
     // Fetch paginated refunds
     const refunds = await Refund.find()
@@ -57,19 +56,16 @@ export const listRefunds = async (req, res) => {
     return res.json({
       refunds,
       pagination: {
-        currentPage: page,
-        totalPages,
-        totalItems: totalCount,
-        itemsPerPage: limit,
-        hasNextPage: page < totalPages,
-        hasPrevPage: page > 1,
+        page,
+        limit,
+        total: totalCount,
+        pages: Math.ceil(totalCount / limit),
       },
     });
   } catch (err) {
     console.error(err);
     return res.status(500).json({
       message: "Failed to list refunds",
-      error: process.env.NODE_ENV === "development" ? err.message : undefined,
     });
   }
 };
