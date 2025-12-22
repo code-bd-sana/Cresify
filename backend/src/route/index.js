@@ -2,12 +2,14 @@ import { Router } from "express";
 import booking from "./BookingRoute.js";
 import product from "./ProductRoute.js";
 import providerAvailability from "./ProviderAvailabilityRoute.js";
+import sellerOverview from "./SellerOverview.js";
 import user from "./UserRoute.js";
 import adminBlogRoute from "./admin/AdminBlogRoute.js";
 import adminOverviewRoute from "./admin/AdminOverviewRoute.js";
 import adminProductRoute from "./admin/AdminProductRoute.js";
 import adminRefundRoute from "./admin/AdminRefundRoute.js";
 import adminUserRoute from "./admin/AdminUserRoute.js";
+import chat from "./chat/ChatRoute.js";
 import cart from "./customer/CartRoute.js";
 import customerOrderRoute from "./customer/OrderRoute.js";
 import customerRefundRoute from "./customer/RefundRoute.js";
@@ -15,8 +17,8 @@ import wishList from "./customer/WishListRoute.js";
 import review from "./reviewRoute.js";
 import sellerOrderRoute from "./seller/OrderRoute.js";
 import sellerPayoutRoute from "./seller/PayoutRoute.js";
-import chat from './chat/ChatRoute.js'
-import sellerOverview from './SellerOverview.js'
+import sellerRefundRoute from "./seller/RefundRoute.js";
+
 const router = Router();
 
 router.use("/user", user);
@@ -38,7 +40,8 @@ router.use("/customer/order", customerOrderRoute);
 router.use("/admin/refund", adminRefundRoute);
 router.use("/seller/wallet", sellerPayoutRoute);
 router.use("/seller/order", sellerOrderRoute);
-router.use('/chat', chat)
-router.use('/seller/overview', sellerOverview)
+router.use("/chat", chat);
+router.use("/seller/overview", sellerOverview);
+router.use("/seller/refund", sellerRefundRoute);
 
 export default router;
