@@ -16,8 +16,7 @@ const toTwo = (v) => Number(Number(v || 0).toFixed(2));
  */
 export const requestRefund = async (req, res) => {
   try {
-    const { paymentId, orderId, userId, sellerIds, reason, evidence, items } =
-      req.body;
+    const { paymentId, orderId, userId, sellerIds, items } = req.body;
 
     if (!paymentId || !orderId || !userId) {
       return res.status(400).json({ message: "Missing required fields" });
@@ -25,13 +24,6 @@ export const requestRefund = async (req, res) => {
 
     if (sellerIds && !Array.isArray(sellerIds)) {
       return res.status(400).json({ message: "sellerIds must be an array" });
-    }
-
-    /**
-     * Validate evidence format
-     */
-    if (evidence !== undefined && !Array.isArray(evidence)) {
-      return res.status(400).json({ message: "Evidence must be an array" });
     }
 
     // Load payment and order
