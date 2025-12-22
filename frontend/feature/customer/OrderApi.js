@@ -4,41 +4,39 @@ import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 export const OrderApi = createApi({
   reducerPath: "OrderApi",
   baseQuery: fetchBaseQuery({ baseUrl: base_url }),
-  tagTypes: ["AdminUsers"],
+
+  // ✅ tagTypes add
+  tagTypes: ["Order"],
 
   endpoints: (builder) => ({
 
     createOrder: builder.mutation({
-        query:(data)=>({
-
-            url:`/customer/order/place`,
-            method:"POST",
-            body:data
-
-        }),
-        invalidatesTags:['Order']
+      query: (data) => ({
+        url: `/customer/order/place`,
+        method: "POST",
+        body: data,
+      }),
+      // ✅ invalidate Order
+      invalidatesTags: ["Order"],
     }),
 
     myOrder: builder.query({
-      query:(id)=> `/customer/order/myOrder/${id}`,
-      providesTags:['Order']
+      query: (id) => `/customer/order/myOrder/${id}`,
+      // ✅ provide Order
+      providesTags: ["Order"],
     }),
-    orderOverview:builder.query({
-      query:(id)=>`/customer/order/orderOverview/${id}`
-    })
-    
-    
-  
 
+    orderOverview: builder.query({
+      query: (id) => `/customer/order/orderOverview/${id}`,
+      // ✅ optional but recommended
+      providesTags: ["Order"],
+    }),
 
-  
- 
-
-    
-  
   }),
 });
 
-
-
-export const {useCreateOrderMutation, useMyOrderQuery, useOrderOverviewQuery} = OrderApi
+export const {
+  useCreateOrderMutation,
+  useMyOrderQuery,
+  useOrderOverviewQuery,
+} = OrderApi;

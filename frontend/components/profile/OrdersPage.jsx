@@ -24,10 +24,17 @@ import {
   Star,
   MessageSquare,
   StarIcon,
+  FileText,
+  Upload,
+  Image as ImageIcon,
+  AlertCircle,
+  CheckCircle2,
+  Plus,
 } from "lucide-react";
 import { useMyOrderQuery } from "@/feature/customer/OrderApi";
 import { useSession } from "next-auth/react";
 import { useSaveReviewMutation } from "@/feature/review/ReviewApi";
+import { useCreateRefundMutation } from "@/feature/refund/RefundApi";
 
 export default function OrdersPage() {
   const tabs = [
@@ -48,16 +55,29 @@ export default function OrdersPage() {
   const [reviewText, setReviewText] = useState("");
   const [isCancelConfirmOpen, setIsCancelConfirmOpen] = useState(false);
   const [orderToCancel, setOrderToCancel] = useState(null);
+  const [isRefundModalOpen, setIsRefundModalOpen] = useState(false);
+  const [selectedProductForRefund, setSelectedProductForRefund] = useState(null);
+  const [refundType, setRefundType] = useState("full");
+  const [selectedVendors, setSelectedVendors] = useState([]);
+  const [selectedItems, setSelectedItems] = useState([]);
+  const [refundReason, setRefundReason] = useState("");
+  const [evidenceFiles, setEvidenceFiles] = useState([]);
+  const [isSubmittingRefund, setIsSubmittingRefund] = useState(false);
 
   const { data: user } = useSession();
   const id = user?.user?.id;
   const { data: MyOrder, isLoading, isError } = useMyOrderQuery(id);
-  const [saveReview, {isLoading:reviewLoading}] = useSaveReviewMutation();
+  const [saveReview, { isLoading: reviewLoading }] = useSaveReviewMutation();
+  const [createRefund, {isError:refundError, error:refundErr}] = useCreateRefundMutation()
 
+  console.log(MyOrder, "egolo amar peronal");
+
+  if(!isError){
+    console.log(refundErr, "this i srefund error");
+  }
 
   // API থেকে আসা ডেটা
   const apiOrders = MyOrder?.data || [];
-
 
   const calculateStatusCounts = () => {
     let allCount = 0;
@@ -69,17 +89,11 @@ export default function OrdersPage() {
       allCount++;
 
       const vendorStatuses = order.orderVendors.map((v) => v.status);
-      const paymentStatus = order.paymentStatus;
-
- 
       const allDelivered = vendorStatuses.every((s) => s === "delivered");
-
       const anyShipped = vendorStatuses.some((s) => s === "shipping");
-
       const allProcessingOrPending = vendorStatuses.every(
         (s) => s === "processing" || s === "pending"
       );
-      // কোনো ভেন্ডর ক্যান্সেল হলে
       const anyCancelled = vendorStatuses.some((s) => s === "canceled");
 
       if (allDelivered) {
@@ -112,7 +126,6 @@ export default function OrdersPage() {
     }
   });
 
-  // ফরম্যাট করার জন্য হেল্পার ফাংশন
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     return date.toLocaleDateString("en-US", {
@@ -124,7 +137,6 @@ export default function OrdersPage() {
     });
   };
 
-  // শর্ট তারিখ ফরম্যাট
   const formatShortDate = (dateString) => {
     const date = new Date(dateString);
     return date.toLocaleDateString("en-US", {
@@ -133,7 +145,6 @@ export default function OrdersPage() {
     });
   };
 
-  // টাইম ফরম্যাট
   const formatTime = (dateString) => {
     const date = new Date(dateString);
     return date.toLocaleTimeString("en-US", {
@@ -142,12 +153,9 @@ export default function OrdersPage() {
     });
   };
 
-  // অর্ডারের স্ট্যাটাস ডিটারমাইন - FIXED
   const getOrderStatus = (order) => {
     const vendorStatuses = order.orderVendors.map((v) => v.status);
-    const paymentStatus = order.paymentStatus;
 
-    // সব ভেন্ডর ডেলিভার্ড হলে
     const allDelivered = vendorStatuses.every((s) => s === "delivered");
     if (allDelivered) {
       return {
@@ -158,7 +166,6 @@ export default function OrdersPage() {
       };
     }
 
-    // কোনো ভেন্ডর shipping হলে
     const anyShipped = vendorStatuses.some((s) => s === "shipping");
     if (anyShipped) {
       return {
@@ -169,12 +176,10 @@ export default function OrdersPage() {
       };
     }
 
-    // সব ভেন্ডর processing বা pending
     const allProcessingOrPending = vendorStatuses.every(
       (s) => s === "processing" || s === "pending"
     );
     if (allProcessingOrPending) {
-      // ডেলিভারি তারিখ ক্যালকুলেট (3-5 দিন পর)
       const orderDate = new Date(order.createdAt);
       const deliveryDate = new Date(orderDate);
       deliveryDate.setDate(
@@ -196,7 +201,6 @@ export default function OrdersPage() {
       };
     }
 
-    // কোনো ক্যান্সেল স্ট্যাটাস
     const anyCancelled = vendorStatuses.some((s) => s === "canceled");
     if (anyCancelled) {
       return {
@@ -207,7 +211,6 @@ export default function OrdersPage() {
       };
     }
 
-    // ডিফল্ট
     return {
       status: "Processing",
       statusColor: "#F7A500",
@@ -216,7 +219,6 @@ export default function OrdersPage() {
     };
   };
 
-  // সব ভেন্ডরের প্রডাক্ট একসাথে সংগ্রহ
   const getAllProductsFromOrder = (order) => {
     const allProducts = [];
 
@@ -239,8 +241,9 @@ export default function OrdersPage() {
           category: product.product?.category,
           sellerId: vendor.vendorId?._id,
           sellerName: vendor.vendorId?.name,
-          // Check if product is delivered for review eligibility
           canReview: vendor.status === "delivered",
+          rawData: order,
+          orderId: order.orderId,
         });
       });
     });
@@ -248,27 +251,22 @@ export default function OrdersPage() {
     return allProducts;
   };
 
-  // মোট প্রডাক্ট কাউন্ট
   const getTotalProductCount = (order) => {
     return order.orderVendors.reduce((total, vendor) => {
       return total + vendor.products.length;
     }, 0);
   };
 
-  // অর্ডার টোটাল ক্যালকুলেট (সঠিকভাবে)
   const calculateOrderTotal = (order) => {
-    // API-তে amount ফিল্ডে সেন্টে আছে (ডেটা দেখে), তাই 100 দিয়ে ভাগ করছি
-    return (order.amount / 100).toFixed(2);
+    return (order.amount).toFixed(2);
   };
 
-  // সব প্রোডাক্টের টোটাল সাবটোটাল ক্যালকুলেট
   const calculateSubtotal = (allProducts) => {
     return allProducts.reduce((total, product) => {
       return total + product.subtotal;
     }, 0);
   };
 
-  // API ডেটাকে কম্পোনেন্টের ফরম্যাটে কনভার্ট
   const orders = apiOrders.map((order) => {
     const statusInfo = getOrderStatus(order);
     const allProducts = getAllProductsFromOrder(order);
@@ -284,13 +282,13 @@ export default function OrdersPage() {
       date: formatDate(order.createdAt),
       expected: statusInfo.expected,
       price: orderTotal,
-      items: allProducts.slice(0, 2), // প্রথম ২টা প্রডাক্ট দেখাবে
+      items: allProducts.slice(0, 2),
       totalItems: totalProducts,
-      allProducts: allProducts, // সব প্রোডাক্ট
+      allProducts: allProducts,
       subtotal: subtotal,
       actions: statusInfo.actions,
       rawData: order,
-      vendors: order.orderVendors, // সব ভেন্ডর
+      vendors: order.orderVendors,
       address: order.address,
       paymentMethod: order.paymentMethod,
       paymentStatus: order.paymentStatus,
@@ -299,7 +297,6 @@ export default function OrdersPage() {
     };
   });
 
-  // ট্যাব ফিল্টারিং
   const filteredOrders =
     activeTab === "all"
       ? orders
@@ -314,19 +311,16 @@ export default function OrdersPage() {
           return false;
         });
 
-  // View Details বাটন ক্লিক হ্যান্ডলার
   const handleViewDetails = (order) => {
     setSelectedOrder(order);
     setIsModalOpen(true);
   };
 
-  // Track Order বাটন ক্লিক হ্যান্ডলার
   const handleTrackOrder = (order) => {
     setTrackingOrder(order);
     setIsTrackModalOpen(true);
   };
 
-  // Cancel Order বাটন ক্লিক হ্যান্ডলার
   const handleCancelOrder = (order) => {
     console.log("=== CANCEL ORDER ===");
     console.log("Order ID to cancel:", order.fullId);
@@ -335,19 +329,16 @@ export default function OrdersPage() {
     setIsCancelConfirmOpen(true);
   };
 
-  // Confirm Cancel Order
   const handleConfirmCancel = () => {
     if (orderToCancel) {
       console.log("=== CONFIRM CANCEL ORDER ===");
       console.log("Cancelling Order ID:", orderToCancel.fullId);
       console.log("============================");
-      // এখানে API কল করতে হবে
     }
     setIsCancelConfirmOpen(false);
     setOrderToCancel(null);
   };
 
-  // Review Product বাটন ক্লিক হ্যান্ডলার
   const handleReviewProduct = (product) => {
     setSelectedProductForReview(product);
     setRating(0);
@@ -355,8 +346,7 @@ export default function OrdersPage() {
     setIsReviewModalOpen(true);
   };
 
-  // Submit Review
-  const handleSubmitReview = async() => {
+  const handleSubmitReview = async () => {
     if (!selectedProductForReview) return;
 
     console.log("=== SUBMIT REVIEW ===");
@@ -368,32 +358,193 @@ export default function OrdersPage() {
     console.log("====================");
 
     try {
-
       const reviewData = {
         id,
         product: selectedProductForReview.productId,
-        review:selectedProductForReview,
-        ratng:rating,
-        reviewText:reviewText
+        review: selectedProductForReview,
+        ratng: rating,
+        reviewText: reviewText,
       };
 
       const result = await saveReview(reviewData);
       console.log(result, "aso he result aso aso");
 
-
-
-         setIsReviewModalOpen(false);
-    setSelectedProductForReview(null);
-      
+      setIsReviewModalOpen(false);
+      setSelectedProductForReview(null);
     } catch (error) {
       console.log(error);
     }
-
-    // এখানে API কল করতে হবে
- 
   };
 
-  // ট্র্যাকিং স্ট্যাটাস স্টেপস জেনারেট
+  const handleRefundRequest = (product) => {
+    setSelectedProductForRefund(product);
+    setRefundType("full");
+    setSelectedVendors([]);
+    setSelectedItems([]);
+    setRefundReason("");
+    setEvidenceFiles([]);
+    setIsRefundModalOpen(true);
+  };
+
+  const handleVendorSelect = (vendorId) => {
+    if (selectedVendors.includes(vendorId)) {
+      setSelectedVendors(selectedVendors.filter((id) => id !== vendorId));
+    } else {
+      setSelectedVendors([...selectedVendors, vendorId]);
+    }
+  };
+
+  const handleItemSelect = (item) => {
+    const existingItemIndex = selectedItems.findIndex(
+      (selected) =>
+        selected.productId === item.productId &&
+        selected.orderVendorId === item.vendorId
+    );
+
+    if (existingItemIndex >= 0) {
+      const newSelectedItems = [...selectedItems];
+      newSelectedItems.splice(existingItemIndex, 1);
+      setSelectedItems(newSelectedItems);
+    } else {
+      setSelectedItems([
+        ...selectedItems,
+        {
+          orderVendorId: item.vendorId,
+          productId: item.productId,
+          quantity: item.qty,
+          reason: "",
+          evidence: [],
+        },
+      ]);
+    }
+  };
+
+  const handleEvidenceUpload = (e) => {
+    const files = Array.from(e.target.files);
+
+    const newEvidenceFiles = [];
+
+    files.forEach((file) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        newEvidenceFiles.push({
+          url: reader.result,
+          type: file.type.startsWith("image/") ? "image" : "document",
+          note: "",
+          file: file,
+        });
+
+        if (newEvidenceFiles.length === files.length) {
+          setEvidenceFiles([...evidenceFiles, ...newEvidenceFiles]);
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const removeEvidenceFile = (index) => {
+    const newFiles = [...evidenceFiles];
+    newFiles.splice(index, 1);
+    setEvidenceFiles(newFiles);
+  };
+
+const handleSubmitRefund = async() => {
+  if (!selectedProductForRefund) return;
+
+  const refundData = {
+    paymentId: selectedProductForRefund.rawData?.paymentId || "",
+    orderId: selectedProductForRefund._id || selectedProductForRefund.rawData?._id || "",
+    userId: id,
+    reason: refundReason,
+    evidence: evidenceFiles
+      .filter(e => e.url.trim()) 
+      .map((file) => ({
+        url: file.url,
+        type: file.type,
+        note: file.note,
+      })),
+  };
+
+  // Partial refund হলে items যোগ করব
+  if (refundType === "partial" && selectedItems.length > 0) {
+    refundData.items = selectedItems.map((item) => ({
+      orderVendorId: item.orderVendorId,
+      productId: item.productId,
+      quantity: item.quantity,
+      reason: item.reason || refundReason,
+    }));
+  }
+
+  console.log("=== REFUND REQUEST DATA ===");
+  console.log("Refund Data:", refundData);
+  console.log("Refund Type:", refundType);
+  console.log("Selected Items:", selectedItems);
+  console.log("Evidence Links:", evidenceFiles.filter(e => e.url.trim()));
+  console.log("========================");
+
+  try {
+    const result = createRefund(refundData);
+    console.log(result, "result is here");
+    
+  } catch (error) {
+    console.log(error);
+  }
+
+  setIsSubmittingRefund(true);
+
+  // এখানে আপনার API কল করবেন
+  setTimeout(() => {
+    console.log("Refund request submitted successfully");
+    setIsSubmittingRefund(false);
+    setIsRefundModalOpen(false);
+    // Reset states
+    setSelectedProductForRefund(null);
+    setRefundType("full");
+    setSelectedVendors([]);
+    setSelectedItems([]);
+    setRefundReason("");
+    setEvidenceFiles([{ url: "", type: "link", note: "" }]); // একটি খালি লিঙ্ক ফিল্ড
+  }, 2000);
+};
+
+
+
+
+
+
+
+
+
+
+  const getAllVendorsForRefund = () => {
+    if (!selectedProductForRefund || !selectedProductForRefund.rawData)
+      return [];
+
+    return selectedProductForRefund.rawData.orderVendors.map((vendor) => ({
+      id: vendor._id,
+      name: vendor.seller?.firstName  || "Unknown Vendor",
+      sellerId: vendor.seller,
+      status: vendor.status,
+      amount: (vendor.amount / 100).toFixed(2),
+    }));
+  };
+
+  const getAllItemsForRefund = () => {
+    if (!selectedProductForRefund || !selectedProductForRefund.allProducts)
+      return [];
+
+    return selectedProductForRefund.allProducts.map((product) => ({
+      orderVendorId: product.vendorId,
+      productId: product.productId,
+      name: product.name,
+      quantity: product.qty,
+      price: product.price,
+      subtotal: product.subtotal,
+      vendorName: product.sellerName,
+      canRefund: product.vendorStatus === "delivered",
+    }));
+  };
+
   const getTrackingSteps = (order) => {
     const orderDate = new Date(order.createdAt);
     const currentStatus = order.status.toLowerCase();
@@ -420,7 +571,7 @@ export default function OrdersPage() {
           currentStatus === "delivered"
             ? "completed"
             : "pending",
-        date: formatShortDate(new Date(orderDate.getTime() + 30 * 60 * 1000)), // 30 minutes later
+        date: formatShortDate(new Date(orderDate.getTime() + 30 * 60 * 1000)),
         time: formatTime(new Date(orderDate.getTime() + 30 * 60 * 1000)),
         color: "#5A3DF6",
       },
@@ -437,7 +588,7 @@ export default function OrdersPage() {
             : "pending",
         date: formatShortDate(
           new Date(orderDate.getTime() + 2 * 60 * 60 * 1000)
-        ), // 2 hours later
+        ),
         time: formatTime(new Date(orderDate.getTime() + 2 * 60 * 60 * 1000)),
         color: "#F7A500",
       },
@@ -452,7 +603,7 @@ export default function OrdersPage() {
             : "pending",
         date: formatShortDate(
           new Date(orderDate.getTime() + 24 * 60 * 60 * 1000)
-        ), // 1 day later
+        ),
         time: formatTime(new Date(orderDate.getTime() + 24 * 60 * 60 * 1000)),
         color: "#5A3DF6",
       },
@@ -464,7 +615,7 @@ export default function OrdersPage() {
         status: currentStatus === "delivered" ? "completed" : "pending",
         date: formatShortDate(
           new Date(orderDate.getTime() + 48 * 60 * 60 * 1000)
-        ), // 2 days later
+        ),
         time: formatTime(new Date(orderDate.getTime() + 48 * 60 * 60 * 1000)),
         color: "#9838E1",
       },
@@ -476,7 +627,7 @@ export default function OrdersPage() {
         status: currentStatus === "delivered" ? "completed" : "pending",
         date: formatShortDate(
           new Date(orderDate.getTime() + 72 * 60 * 60 * 1000)
-        ), // 3 days later
+        ),
         time: formatTime(new Date(orderDate.getTime() + 72 * 60 * 60 * 1000)),
         color: "#00C363",
       },
@@ -485,26 +636,21 @@ export default function OrdersPage() {
     return steps;
   };
 
-  // কারেন্ট স্ট্যাটাস ইন্ডেক্স - FIXED
   const getCurrentStatusIndex = (order) => {
-    const status = order.status.toLowerCase();
-    const vendorStatuses = order.rawData?.orderVendors?.map(v => v.status) || [];
+    const vendorStatuses = order.rawData?.orderVendors?.map((v) => v.status) || [];
 
-    // Check if any vendor is shipped
-    const anyShipped = vendorStatuses.some(s => s === "shipping");
-    // Check if all vendors are delivered
-    const allDelivered = vendorStatuses.every(s => s === "delivered");
+    const anyShipped = vendorStatuses.some((s) => s === "shipping");
+    const allDelivered = vendorStatuses.every((s) => s === "delivered");
 
     if (allDelivered) {
-      return 5; // Delivered
+      return 5;
     } else if (anyShipped) {
-      return 3; // Shipped
+      return 3;
     } else {
-      return 2; // Processing
+      return 2;
     }
   };
 
-  // পেমেন্ট মেথড টেক্সট
   const getPaymentMethodText = (method) => {
     switch (method) {
       case "card":
@@ -516,7 +662,6 @@ export default function OrdersPage() {
     }
   };
 
-  // পেমেন্ট স্ট্যাটাস টেক্সট
   const getPaymentStatusText = (status) => {
     switch (status) {
       case "pending":
@@ -530,7 +675,6 @@ export default function OrdersPage() {
     }
   };
 
-  // ভেন্ডর স্ট্যাটাস টেক্সট - FIXED
   const getVendorStatusText = (status) => {
     switch (status) {
       case "pending":
@@ -548,7 +692,6 @@ export default function OrdersPage() {
     }
   };
 
-  // লোডিং স্টেট
   if (isLoading) {
     return (
       <section className="w-full bg-[#F7F7FA] min-h-screen flex items-center justify-center">
@@ -560,7 +703,6 @@ export default function OrdersPage() {
     );
   }
 
-  // এরর স্টেট
   if (isError) {
     return (
       <section className="w-full bg-[#F7F7FA] min-h-screen flex items-center justify-center">
@@ -573,7 +715,6 @@ export default function OrdersPage() {
     );
   }
 
-  // নো অর্ডার স্টেট
   if (orders.length === 0) {
     return (
       <section className="w-full bg-[#F7F7FA] min-h-screen pb-10 px-4">
@@ -596,7 +737,7 @@ export default function OrdersPage() {
     <>
       <section className="w-full bg-[#F7F7FA] pb-10 px-4">
         <div className="max-w-[850px] mx-auto">
-          {/* ------------------- TOP FILTER TABS ------------------- */}
+          {/* TOP FILTER TABS */}
           <div className="flex justify-center mb-10">
             <div className="flex items-center gap-6 bg-white px-4 py-3 rounded-[20px] shadow-[0_4px_14px_rgba(0,0,0,0.04)] w-fit">
               {updatedTabs.map((tab) => (
@@ -611,10 +752,7 @@ export default function OrdersPage() {
                     }
                   `}
                 >
-                  {/* LABEL */}
                   {tab.label}
-
-                  {/* COUNT BADGE */}
                   <span
                     className={`
                       text-[11px] w-[22px] h-[22px] flex items-center justify-center rounded-full font-semibold
@@ -632,7 +770,7 @@ export default function OrdersPage() {
             </div>
           </div>
 
-          {/* ------------------- ORDER CARDS ------------------- */}
+          {/* ORDER CARDS */}
           <div className="space-y-6">
             {filteredOrders.map((order, index) => (
               <div
@@ -669,7 +807,7 @@ export default function OrdersPage() {
                   <p className="text-[11px] text-[#F78D25]">{order.expected}</p>
                 )}
 
-                {/* Products - একই অর্ডারে সব প্রডাক্ট দেখাবে */}
+                {/* Products */}
                 <div className="mt-4">
                   <div className="flex flex-wrap gap-4">
                     {order.items.map((item, i) => (
@@ -690,7 +828,6 @@ export default function OrdersPage() {
                       </div>
                     ))}
 
-                    {/* এক্সট্রা আইটেমস কাউন্ট */}
                     {order.totalItems > 2 && (
                       <div className="flex items-center ml-2">
                         <div className="h-[45px] w-[45px] rounded-[10px] bg-purple-50 flex items-center justify-center">
@@ -710,7 +847,6 @@ export default function OrdersPage() {
                     )}
                   </div>
 
-                  {/* ভেন্ডর কাউন্ট */}
                   {order.vendors.length > 1 && (
                     <div className="mt-2 text-[10px] text-gray-500">
                       Multiple vendors in this order
@@ -720,7 +856,6 @@ export default function OrdersPage() {
 
                 {/* ACTION BUTTONS */}
                 <div className="flex flex-wrap gap-3 mt-4">
-                  {/* View Details */}
                   <button
                     onClick={() => handleViewDetails(order)}
                     className="
@@ -737,7 +872,6 @@ export default function OrdersPage() {
                     View Details
                   </button>
 
-                  {/* Track Order */}
                   {(order.actions === "track" || order.actions === "full") && (
                     <button
                       onClick={() => handleTrackOrder(order)}
@@ -754,7 +888,6 @@ export default function OrdersPage() {
                     </button>
                   )}
 
-                  {/* Cancel Order - শুধু Processing স্ট্যাটাসে দেখাবে */}
                   {order.actions === "full" && (
                     <button
                       onClick={() => handleCancelOrder(order)}
@@ -777,7 +910,7 @@ export default function OrdersPage() {
             ))}
           </div>
 
-          {/* ------------------- HELP SECTION ------------------- */}
+          {/* HELP SECTION */}
           <div className="mt-10 flex justify-center">
             <div className="w-full max-w-[350px] bg-white rounded-[16px] border border-[#EEEAF7] shadow-[0_6px_18px_rgba(0,0,0,0.06)] p-6 text-center">
               <div className="h-[55px] w-[55px] mx-auto rounded-full bg-gradient-to-r from-[#9838E1] to-[#F68E44] flex items-center justify-center">
@@ -813,7 +946,7 @@ export default function OrdersPage() {
         </div>
       </section>
 
-      {/* ------------------- ORDER DETAILS MODAL ------------------- */}
+      {/* ORDER DETAILS MODAL */}
       {isModalOpen && selectedOrder && (
         <div className="fixed inset-0 backdrop-blur-sm bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
@@ -1000,7 +1133,7 @@ export default function OrdersPage() {
                             </div>
                           </div>
 
-                          {/* Vendor Info and Review Button */}
+                          {/* Vendor Info and Action Buttons */}
                           <div className="mt-3 pt-3 border-t border-dashed">
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-2 text-sm text-gray-500">
@@ -1010,21 +1143,35 @@ export default function OrdersPage() {
                                 </span>
                                 <ChevronRight size={14} />
                                 <span>
-                                  Product ID: {product.productId?.substring(0, 8)}
-                                  ...
+                                  Product ID:{" "}
+                                  {product.productId?.substring(0, 8)}...
                                 </span>
                               </div>
-                              
-                              {/* Review Button - Only show for delivered products */}
-                              {product.canReview && (
-                                <button
-                                  onClick={() => handleReviewProduct(product)}
-                                  className="flex items-center gap-2 px-3 py-1.5 text-sm bg-green-50 text-green-700 border border-green-200 rounded-lg hover:bg-green-100 transition"
-                                >
-                                  <Star size={14} />
-                                  Write Review
-                                </button>
-                              )}
+
+                              {/* Action Buttons */}
+                              <div className="flex gap-2">
+                                {/* Review Button */}
+                                {product.canReview && (
+                                  <button
+                                    onClick={() => handleReviewProduct(product)}
+                                    className="flex items-center gap-2 px-3 py-1.5 text-sm bg-green-50 text-green-700 border border-green-200 rounded-lg hover:bg-green-100 transition"
+                                  >
+                                    <Star size={14} />
+                                    Write Review
+                                  </button>
+                                )}
+
+                                {/* Refund Button */}
+                                {product.canReview && (
+                                  <button
+                                    onClick={() => handleRefundRequest(product)}
+                                    className="flex items-center gap-2 px-3 py-1.5 text-sm bg-amber-50 text-amber-700 border border-amber-200 rounded-lg hover:bg-amber-100 transition"
+                                  >
+                                    <FileText size={14} />
+                                    Refund Request
+                                  </button>
+                                )}
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -1054,7 +1201,8 @@ export default function OrdersPage() {
                           <div>
                             <div className="flex items-center gap-2">
                               <span className="font-medium">
-                                Vendor {index + 1}: {vendor.vendorId?.name || "Unknown"}
+                                Vendor {index + 1}:{" "}
+                                {vendor.vendorId?.name || "Unknown"}
                               </span>
                               <span
                                 className={`text-xs px-2 py-1 rounded-full ${
@@ -1185,7 +1333,427 @@ export default function OrdersPage() {
         </div>
       )}
 
-      {/* ------------------- TRACK ORDER MODAL ------------------- */}
+      {/* REFUND REQUEST MODAL */}
+{isRefundModalOpen && selectedProductForRefund && (
+  <div className="fixed inset-0 backdrop-blur-sm bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+      {/* Modal Header */}
+      <div className="sticky top-0 bg-white border-b p-6 flex justify-between items-center z-10">
+        <div className="flex items-center gap-3">
+          <div className="h-10 w-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
+            <FileText size={20} className="text-white" />
+          </div>
+          <div>
+            <h2 className="text-xl font-bold text-gray-800">
+              Request Refund
+            </h2>
+            <p className="text-sm text-gray-600">
+              Order #
+              {selectedProductForRefund.orderId ||
+                selectedProductForRefund.rawData?.orderId}
+            </p>
+          </div>
+        </div>
+        <button
+          onClick={() => setIsRefundModalOpen(false)}
+          className="p-2 hover:bg-gray-100 rounded-full transition"
+          disabled={isSubmittingRefund}
+        >
+          <X size={24} className="text-gray-500" />
+        </button>
+      </div>
+
+      {/* Modal Content */}
+      <div className="p-6 space-y-6">
+        {/* Order Information */}
+        <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-5">
+          <div className="flex items-start gap-4">
+            <img
+              src={selectedProductForRefund.image}
+              alt={selectedProductForRefund.name}
+              className="w-20 h-20 rounded-lg object-cover border"
+            />
+            <div className="flex-1">
+              <h3 className="font-bold text-gray-800 text-lg">
+                {selectedProductForRefund.name}
+              </h3>
+              <div className="grid grid-cols-2 gap-4 mt-2">
+                <div>
+                  <p className="text-sm text-gray-600">Order ID</p>
+                  <p className="font-medium">
+                    {selectedProductForRefund.orderId ||
+                      selectedProductForRefund.rawData?.orderId}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Payment ID</p>
+                  <p className="font-medium">
+                    {selectedProductForRefund.rawData?.paymentId?.substring(
+                      0,
+                      12
+                    )}
+                    ...
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Order Date</p>
+                  <p className="font-medium">
+                    {new Date(
+                      selectedProductForRefund.rawData?.createdAt
+                    ).toLocaleDateString()}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Payment Status</p>
+                  <span
+                    className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                      selectedProductForRefund.rawData?.paymentStatus === "paid"
+                        ? "bg-green-100 text-green-800"
+                        : "bg-yellow-100 text-yellow-800"
+                    }`}
+                  >
+                    {selectedProductForRefund.rawData?.paymentStatus || "Unknown"}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Refund Type Selection */}
+        <div className="border rounded-xl p-5">
+          <h4 className="font-bold text-gray-800 mb-4">Refund Type</h4>
+          <div className="grid grid-cols-2 gap-4">
+            <button
+              onClick={() => {
+                setRefundType("full");
+                setSelectedItems([]); // Full refund হলে আইটেম সিলেকশন ক্লিয়ার
+              }}
+              className={`p-4 border-2 rounded-lg transition-all ${
+                refundType === "full"
+                  ? "border-blue-500 bg-blue-50"
+                  : "border-gray-200 hover:border-blue-300"
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <div
+                  className={`h-6 w-6 rounded-full border-2 flex items-center justify-center ${
+                    refundType === "full"
+                      ? "border-blue-500 bg-blue-500"
+                      : "border-gray-300"
+                  }`}
+                >
+                  {refundType === "full" && (
+                    <CheckCircle2 size={14} className="text-white" />
+                  )}
+                </div>
+                <div className="text-left">
+                  <p className="font-semibold text-gray-800">Full Refund</p>
+                  <p className="text-sm text-gray-600 mt-1">
+                    Refund the entire order amount
+                  </p>
+                  <p className="text-xs text-blue-600 mt-1">
+                    ${(selectedProductForRefund.rawData?.amount  || 0).toFixed(2)}
+                  </p>
+                </div>
+              </div>
+            </button>
+
+            <button
+              onClick={() => setRefundType("partial")}
+              className={`p-4 border-2 rounded-lg transition-all ${
+                refundType === "partial"
+                  ? "border-blue-500 bg-blue-50"
+                  : "border-gray-200 hover:border-blue-300"
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <div
+                  className={`h-6 w-6 rounded-full border-2 flex items-center justify-center ${
+                    refundType === "partial"
+                      ? "border-blue-500 bg-blue-500"
+                      : "border-gray-300"
+                  }`}
+                >
+                  {refundType === "partial" && (
+                    <CheckCircle2 size={14} className="text-white" />
+                  )}
+                </div>
+                <div className="text-left">
+                  <p className="font-semibold text-gray-800">Partial Refund</p>
+                  <p className="text-sm text-gray-600 mt-1">
+                    Refund specific items from your order
+                  </p>
+                </div>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        {/* Partial Item Selection - শুধু partial হলে দেখাবে */}
+     
+
+        {/* Refund Reason */}
+        <div className="border rounded-xl p-5">
+          <h4 className="font-bold text-gray-800 mb-4">Refund Reason</h4>
+          <div className="space-y-3">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {[
+                "Item Damaged",
+                "Wrong Item",
+                "Not as Described",
+                "Late Delivery",
+                "Quality Issue",
+                "Changed Mind",
+                "Other",
+              ].map((reason) => (
+                <button
+                  key={reason}
+                  onClick={() => setRefundReason(reason)}
+                  className={`px-4 py-2 border rounded-lg text-sm transition-all ${
+                    refundReason === reason
+                      ? "border-blue-500 bg-blue-50 text-blue-700"
+                      : "border-gray-200 text-gray-700 hover:border-blue-300"
+                  }`}
+                >
+                  {reason}
+                </button>
+              ))}
+            </div>
+            <textarea
+              value={refundReason}
+              onChange={(e) => setRefundReason(e.target.value)}
+              placeholder="Please provide detailed reason for your refund request..."
+              className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              rows={4}
+            />
+          </div>
+        </div>
+
+        {/* Evidence Links */}
+        <div className="border rounded-xl p-5">
+          <h4 className="font-bold text-gray-800 mb-4">Evidence Links (Optional)</h4>
+          <p className="text-sm text-gray-600 mb-4">
+            Add links to photos, documents, or any supporting evidence for your refund request.
+            You can add multiple links.
+          </p>
+
+          {/* Evidence Links Input */}
+          <div className="space-y-3">
+            {evidenceFiles.map((evidence, index) => (
+              <div key={index} className="flex gap-2">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="h-2 w-2 rounded-full bg-blue-500"></div>
+                    <span className="text-sm font-medium text-gray-700">
+                      Evidence Link {index + 1}
+                    </span>
+                  </div>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={evidence.url}
+                      onChange={(e) => {
+                        const newFiles = [...evidenceFiles];
+                        newFiles[index].url = e.target.value;
+                        setEvidenceFiles(newFiles);
+                      }}
+                      placeholder="https://example.com/evidence.jpg"
+                      className="flex-1 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                    <input
+                      type="text"
+                      value={evidence.note}
+                      onChange={(e) => {
+                        const newFiles = [...evidenceFiles];
+                        newFiles[index].note = e.target.value;
+                        setEvidenceFiles(newFiles);
+                      }}
+                      placeholder="Description (optional)"
+                      className="flex-1 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+                </div>
+                {evidenceFiles.length > 1 && (
+                  <button
+                    onClick={() => removeEvidenceFile(index)}
+                    className="mt-7 p-2 text-red-600 hover:bg-red-50 rounded-lg transition"
+                  >
+                    <X size={18} />
+                  </button>
+                )}
+              </div>
+            ))}
+
+            {/* Add More Evidence Link Button */}
+            <button
+              onClick={() => {
+                if (evidenceFiles.length < 5) {
+                  setEvidenceFiles([
+                    ...evidenceFiles,
+                    { url: "", type: "link", note: "" }
+                  ]);
+                }
+              }}
+              disabled={evidenceFiles.length >= 5}
+              className={`w-full py-3 border-2 border-dashed rounded-lg flex items-center justify-center gap-2 transition ${
+                evidenceFiles.length >= 5
+                  ? "border-gray-200 text-gray-400 cursor-not-allowed"
+                  : "border-blue-300 text-blue-600 hover:border-blue-400 hover:bg-blue-50"
+              }`}
+            >
+              <Plus size={18} />
+              Add Another Evidence Link
+              <span className="text-xs text-gray-500">
+                ({evidenceFiles.length}/5)
+              </span>
+            </button>
+          </div>
+
+          {/* File Upload Tips */}
+          <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+            <div className="flex items-start gap-3">
+              <AlertCircle
+                size={20}
+                className="text-blue-600 flex-shrink-0 mt-0.5"
+              />
+              <div>
+                <h5 className="font-medium text-blue-800">
+                  Tips for Evidence Links
+                </h5>
+                <ul className="text-sm text-blue-700 mt-1 space-y-1">
+                  <li>• Google Drive, Dropbox, or Imgur links for photos</li>
+                  <li>• Direct links to images (jpg, png, etc.)</li>
+                  <li>• Document links (PDF, Google Docs, etc.)</li>
+                  <li>• YouTube or video links showing the issue</li>
+                  <li>• Make sure links are publicly accessible</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Refund Summary */}
+        <div className="border rounded-xl p-5">
+          <h4 className="font-bold text-gray-800 mb-4">Refund Summary</h4>
+          <div className="space-y-3">
+            <div className="flex justify-between">
+              <span className="text-gray-600">Refund Type:</span>
+              <span className="font-medium capitalize">{refundType} Refund</span>
+            </div>
+
+        
+
+            <div className="flex justify-between">
+              <span className="text-gray-600">Evidence Links:</span>
+              <span className="font-medium">
+                {evidenceFiles.filter(e => e.url.trim()).length} link(s)
+              </span>
+            </div>
+
+            {/* <div className="pt-3 border-t">
+              <div className="flex justify-between text-lg font-bold">
+                <span>Estimated Refund Amount</span>
+                <span className="text-green-600">
+                  $
+                  {(() => {
+                    if (refundType === "full") {
+                      // Full refund হলে পুরো অর্ডারের টাকা
+                      return (selectedProductForRefund.rawData?.amount  || 0).toFixed(2);
+                    } else {
+                      // Partial refund হলে শুধু সিলেক্টেড আইটেমের টাকা
+                      return '--';
+                    }
+                  })()}
+                </span>
+              </div>
+              <p className="text-sm text-gray-600 mt-1">
+                * Actual refund amount may vary based on seller approval and platform policies
+              </p>
+            </div> */}
+          </div>
+        </div>
+      </div>
+
+      {/* Modal Footer */}
+      <div className="sticky bottom-0 bg-white border-t p-6 flex justify-between gap-3">
+        <button
+          onClick={() => setIsRefundModalOpen(false)}
+          className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition"
+          disabled={isSubmittingRefund}
+        >
+          Cancel
+        </button>
+        <div className="flex gap-3">
+          <button
+            onClick={() => {
+              const refundData = {
+                paymentId: selectedProductForRefund.rawData?.paymentId,
+                orderId:
+                  selectedProductForRefund.orderId ||
+                  selectedProductForRefund.rawData?.orderId,
+                userId: id,
+                items:
+                  refundType === "partial" && selectedItems.length > 0
+                    ? selectedItems.map((item) => ({
+                        orderVendorId: item.orderVendorId,
+                        productId: item.productId,
+                        quantity: item.quantity,
+                        reason: refundReason,
+                      }))
+                    : undefined,
+                reason: refundReason,
+                evidence: evidenceFiles
+                  .filter(e => e.url.trim()) // শুধু ভরাট লিঙ্কগুলো
+                  .map((file) => ({
+                    url: file.url,
+                    type: file.type,
+                    note: file.note,
+                  })),
+              };
+              console.log("Refund Request Preview:", refundData);
+              console.log("Selected Items Details:", selectedItems);
+            }}
+            className="px-6 py-3 border border-blue-500 text-blue-600 rounded-lg font-medium hover:bg-blue-50 transition flex items-center gap-2"
+            disabled={isSubmittingRefund}
+          >
+            <FileText size={16} />
+            Preview Data
+          </button>
+          <button
+            onClick={handleSubmitRefund}
+            disabled={
+              isSubmittingRefund ||
+              !refundReason.trim() 
+            
+            }
+            className={`px-6 py-3 rounded-lg font-medium transition flex items-center gap-2 ${
+              isSubmittingRefund ||
+              !refundReason.trim() ||
+              (refundType === "partial" && selectedItems.length === 0)
+                ? "bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:opacity-9"
+                : "bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:opacity-90"
+            }`}
+          >
+            {isSubmittingRefund ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                Submitting...
+              </>
+            ) : (
+              <>
+                <Upload size={16} />
+                Submit Refund Request
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+)}
+
+      {/* TRACK ORDER MODAL */}
       {isTrackModalOpen && trackingOrder && (
         <div className="fixed inset-0 backdrop-blur-sm bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
@@ -1493,7 +2061,7 @@ export default function OrdersPage() {
         </div>
       )}
 
-      {/* ------------------- REVIEW MODAL ------------------- */}
+      {/* REVIEW MODAL */}
       {isReviewModalOpen && selectedProductForReview && (
         <div className="fixed inset-0 backdrop-blur-sm bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl max-w-md w-full">
@@ -1537,7 +2105,8 @@ export default function OrdersPage() {
                     Seller: {selectedProductForReview.sellerName || "Unknown"}
                   </p>
                   <p className="text-xs text-gray-500">
-                    Product ID: {selectedProductForReview.productId?.substring(0, 8)}...
+                    Product ID:{" "}
+                    {selectedProductForReview.productId?.substring(0, 8)}...
                   </p>
                 </div>
               </div>
@@ -1592,7 +2161,9 @@ export default function OrdersPage() {
 
               {/* Review Guidelines */}
               <div className="p-4 bg-blue-50 rounded-lg">
-                <h4 className="font-medium text-blue-800 mb-2">Review Guidelines</h4>
+                <h4 className="font-medium text-blue-800 mb-2">
+                  Review Guidelines
+                </h4>
                 <ul className="text-sm text-blue-700 space-y-1">
                   <li className="flex items-start gap-2">
                     <div className="w-1 h-1 rounded-full bg-blue-600 mt-2"></div>
@@ -1635,7 +2206,7 @@ export default function OrdersPage() {
         </div>
       )}
 
-      {/* ------------------- CANCEL CONFIRMATION MODAL ------------------- */}
+      {/* CANCEL CONFIRMATION MODAL */}
       {isCancelConfirmOpen && orderToCancel && (
         <div className="fixed inset-0 backdrop-blur-sm bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl max-w-md w-full">
@@ -1675,7 +2246,8 @@ export default function OrdersPage() {
                   <div>
                     <h4 className="font-bold text-red-800">Warning</h4>
                     <p className="text-sm text-red-700 mt-1">
-                      Are you sure you want to cancel this order? This action cannot be undone.
+                      Are you sure you want to cancel this order? This action
+                      cannot be undone.
                     </p>
                   </div>
                 </div>
@@ -1693,17 +2265,23 @@ export default function OrdersPage() {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Total Amount:</span>
-                  <span className="font-bold text-red-600">${orderToCancel.price}</span>
+                  <span className="font-bold text-red-600">
+                    ${orderToCancel.price}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Items:</span>
-                  <span className="font-medium">{orderToCancel.totalItems} items</span>
+                  <span className="font-medium">
+                    {orderToCancel.totalItems} items
+                  </span>
                 </div>
               </div>
 
               {/* Reason Selection */}
               <div className="space-y-3">
-                <h4 className="font-medium text-gray-800">Reason for Cancellation</h4>
+                <h4 className="font-medium text-gray-800">
+                  Reason for Cancellation
+                </h4>
                 <select className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent">
                   <option value="">Select a reason</option>
                   <option value="change-mind">Changed my mind</option>
