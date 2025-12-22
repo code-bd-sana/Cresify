@@ -14,7 +14,7 @@ const refundSchema = new Schema(
   {
     refundId: { type: String, trim: true }, // Stripe refund ID once processed
     payment: { type: Schema.Types.ObjectId, ref: "Payment", required: true },
-    order: { type: Schema.Types.ObjectId, ref: "order", required: true },
+    order: { type: Schema.Types.ObjectId, ref: "Order", required: true },
     // If refund is for a specific vendor's part of an order
     orderVendor: { type: Schema.Types.ObjectId, ref: "OrderVendor" },
 
