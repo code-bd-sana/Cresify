@@ -11,6 +11,8 @@ import { WishlistApi } from "@/feature/customer/WishlistApi";
 import { OrderApi } from "@/feature/customer/OrderApi";
 import { SellerApi } from "@/feature/seller/SellerApi";
 import { ChatApi } from "@/feature/chat/ChatApi";
+import { ReviewAPi } from "@/feature/review/ReviewApi";
+import { RefundApi } from "@/feature/refund/RefundApi";
 
 export const store = configureStore({
   reducer: {
@@ -25,7 +27,9 @@ export const store = configureStore({
     [AdminProductApi.reducerPath]: AdminProductApi.reducer,
     [OrderApi.reducerPath]:OrderApi.reducer,
     [SellerApi.reducerPath]: SellerApi.reducer,
-    [ChatApi.reducerPath]: ChatApi.reducer
+    [ChatApi.reducerPath]: ChatApi.reducer,
+    [ReviewAPi.reducerPath]: ReviewAPi.reducer,
+    [RefundApi.reducerPath]: RefundApi.reducer
   },
 
   middleware: (getDefaultMiddleware) =>
@@ -40,6 +44,8 @@ export const store = configureStore({
       AdminProductApi.middleware,
       OrderApi.middleware,
       SellerApi.middleware,
-      ChatApi.middleware
+      ChatApi.middleware,
+      ReviewAPi.middleware,
+      RefundApi.middleware
     ]),
 });

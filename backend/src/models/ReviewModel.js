@@ -18,8 +18,14 @@ const ReviewSchema = new Schema({
     provider:{
         type:mongoose.Schema.Types.ObjectId,
         ref:User,
-        required:[true, "Provider is Requried"]
+
     },
+    seller:{
+        type:mongoose.Schema.Types.ObjectId,
+        ref:User,
+
+    },
+    
     reply:String
 }, {timestamps:true});
 

@@ -4,7 +4,7 @@ import { useGetAdminOverviewQuery } from "@/feature/admin/AdminOverviewApi";
 import { FiBarChart2 } from "react-icons/fi";
 import { LuBriefcase, LuPackage, LuShoppingBag, LuUsers } from "react-icons/lu";
 
-export default function DashboardStats() {
+export default function DashboardStats({data}) {
   /** Fetch overview stats */
   const { data: overview } = useGetAdminOverviewQuery();
   const overviewData = overview?.data;
@@ -53,12 +53,12 @@ export default function DashboardStats() {
       value: overviewData?.totalOrders ?? 0,
       icon: LuShoppingBag,
     },
-    {
-      id: 8,
-      label: "Platform Revenue",
-      value: `$${overviewData?.totalPlatformRevenue ?? 0}`,
-      icon: FiBarChart2,
-    },
+    // {
+    //   id: 8,
+    //   label: "Platform Revenue",
+    //   value: `$${overviewData?.totalPlatformRevenue ?? 0}`,
+    //   icon: FiBarChart2,
+    // },
   ];
 
   return (

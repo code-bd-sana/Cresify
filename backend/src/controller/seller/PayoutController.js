@@ -4,6 +4,7 @@ import Stripe from "stripe";
 import Payout from "../../models/PayoutModel.js";
 import Transaction from "../../models/TransactionModel.js";
 import Wallet from "../../models/WalletModel.js";
+import { toTwo } from "../../utils/money.js";
 
 dotenv.config();
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
@@ -23,8 +24,9 @@ export const getWallet = async (req, res) => {
 };
 
 export const requestPayout = async (req, res) => {
-  const { sellerId, amount, method } = req.body;
-  if (!sellerId || !amount)
+  const { sellerId, amount: rawAmount, method } = req.body;
+  const amount = toTwo(rawAmount);
+  if (!sellerId || amount === undefined || Number.isNaN(amount))
     return res.status(400).json({ message: "Missing fields" });
 
   const session = await mongoose.startSession();
@@ -32,7 +34,7 @@ export const requestPayout = async (req, res) => {
     session.startTransaction();
 
     const wallet = await Wallet.findOne({ user: sellerId }).session(session);
-    if (!wallet || (wallet.balance || 0) < amount) {
+    if (!wallet || toTwo(wallet.balance || 0) < amount) {
       if (session.inTransaction && session.inTransaction())
         await session.abortTransaction();
       return res.status(400).json({ message: "Insufficient balance" });
@@ -44,7 +46,7 @@ export const requestPayout = async (req, res) => {
         {
           payoutId: `payout_${Date.now()}`,
           seller: sellerId,
-          amount,
+          amount: toTwo(amount),
           currency: wallet.currency || "usd",
           status: "queued",
           method: method || "manual",
@@ -54,8 +56,8 @@ export const requestPayout = async (req, res) => {
     );
 
     // deduct from wallet balance immediately (funds reserved for payout)
-    const before = wallet.balance || 0;
-    wallet.balance = +(wallet.balance - amount).toFixed(2);
+    const before = toTwo(wallet.balance || 0);
+    wallet.balance = toTwo((wallet.balance || 0) - amount);
     await wallet.save({ session });
 
     await Transaction.create(
@@ -65,7 +67,7 @@ export const requestPayout = async (req, res) => {
           type: "payout",
           wallet: wallet._id,
           user: sellerId,
-          amount: amount,
+          amount: toTwo(amount),
           currency: wallet.currency || "usd",
           balanceBefore: before,
           balanceAfter: wallet.balance,

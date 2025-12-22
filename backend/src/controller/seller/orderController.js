@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import OrderVendorModel from "../../models/OrderVendorModel.js";
+import User from "../../models/UserModel.js";
 
 /**
  * Get orders for a seller with pagination and search by order ID or customer name.
@@ -16,27 +17,35 @@ export const getSellerOrders = async (req, res) => {
   try {
     const { sellerId, search = "", page = 1, limit = 10 } = req.query;
 
+    // Validation
     if (!sellerId) {
       return res.status(400).json({ message: "sellerId is required" });
     }
 
-    const sellerObjectId = new mongoose.Types.ObjectId(sellerId);
+    // Find user and role
+    const user = await User.findOne({ _id: sellerId });
+    const role = user?.role;
+    console.log(role, "user role");
 
+    const sellerObjectId = new mongoose.Types.ObjectId(sellerId);
     const pageNum = Math.max(1, Number(page));
     const limitNum = Math.min(100, Math.max(1, Number(limit)));
     const skip = (pageNum - 1) * limitNum;
-
     const searchRegex = search ? new RegExp(search.trim(), "i") : null;
 
     const pipeline = [
       /**
-       * 1️. Seller isolation
+       * 1️. Seller isolation (only if role is NOT admin)
        */
-      {
-        $match: {
-          seller: sellerObjectId,
-        },
-      },
+      ...(role !== "admin"
+        ? [
+            {
+              $match: {
+                seller: sellerObjectId,
+              },
+            },
+          ]
+        : []),
 
       /**
        * 2️. Join Order
@@ -65,7 +74,20 @@ export const getSellerOrders = async (req, res) => {
       { $unwind: "$customer" },
 
       /**
-       * 4️. Search filter (Order ID OR Customer Name)
+       * 4️. Join Seller (add seller info)
+       */
+      {
+        $lookup: {
+          from: "users",
+          localField: "seller",
+          foreignField: "_id",
+          as: "sellerInfo",
+        },
+      },
+      { $unwind: "$sellerInfo" },
+
+      /**
+       * 5️. Search filter (Order ID OR Customer Name)
        */
       ...(searchRegex
         ? [
@@ -74,6 +96,7 @@ export const getSellerOrders = async (req, res) => {
                 $or: [
                   { "order._id": { $regex: searchRegex } },
                   { "customer.name": { $regex: searchRegex } },
+                  { "sellerInfo.name": { $regex: searchRegex } }, // optional search by seller name
                 ],
               },
             },
@@ -81,12 +104,12 @@ export const getSellerOrders = async (req, res) => {
         : []),
 
       /**
-       * 5️. Sort latest first
+       * 6️. Sort latest first
        */
       { $sort: { createdAt: -1 } },
 
       /**
-       * 6️. Pagination + total count
+       * 7️. Pagination + total count
        */
       {
         $facet: {
@@ -106,6 +129,14 @@ export const getSellerOrders = async (req, res) => {
                   email: "$customer.email",
                   phoneNumber: "$customer.phoneNumber",
                   image: "$customer.image",
+                },
+
+                seller: {
+                  _id: "$sellerInfo._id",
+                  name: "$sellerInfo.name",
+                  email: "$sellerInfo.email",
+                  phoneNumber: "$sellerInfo.phoneNumber",
+                  image: "$sellerInfo.image",
                 },
 
                 products: 1,
@@ -149,7 +180,10 @@ export const getSellerOrders = async (req, res) => {
   }
 };
 
+
+
 export const orderStatusUpdate = async (req, res) => {
+  console.log(req.body, "asoasdf sohn g");
   try {
     const { status, id } = req.body;
     const updated = await OrderVendorModel.updateOne(
@@ -175,3 +209,63 @@ export const orderStatusUpdate = async (req, res) => {
     });
   }
 };
+
+// Backend controller
+export const paymentHistory = async (req, res) => {
+
+  
+  try {
+
+    const id = req.params.id
+    const { sellerId, page = 0, limit = 10, search = "" } = req.query;
+    
+    const skip = page * limit;
+
+    const user =await User.findOne({_id:id});
+
+
+    // Build query
+    let query = {};
+
+
+    if(user.role === 'seller'){
+      query.seller = id
+    }
+    if (sellerId) query.seller = sellerId;
+    
+    // Add search functionality
+    if (search) {
+      query.$or = [
+        { orderId: { $regex: search, $options: 'i' } },
+        { _id: { $regex: search, $options: 'i' } }
+      ];
+    }
+
+    // Get total count
+    const total = await OrderVendorModel.countDocuments(query);
+
+    // Get paginated results
+    const result = await OrderVendorModel.find(query)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(parseInt(limit));
+
+    res.status(200).json({
+      message: "Success",
+      data: result,
+      pagination: {
+        total,
+        page: parseInt(page),
+        limit: parseInt(limit),
+        totalPages: Math.ceil(total / limit),
+      }
+    });
+    
+  } catch (error) {
+    res.status(500).json({
+      error,
+      message: error?.message
+    });
+  }
+};
+

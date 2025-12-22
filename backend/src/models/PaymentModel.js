@@ -2,9 +2,11 @@ import mongoose, { Schema } from "mongoose";
 
 const paymentSchema = new Schema(
   {
-    order: { type: Schema.Types.ObjectId, ref: "order", required: true },
+    order: { type: Schema.Types.ObjectId, ref: "order" },
+    booking: { type: Schema.Types.ObjectId, ref: "Booking" },
     buyer: { type: Schema.Types.ObjectId, ref: "User", required: true },
     seller: { type: Schema.Types.ObjectId, ref: "User" },
+    provider: { type: Schema.Types.ObjectId, ref: "User" },
     amount: { type: Number, required: true, min: 0 },
     currency: { type: String, required: true, default: "usd" },
     status: {

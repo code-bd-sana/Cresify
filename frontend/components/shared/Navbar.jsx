@@ -76,7 +76,7 @@ export default function Navbar() {
           </div>
 
           {/* ICONS */}
-          <FiMessageCircle className='text-[22px] text-black cursor-pointer' />
+          {/* <FiMessageCircle className='text-[22px] text-black cursor-pointer' /> */}
           {/* <FiHeart className='text-[22px] text-black cursor-pointer' /> */}
           <Link href='/cart'>
             <FiShoppingCart className='text-[22px] text-black cursor-pointer' />

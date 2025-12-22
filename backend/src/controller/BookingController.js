@@ -1,23 +1,38 @@
+import dotenv from "dotenv";
 import mongoose from "mongoose";
+import Stripe from "stripe";
 import Booking from "../models/BookingModel.js";
-import ProviderAvailability from "../models/ProviderAvailabilityModel.js";
+import Payment from "../models/PaymentModel.js";
+import Transaction from "../models/TransactionModel.js";
 import User from "../models/UserModel.js";
+import Wallet from "../models/WalletModel.js";
+import { toTwo } from "../utils/money.js";
+
+dotenv.config();
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+  apiVersion: "2025-10-29.clover",
+});
 
 /**
- * Save a new booking
+ * Save a new booking with payment processing
  * @route POST /booking
  * @param {Object} req.body - Booking data
  * @returns {Object} 200 - Success message and saved booking
  */
 export const saveBooking = async (req, res) => {
+  const session = await mongoose.startSession();
+
   try {
+    session.startTransaction();
+
     const {
-      customer: customer,
+      customer,
       provider,
       address,
       paymentMethod,
       bookingDate: rawDate,
       timeSlot: { start: rawStart, end: rawEnd },
+      notes,
     } = req.body;
 
     // ====== 1. Basic required fields ======
@@ -25,11 +40,14 @@ export const saveBooking = async (req, res) => {
       return res.status(400).json({ message: "Missing required fields" });
     }
 
+    if (!["cod", "card"].includes(paymentMethod)) {
+      return res.status(400).json({ message: "Invalid payment method" });
+    }
+
     // ====== 2. Validate users in parallel ======
-    const [customerData, providerData, availability] = await Promise.all([
+    const [customerData, providerData] = await Promise.all([
       User.findById(customer).lean(),
       User.findById(provider).lean(),
-      ProviderAvailability.findOne({ provider }).lean(),
     ]);
 
     if (!customerData)
@@ -38,10 +56,13 @@ export const saveBooking = async (req, res) => {
       return res.status(404).json({ message: "Provider not found" });
     if (providerData.status !== "active")
       return res.status(400).json({ message: "Provider is not active" });
-    if (!availability)
+
+    // Check if provider has availability configured (working hours/days)
+    if (!providerData.workingDays || !providerData.workingDays.length) {
       return res
         .status(400)
         .json({ message: "Provider availability not configured" });
+    }
 
     // ====== 3. Parse & validate date ======
     const bookingDate = new Date(rawDate);
@@ -68,23 +89,12 @@ export const saveBooking = async (req, res) => {
     const dayName = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][
       bookingDate.getDay()
     ];
-    if (!availability.workingDays.includes(dayName))
+    if (!providerData.workingDays.includes(dayName))
       return res
         .status(400)
         .json({ message: `Provider does not work on ${dayName}s` });
 
-    // ====== 5. Check fully blocked date ======
-    const isFullyBlocked = availability.blockedDates.some((d) => {
-      const bd = new Date(d);
-      bd.setHours(0, 0, 0, 0);
-      return bd.getTime() === bookingDay.getTime();
-    });
-    if (isFullyBlocked)
-      return res
-        .status(400)
-        .json({ message: "Provider unavailable on this date" });
-
-    // ====== 6. Normalize time to 24h format ======
+    // ====== 5. Normalize time to 24h format ======
     const to24h = (time) => {
       const match = time.match(/^(\d{1,2}):(\d{2})\s?(AM|PM)?$/i);
       if (!match) throw new Error("Invalid time");
@@ -107,8 +117,8 @@ export const saveBooking = async (req, res) => {
         .json({ message: "Invalid time format. Use: 09:00 or 9:00 AM" });
     }
 
-    const workStart24 = to24h(availability.workingHours.start);
-    const workEnd24 = to24h(availability.workingHours.end);
+    const workStart24 = to24h(providerData.workingHours?.start || "09:00");
+    const workEnd24 = to24h(providerData.workingHours?.end || "18:00");
 
     const minutes = (t) => {
       const [h, m] = t.split(":").map(Number);
@@ -119,7 +129,7 @@ export const saveBooking = async (req, res) => {
     const slotEndMin = minutes(end24);
     const workStartMin = minutes(workStart24);
     const workEndMin = minutes(workEnd24);
-    const duration = availability.slotDuration || 60;
+    const duration = providerData.slotDuration || 60;
 
     // Validate duration & alignment
     if (slotEndMin <= slotStartMin)
@@ -129,7 +139,7 @@ export const saveBooking = async (req, res) => {
     if (slotEndMin - slotStartMin !== duration)
       return res
         .status(400)
-        .json({ message: `Slot must be exactly ${duration} minutes}` });
+        .json({ message: `Slot must be exactly ${duration} minutes` });
     if ((slotStartMin - workStartMin) % duration !== 0)
       return res
         .status(400)
@@ -137,35 +147,19 @@ export const saveBooking = async (req, res) => {
     if (slotStartMin < workStartMin || slotEndMin > workEndMin)
       return res.status(400).json({ message: "Outside working hours" });
 
-    // ====== 7. Check manually blocked slots ======
-    const blockedSlotKey = `${start24}-${end24}`;
-    const isManuallyBlocked = availability.blockedSlots.some((bs) => {
-      const blockedDay = new Date(bs.date);
-      blockedDay.setHours(0, 0, 0, 0);
-      return (
-        blockedDay.getTime() === bookingDay.getTime() &&
-        bs.time === blockedSlotKey
-      );
-    });
-    if (isManuallyBlocked)
-      return res
-        .status(400)
-        .json({ message: "This time slot is blocked by provider" });
-
-    // ====== 8. Create exact Date objects for overlap check ======
+    // ====== 6. Create exact Date objects for overlap check ======
     const slotStartDate = new Date(bookingDate);
     slotStartDate.setHours(...start24.split(":").map(Number), 0, 0);
 
     const slotEndDate = new Date(bookingDate);
     slotEndDate.setHours(...end24.split(":").map(Number), 0, 0);
 
-    // ====== 9. FINAL: Prevent double booking (FAST & INDEXED) ======
+    // ====== 7. FINAL: Prevent double booking ======
     const conflict = await Booking.findOne({
       provider,
       bookingDate: bookingDay,
       status: { $in: ["pending", "accept"] },
       $or: [
-        // Existing booking overlaps with new one
         {
           "timeSlot.start": { $lt: end24 },
           "timeSlot.end": { $gt: start24 },
@@ -178,62 +172,384 @@ export const saveBooking = async (req, res) => {
         message: "Time slot already booked",
       });
 
-    // ====== 10. Save booking ======
-    const booking = await Booking.create({
-      customer,
-      provider,
-      address,
-      paymentMethod,
-      bookingDate,
-      timeSlot: { start: rawStart.trim(), end: rawEnd.trim() },
-      status: "pending",
-      paymentStatus: paymentMethod === "cod" ? "pending" : "completed",
-    });
+    // ====== 8. Calculate pricing ======
+    const commissionPercent = Number(
+      process.env.PLATFORM_COMMISSION_PERCENT || 10
+    );
+    const commissionVATRate = Number(
+      process.env.PLATFORM_COMMISSION_VAT_PERCENT || 19
+    );
 
-    return res.status(201).json({
-      message: "Booking created successfully",
-      data: booking,
-    });
+    // Calculate service amount from provider's hourly rate
+    const hourlyRate = providerData.hourlyRate || 0;
+    const hours = duration / 60;
+    const serviceAmount = toTwo(hourlyRate * hours);
+
+    if (serviceAmount <= 0) {
+      return res.status(400).json({ message: "Invalid service price" });
+    }
+
+    // Platform commission calculation
+    const commissionAmount = toTwo((serviceAmount * commissionPercent) / 100);
+    const commissionVATAmount = toTwo(
+      (commissionAmount * commissionVATRate) / 100
+    );
+    const commissionTotal = toTwo(commissionAmount + commissionVATAmount);
+    const providerPayout = toTwo(serviceAmount - commissionTotal);
+
+    // ====== 9. Create booking ======
+    const [booking] = await Booking.create(
+      [
+        {
+          customer,
+          provider,
+          address,
+          paymentMethod,
+          bookingDate,
+          timeSlot: { start: rawStart.trim(), end: rawEnd.trim() },
+          status: "pending",
+          paymentStatus: paymentMethod === "cod" ? "pending" : "processing",
+        },
+      ],
+      { session }
+    );
+
+    // ====== 10. Create payment record ======
+    const [payment] = await Payment.create(
+      [
+        {
+          booking: booking._id,
+          buyer: customer,
+          provider: provider,
+          amount: serviceAmount,
+          currency: "usd",
+          status: paymentMethod === "cod" ? "pending" : "processing",
+          method: paymentMethod === "cod" ? "cod" : "stripe_checkout",
+          commissionAmount: commissionAmount,
+          commissionVATAmount: commissionVATAmount,
+          commissionVATRate: commissionVATRate,
+          commissionTotal: commissionTotal,
+          providerPayout: providerPayout,
+          metadata: {
+            serviceName: providerData.serviceName,
+            duration: duration,
+            startTime: rawStart.trim(),
+            endTime: rawEnd.trim(),
+            providerName: providerData.name || providerData.serviceName,
+            customerName: customerData.name,
+            hourlyRate: hourlyRate,
+            hours: hours,
+          },
+        },
+      ],
+      { session }
+    );
+
+    // ====== 11. STRIPE PAYMENT ======
+    if (paymentMethod === "card") {
+      const lineItems = [
+        {
+          price_data: {
+            currency: "usd",
+            product_data: {
+              name: providerData.serviceName || "Service",
+              description: `${duration} minute session on ${bookingDate.toLocaleDateString()} at ${rawStart} - ${rawEnd}`,
+            },
+            unit_amount: Math.round(serviceAmount * 100),
+          },
+          quantity: 1,
+        },
+      ];
+
+      const checkoutSession = await stripe.checkout.sessions.create({
+        mode: "payment",
+        payment_method_types: ["card"],
+        line_items: lineItems,
+        customer_email: customerData.email,
+        success_url: `${process.env.FRONTEND_URL}/payment-success?session_id={CHECKOUT_SESSION_ID}&booking_id=${booking._id}`,
+        cancel_url: `${process.env.FRONTEND_URL}/payment-cancel?booking_id=${booking._id}`,
+        metadata: {
+          bookingId: booking._id.toString(),
+          customerId: customer,
+          providerId: provider,
+          paymentId: payment._id.toString(),
+          itemType: "service",
+          serviceName: providerData.serviceName,
+          amount: serviceAmount.toString(),
+          commissionPercent: commissionPercent.toString(),
+          commissionVATRate: commissionVATRate.toString(),
+        },
+      });
+
+      // Update payment with Stripe session ID
+      payment.stripeSessionId = checkoutSession.id;
+      payment.stripePaymentIntent = checkoutSession.payment_intent;
+      await payment.save({ session });
+
+      await session.commitTransaction();
+
+      return res.json({
+        success: true,
+        message: "Booking created successfully. Redirect to payment.",
+        checkoutUrl: checkoutSession.url,
+        bookingId: booking._id,
+        paymentId: payment._id,
+        amount: serviceAmount,
+        sessionId: checkoutSession.id,
+      });
+    }
+
+    // ====== 12. COD PROCESSING ======
+    if (paymentMethod === "cod") {
+      await session.commitTransaction();
+
+      return res.status(201).json({
+        success: true,
+        message: "Booking placed successfully (Cash on Delivery)",
+        bookingId: booking._id,
+        paymentId: payment._id,
+        data: {
+          booking: {
+            _id: booking._id,
+            status: booking.status,
+            bookingDate: booking.bookingDate,
+            timeSlot: booking.timeSlot,
+            amount: serviceAmount,
+            paymentMethod: "cod",
+          },
+          payment: {
+            status: "pending",
+            amount: serviceAmount,
+            method: "cod",
+          },
+        },
+      });
+    }
   } catch (error) {
     console.error("saveBooking error:", error);
+    await session.abortTransaction();
+
+    // Handle specific Stripe errors
+    if (error instanceof stripe.errors.StripeError) {
+      return res.status(400).json({
+        success: false,
+        message: `Payment error: ${error.message}`,
+        code: error.code,
+      });
+    }
+
     return res.status(500).json({
+      success: false,
       message: "Server error",
       error: error.message,
     });
+  } finally {
+    session.endSession();
   }
 };
 
 /**
- * Change the status of a booking
+ * Update booking status (provider accepts/rejects)
+ *
  * @route PUT /booking
- * @param {string} req.body.id - Booking ID
- * @param {string} req.body.status - New status
- * @returns {Object} 200 - Success message and update result
+ * @param {string} req.params.bookingId - Booking ID
+ * @param {string} req.body.status - New
+ * status: 'accept' or 'rejected'
+ * @returns {Object} 200 - Success message and updated booking
  */
-export const changeStatus = async (req, res) => {
+export const updateBookingStatus = async (req, res) => {
+  const session = await mongoose.startSession();
+
   try {
-    const { id, status } = req.body;
+    const { bookingId } = req.params;
+    const { status } = req.body;
+    const providerId = req.user?.userId; // Assuming user ID from auth middleware
 
-    const updated = await Booking.updateOne(
-      {
-        _id: id,
-      },
-      {
-        $set: {
-          status: status,
-        },
+    if (!["accept", "rejected"].includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid status",
+      });
+    }
+
+    session.startTransaction();
+
+    const booking = await Booking.findOne({
+      _id: bookingId,
+      provider: providerId,
+    }).session(session);
+
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: "Booking not found",
+      });
+    }
+
+    if (booking.status !== "pending") {
+      return res.status(400).json({
+        success: false,
+        message: "Booking status cannot be changed",
+      });
+    }
+
+    // If rejecting a paid booking, need to process refund
+    if (status === "rejected" && booking.paymentStatus === "completed") {
+      const payment = await Payment.findOne({
+        booking: bookingId,
+        status: "paid",
+      }).session(session);
+
+      if (payment) {
+        // Process refund through Stripe
+        if (payment.stripePaymentIntent) {
+          const refund = await stripe.refunds.create({
+            payment_intent: payment.stripePaymentIntent,
+          });
+
+          payment.status = "refunded";
+          payment.metadata = {
+            ...payment.metadata,
+            refundId: refund.id,
+            refundedAt: new Date(),
+          };
+          await payment.save({ session });
+
+          // Update wallet balance (remove reserved amount)
+          await Wallet.findOneAndUpdate(
+            { user: payment.provider },
+            { $inc: { reserved: -payment.providerPayout } },
+            { session }
+          );
+
+          // Create refund transaction
+          await Transaction.create(
+            [
+              {
+                transactionId: `refund_${Date.now()}_${payment._id}`,
+                type: "refund",
+                user: payment.provider,
+                payment: payment._id,
+                amount: -payment.providerPayout,
+                currency: payment.currency,
+                metadata: {
+                  bookingId: booking._id,
+                  refundId: refund.id,
+                  reason: "provider_rejection",
+                },
+              },
+            ],
+            { session }
+          );
+        }
       }
-    );
+    }
 
-    res.status(200).json({
-      message: "Success",
-      data: updated,
+    booking.status = status;
+    await booking.save({ session });
+
+    await session.commitTransaction();
+
+    return res.json({
+      success: true,
+      message: `Booking ${status} successfully`,
+      booking,
     });
   } catch (error) {
-    res.status(500).json({
-      error,
-      message: error?.message,
+    console.error("Update booking status error:", error);
+    await session.abortTransaction();
+
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+      error: error.message,
     });
+  } finally {
+    session.endSession();
+  }
+};
+
+/**
+ * Complete service and release provider payout
+ */
+export const completeService = async (req, res) => {
+  const session = await mongoose.startSession();
+
+  try {
+    const { bookingId } = req.params;
+    const providerId = req.user?.userId;
+
+    session.startTransaction();
+
+    const booking = await Booking.findOne({
+      _id: bookingId,
+      provider: providerId,
+      status: "accept",
+    }).session(session);
+
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: "Booking not found or not accepted",
+      });
+    }
+
+    const payment = await Payment.findOne({
+      booking: bookingId,
+      status: "paid",
+    }).session(session);
+
+    if (!payment) {
+      return res.status(400).json({
+        success: false,
+        message: "Payment not found or not paid",
+      });
+    }
+
+    // Release reserved funds to available balance
+    await Wallet.findOneAndUpdate(
+      { user: payment.provider },
+      { $inc: { reserved: -payment.providerPayout } },
+      { session }
+    );
+
+    // Create transaction for released funds
+    await Transaction.create(
+      [
+        {
+          transactionId: `release_${Date.now()}_${payment._id}`,
+          type: "release",
+          user: payment.provider,
+          payment: payment._id,
+          amount: payment.providerPayout,
+          currency: payment.currency,
+          metadata: {
+            bookingId: booking._id,
+            serviceCompleted: true,
+            releasedAt: new Date(),
+          },
+        },
+      ],
+      { session }
+    );
+
+    await session.commitTransaction();
+
+    return res.json({
+      success: true,
+      message: "Service completed and funds released",
+    });
+  } catch (error) {
+    console.error("Complete service error:", error);
+    await session.abortTransaction();
+
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+      error: error.message,
+    });
+  } finally {
+    session.endSession();
   }
 };
 
