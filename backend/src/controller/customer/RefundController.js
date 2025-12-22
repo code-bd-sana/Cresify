@@ -16,7 +16,8 @@ const toTwo = (v) => Number(Number(v || 0).toFixed(2));
  */
 export const requestRefund = async (req, res) => {
   try {
-    const { paymentId, orderId, userId, sellerIds, items } = req.body;
+    const { paymentId, orderId, userId, sellerIds, reason, evidence, items } =
+      req.body;
 
     if (!paymentId || !orderId || !userId) {
       return res.status(400).json({ message: "Missing required fields" });
@@ -24,6 +25,27 @@ export const requestRefund = async (req, res) => {
 
     if (sellerIds && !Array.isArray(sellerIds)) {
       return res.status(400).json({ message: "sellerIds must be an array" });
+    }
+
+    // If sellerIds provided and non-empty, require evidence to be a non-empty array
+    if (Array.isArray(sellerIds) && sellerIds.length) {
+      if (!Array.isArray(evidence) || evidence.length === 0) {
+        return res.status(400).json({
+          message:
+            "Evidence is required and must be a non-empty array when requesting per-seller refunds",
+        });
+      }
+    }
+
+    // If items provided, require each item to include a non-empty evidence array
+    if (Array.isArray(items) && items.length) {
+      for (const it of items) {
+        if (!Array.isArray(it.evidence) || it.evidence.length === 0) {
+          return res.status(400).json({
+            message: "Each item must include a non-empty evidence array",
+          });
+        }
+      }
     }
 
     // Load payment and order
@@ -75,9 +97,21 @@ export const requestRefund = async (req, res) => {
           });
         }
 
-        // handle evidence upload if provided (evidence may be base64 data URLs)
+        // handle evidence upload: collect evidence from all items for this vendor
         let uploadedEvidence = [];
-        const ev = its[0].evidence || evidence || [];
+        // Each item is required to have an `evidence` array per validation above.
+        // Aggregate all item evidence entries for this vendor.
+        let ev = its.flatMap((i) =>
+          Array.isArray(i.evidence) ? i.evidence : []
+        );
+        // As a safety fallback, include global `evidence` if present and ev is empty
+        if (
+          (!Array.isArray(ev) || ev.length === 0) &&
+          Array.isArray(evidence)
+        ) {
+          ev = ev.concat(evidence);
+        }
+
         if (Array.isArray(ev) && ev.length) {
           for (const e of ev) {
             try {
@@ -118,17 +152,19 @@ export const requestRefund = async (req, res) => {
         createdRefunds.push(refundDoc);
       }
     } else if (Array.isArray(sellerIds) && sellerIds.length) {
-      // Full vendor refunds requested
+      // Full vendor refunds requested for specific sellers
+      const sellerObjectIds = sellerIds.map(
+        (s) => new mongoose.Types.ObjectId(s)
+      );
       const orderVendors = await OrderVendorModel.find({
         order: new mongoose.Types.ObjectId(orderId),
-        // seller: { $in: sellerIds.map((id) => new mongoose.Types.ObjectId(id)) },
+        seller: { $in: sellerObjectIds },
       });
-      
 
       for (const ov of orderVendors) {
         const refundAmount = toTwo(ov.amount + (ov.shippingAmount || 0));
 
-        // upload evidence if any
+        // upload evidence (evidence is required when sellerIds provided per validation above)
         let uploadedEvidence = [];
         if (Array.isArray(evidence) && evidence.length) {
           for (const e of evidence) {

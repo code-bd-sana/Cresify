@@ -1,10 +1,11 @@
 import { Router } from "express";
 import {
-  changeStatus,
+  completeService,
   getBookingStats,
   getTodaysBookings,
   getUpcomingBookings,
   saveBooking,
+  updateBookingStatus,
 } from "../controller/BookingController.js";
 
 const router = Router();
@@ -19,7 +20,13 @@ router.post("/", saveBooking);
  * @route PUT /booking
  * @desc Change the status of a booking
  */
-router.put("/", changeStatus);
+router.put("/", updateBookingStatus);
+
+/**
+ * @route POST /booking/complete/:bookingId
+ * @desc Complete a service and release provider payout
+ */
+router.post("/complete/:bookingId", completeService);
 
 /**
  * @route GET /booking/today
