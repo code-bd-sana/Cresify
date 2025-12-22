@@ -153,12 +153,12 @@ export const requestRefund = async (req, res) => {
       }
     } else if (Array.isArray(sellerIds) && sellerIds.length) {
       // Full vendor refunds requested for specific sellers
-      const sellerObjectIds = sellerIds.map(
-        (s) => new mongoose.Types.ObjectId(s)
-      );
+      // const sellerObjectIds = sellerIds.map(
+      //   (s) => new mongoose.Types.ObjectId(s)
+      // );
       const orderVendors = await OrderVendorModel.find({
         order: new mongoose.Types.ObjectId(orderId),
-        seller: { $in: sellerObjectIds },
+        // seller: { $in: sellerObjectIds },
       });
 
       for (const ov of orderVendors) {
