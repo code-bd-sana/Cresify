@@ -86,7 +86,7 @@ export const listSellerRefunds = async (req, res) => {
 export const getSellerRefund = async (req, res) => {
   try {
     const id = req.params.id;
-    const sellerId = req.body.sellerId;
+    const sellerId = req.params.sellerId;
     if (!id || !sellerId)
       return res.status(400).json({ message: "id and sellerId required" });
 
