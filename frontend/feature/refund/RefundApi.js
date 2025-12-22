@@ -16,9 +16,30 @@ export const RefundApi = createApi({
         }),
         myRefundRequest:builder.query({
             query:(id)=>`/customer/refund?userId=${id}`
-        })
+        }),
+
+      sellerRefundRequest: builder.query({
+  query: ({ sellerId, page = 1, limit = 10 }) => 
+    `/seller/refund?sellerId=${sellerId}&page=${page}&limit=${limit}`
+}) ,    
+      adminRefund: builder.query({
+  query: ({page = 1, limit = 10}) => 
+    `/admin/refund/?page=${page}&limit=${limit}`
+}) ,
+
+processRefund:builder.mutation({
+    query:(data)=>({
+        url:'/',
+        method:"POST",
+        body:data
+    })
+})
+
+
+
+
     })
 
 });
 
-export const {useCreateRefundMutation, useMyRefundRequestQuery} = RefundApi;
+export const {useCreateRefundMutation, useMyRefundRequestQuery,useSellerRefundRequestQuery, useAdminRefundQuery, useProcessRefundMutation} = RefundApi;

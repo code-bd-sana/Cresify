@@ -272,12 +272,12 @@ export default function ProductDetails({ id }) {
               </button>
 
               {/* Message Seller */}
-              <button className="w-[44px] h-[44px] rounded-[10px] border border-[#D9D3E9] flex items-center justify-center hover:bg-[#F9F6FF] transition-colors">
+              {/* <button className="w-[44px] h-[44px] rounded-[10px] border border-[#D9D3E9] flex items-center justify-center hover:bg-[#F9F6FF] transition-colors">
                 <MessageCircle
                   size={19}
                   className="text-[#A46CFF] cursor-pointer"
                 />
-              </button>
+              </button> */}
             </div>
 
             {/* STORE */}

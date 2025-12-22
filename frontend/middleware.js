@@ -59,5 +59,10 @@ export const config = {
     "/dashboard/content",
     "/dashboard/messages",
     "/dashboard/settings",
+    '/profile',
+'/product-details/:path*',
+'/cart',
+'/dashboard/refund'
+
   ],
 };
