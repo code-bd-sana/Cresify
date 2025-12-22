@@ -14,7 +14,7 @@ const router = Router();
  * - Respond to a refund (upload proof / accept / dispute)
  */
 router.get("/", listSellerRefunds);
-router.get("/:sellerId", getSellerRefund);
+router.get("/:refundId/:sellerId", getSellerRefund);
 router.post("/:id/respond", respondToRefund);
 
 export default router;
