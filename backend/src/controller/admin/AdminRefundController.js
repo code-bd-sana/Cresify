@@ -16,21 +16,61 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
 });
 
 /**
- * List all refunds (admin)
+ * List all refunds (admin) with pagination
  * Query params: page, limit
  *
- * Returns up to 100 most recent refunds
+ * Returns paginated refunds
  */
 export const listRefunds = async (req, res) => {
   try {
+    // Parse query parameters with defaults
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+
+    // Validate pagination parameters
+    if (page < 1) {
+      return res.status(400).json({
+        message: "Page must be a positive integer",
+      });
+    }
+
+    if (limit < 1 || limit > 100) {
+      return res.status(400).json({
+        message: "Limit must be between 1 and 100",
+      });
+    }
+
+    // Calculate skip value
+    const skip = (page - 1) * limit;
+
+    // Get total count for pagination metadata
+    const totalCount = await Refund.countDocuments();
+    const totalPages = Math.ceil(totalCount / limit);
+
+    // Fetch paginated refunds
     const refunds = await Refund.find()
       .populate("requestedBy processedBy seller")
       .sort({ createdAt: -1 })
-      .limit(100);
-    return res.json({ refunds });
+      .skip(skip)
+      .limit(limit);
+
+    return res.json({
+      refunds,
+      pagination: {
+        currentPage: page,
+        totalPages,
+        totalItems: totalCount,
+        itemsPerPage: limit,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1,
+      },
+    });
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ message: "Failed to list refunds" });
+    return res.status(500).json({
+      message: "Failed to list refunds",
+      error: process.env.NODE_ENV === "development" ? err.message : undefined,
+    });
   }
 };
 
