@@ -8,6 +8,7 @@ import {
   extractBase64FromDataURL,
   uploadImageToImgBB,
 } from "../../utils/imageUpload.js";
+import OrderModel from "../../models/OrderModel.js";
 
 const toTwo = (v) => Number(Number(v || 0).toFixed(2));
 
@@ -153,12 +154,12 @@ export const requestRefund = async (req, res) => {
       }
     } else if (Array.isArray(sellerIds) && sellerIds.length) {
       // Full vendor refunds requested for specific sellers
-      const sellerObjectIds = sellerIds.map(
-        (s) => new mongoose.Types.ObjectId(s)
-      );
+      // const sellerObjectIds = sellerIds.map(
+      //   (s) => new mongoose.Types.ObjectId(s)
+      // );
       const orderVendors = await OrderVendorModel.find({
         order: new mongoose.Types.ObjectId(orderId),
-        seller: { $in: sellerObjectIds },
+        // seller: { $in: sellerObjectIds },
       });
 
       for (const ov of orderVendors) {
@@ -256,7 +257,7 @@ export const listMyRefunds = async (req, res) => {
       requestedBy: new mongoose.Types.ObjectId(userId),
     })
       .sort({ createdAt: -1 })
-      .populate("order")
+      .populate("order", "amount paymentMethod paymentStatus orderId")
       .populate({
         path: "orderVendor",
         populate: { path: "seller", select: "name shopName shopLogo" },
@@ -266,6 +267,9 @@ export const listMyRefunds = async (req, res) => {
         populate: { path: "evidence.uploadedBy", select: "firstName lastName" },
       })
       .populate({ path: "items.product", select: "name price image" });
+
+
+      console.log(refunds);
 
     return res.json({ refunds });
   } catch (err) {

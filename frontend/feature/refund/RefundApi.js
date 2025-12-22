@@ -1,6 +1,7 @@
 import { base_url } from "@/utils/utils";
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
+
 export const RefundApi = createApi({
     reducerPath:"RefundApi",
     baseQuery: fetchBaseQuery({baseUrl:base_url}),
@@ -12,9 +13,12 @@ export const RefundApi = createApi({
                 method:'POST',
                 body:data
             })
+        }),
+        myRefundRequest:builder.query({
+            query:(id)=>`/customer/refund?userId=${id}`
         })
     })
 
 });
 
-export const {useCreateRefundMutation} = RefundApi;
+export const {useCreateRefundMutation, useMyRefundRequestQuery} = RefundApi;

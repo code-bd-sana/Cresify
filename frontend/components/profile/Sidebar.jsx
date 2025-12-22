@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { signOut } from "next-auth/react";
 import { CiChat2 } from "react-icons/ci";
+import { TbReceiptRefund } from "react-icons/tb";
 
 export default function Sidebar({ active, setActive }) {
   const menu = [
@@ -20,6 +21,7 @@ export default function Sidebar({ active, setActive }) {
     { key: "booking", label: "My Booking", icon: CalendarCheck2 },
     { key: "wishlist", label: "Wishlist", icon: Heart },
     { key: "chat", label: "chat", icon:  CiChat2 },
+    { key: "refund", label: "Refund", icon: TbReceiptRefund  },
     // { key: "payments", label: "Payment Methods", icon: CreditCard },
   ];
 

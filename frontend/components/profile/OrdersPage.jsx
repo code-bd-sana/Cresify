@@ -1690,128 +1690,6 @@ const resetRefundForm = () => {
                 <X size={24} className="text-gray-500" />
               </button>
             </div>
-
-            {/* Modal Content */}
-            <div className="p-6 space-y-6">
-              {/* Order Information */}
-              <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-5">
-                <div className="flex items-start gap-4">
-                  <img
-                    src={selectedProductForRefund.image}
-                    alt={selectedProductForRefund.name}
-                    className="w-20 h-20 rounded-lg object-cover border"
-                  />
-                  <div className="flex-1">
-                    <h3 className="font-bold text-gray-800 text-lg">
-                      {selectedProductForRefund.name}
-                    </h3>
-                    <div className="grid grid-cols-2 gap-4 mt-2">
-                      <div>
-                        <p className="text-sm text-gray-600">Order ID</p>
-                        <p className="font-medium">
-                          {selectedProductForRefund.orderId ||
-                            selectedProductForRefund.rawData?.orderId}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-600">Payment ID</p>
-                        <p className="font-medium">
-                          {selectedProductForRefund.rawData?.paymentId?.substring(
-                            0,
-                            12
-                          )}
-                          ...
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-600">Order Date</p>
-                        <p className="font-medium">
-                          {new Date(
-                            selectedProductForRefund.rawData?.createdAt
-                          ).toLocaleDateString()}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-600">Payment Status</p>
-                        <span
-                          className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                            selectedProductForRefund.rawData?.paymentStatus ===
-                            "paid"
-                              ? "bg-green-100 text-green-800"
-                              : "bg-yellow-100 text-yellow-800"
-                          }`}
-                        >
-                          {selectedProductForRefund.rawData?.paymentStatus ||
-                            "Unknown"}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Refund Type Selection */}
-              <div className="border rounded-xl p-5">
-                <h4 className="font-bold text-gray-800 mb-4">Refund Type</h4>
-                <div className="grid grid-cols-2 gap-4">
-                  <button
-                    onClick={() => {
-                      setRefundType("full");
-                      setSelectedItems([]); // Full refund হলে আইটেম সিলেকশন ক্লিয়ার
-                    }}
-                    className={`p-4 border-2 rounded-lg transition-all ${
-                      refundType === "full"
-                        ? "border-blue-500 bg-blue-50"
-                        : "border-gray-200 hover:border-blue-300"
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div
-                        className={`h-6 w-6 rounded-full border-2 flex items-center justify-center ${
-                          refundType === "full"
-                            ? "border-blue-500 bg-blue-500"
-                            : "border-gray-300"
-                        }`}
-                      >
-                        {refundType === "full" && (
-                          <CheckCircle2 size={14} className="text-white" />
-                        )}
-                      </div>
-                      <div className="text-left">
-                        <p className="font-semibold text-gray-800">
-                          Full Refund
-                        </p>
-                        <p className="text-sm text-gray-600 mt-1">
-                          Refund the entire order amount
-                        </p>
-                        <p className="text-xs text-blue-600 mt-1">
-                          $
-                          {(
-                            selectedProductForRefund.rawData?.amount || 0
-                          ).toFixed(2)}
-                        </p>
-                      </div>
-                    </div>
-                  </button>
-
-                  <button
-                    onClick={() => setRefundType("partial")}
-                    className={`p-4 border-2 rounded-lg transition-all ${
-                      refundType === "partial"
-                        ? "border-blue-500 bg-blue-50"
-                        : "border-gray-200 hover:border-blue-300"
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div
-                        className={`h-6 w-6 rounded-full border-2 flex items-center justify-center ${
-                          refundType === "partial"
-                            ? "border-blue-500 bg-blue-500"
-                            : "border-gray-300"
-                        }`}
-                      >
-                        {/* Partial Item Selection - শুধু partial হলে দেখাবে */}
-                     {/* PARTIAL REFUND: Item Selection */}
 {refundType === "partial" && (
   <div className="space-y-6">
     <div className="flex bg-bl items-center justify-between">
@@ -2262,6 +2140,128 @@ const resetRefundForm = () => {
     )}
   </div>
 )}
+            {/* Modal Content */}
+            <div className="p-6 space-y-6">
+              {/* Order Information */}
+              <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-5">
+                <div className="flex items-start gap-4">
+                  <img
+                    src={selectedProductForRefund.image}
+                    alt={selectedProductForRefund.name}
+                    className="w-20 h-20 rounded-lg object-cover border"
+                  />
+                  <div className="flex-1">
+                    <h3 className="font-bold text-gray-800 text-lg">
+                      {selectedProductForRefund.name}
+                    </h3>
+                    <div className="grid grid-cols-2 gap-4 mt-2">
+                      <div>
+                        <p className="text-sm text-gray-600">Order ID</p>
+                        <p className="font-medium">
+                          {selectedProductForRefund.orderId ||
+                            selectedProductForRefund.rawData?.orderId}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600">Payment ID</p>
+                        <p className="font-medium">
+                          {selectedProductForRefund.rawData?.paymentId?.substring(
+                            0,
+                            12
+                          )}
+                          ...
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600">Order Date</p>
+                        <p className="font-medium">
+                          {new Date(
+                            selectedProductForRefund.rawData?.createdAt
+                          ).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600">Payment Status</p>
+                        <span
+                          className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                            selectedProductForRefund.rawData?.paymentStatus ===
+                            "paid"
+                              ? "bg-green-100 text-green-800"
+                              : "bg-yellow-100 text-yellow-800"
+                          }`}
+                        >
+                          {selectedProductForRefund.rawData?.paymentStatus ||
+                            "Unknown"}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Refund Type Selection */}
+              <div className="border rounded-xl p-5">
+                <h4 className="font-bold text-gray-800 mb-4">Refund Type</h4>
+                <div className="grid grid-cols-2 gap-4">
+                  <button
+                    onClick={() => {
+                      setRefundType("full");
+                      setSelectedItems([]); // Full refund হলে আইটেম সিলেকশন ক্লিয়ার
+                    }}
+                    className={`p-4 border-2 rounded-lg transition-all ${
+                      refundType === "full"
+                        ? "border-blue-500 bg-blue-50"
+                        : "border-gray-200 hover:border-blue-300"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div
+                        className={`h-6 w-6 rounded-full border-2 flex items-center justify-center ${
+                          refundType === "full"
+                            ? "border-blue-500 bg-blue-500"
+                            : "border-gray-300"
+                        }`}
+                      >
+                        {refundType === "full" && (
+                          <CheckCircle2 size={14} className="text-white" />
+                        )}
+                      </div>
+                      <div className="text-left">
+                        <p className="font-semibold text-gray-800">
+                          Full Refund
+                        </p>
+                        <p className="text-sm text-gray-600 mt-1">
+                          Refund the entire order amount
+                        </p>
+                        <p className="text-xs text-blue-600 mt-1">
+                          $
+                          {(
+                            selectedProductForRefund.rawData?.amount || 0
+                          ).toFixed(2)}
+                        </p>
+                      </div>
+                    </div>
+                  </button>
+
+                  <button
+                    onClick={() => setRefundType("partial")}
+                    className={`p-4 border-2 rounded-lg transition-all ${
+                      refundType === "partial"
+                        ? "border-blue-500 bg-blue-50"
+                        : "border-gray-200 hover:border-blue-300"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div
+                        className={`h-6 w-6 rounded-full border-2 flex items-center justify-center ${
+                          refundType === "partial"
+                            ? "border-blue-500 bg-blue-500"
+                            : "border-gray-300"
+                        }`}
+                      >
+                        {/* Partial Item Selection - শুধু partial হলে দেখাবে */}
+                     {/* PARTIAL REFUND: Item Selection */}
+
                       </div>
                       <div className="text-left">
                         <p className="font-semibold text-gray-800">
