@@ -13,6 +13,8 @@ import { SellerApi } from "@/feature/seller/SellerApi";
 import { ChatApi } from "@/feature/chat/ChatApi";
 import { ReviewAPi } from "@/feature/review/ReviewApi";
 import { RefundApi } from "@/feature/refund/RefundApi";
+import { ProviderApi } from "@/feature/provider/ProviderApi";
+
 
 export const store = configureStore({
   reducer: {
@@ -29,7 +31,8 @@ export const store = configureStore({
     [SellerApi.reducerPath]: SellerApi.reducer,
     [ChatApi.reducerPath]: ChatApi.reducer,
     [ReviewAPi.reducerPath]: ReviewAPi.reducer,
-    [RefundApi.reducerPath]: RefundApi.reducer
+    [RefundApi.reducerPath]: RefundApi.reducer,
+    [ProviderApi.reducerPath]: ProviderApi.reducer,
   },
 
   middleware: (getDefaultMiddleware) =>
@@ -46,6 +49,7 @@ export const store = configureStore({
       SellerApi.middleware,
       ChatApi.middleware,
       ReviewAPi.middleware,
-      RefundApi.middleware
+      RefundApi.middleware,
+      ProviderApi.middleware
     ]),
 });

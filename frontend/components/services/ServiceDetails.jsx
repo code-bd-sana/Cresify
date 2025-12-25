@@ -1,13 +1,16 @@
 "use client";
 
+import { useGetProviderDatesQuery, useGetProviderTimeslotsQuery } from "@/feature/provider/ProviderApi";
 import { useGetServiceProviderQuery } from "@/feature/UserApi";
 import { MapPin, MessageSquare, Star } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { useState } from "react";
 
 export default function ServiceDetails() {
   const searchParams = useSearchParams();
-  const id = searchParams.get("id");
+  const [date, setDate] = useState(null)
+   const id = searchParams.get("id");
 
   const {
     data: response,
@@ -17,7 +20,10 @@ export default function ServiceDetails() {
     skip: !id,
   });
 
+  console.log(id, 'id kire tui asdf');
+
   const provider = response?.data;
+
 
   if (isLoading) {
     return (

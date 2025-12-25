@@ -1,23 +1,121 @@
 "use client";
 
+import { 
+  useCreateDateMutation, 
+  useCreateTimeSlotMutation, 
+  useDeleteDateMutation, 
+  useDeleteTimeslotMutation, 
+  useGetProviderDatesQuery, 
+  useGetProviderTimeslotsQuery 
+} from "@/feature/provider/ProviderApi";
+import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
-import { FiClock } from "react-icons/fi";
+import { FiClock, FiTrash2, FiPlus, FiCalendar } from "react-icons/fi";
+import { toast, Toaster } from "react-hot-toast";
 
 export default function AvailabilityPage() {
-  // Calendar state - only current month
+  // State variables
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const [selectedDateId, setSelectedDateId] = useState(null);
   const [selectedDuration, setSelectedDuration] = useState("60m");
   const [calendarDays, setCalendarDays] = useState([]);
+  const [availableDates, setAvailableDates] = useState([]);
+  const [timeSlots, setTimeSlots] = useState([]);
+  const [isDateLoading, setIsDateLoading] = useState(false);
+  const [isTimeSlotLoading, setIsTimeSlotLoading] = useState(false);
+  const [deletingId, setDeletingId] = useState(null);
+  const [newTimeSlot, setNewTimeSlot] = useState({
+    startTime: "09:00",
+    endTime: "10:00",
+    isBooked: false
+  });
+  
+  // Get user session
+  const { data: session } = useSession();
+  const userId = session?.user?.id;
 
-  // Get current date
+  // RTK Query hooks
+  const [createDate] = useCreateDateMutation();
+  const [deleteDate] = useDeleteDateMutation();
+  const { data: datesResponse, isLoading: datesLoading, refetch: refetchDates } = useGetProviderDatesQuery(userId);
+  
+  const [createTimeSlot] = useCreateTimeSlotMutation();
+  const [deleteTimeslot] = useDeleteTimeslotMutation();
+  const { data: timeslotsResponse, isLoading: timeslotsLoading, refetch: refetchTimeslots } = useGetProviderTimeslotsQuery(selectedDateId);
+
+  console.log(selectedDateId, 'yes got it');
+
+  // Current date
   const today = new Date();
   const currentYear = today.getFullYear();
   const currentMonth = today.getMonth();
 
-  // Generate calendar days for current month only
+  // Format date to YYYY-MM-DD
+  const formatDateToYMD = (date) => {
+    const d = new Date(date);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  // Format time for display
+  const formatTimeForDisplay = (time) => {
+    const [hour, minute] = time.split(':');
+    const date = new Date();
+    date.setHours(hour, minute);
+    return date.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true
+    });
+  };
+
+  // Format date for display
+  const formatDateForDisplay = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { 
+      weekday: 'long', 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    });
+  };
+
+  // Load available dates and time slots
+  useEffect(() => {
+    if (datesResponse?.data) {
+      setAvailableDates(datesResponse.data);
+      console.log("Loaded dates:", datesResponse.data);
+      
+      // Find if selected date exists in available dates
+      const selectedDateString = formatDateToYMD(selectedDate);
+      const foundDate = datesResponse.data.find(
+        date => formatDateToYMD(date.workingDate) === selectedDateString
+      );
+      
+      if (foundDate) {
+        setSelectedDateId(foundDate._id);
+      } else {
+        setSelectedDateId(null);
+      }
+    }
+  }, [datesResponse, selectedDate]);
+
+  // Load time slots for selected date
+  useEffect(() => {
+    if (timeslotsResponse?.data && selectedDateId) {
+      setTimeSlots(timeslotsResponse.data);
+      console.log("Loaded timeslots:", timeslotsResponse.data);
+    } else {
+      setTimeSlots([]);
+    }
+  }, [timeslotsResponse, selectedDateId]);
+
+  // Generate calendar days
   useEffect(() => {
     generateCalendarDays();
-  }, [selectedDate]);
+  }, [selectedDate, availableDates]);
 
   // Calendar functions
   const getDaysInMonth = (year, month) => {
@@ -36,270 +134,506 @@ export default function AvailabilityPage() {
 
     // Add empty cells for days before the 1st of the month
     for (let i = 0; i < firstDayOfMonth; i++) {
-      days.push({
-        label: "",
-        isCurrentMonth: false,
-        isEmpty: true,
-      });
+      days.push({ label: "", isCurrentMonth: false, isEmpty: true });
     }
 
     // Add current month days
     for (let i = 1; i <= daysInMonth; i++) {
-      const isToday =
-        today.getDate() === i &&
-        today.getMonth() === currentMonth &&
-        today.getFullYear() === currentYear;
+      const date = new Date(currentYear, currentMonth, i);
+      const dateString = formatDateToYMD(date);
+      
+      const isToday = today.getDate() === i && today.getMonth() === currentMonth;
+      const isSelected = selectedDate.getDate() === i && selectedDate.getMonth() === currentMonth;
+      
+      const isAvailable = availableDates.some(
+        date => formatDateToYMD(date.workingDate) === dateString
+      );
 
-      const isSelected =
-        selectedDate.getDate() === i &&
-        selectedDate.getMonth() === currentMonth &&
-        selectedDate.getFullYear() === currentYear;
+      const isPastDate = date < new Date(today.setHours(0, 0, 0, 0));
 
       days.push({
         label: String(i),
+        date: date,
+        dateString: dateString,
         isCurrentMonth: true,
         isToday,
         isSelected,
+        isAvailable,
+        isPastDate,
         isEmpty: false,
       });
     }
 
-    // Add highlight for specific days (for demo purposes)
-    const highlightedDays = [7]; // Days to highlight
-    days.forEach((day) => {
-      if (day.isCurrentMonth && highlightedDays.includes(parseInt(day.label))) {
-        day.isHighlighted = true;
-      }
-    });
-
     setCalendarDays(days);
   };
 
+  // Handle date selection
   const handleDateSelect = (day) => {
-    if (day.isCurrentMonth) {
-      const newSelectedDate = new Date(
-        currentYear,
-        currentMonth,
-        parseInt(day.label)
+    if (day.isCurrentMonth && !day.isPastDate) {
+      setSelectedDate(day.date);
+      
+      // Find if this date exists in available dates
+      const foundDate = availableDates.find(
+        date => formatDateToYMD(date.workingDate) === day.dateString
       );
-      setSelectedDate(newSelectedDate);
+      
+      if (foundDate) {
+        setSelectedDateId(foundDate._id);
+      } else {
+        setSelectedDateId(null);
+      }
+    }
+  };
+
+  // Handle creating a new date
+  const handleCreateDate = async () => {
+    if (!userId) {
+      toast.error("Please login first");
+      return;
+    }
+
+    const selectedDateString = formatDateToYMD(selectedDate);
+    const alreadyExists = availableDates.some(
+      date => formatDateToYMD(date.workingDate) === selectedDateString
+    );
+
+    if (alreadyExists) {
+      toast.error("This date is already marked as available");
+      return;
+    }
+
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    if (selectedDate < todayStart) {
+      toast.error("Cannot mark past dates as available");
+      return;
+    }
+
+    setIsDateLoading(true);
+    try {
+      const dateData = {
+        provider: userId,
+        workingDate: selectedDate,
+        duration: selectedDuration,
+        isAvailable: true,
+      };
+
+      const result = await createDate(dateData).unwrap();
+      
+      if (result.message === "Success") {
+        toast.success("Date marked as available successfully");
+        refetchDates();
+      } else {
+        toast.error("Failed to mark date as available");
+      }
+    } catch (error) {
+      toast.error(error?.data?.message || "Failed to mark date as available");
+    } finally {
+      setIsDateLoading(false);
+    }
+  };
+
+  // Handle creating a new time slot
+  const handleCreateTimeSlot = async () => {
+    if (!selectedDateId) {
+      toast.error("Please select an available date first");
+      return;
+    }
+
+    if (!newTimeSlot.startTime || !newTimeSlot.endTime) {
+      toast.error("Please enter start and end time");
+      return;
+    }
+
+    setIsTimeSlotLoading(true);
+    try {
+      const timeSlotData = {
+        availability: selectedDateId,
+        startTime: newTimeSlot.startTime,
+        endTime: newTimeSlot.endTime,
+        duration: selectedDuration,
+        isBooked: false
+      };
+
+      const result = await createTimeSlot(timeSlotData).unwrap();
+      
+      if (result.message === "Success") {
+        toast.success("Time slot created successfully");
+        setNewTimeSlot({ startTime: "09:00", endTime: "10:00", isBooked: false });
+        refetchTimeslots();
+      } else {
+        toast.error("Failed to create time slot");
+      }
+    } catch (error) {
+      toast.error(error?.data?.message || "Failed to create time slot");
+    } finally {
+      setIsTimeSlotLoading(false);
+    }
+  };
+
+  // Handle deleting a date
+  const handleDeleteDate = async (dateId) => {
+    if (!confirm("Are you sure you want to delete this date and all its time slots?")) {
+      return;
+    }
+
+    setDeletingId(dateId);
+    try {
+      const result = await deleteDate(dateId).unwrap();
+      
+      if (result.message === "Success") {
+        toast.success("Date deleted successfully");
+        refetchDates();
+        if (selectedDateId === dateId) {
+          setSelectedDateId(null);
+          setTimeSlots([]);
+        }
+      }
+    } catch (error) {
+      toast.error(error?.data?.message || "Failed to delete date");
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  // Handle deleting a time slot
+  const handleDeleteTimeSlot = async (slotId) => {
+    if (!confirm("Are you sure you want to delete this time slot?")) {
+      return;
+    }
+
+    setDeletingId(slotId);
+    try {
+      const result = await deleteTimeslot(slotId).unwrap();
+      
+      if (result.message === "Success") {
+        toast.success("Time slot deleted successfully");
+        refetchTimeslots();
+      }
+    } catch (error) {
+      toast.error(error?.data?.message || "Failed to delete time slot");
+    } finally {
+      setDeletingId(null);
     }
   };
 
   // Format month and year for display
   const formatMonthYear = () => {
-    const options = { month: "long", year: "numeric" };
-    return today.toLocaleDateString("en-US", options);
+    return today.toLocaleDateString("en-US", { month: "long", year: "numeric" });
   };
 
   // Format selected date for display
   const formatSelectedDate = () => {
-    const options = { weekday: "long", month: "short", day: "numeric" };
-    return selectedDate.toLocaleDateString("en-US", options);
+    return selectedDate.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" });
   };
 
-  const slots = [
-    { time: "09:00 AM", name: "Makbul Hossain Tamim", status: "Booked" },
-    { time: "10:00 AM", name: "Makbul Hossain Tamim", status: "Booked" },
-    { time: "11:00 AM", name: "", status: "Block" },
-    { time: "12:00 PM", name: "Makbul Hossain Tamim", status: "Booked" },
-    { time: "01:00 PM", name: "Makbul Hossain Tamim", status: "Booked" },
-    { time: "02:00 PM", name: "", status: "Block" },
-  ];
+  // Get selected date object from available dates
+  const getSelectedDateObject = () => {
+    return availableDates.find(date => date._id === selectedDateId);
+  };
 
-  const workingDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-  const activeWorkingDays = ["Mon", "Tue", "Wed", "Thu", "Fri"];
   const durations = ["30m", "60m", "90m", "120m"];
 
   return (
     <div className='min-h-screen px-2 pt-6 flex justify-center'>
-      <div className='w-full space-y-6'>
-        {/* ================== TOP: CALENDAR + SLOTS ================== */}
-        <div className='grid grid-cols-1 lg:grid-cols-[3fr_2fr] gap-5'>
-          {/* LEFT: CALENDAR CARD */}
-          <div className='bg-white rounded-2xl border border-[#EFE9FF] shadow-sm p-5'>
-            <h2 className='text-[18px] font-semibold text-gray-900 mb-4'>
-              Select Date &amp; Time
-            </h2>
-
-            {/* Month header - Only current month, no navigation */}
-            <div className='flex items-center justify-center mb-3'>
-              <p className='text-sm font-medium text-gray-800'>
+      <Toaster position="top-right" />
+      <div className='w-full max-w-6xl space-y-6'>
+        
+        {/* ================== CALENDAR SECTION ================== */}
+        <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
+          
+          {/* LEFT: CALENDAR */}
+          <div className='bg-white rounded-2xl border border-[#EFE9FF] shadow-sm p-6'>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className='text-xl font-semibold text-gray-900'>
+                <FiCalendar className="inline mr-2" />
+                Select Date
+              </h2>
+              <div className="text-sm font-medium text-gray-800">
                 {formatMonthYear()}
-              </p>
+              </div>
             </div>
 
             {/* Week days header */}
-            <div className='grid grid-cols-7 text-center text-[11px] text-gray-400 mb-2'>
-              <span>Su</span>
-              <span>Mo</span>
-              <span>Tu</span>
-              <span>We</span>
-              <span>Th</span>
-              <span>Fr</span>
-              <span>Sa</span>
-            </div>
-
-            {/* Calendar days - Only current month */}
-            <div className='grid grid-cols-7 gap-y-2 text-[13px]'>
-              {calendarDays.map((day, idx) => {
-                if (day.isEmpty) {
-                  return (
-                    <div
-                      key={idx}
-                      className='flex items-center justify-center h-10'></div>
-                  );
-                }
-
-                return (
-                  <button
-                    key={idx}
-                    type='button'
-                    onClick={() => handleDateSelect(day)}
-                    className={[
-                      "flex items-center justify-center h-10 rounded-xl transition",
-                      "text-gray-800",
-                      day.isHighlighted ? "text-white bg-[#8B5CF6]" : "",
-                      day.isSelected
-                        ? "bg-purple-600 text-white font-semibold"
-                        : "",
-                      day.isToday && !day.isSelected
-                        ? "ring-2 ring-purple-400"
-                        : "",
-                      !day.isSelected && !day.isHighlighted
-                        ? "hover:bg-gray-100"
-                        : "",
-                    ].join(" ")}>
-                    {day.label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* RIGHT: SLOTS CARD */}
-          <div className='bg-white rounded-2xl border border-[#EFE9FF] shadow-sm p-5 flex flex-col'>
-            <h2 className='text-[18px] font-semibold text-gray-900 mb-4'>
-              {formatSelectedDate()}
-            </h2>
-
-            <div className='space-y-2 flex-1'>
-              {slots.map((slot, idx) => (
-                <div
-                  key={idx}
-                  className='flex items-center justify-between rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] px-4 py-3'>
-                  <div>
-                    <p className='text-sm font-medium text-gray-900'>
-                      {slot.time}
-                    </p>
-                    {slot.name && (
-                      <p className='text-xs text-gray-500 mt-1'>{slot.name}</p>
-                    )}
-                  </div>
-                  <span
-                    className={`text-xs font-medium ${
-                      slot.status === "Booked"
-                        ? "text-[#3B82F6]"
-                        : "text-[#EF4444]"
-                    }`}>
-                    {slot.status}
-                  </span>
-                </div>
+            <div className='grid grid-cols-7 text-center text-sm text-gray-500 mb-3'>
+              {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(day => (
+                <span key={day} className="py-2">{day}</span>
               ))}
             </div>
 
-            <button className='mt-4 w-full py-3 rounded-xl text-white font-medium bg-gradient-to-r from-[#8736C5] to-[#F88D25] shadow hover:opacity-90 transition'>
-              Block Entire Day
-            </button>
+            {/* Calendar grid */}
+            <div className='grid grid-cols-7 gap-2'>
+              {calendarDays.map((day, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => handleDateSelect(day)}
+                  disabled={day.isEmpty || day.isPastDate}
+                  className={`
+                    h-12 rounded-lg flex flex-col items-center justify-center text-sm transition-all
+                    ${day.isEmpty ? 'invisible' : ''}
+                    ${day.isPastDate ? 'opacity-40 cursor-not-allowed text-gray-400' : 'cursor-pointer'}
+                    ${day.isAvailable ? 'bg-green-50 border border-green-200 text-green-800' : 'bg-gray-50 text-gray-700'}
+                    ${day.isSelected ? 'bg-purple-600 text-white border-2 border-purple-500' : ''}
+                    ${day.isToday && !day.isSelected ? 'ring-2 ring-purple-300' : ''}
+                    ${!day.isSelected && !day.isPastDate ? 'hover:bg-gray-100' : ''}
+                  `}
+                >
+                  <span>{day.label}</span>
+                  {day.isAvailable && !day.isSelected && (
+                    <div className="w-1.5 h-1.5 mt-1 bg-green-500 rounded-full"></div>
+                  )}
+                </button>
+              ))}
+            </div>
+
+            {/* Date Actions */}
+            <div className="mt-6 flex items-center justify-between">
+              <div className="text-sm text-gray-600">
+                {formatSelectedDate()}
+                {getSelectedDateObject() && (
+                  <span className="ml-2 px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
+                    Available
+                  </span>
+                )}
+              </div>
+              <button
+                onClick={handleCreateDate}
+                disabled={isDateLoading || selectedDateId || selectedDate < new Date(today.setHours(0, 0, 0, 0))}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+                  isDateLoading || selectedDateId || selectedDate < new Date(today.setHours(0, 0, 0, 0))
+                    ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                    : "bg-gradient-to-r from-[#8736C5] to-[#F88D25] text-white hover:opacity-90"
+                }`}
+              >
+                {isDateLoading ? "Adding..." : selectedDateId ? "Already Available" : "Mark as Available"}
+              </button>
+            </div>
+          </div>
+
+          {/* RIGHT: TIME SLOTS */}
+          <div className='bg-white rounded-2xl border border-[#EFE9FF] shadow-sm p-6'>
+            <h2 className='text-xl font-semibold text-gray-900 mb-6'>
+              <FiClock className="inline mr-2" />
+              Time Slots for {formatSelectedDate()}
+            </h2>
+
+            {!selectedDateId ? (
+              <div className="text-center py-10">
+                <div className="text-4xl mb-4">📅</div>
+                <p className="text-gray-600 mb-2">No date selected</p>
+                <p className="text-sm text-gray-500">
+                  First mark a date as available to add time slots
+                </p>
+              </div>
+            ) : (
+              <>
+                {/* Add Time Slot Form */}
+                <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+                  <h3 className="text-sm font-medium text-gray-700 mb-3">Add New Time Slot</h3>
+                  <div className="grid grid-cols-2 gap-4 mb-3">
+                    <div>
+                      <label className="block text-xs text-gray-600 mb-1">Start Time</label>
+                      <input
+                        type="time"
+                        value={newTimeSlot.startTime}
+                        onChange={(e) => setNewTimeSlot({...newTimeSlot, startTime: e.target.value})}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-gray-600 mb-1">End Time</label>
+                      <input
+                        type="time"
+                        value={newTimeSlot.endTime}
+                        onChange={(e) => setNewTimeSlot({...newTimeSlot, endTime: e.target.value})}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex gap-2">
+                  
+                    </div>
+                    <button
+                      onClick={handleCreateTimeSlot}
+                      disabled={isTimeSlotLoading}
+                      className="px-4 py-2 bg-gradient-to-r from-[#8736C5] to-[#F88D25] text-white text-sm rounded-lg hover:opacity-90 transition"
+                    >
+                      {isTimeSlotLoading ? 'Adding...' : 'Add Slot'}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Time Slots List */}
+                <div className="space-y-3 max-h-80 overflow-y-auto">
+                  {timeslotsLoading ? (
+                    <div className="text-center py-8">
+                      <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+                      <p className="mt-2 text-sm text-gray-500">Loading time slots...</p>
+                    </div>
+                  ) : timeSlots.length > 0 ? (
+                    timeSlots.map(slot => (
+                      <div
+                        key={slot._id}
+                        className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition"
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className="text-center">
+                            <div className="text-sm font-medium text-gray-900">
+                              {formatTimeForDisplay(slot.startTime)}
+                            </div>
+                            <div className="text-xs text-gray-500">to</div>
+                            <div className="text-sm font-medium text-gray-900">
+                              {formatTimeForDisplay(slot.endTime)}
+                            </div>
+                          </div>
+                          <div className="text-sm text-gray-600">
+                            Duration: {slot.duration}
+                            <div className={`text-xs mt-1 px-2 py-1 rounded-full ${slot.isBooked ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}`}>
+                              {slot.isBooked ? 'Booked' : 'Available'}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <button
+                            onClick={() => handleDeleteTimeSlot(slot._id)}
+                            disabled={deletingId === slot._id}
+                            className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition"
+                            title="Delete time slot"
+                          >
+                            {deletingId === slot._id ? (
+                              <div className="w-4 h-4 border-2 border-gray-300 border-t-red-500 rounded-full animate-spin"></div>
+                            ) : (
+                              <FiTrash2 size={16} />
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-10">
+                      <div className="text-4xl mb-4">⏰</div>
+                      <p className="text-gray-600 mb-2">No time slots yet</p>
+                      <p className="text-sm text-gray-500">
+                        Add time slots using the form above
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
           </div>
         </div>
 
-        {/* ================== BOTTOM: AVAILABILITY SETTINGS ================== */}
-        <div className='bg-white rounded-2xl border border-[#EFE9FF] shadow-sm p-5 space-y-4'>
-          <h2 className='text-[18px] font-semibold text-gray-900'>
-            Availability Settings
+        {/* ================== ALL AVAILABLE DATES ================== */}
+        <div className='bg-white rounded-2xl border border-[#EFE9FF] shadow-sm p-6'>
+          <h2 className='text-xl font-semibold text-gray-900 mb-6'>
+            <FiCalendar className="inline mr-2" />
+            All Available Dates
           </h2>
 
-          {/* WORKING DAYS + HOURS + DURATION */}
-          <div className='grid grid-cols-1 md:grid-cols-[2fr_2fr_2fr] gap-4 mt-2'>
-            {/* Working Days */}
-            <div>
-              <p className='text-sm font-medium text-gray-700 mb-2'>
-                Working Days
-              </p>
-              <div className='flex flex-wrap gap-2'>
-                {workingDays.map((day) => {
-                  const active = activeWorkingDays.includes(day);
-                  return (
-                    <button
-                      key={day}
-                      className={`min-w-[40px] px-3 py-1.5 rounded-lg text-xs font-medium transition ${
-                        active
-                          ? "bg-[#8B5CF6] text-white"
-                          : "bg-[#F3F4F6] text-gray-700"
-                      }`}>
-                      {day}
-                    </button>
-                  );
-                })}
-              </div>
+          {datesLoading ? (
+            <div className="text-center py-8">
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+              <p className="mt-2 text-sm text-gray-500">Loading available dates...</p>
             </div>
-
-            {/* Working Hours */}
-            <div>
-              <p className='text-sm font-medium text-gray-700 mb-2'>
-                Working Hours
-              </p>
-              <div className='flex items-center gap-3'>
-                <div className='relative flex-1'>
-                  <input
-                    defaultValue='09:00 AM'
-                    className='w-full rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] px-3 py-2 text-sm pr-9 outline-none focus:ring-2 focus:ring-[#C4B5FD]'
-                  />
-                  <FiClock className='absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-[16px]' />
+          ) : availableDates.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {availableDates.map(date => (
+                <div
+                  key={date._id}
+                  className={`p-4 rounded-lg border transition-all ${
+                    date._id === selectedDateId 
+                      ? 'border-purple-500 bg-purple-50' 
+                      : 'border-gray-200 bg-gray-50 hover:bg-gray-100'
+                  }`}
+                >
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <h3 className="font-medium text-gray-900">
+                          {formatDateForDisplay(date.workingDate)}
+                        </h3>
+                        <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
+                          Available
+                        </span>
+                      </div>
+                      <div className="text-sm text-gray-600">
+                        <div className="mb-1">Duration: {date.duration}</div>
+                        <div className="text-xs text-gray-500">
+                          Created: {new Date(date.createdAt).toLocaleDateString()}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <button
+                        onClick={() => handleDeleteDate(date._id)}
+                        disabled={deletingId === date._id}
+                        className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition"
+                        title="Delete date and all time slots"
+                      >
+                        {deletingId === date._id ? (
+                          <div className="w-4 h-4 border-2 border-gray-300 border-t-red-500 rounded-full animate-spin"></div>
+                        ) : (
+                          <FiTrash2 size={16} />
+                        )}
+                      </button>
+                      <button
+                        onClick={() => {
+                          setSelectedDate(new Date(date.workingDate));
+                          setSelectedDateId(date._id);
+                        }}
+                        className={`px-3 py-1 text-xs rounded-lg transition ${
+                          date._id === selectedDateId
+                            ? 'bg-purple-600 text-white'
+                            : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                        }`}
+                      >
+                        Select
+                      </button>
+                    </div>
+                  </div>
+                  {/* Show time slot count for this date */}
+                  {date._id === selectedDateId && timeSlots.length > 0 && (
+                    <div className="mt-3 pt-3 border-t border-gray-200">
+                      <div className="text-xs text-gray-500 mb-1">
+                        {timeSlots.length} time slot(s) for this date
+                      </div>
+                      <div className="flex flex-wrap gap-1">
+                        {timeSlots.slice(0, 3).map(slot => (
+                          <span 
+                            key={slot._id} 
+                            className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded"
+                          >
+                            {formatTimeForDisplay(slot.startTime)}
+                          </span>
+                        ))}
+                        {timeSlots.length > 3 && (
+                          <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded">
+                            +{timeSlots.length - 3} more
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
-                <span className='text-gray-500 text-sm'>—</span>
-                <div className='relative flex-1'>
-                  <input
-                    defaultValue='06:00 PM'
-                    className='w-full rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] px-3 py-2 text-sm pr-9 outline-none focus:ring-2 focus:ring-[#C4B5FD]'
-                  />
-                  <FiClock className='absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-[16px]' />
-                </div>
-              </div>
+              ))}
             </div>
-
-            {/* Slot Duration */}
-            <div>
-              <p className='text-sm font-medium text-gray-700 mb-2'>
-                Slot Duration
+          ) : (
+            <div className="text-center py-12 border-2 border-dashed border-gray-300 rounded-lg">
+              <div className="text-4xl mb-4">📅</div>
+              <p className="text-gray-600 mb-2">No available dates yet</p>
+              <p className="text-sm text-gray-500 mb-4">
+                Select dates from the calendar and mark them as available
               </p>
-              <div className='flex flex-wrap gap-2'>
-                {durations.map((d) => {
-                  const active = d === selectedDuration;
-                  return (
-                    <button
-                      key={d}
-                      onClick={() => setSelectedDuration(d)}
-                      className={`px-4 py-1.5 rounded-lg text-xs font-medium transition ${
-                        active
-                          ? "bg-[#4B5563] text-white"
-                          : "bg-[#F3F4F6] text-gray-700"
-                      }`}>
-                      {d}
-                    </button>
-                  );
-                })}
-              </div>
+              <button
+                onClick={() => setSelectedDate(new Date())}
+                className="px-4 py-2 bg-gradient-to-r from-[#8736C5] to-[#F88D25] text-white rounded-lg hover:opacity-90 transition"
+              >
+                Start Adding Dates
+              </button>
             </div>
-          </div>
-
-          {/* Save Button */}
-          <div className='mt-4 flex justify-end'>
-            <button className='px-8 py-2.5 rounded-xl text-white font-medium bg-gradient-to-r from-[#8736C5] to-[#F88D25] shadow hover:opacity-90 transition'>
-              Save Changes
-            </button>
-          </div>
+          )}
         </div>
       </div>
     </div>

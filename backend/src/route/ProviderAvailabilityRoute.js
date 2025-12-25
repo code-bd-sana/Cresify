@@ -6,6 +6,7 @@ import {
   getProviderBookingsForDate,
   updateProviderAvailability,
 } from "../controller/ProviderAvailabilityController.js";
+import { createDate, createTimeslot, deleteDate, deleteTimeslot, getProviderDates, getProviderTimeslots } from "../controller/provider/ProviderController.js";
 
 const router = Router();
 
@@ -14,6 +15,17 @@ const router = Router();
  * @desc Get provider's availability settings
  */
 router.get("/:providerId", getProviderAvailability);
+
+
+
+// create date
+router.post('/createDate',createDate);
+
+router.delete('/deleteDate/:id',deleteDate);
+
+router.get('/getProviderDates/:id',getProviderDates);
+
+
 
 /**
  * @route PUT /provider-availability/:providerId
@@ -38,5 +50,28 @@ router.post("/:providerId/block-slot", blockProviderSlot);
  * @desc Get all bookings for a provider on a specific date
  */
 router.get("/:providerId/bookings", getProviderBookingsForDate);
+
+
+
+//time slots route
+
+
+
+
+
+router.post('/createTimeSlot',createTimeslot);
+router.delete('/deleteTimeSlot/:id',deleteTimeslot);
+router.get('/getProviderTimeSlots/:date',getProviderTimeslots);
+
+
+
+
+
+
+
+
+
+
+
 
 export default router;

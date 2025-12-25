@@ -6,31 +6,27 @@ const ProviderAvailabilitySchema = new Schema(
       type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
-      unique: true,
     },
-    workingDays: [
-      {
-        type: String,
-        enum: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
-      },
-    ],
-    workingHours: {
-      start: { type: String, required: true }, // e.g. "09:00 AM"
-      end: { type: String, required: true }, // e.g. "06:00 PM"
+    workingDate: {
+      type: Date,
+      required: true,
     },
-    slotDuration: {
-      type: Number,
-      default: 60, // in minutes
+    duration: {
+      type: String,
+      default: "60m",
     },
-    blockedDates: [{ type: Date }], // full days blocked
-    blockedSlots: [
-      {
-        date: { type: Date, required: true },
-        time: { type: String, required: true },
-      },
-    ],
+    isAvailable: {
+      type: Boolean,
+      default: true,
+    },
   },
   { timestamps: true }
+);
+
+// Compound unique index - একই provider একই workingDate রাখতে পারবে না
+ProviderAvailabilitySchema.index(
+  { provider: 1, workingDate: 1 },
+  { unique: true }
 );
 
 const ProviderAvailability = mongoose.model(

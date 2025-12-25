@@ -1,8 +1,23 @@
 "use client";
 
+import { useGetProviderDatesQuery, useGetProviderTimeslotsQuery } from "@/feature/provider/ProviderApi";
 import { Calendar, FileText } from "lucide-react";
+import { useSearchParams } from "next/navigation";
+import { useState } from "react";
 
 export default function BookingSteps() {
+
+    const searchParams = useSearchParams();
+       const id = searchParams.get("id");
+
+       console.log(id, 'id kire toi dfs');
+  const [date, setDate] = useState(null)
+
+    const {data:availableDate} = useGetProviderDatesQuery(id);
+  console.log(availableDate, 'all available dates');
+  const {data:timeSlot} =  useGetProviderTimeslotsQuery(date);
+  console.log(timeSlot, 'this is time slot');
+  
   return (
     <div className="w-full flex justify-center py-10">
       <div className="flex items-center gap-8">

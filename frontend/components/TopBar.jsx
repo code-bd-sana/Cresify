@@ -12,7 +12,7 @@ export default function Topbar({ onMenuClick }) {
 
 
   const { data: profile, isLoading, error } = useMyProfileQuery(id);
-  console.log(profile?.data, "na na nananad sfhb");
+
 
   
 
