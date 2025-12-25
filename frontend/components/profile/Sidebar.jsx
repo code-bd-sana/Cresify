@@ -64,9 +64,11 @@ export default function Sidebar({ active, setActive }) {
 
       {/* LOGOUT */}
       <button
-      onClick={()=>{
-        signOut();
-      }}
+     onClick={() => {
+  signOut({
+    callbackUrl: "/",
+  });
+}}
         className="flex items-center gap-3 px-4 py-[10px] w-full text-left text-[14px]
         text-[#F78D25] font-medium hover:bg-orange-50 rounded-[10px]"
       >
