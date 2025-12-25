@@ -243,3 +243,25 @@ export const getBlog = async (req, res) => {
     });
   }
 };
+
+
+
+
+export const singleBlog = async(req, res)=>{
+  try {
+    const id = req.params.id;
+
+    const blog = await Blog.findOne({_id:id});
+
+    res.status(200).json({
+      message:'Success',
+      data:blog
+    })
+    
+  } catch (error) {
+    res.status(500).json({
+      error,
+      message:error?.message
+    })
+  }
+}

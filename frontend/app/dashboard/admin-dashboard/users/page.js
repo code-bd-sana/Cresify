@@ -110,10 +110,10 @@ export default function UserManagementPage() {
           </p>
         </div>
 
-        <button className='hidden sm:flex items-center gap-2 px-5 py-2.5 rounded-lg text-white text-sm font-medium bg-linear-to-r from-[#8736C5] via-[#9C47C6] to-[#F88D25] shadow-md hover:opacity-90 transition'>
+        {/* <button className='hidden sm:flex items-center gap-2 px-5 py-2.5 rounded-lg text-white text-sm font-medium bg-linear-to-r from-[#8736C5] via-[#9C47C6] to-[#F88D25] shadow-md hover:opacity-90 transition'>
           <span className='text-lg'>+</span>
           Add Users
-        </button>
+        </button> */}
       </div>
 
       {/* STAT CARDS */}

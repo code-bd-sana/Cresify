@@ -15,7 +15,11 @@ export default function AddProduct() {
     price: "",
     stockQuantity: "",
     description: "",
-    location: "", // নতুন লকেশন ফিল্ড
+    location: "",
+    country: "",
+    region: "",
+    city: "",
+    shippingCost: "0",
     status: "active",
     image: null,
     imagePreview: null,
@@ -115,8 +119,28 @@ export default function AddProduct() {
       return;
     }
 
-    if (!formData.location.trim()) { // নতুন লকেশন ভ্যালিডেশন
+    if (!formData.location.trim()) {
       toast.error("Please enter location");
+      return;
+    }
+
+    if (!formData.country.trim()) {
+      toast.error("Please enter country");
+      return;
+    }
+
+    if (!formData.region.trim()) {
+      toast.error("Please enter region");
+      return;
+    }
+
+    if (!formData.city.trim()) {
+      toast.error("Please enter city");
+      return;
+    }
+
+    if (!formData.shippingCost || parseFloat(formData.shippingCost) < 0) {
+      toast.error("Please enter a valid shipping cost");
       return;
     }
 
@@ -141,7 +165,11 @@ export default function AddProduct() {
         category: formData.category,
         price: parseFloat(formData.price),
         stock: parseInt(formData.stockQuantity),
-        location: formData.location, // নতুন লকেশন ফিল্ড যোগ করা হয়েছে
+        location: formData.location,
+        country: formData.country,
+        region: formData.region,
+        city: formData.city,
+        shippingCost: parseFloat(formData.shippingCost),
         status: formData.status,
         description: formData.description,
         image: imageUrl,
@@ -157,14 +185,18 @@ export default function AddProduct() {
         price: "",
         stockQuantity: "",
         description: "",
-        location: "", // রিসেট করার সময়ও যুক্ত হয়েছে
+        location: "",
+        country: "",
+        region: "",
+        city: "",
+        shippingCost: "0",
         status: "active",
         image: null,
         imagePreview: null,
       });
     } catch (error) {
       console.error("Publish error:", error);
-      alert(`❌ Error: ${error.message}`);
+      toast.error(`❌ Error: ${error.message}`);
     } finally {
       setIsUploading(false);
     }
@@ -310,7 +342,6 @@ export default function AddProduct() {
                   />
                 </div>
 
-                {/* নতুন লকেশন ফিল্ড */}
                 <div className="space-y-1.5">
                   <label className="block text-xs font-medium text-[#4B5563]">
                     Location<span className="text-[#F97316]">*</span>
@@ -320,11 +351,85 @@ export default function AddProduct() {
                     name="location"
                     value={formData.location}
                     onChange={handleInputChange}
-                    placeholder="Enter product location (e.g., Dhaka, Bangladesh)"
+                    placeholder="Enter product location"
                     className="w-full rounded-lg border border-[#E4E4EE] bg-[#FDFDFE] px-3.5 py-2.5 text-xs sm:text-sm placeholder:text-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#FF7A00]/40 focus:border-[#FF7A00] transition"
                     required
                   />
                 </div>
+              </div>
+
+              {/* Country, Region & City */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5">
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-medium text-[#4B5563]">
+                    Country<span className="text-[#F97316]">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="country"
+                    value={formData.country}
+                    onChange={handleInputChange}
+                    placeholder="Enter country"
+                    className="w-full rounded-lg border border-[#E4E4EE] bg-[#FDFDFE] px-3.5 py-2.5 text-xs sm:text-sm placeholder:text-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#FF7A00]/40 focus:border-[#FF7A00] transition"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-medium text-[#4B5563]">
+                    Region<span className="text-[#F97316]">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="region"
+                    value={formData.region}
+                    onChange={handleInputChange}
+                    placeholder="Enter region/state"
+                    className="w-full rounded-lg border border-[#E4E4EE] bg-[#FDFDFE] px-3.5 py-2.5 text-xs sm:text-sm placeholder:text-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#FF7A00]/40 focus:border-[#FF7A00] transition"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-medium text-[#4B5563]">
+                    City<span className="text-[#F97316]">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="city"
+                    value={formData.city}
+                    onChange={handleInputChange}
+                    placeholder="Enter city"
+                    className="w-full rounded-lg border border-[#E4E4EE] bg-[#FDFDFE] px-3.5 py-2.5 text-xs sm:text-sm placeholder:text-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#FF7A00]/40 focus:border-[#FF7A00] transition"
+                    required
+                  />
+                </div>
+              </div>
+
+              {/* Shipping Cost */}
+              <div className="space-y-1.5">
+                <label className="block text-xs font-medium text-[#4B5563]">
+                  Shipping Cost ($)<span className="text-[#F97316]">*</span>
+                </label>
+                <div className="relative">
+                  <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-xs text-[#9CA3AF]">
+                    $
+                  </span>
+                  <input
+                    type="number"
+                    name="shippingCost"
+                    value={formData.shippingCost}
+                    onChange={handleInputChange}
+                    min="0"
+                    step="0.01"
+                    placeholder="0.00"
+                    className="w-full rounded-lg border border-[#E4E4EE] bg-[#FDFDFE] pl-7 pr-3.5 py-2.5 text-xs sm:text-sm placeholder:text-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#FF7A00]/40 focus:border-[#FF7A00] transition"
+                    required
+                  />
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  Enter 0 for free shipping
+                </p>
               </div>
 
               {/* Status */}

@@ -1,5 +1,5 @@
 'use client'
-import { useAdminRefundQuery, useProcessRefundMutation } from '@/feature/refund/RefundApi';
+import { useAdminRefundQuery, useProcessRefundMutation, useRefundActionMutation } from '@/feature/refund/RefundApi';
 import { useSession } from 'next-auth/react';
 import React, { useState } from 'react';
 import { FiChevronLeft, FiChevronRight, FiCheck, FiX, FiEye, FiFileText, FiImage, FiLink, FiUser, FiShoppingBag, FiDollarSign, FiCalendar } from 'react-icons/fi';
@@ -7,6 +7,12 @@ import { MdClose } from 'react-icons/md';
 
 const AdminRefundpage = () => {
     const { data: session } = useSession();
+    const [refundAction, {error, isError}] = useRefundActionMutation();
+
+    if(isError){
+        console.log(error, 'no non non noonon ');
+    }
+
     const adminId = session?.user?.id;
     
     // States
@@ -82,8 +88,11 @@ const AdminRefundpage = () => {
             }
 
             console.log('Processing refund:', requestData);
+
+            const result = await refundAction(requestData).unwrap()
+            console.log(result, 'result tomi asco');
             
-            await processRefund(requestData).unwrap();
+          
             
             setMessage({ type: 'success', text: `Refund ${action}d successfully!` });
             setSelectedRefund(null);

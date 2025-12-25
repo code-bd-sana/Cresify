@@ -18,6 +18,7 @@ import {
 import Link from "next/link";
 import { useAllProductQuery } from "@/feature/ProductApi";
 import Image from "next/image";
+import { useSearchParams } from "next/navigation";
 
 const CATEGORY_ICONS = [
   LuShirt,
@@ -31,6 +32,13 @@ const CATEGORY_ICONS = [
 ];
 
 export default function ProductsPage({ searchTerm = "" }) {
+  const searchParams = useSearchParams();
+  
+  // Get query parameters from URL
+  const queryCountry = searchParams.get('country') || "";
+  const queryRegion = searchParams.get('region') || "";
+  const queryCity = searchParams.get('city') || "";
+  
   const [price, setPrice] = useState([0, 1000]);
   const [open, setOpen] = useState(false);
   const [selectedSort, setSelectedSort] = useState("Most Popular");
@@ -41,6 +49,13 @@ export default function ProductsPage({ searchTerm = "" }) {
   const [selectedLocations, setSelectedLocations] = useState([]);
   const [isFiltersApplied, setIsFiltersApplied] = useState(false);
   const [selectedRating, setSelectedRating] = useState(null);
+  
+  // Initialize filters from query parameters
+  const [filters, setFilters] = useState({
+    country: queryCountry,
+    region: queryRegion,
+    city: queryCity,
+  });
 
   // Sync with parent search term
   useEffect(() => {
@@ -49,6 +64,27 @@ export default function ProductsPage({ searchTerm = "" }) {
       setSkip(0);
     }
   }, [searchTerm]);
+
+  // Sync filters with query params when component mounts
+  useEffect(() => {
+    if (queryCountry || queryRegion || queryCity) {
+      setFilters({
+        country: queryCountry,
+        region: queryRegion,
+        city: queryCity,
+      });
+      // Auto-apply filters from URL
+      setIsFiltersApplied(true);
+    }
+  }, [queryCountry, queryRegion, queryCity]);
+
+  // Update filters
+  const updateFilter = (field, value) => {
+    setFilters(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
 
   // Build query parameters
   const queryParams = {
@@ -85,6 +121,17 @@ export default function ProductsPage({ searchTerm = "" }) {
     queryParams.location = selectedLocations.join(',');
   }
 
+  // Add country, region, city filters from query params
+  if (filters.country) {
+    queryParams.country = filters.country;
+  }
+  if (filters.region) {
+    queryParams.region = filters.region;
+  }
+  if (filters.city) {
+    queryParams.city = filters.city;
+  }
+
   const { data, isLoading, isFetching } = useAllProductQuery(queryParams);
   
   const products = data?.data || [];
@@ -100,8 +147,6 @@ export default function ProductsPage({ searchTerm = "" }) {
     "Sports",
     "Books",
   ];
-
-
 
   // Extract unique locations
   const locations = [...new Set(products.map(p => p.location).filter(Boolean))];
@@ -142,6 +187,7 @@ export default function ProductsPage({ searchTerm = "" }) {
     setPrice([0, 1000]);
     setSearch("");
     setSelectedRating(null);
+    setFilters({ country: "", region: "", city: "" });
     setIsFiltersApplied(false);
     setSkip(0);
   };
@@ -158,7 +204,7 @@ export default function ProductsPage({ searchTerm = "" }) {
   return (
     <main className="w-full bg-[#F7F7FA] py-10 px-6">
       <div className="max-w-[1350px] mx-auto flex gap-7">
-        {/* LEFT SIDEBAR - আপনার আগের ডিজাইন */}
+        {/* LEFT SIDEBAR */}
         <aside className="hidden lg:block w-[270px]">
           <div className="bg-white rounded-[18px] p-6 shadow-[0_4px_24px_rgba(0,0,0,0.06)] border border-[#F2EEF9]">
             {/* Header */}
@@ -172,6 +218,73 @@ export default function ProductsPage({ searchTerm = "" }) {
               >
                 Clean everything
               </button>
+            </div>
+
+            {/* Location Filters (Country, Region, City) */}
+            {(queryCountry || queryRegion || queryCity) && (
+              <div className="mb-6 p-3 bg-blue-50 rounded-lg border border-blue-100">
+                <p className="text-xs font-semibold text-blue-800 mb-2">
+                  Active Location Filters from URL:
+                </p>
+                {queryCountry && (
+                  <p className="text-xs text-blue-700 mb-1">
+                    Country: <span className="font-semibold">{queryCountry}</span>
+                  </p>
+                )}
+                {queryRegion && (
+                  <p className="text-xs text-blue-700 mb-1">
+                    Region: <span className="font-semibold">{queryRegion}</span>
+                  </p>
+                )}
+                {queryCity && (
+                  <p className="text-xs text-blue-700 mb-1">
+                    City: <span className="font-semibold">{queryCity}</span>
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Manual Location Filters */}
+            <div className="mb-6">
+              <p className="text-[14px] font-semibold text-[#1B1B1B] mb-3">
+                Location Filters
+              </p>
+              
+              {/* Country Filter */}
+              <div className="mb-3">
+                <label className="block text-[12px] text-gray-600 mb-1">Country</label>
+                <input
+                  type="text"
+                  value={filters.country}
+                  onChange={(e) => updateFilter('country', e.target.value)}
+                  placeholder="Filter by country"
+                  className="w-full border border-[#E5E0F3] rounded-[8px] px-3 py-2 text-[13px] outline-none focus:ring-2 focus:ring-[#9838E1]/40"
+                />
+              </div>
+
+              {/* Region Filter */}
+              <div className="mb-3">
+                <label className="block text-[12px] text-gray-600 mb-1">Region</label>
+                <input
+                  type="text"
+                  value={filters.region}
+                  onChange={(e) => updateFilter('region', e.target.value)}
+                  placeholder="Filter by region"
+                  className="w-full border border-[#E5E0F3] rounded-[8px] px-3 py-2 text-[13px] outline-none focus:ring-2 focus:ring-[#9838E1]/40"
+                />
+              </div>
+
+              {/* City Filter */}
+              <div className="mb-3">
+                <label className="block text-[12px] text-gray-600 mb-1">City</label>
+                <input
+                  type="text"
+                  value={filters.city}
+                  onChange={(e) => updateFilter('city', e.target.value)}
+                  placeholder="Filter by city"
+                  className="w-full border border-[#E5E0F3] rounded-[8px] px-3 py-2 text-[13px] outline-none focus:ring-2 focus:ring-[#9838E1]/40"
+                />
+              </div>
             </div>
 
             {/* Categories */}
@@ -215,37 +328,36 @@ export default function ProductsPage({ searchTerm = "" }) {
               </div>
 
               {/* Real Range Slider */}
-             <div className="w-full overflow-hidden px-1">
-  <Range
-    step={1}
-    min={0}
-    max={1000}
-    values={price}
-    onChange={setPrice}
-    renderTrack={({ props, children }) => (
-      <div
-        {...props}
-        className="h-[7px] w-full rounded-full bg-[#E7DFFF] relative mb-3"
-      >
-        <div
-          className="absolute h-full rounded-full bg-gradient-to-r from-[#9838E1] to-[#F68E44]"
-          style={{
-            left: `${(price[0] / 1000) * 100}%`,
-            width: `${((price[1] - price[0]) / 1000) * 100}%`,
-          }}
-        />
-        {children}
-      </div>
-    )}
-    renderThumb={({ props }) => (
-      <div
-        {...props}
-        className="h-[16px] w-[16px] bg-white border border-[#9838E1] rounded-full shadow-[0_2px_6px_rgba(0,0,0,0.15)]"
-      />
-    )}
-  />
-</div>
-
+              <div className="w-full overflow-hidden px-1">
+                <Range
+                  step={1}
+                  min={0}
+                  max={1000}
+                  values={price}
+                  onChange={setPrice}
+                  renderTrack={({ props, children }) => (
+                    <div
+                      {...props}
+                      className="h-[7px] w-full rounded-full bg-[#E7DFFF] relative mb-3"
+                    >
+                      <div
+                        className="absolute h-full rounded-full bg-gradient-to-r from-[#9838E1] to-[#F68E44]"
+                        style={{
+                          left: `${(price[0] / 1000) * 100}%`,
+                          width: `${((price[1] - price[0]) / 1000) * 100}%`,
+                        }}
+                      />
+                      {children}
+                    </div>
+                  )}
+                  renderThumb={({ props }) => (
+                    <div
+                      {...props}
+                      className="h-[16px] w-[16px] bg-white border border-[#9838E1] rounded-full shadow-[0_2px_6px_rgba(0,0,0,0.15)]"
+                    />
+                  )}
+                />
+              </div>
 
               {/* Inputs */}
               <div className="flex items-center gap-3">
@@ -264,49 +376,10 @@ export default function ProductsPage({ searchTerm = "" }) {
               </div>
             </div>
 
-            {/* Qualification */}
-            {/* <div className="mb-8">
-              <p className="text-[14px] font-semibold text-[#1B1B1B] mb-3">
-                Qualification
-              </p>
-
-              <div className="space-y-2">
-                {[5, 4, 3, 2, 1].map((stars) => (
-                  <div
-                    key={stars}
-                    className="flex items-center gap-2 text-[13px]"
-                  >
-                    <input 
-                      type="radio" 
-                      name="rating"
-                      checked={selectedRating === stars}
-                      onChange={() => setSelectedRating(stars)}
-                      className="h-[14px] w-[14px]" 
-                    />
-                    <div className="flex gap-[2px]">
-                      {[...Array(stars)].map((_, i) => (
-                        <AiFillStar
-                          key={i}
-                          className="text-[#FFA534] text-[14px]"
-                        />
-                      ))}
-                      {[...Array(5 - stars)].map((_, i) => (
-                        <AiFillStar
-                          key={i}
-                          className="text-[#DDD] text-[14px]"
-                        />
-                      ))}
-                    </div>
-                    <span className="text-[#A8A8A8]">and more</span>
-                  </div>
-                ))}
-              </div>
-            </div> */}
-
             {/* Location */}
             <div className="mb-7">
               <p className="text-[14px] font-semibold text-[#1B1B1B] mb-3">
-                Location
+                Product Locations
               </p>
               <div className="space-y-2 max-h-48 overflow-y-auto">
                 {locations.map((location, index) => (
@@ -343,7 +416,7 @@ export default function ProductsPage({ searchTerm = "" }) {
 
         {/* RIGHT CONTENT */}
         <section className="flex-1">
-          {/* TOP SEARCH + SORT - আপনার আগের ডিজাইন */}
+          {/* TOP SEARCH + SORT */}
           <div className="w-full flex flex-col mb-2 bg-white p-3 rounded-3xl gap-4 md:flex-row md:items-center md:justify-between">
             {/* Search Bar */}
             <div className="flex-1">
@@ -422,13 +495,66 @@ export default function ProductsPage({ searchTerm = "" }) {
             </div>
           </div>
 
+          {/* Active Filters Display */}
+          {(filters.country || filters.region || filters.city || selectedCategories.length > 0 || selectedLocations.length > 0 || search) && (
+            <div className="mb-5 p-3 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl border border-blue-100">
+              <p className="text-sm font-semibold text-gray-700 mb-2">
+                Active Filters:
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {search && (
+                  <span className="px-3 py-1 bg-blue-100 text-blue-800 text-xs rounded-full font-medium">
+                    Search: "{search}"
+                  </span>
+                )}
+                {filters.country && (
+                  <span className="px-3 py-1 bg-purple-100 text-purple-800 text-xs rounded-full font-medium">
+                    Country: {filters.country}
+                  </span>
+                )}
+                {filters.region && (
+                  <span className="px-3 py-1 bg-purple-100 text-purple-800 text-xs rounded-full font-medium">
+                    Region: {filters.region}
+                  </span>
+                )}
+                {filters.city && (
+                  <span className="px-3 py-1 bg-purple-100 text-purple-800 text-xs rounded-full font-medium">
+                    City: {filters.city}
+                  </span>
+                )}
+                {selectedCategories.length > 0 && (
+                  <span className="px-3 py-1 bg-green-100 text-green-800 text-xs rounded-full font-medium">
+                    Categories: {selectedCategories.length}
+                  </span>
+                )}
+                {selectedLocations.length > 0 && (
+                  <span className="px-3 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-full font-medium">
+                    Locations: {selectedLocations.length}
+                  </span>
+                )}
+                {(price[0] > 0 || price[1] < 1000) && (
+                  <span className="px-3 py-1 bg-orange-100 text-orange-800 text-xs rounded-full font-medium">
+                    Price: ${price[0]} - ${price[1]}
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Showing text */}
           <p className="text-[13px] text-[#777] mb-5">
             Showing <span className="font-semibold text-[#444]">{products.length}</span> of{" "}
             <span className="font-semibold text-[#444]">{totalProducts}</span> products
+            {(filters.country || filters.region || filters.city) && (
+              <span className="text-blue-600 font-medium ml-2">
+                {filters.country && `in ${filters.country}`}
+                {filters.region && `, ${filters.region}`}
+                {filters.city && `, ${filters.city}`}
+              </span>
+            )}
           </p>
 
-          {/* PRODUCT GRID - আপনার আগের ডিজাইন */}
+          {/* PRODUCT GRID */}
           {isLoading ? (
             <div className="flex justify-center items-center h-64">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#9838E1]"></div>
@@ -441,13 +567,18 @@ export default function ProductsPage({ searchTerm = "" }) {
                 {search 
                   ? `No products found for "${search}"`
                   : "No products available"}
+                {(filters.country || filters.region || filters.city) && (
+                  <span>
+                    {" "}with the current location filters.
+                  </span>
+                )}
               </p>
-              {search && (
+              {(search || filters.country || filters.region || filters.city) && (
                 <button
-                  onClick={() => setSearch("")}
+                  onClick={clearFilters}
                   className="mt-2 px-6 py-2 text-sm font-medium text-white rounded-lg bg-gradient-to-r from-[#9838E1] to-[#F68E44] hover:opacity-90"
                 >
-                  Clear Search
+                  Clear All Filters
                 </button>
               )}
             </div>
@@ -546,28 +677,44 @@ export default function ProductsPage({ searchTerm = "" }) {
                           by {product.seller?.name || product.seller?.email || "Unknown Seller"}
                         </p>
 
-                        {/* Location */}
-                        <div className="flex items-center gap-2 text-[13px] text-[#666] mb-3">
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            className="w-[15px] h-[15px] text-[#555]"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              d="M12 11a3 3 0 100-6 3 3 0 000 6z"
-                            />
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              d="M19.5 10.5c0 7-7.5 11.5-7.5 11.5S4.5 17.5 4.5 10.5a7.5 7.5 0 1115 0z"
-                            />
-                          </svg>
-                          {product.location || "N/A"}
+                        {/* Location Info */}
+                        <div className="mb-3 space-y-1">
+                          <div className="flex items-center gap-2 text-[12px] text-gray-600">
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              className="w-[14px] h-[14px] text-gray-500"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M12 11a3 3 0 100-6 3 3 0 000 6z"
+                              />
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M19.5 10.5c0 7-7.5 11.5-7.5 11.5S4.5 17.5 4.5 10.5a7.5 7.5 0 1115 0z"
+                              />
+                            </svg>
+                            {product.location || "N/A"}
+                          </div>
+                          {(product.country || product.city) && (
+                            <div className="flex flex-wrap gap-1">
+                              {product.country && (
+                                <span className="px-2 py-0.5 bg-blue-50 text-blue-700 text-[10px] rounded-full">
+                                  {product.country}
+                                </span>
+                              )}
+                              {product.city && (
+                                <span className="px-2 py-0.5 bg-purple-50 text-purple-700 text-[10px] rounded-full">
+                                  {product.city}
+                                </span>
+                              )}
+                            </div>
+                          )}
                         </div>
 
                         {/* Rating */}

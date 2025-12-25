@@ -4,6 +4,7 @@ import {
   editBlog,
   getBlog,
   saveBlog,
+  singleBlog,
 } from "../../controller/admin/AdminBlogController.js";
 
 /**
@@ -47,5 +48,6 @@ router.put("/edit", editBlog);
  * @params  id - Blog ID to delete
  */
 router.delete("/delete/:id", deleteBlog);
+router.get('/:id', singleBlog)
 
 export default router;

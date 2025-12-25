@@ -66,14 +66,14 @@ export default function Navbar() {
 
         {/* RIGHT */}
         <div className='flex items-center gap-6'>
-          {/* SEARCH BAR */}
-          <div className='flex items-center border border-[#D6D6D6] rounded-md px-3 py-[7px] w-[320px] shadow-sm'>
+
+          {/* <div className='flex items-center border border-[#D6D6D6] rounded-md px-3 py-[7px] w-[320px] shadow-sm'>
             <input
               type='text'
               placeholder='Search for product or service....'
               className='w-full text-sm outline-none placeholder:text-[#9F9F9F]'
             />
-          </div>
+          </div> */}
 
           {/* ICONS */}
           {/* <FiMessageCircle className='text-[22px] text-black cursor-pointer' /> */}
@@ -132,15 +132,15 @@ export default function Navbar() {
 
       {/* ---------------- MOBILE MENU DROPDOWN ---------------- */}
       {open && (
-        <div className='lg:hidden bg-white px-4 pb-5 border-t animate-slideDown'>
+        <div className='xl:hidden bg-white px-4 pb-5 border-t animate-slideDown'>
           {/* SEARCH BAR */}
-          <div className='mt-3 flex items-center border border-[#D6D6D6] rounded-md px-3 py-[7px] w-full shadow-sm'>
+          {/* <div className='mt-3 flex items-center border border-[#D6D6D6] rounded-md px-3 py-[7px] w-full shadow-sm'>
             <input
               type='text'
               placeholder='Search for product or service....'
               className='w-full text-sm outline-none placeholder:text-[#9F9F9F]'
             />
-          </div>
+          </div> */}
 
           {/* MENU ITEMS */}
           <div className='flex flex-col gap-4 mt-4'>
@@ -165,7 +165,9 @@ export default function Navbar() {
 
           {/* MESSAGE ICON */}
           <div className='flex mt-4 items-center gap-4'>
-            <FiMessageCircle className='text-[22px] text-black cursor-pointer' />
+          <Link href='/cart'>
+            <FiShoppingCart className='text-[22px] text-black cursor-pointer' />
+          </Link>
 
             {user?.role === "buyer" ? (
               <FaUser />

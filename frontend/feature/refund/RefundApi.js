@@ -33,6 +33,14 @@ processRefund:builder.mutation({
         method:"POST",
         body:data
     })
+}),
+
+refundAction: builder.mutation({
+    query:(data)=>({
+        url:'/admin/refund/review',
+        method:"POST",
+        body:data
+    })
 })
 
 
@@ -42,4 +50,4 @@ processRefund:builder.mutation({
 
 });
 
-export const {useCreateRefundMutation, useMyRefundRequestQuery,useSellerRefundRequestQuery, useAdminRefundQuery, useProcessRefundMutation} = RefundApi;
+export const {useCreateRefundMutation, useMyRefundRequestQuery,useSellerRefundRequestQuery, useAdminRefundQuery, useProcessRefundMutation, useRefundActionMutation} = RefundApi;
