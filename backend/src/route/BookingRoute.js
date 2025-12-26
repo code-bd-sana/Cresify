@@ -8,6 +8,7 @@ import {
   providerBooking,
   saveBooking,
   updateBookingStatus,
+  updateBookingStatusNew,
   userBooking,
 } from "../controller/BookingController.js";
 
@@ -63,5 +64,7 @@ router.get('/userBookings/:userId', userBooking)
 router.get('/providerBookings/:id', providerBooking)
 
 router.get('/adminBookings', allBookings)
+
+router.put('/updateStatus/', updateBookingStatusNew)
 
 export default router;

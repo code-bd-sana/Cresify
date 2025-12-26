@@ -422,7 +422,7 @@ export default function BookingList() {
                     ) : null}
 
                     {/* Cancel Button - Only for pending/accepted bookings */}
-                    {booking.status === 'pending' || booking.status === 'accept' ? (
+                    {/* {booking.status === 'pending' || booking.status === 'accept' ? (
                       <button
                         onClick={() => handleCancel(booking._id)}
                         className="
@@ -438,7 +438,7 @@ export default function BookingList() {
                         <X size={16} className="text-[#F78D25]" />
                         Cancel Booking
                       </button>
-                    ) : null}
+                    ) : null} */}
                   </div>
                 </div>
               );

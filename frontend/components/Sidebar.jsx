@@ -84,7 +84,7 @@ export default function Sidebar({ open, onClose }) {
       icon: SlCalender,
       path: "/dashboard/service-provider-dashboard/calender",
     },
-    { label: "Payments", icon: FiCreditCard, path: "/dashboard/payments" },
+    { label: "Payments", icon: FiCreditCard, path: "/dashboard/providerPayments" },
     { label: "Messages", icon: FiMessageSquare, path: "/dashboard/messages" },
     { label: "Reviews", icon: FiStar, path: "/dashboard/reviews" },
     { label: "Settings", icon: FiSettings, path: "/dashboard/settings" },

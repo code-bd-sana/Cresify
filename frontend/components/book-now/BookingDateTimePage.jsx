@@ -12,6 +12,7 @@ export default function BookingDateTimePage() {
   const GRADIENT_TO = "#F68E44";
 
   const [bookService, {isLoading, isError, error}] = useBookServiceMutation();
+  
 
 
 
@@ -358,7 +359,7 @@ try {
   return (
     <section className='w-full bg-[#F7F7FA] py-10 px-6'>
       <Toaster position="top-center" />
-      <div className='mx-auto max-w-[1250px] grid gap-8 lg:grid-cols-[minmax(0,2.2fr)_minmax(0,1fr)]'>
+      <div className='mx-auto max-w-[1250px] grid gap-8 ]'>
         
         {/* ---------------- LEFT CARD ---------------- */}
         <div className='rounded-[20px] border border-[#ECE6F7] bg-white px-8 py-6 shadow-[0_10px_30px_rgba(15,23,42,0.06)]'>
@@ -555,16 +556,16 @@ try {
         </div>
 
         {/* ---------------- RIGHT ORDER SUMMARY ---------------- */}
-        <aside
+        {/* <aside
           className='w-full rounded-[18px] border border-[#E9E5F4] bg-white px-6 py-6 
              shadow-[0_6px_20px_rgba(0,0,0,0.05)] h-fit sticky top-6'>
           
-          {/* TITLE */}
+       
           <h3 className='text-[15px] font-semibold text-[#1B1B1B] mb-5'>
             Order Summary
           </h3>
 
-          {/* SERVICE ITEM */}
+
           <div className='flex items-center justify-between mb-5'>
             <div className='flex items-center gap-3'>
               <div className='h-[48px] w-[48px] rounded-[12px] overflow-hidden bg-[#F5F4FA]'>
@@ -584,7 +585,7 @@ try {
             <p className='text-[14px] font-semibold text-[#F26A00]'>$55.00</p>
           </div>
 
-          {/* DATE BLOCK */}
+
           <div className='border-t border-[#EEEAF7] pt-4 pb-3'>
             <div className="flex items-center gap-2 mb-1">
               <div className='h-[28px] w-[28px] rounded-full bg-[#F7F7FA] flex items-center justify-center'>
@@ -603,7 +604,7 @@ try {
             )}
           </div>
 
-          {/* TIME BLOCK */}
+
           <div className='border-t border-[#EEEAF7] pt-4 pb-3'>
             <div className="flex items-center gap-2 mb-1">
               <div className='h-[28px] w-[28px] rounded-full bg-[#F7F7FA] flex items-center justify-center'>
@@ -632,7 +633,7 @@ try {
             )}
           </div>
 
-          {/* PRICE DETAILS */}
+     
           <div className='border-t border-[#EEEAF7] pt-4 space-y-2 text-[12px] text-[#666] mb-4'>
             <div className='flex justify-between'>
               <span>Service Fee</span>
@@ -650,7 +651,7 @@ try {
             </div>
           </div>
 
-          {/* TOTAL */}
+    
           <div className='flex items-center justify-between mb-5 text-[13px] font-semibold border-t border-gray-200 pt-4'>
             <div>
               <span>Total Amount</span>
@@ -668,7 +669,7 @@ try {
             </div>
           </div>
 
-          {/* BOOKING STATUS */}
+
           {selectedTimeSlot && !showBookingForm && (
             <div className="mb-5 p-3 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg">
               <div className="flex items-center gap-2">
@@ -680,7 +681,7 @@ try {
             </div>
           )}
 
-          {/* SECURITY */}
+
           <div className='flex items-center justify-center gap-2 mb-4'>
             <svg width='16' height='16' fill='#52B788'>
               <path d='M8 1l6 3v4c0 3.9-2.7 7.4-6 8-3.3-.6-6-4.1-6-8V4l6-3z' />
@@ -690,7 +691,7 @@ try {
             </p>
           </div>
 
-          {/* PAYMENT METHODS */}
+   
           <div className='border-t border-[#EEEAF7] pt-3 text-center'>
             <p className='text-[11px] text-[#999] mb-2'>
               Accepted payment methods
@@ -708,7 +709,7 @@ try {
               </span>
             </div>
           </div>
-        </aside>
+        </aside> */}
       </div>
 
       {/* BOOKING FORM MODAL */}

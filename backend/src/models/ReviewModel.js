@@ -13,7 +13,7 @@ const ReviewSchema = new Schema({
     product:{
         type:mongoose.Schema.Types.ObjectId,
         ref:Product,
-        required:true
+        
     },
     provider:{
         type:mongoose.Schema.Types.ObjectId,

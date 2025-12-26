@@ -60,14 +60,26 @@ export const ProviderApi = createApi({
       providesTags: ["Bookings"],
     }),
 
-    getProviderBookings: builder.query({
-      query: (id) => `/booking/providerBookings/${id}`,
+     getProviderBookings: builder.query({
+      query: ({ id, skip = 0, limit = 10 }) => ({
+        url: `/booking/providerBookings/${id}`,
+        params: { skip, limit }
+      }),
       providesTags: ["Bookings"],
     }),
 
     getAllBookings: builder.query({
       query: () => `/booking`,
       providesTags: ["Bookings"],
+    }),
+
+    updateStatus: builder.mutation({
+      query: (data) => ({
+        url: `/booking/updateStatus/`,
+        method: "PUT",
+        body: data,
+      }),
+      invalidatesTags: ["Bookings"],
     }),
   }),
 });
@@ -84,4 +96,5 @@ export const {
   useGetAllBookingsQuery,
   useGetUserBookingsQuery,
   useGetProviderBookingsQuery,
+  useUpdateStatusMutation
 } = ProviderApi;

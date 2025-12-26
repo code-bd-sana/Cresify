@@ -899,32 +899,38 @@ export const userBooking= async(req, res)=> {
 }
 
 
-export const providerBooking= async(req, res)=> {
-
+export const providerBooking = async(req, res)=> {
   try {
-
-    const {id} = req.params
-const skip = parseInt(req.query.skip) || 0;
-const limit = Math.min(parseInt(req.query.limit) || 20, 100); // max 100
+    const { id } = req.params;
+    const skip = parseInt(req.query.skip) || 0;
+    const limit = Math.min(parseInt(req.query.limit) || 10, 100);
+    
+    // Get total count
+    const total = await Booking.countDocuments({ provider: id }).populate('customer timeSlot dateId provider');
+    
+    // Get paginated bookings
     const bookings = await Booking.find({
       provider: id,
     })
-      .sort({ createdAt: -1 }) // latest first
-      .populate('customer timeSlot dateId')
+      .sort({ createdAt: -1 })
+      .populate('customer timeSlot dateId provider')
       .skip(skip)
       .limit(limit)
-      .lean() // FASTEST: returns plain objects, no Mongoose overhead
+      .lean()
       .exec();
-    res.status(200).json({message: "Success",
-    data: {
-      total: bookings.length,
-      bookings,
-    },
-  });    
-
-
-     } catch (error) {
-    res.status(500).json({message:"server error", error: error.message})
+    
+    res.status(200).json({
+      message: "Success",
+      data: {
+        total, // This should be the total count, not bookings.length
+        bookings,
+        page: Math.floor(skip / limit) + 1,
+        totalPages: Math.ceil(total / limit),
+        hasMore: skip + limit < total
+      },
+    });    
+  } catch (error) {
+    res.status(500).json({message:"server error", error: error.message});
   }
 }
 
@@ -953,3 +959,21 @@ export const allBookings = async(req, res)=> {
     res.status(500).json({message:"server error", error: error.message})
   }
 }
+
+
+export const updateBookingStatusNew = async (req, res) => {
+  try {
+    const {id, status} = req.body;
+    const booking = await Booking.findByIdAndUpdate(
+      id,
+      { status: status },
+      { new: true }
+    );
+    res.status(200).json({message: "Booking status updated", booking});
+
+  } catch (error) {
+    res.status(500).json({message:"server error", error: error.message})
+  }
+}
+
+
