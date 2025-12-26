@@ -103,13 +103,56 @@ export const reviewRefund = async (req, res) => {
       const refundAmount = toTwo(refund.amount);
 
       let stripeRefund = null;
-      if (payment.method === "stripe_checkout" || payment.paymentId) {
-        // Create Stripe refund (amount in cents)
+      // Only attempt Stripe refund when payment was via Stripe or has a Stripe id
+      if (
+        payment.method === "stripe_checkout" ||
+        payment.paymentId ||
+        payment.metadata?.stripePaymentIntent ||
+        payment.stripeSessionId ||
+        payment.metadata?.stripeCharge
+      ) {
         try {
-          stripeRefund = await stripe.refunds.create({
-            payment_intent: payment.paymentId,
-            amount: Math.round(refundAmount * 100),
-          });
+          const refundParams = { amount: Math.round(refundAmount * 100) };
+
+          // Prefer explicit paymentId on record
+          if (payment.paymentId) {
+            const pid = String(payment.paymentId);
+            if (pid.startsWith("pi_")) refundParams.payment_intent = pid;
+            else refundParams.charge = pid;
+          } else if (payment.metadata?.stripePaymentIntent) {
+            refundParams.payment_intent = String(
+              payment.metadata.stripePaymentIntent
+            );
+          } else if (payment.metadata?.stripeCharge) {
+            refundParams.charge = String(payment.metadata.stripeCharge);
+          } else if (payment.stripeSessionId || payment.stripeSession) {
+            const sessId = payment.stripeSessionId || payment.stripeSession;
+            try {
+              const session = await stripe.checkout.sessions.retrieve(sessId, {
+                expand: ["payment_intent"],
+              });
+              if (session && session.payment_intent) {
+                const pi =
+                  typeof session.payment_intent === "string"
+                    ? session.payment_intent
+                    : session.payment_intent.id;
+                if (pi) refundParams.payment_intent = pi;
+              }
+            } catch (e) {
+              console.error(
+                "Failed to retrieve checkout session",
+                e?.message || e
+              );
+            }
+          }
+
+          if (!refundParams.payment_intent && !refundParams.charge) {
+            throw new Error(
+              "Missing payment identifier for stripe refund (payment_intent or charge)"
+            );
+          }
+
+          stripeRefund = await stripe.refunds.create(refundParams);
           refund.refundId = stripeRefund.id;
           refund.stripeRefundId = stripeRefund.id;
         } catch (err) {
@@ -200,9 +243,9 @@ export const reviewRefund = async (req, res) => {
           });
 
           // ledger entries: debit reserved portion and debit current portion (if any)
-          if (deductFromReserved > 0) {
+          if (deductFromReserved > 0 && sellerId) {
             ledgerDocs.push({
-              user: sellerId,
+              seller: sellerId,
               type: "debit",
               amount: toTwo(deductFromReserved),
               reason: "refund",
@@ -224,13 +267,15 @@ export const reviewRefund = async (req, res) => {
           }
 
           if (remaining > 0) {
-            ledgerDocs.push({
-              user: sellerId,
-              type: "debit",
-              amount: toTwo(remaining),
-              reason: "refund",
-              refId: order._id,
-            });
+            if (sellerId) {
+              ledgerDocs.push({
+                seller: sellerId,
+                type: "debit",
+                amount: toTwo(remaining),
+                reason: "refund",
+                refId: order._id,
+              });
+            }
 
             txDocs.push({
               transactionId: `${
@@ -264,13 +309,15 @@ export const reviewRefund = async (req, res) => {
               },
             });
 
-            ledgerDocs.push({
-              user: sellerId,
-              type: "debit",
-              amount: toTwo(sellerShareFee),
-              reason: "refund_fee",
-              refId: order._id,
-            });
+            if (sellerId) {
+              ledgerDocs.push({
+                seller: sellerId,
+                type: "debit",
+                amount: toTwo(sellerShareFee),
+                reason: "refund_fee",
+                refId: order._id,
+              });
+            }
 
             txDocs.push({
               transactionId: `${
