@@ -23,7 +23,7 @@ export default function ServiceDetails() {
   console.log(id, 'id kire tui asdf');
 
   const provider = response?.data;
-
+console.log(provider, 'tomi amar personal provider');
 
   if (isLoading) {
     return (
@@ -90,7 +90,7 @@ export default function ServiceDetails() {
             </div>
 
             {/* IMAGE THUMBNAILS */}
-            <div className='flex items-center gap-4 mt-5'>
+            {/* <div className='flex items-center gap-4 mt-5'>
               {[
                 provider.image ||
                   provider.businessLogo ||
@@ -113,7 +113,7 @@ export default function ServiceDetails() {
                   />
                 </div>
               ))}
-            </div>
+            </div> */}
           </div>
 
           {/* RIGHT DETAILS */}
@@ -155,9 +155,9 @@ export default function ServiceDetails() {
             {/* Price */}
             <p className='text-[20px] font-semibold text-[#F78D25] mt-3'>
               $
-              {provider.hourlyRate > 0
-                ? provider.hourlyRate
-                : "Contact for pricing"}
+              {
+                 provider.hourlyRate }
+              
               /hr
             </p>
 

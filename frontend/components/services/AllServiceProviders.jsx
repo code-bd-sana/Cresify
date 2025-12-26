@@ -238,7 +238,7 @@ export default function AllServiceProviders() {
             </div>
           ) : (
             filteredProviders.map((p) => (
-              <div key={p._id} className='p-3'>
+              <div key={p._id} className={`p-3 ` }>
                 <Link href={`/service-details?id=${p._id}`}>
                   <div className='bg-white rounded-[20px] overflow-hidden p-3.5 hover:shadow-lg transition-shadow duration-300'>
                     {/* Image */}
@@ -256,6 +256,9 @@ export default function AllServiceProviders() {
                     {/* Name */}
                     <h3 className='text-[16px] font-semibold text-[#1A1A1A] mb-0.5'>
                       {p.name || p.shopName || "Unnamed Provider"}
+                    </h3>
+                    <h3 className='text-[16px] font-semibold text-[#1A1A1A] mb-0.5'>
+                      {p.serviceName}
                     </h3>
 
                     {/* Subtitle */}

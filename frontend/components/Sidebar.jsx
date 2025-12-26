@@ -57,6 +57,7 @@ export default function Sidebar({ open, onClose }) {
 
     // { label: "Reviews", icon: FiStar, path: "/dashboard/reviews" },
     { label: "Refund", icon: TbReceiptRefund, path: "/dashboard/adminRefund" },
+    { label: "Service Refund", icon: TbReceiptRefund, path: "/dashboard/serviceRefund" },
     { label: "Settings", icon: FiSettings, path: "/dashboard/settings" },
   ];
 
