@@ -69,11 +69,17 @@ export const UserApi = createApi({
       providesTags: ["User"], // <-- provide tag
     }),
 
-    getAllServiceProviders: builder.query({
-      query: (page, limit, skip) =>
-        `/user/all-providers?page=${page}&limit=${limit}&skip=${skip}`,
-      providesTags: ["User"], // <-- provide tag
-    }),
+  getAllServiceProviders: builder.query({
+  query: ({ page = 1, limit = 10 }) => ({
+    url: `/user/all-providers`,
+    params: { 
+      page, 
+      limit,
+      skip: (page - 1) * limit 
+    }
+  }),
+  providesTags: ["User"],
+}),
 
     getServiceProvider: builder.query({
       query: (id) => `/user/provider/${id}`,
