@@ -303,6 +303,7 @@ export const saveBooking = async (req, res) => {
             customerEmail: req.body.email || customerData.email,
             address: address || req.body.address,
             country,
+            itemTypeL: "service",
             city,
             hourlyRate: hourlyRate,
             hours: hours,
@@ -857,3 +858,98 @@ export const getBookingStats = async (req, res) => {
     });
   }
 };
+
+
+
+
+
+export const userBooking= async(req, res)=> {
+
+
+  try {
+
+
+    const { userId } = req.params;
+
+    if (!userId) {
+      return res.status(400).json({ message: "userId is required" });
+    }
+
+    const skip = parseInt(req.query.skip) || 0;
+    const limit = Math.min(parseInt(req.query.limit) || 20, 100); // max 100
+    const bookings = await Booking.find({
+      customer: userId,
+    })
+      .sort({ createdAt: -1 }) // latest first
+      .populate('provider timeSlot dateId')
+      .skip(skip)
+      .limit(limit)
+      .lean() // FASTEST: returns plain objects, no Mongoose overhead
+      .exec();
+    res.status(200).json({message: "Success",
+    data: {
+      total: bookings.length,
+      bookings,
+    },
+  });
+    
+  } catch (error) {
+    res.status(500).json({message:"server error", error: error.message})
+  }
+}
+
+
+export const providerBooking= async(req, res)=> {
+
+  try {
+
+    const {id} = req.params
+const skip = parseInt(req.query.skip) || 0;
+const limit = Math.min(parseInt(req.query.limit) || 20, 100); // max 100
+    const bookings = await Booking.find({
+      provider: id,
+    })
+      .sort({ createdAt: -1 }) // latest first
+      .populate('customer timeSlot dateId')
+      .skip(skip)
+      .limit(limit)
+      .lean() // FASTEST: returns plain objects, no Mongoose overhead
+      .exec();
+    res.status(200).json({message: "Success",
+    data: {
+      total: bookings.length,
+      bookings,
+    },
+  });    
+
+
+     } catch (error) {
+    res.status(500).json({message:"server error", error: error.message})
+  }
+}
+
+
+
+export const allBookings = async(req, res)=> {
+  try {
+    
+
+    const skip = parseInt(req.query.skip) || 0;
+    const limit = Math.min(parseInt(req.query.limit) || 20, 100); // max 100
+    const bookings = await Booking.find({})
+      .sort({ createdAt: -1 }) // latest first
+      .populate('customer provider timeSlot dateId')
+      .skip(skip)
+      .limit(limit)
+      .lean() // FASTEST: returns plain objects, no Mongoose overhead
+      .exec();
+    res.status(200).json({message: "Success",
+    data: {
+      total: bookings.length,
+      bookings,
+    },
+  }); 
+  } catch (error) {
+    res.status(500).json({message:"server error", error: error.message})
+  }
+}

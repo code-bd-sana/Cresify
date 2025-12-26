@@ -1,6 +1,8 @@
 
 import mongoose, { Schema } from "mongoose";
 import User from "./UserModel.js";
+import ProviderAvailability from "./ProviderAvailabilityModel.js";
+import Timeslot from "./TimeSlotModel.js";
 
 export const BookingSchema = new Schema(
   {
@@ -16,7 +18,7 @@ export const BookingSchema = new Schema(
     },
     dateId: {
       type: Schema.Types.ObjectId,
-      ref: "ProviderAvailabilityModel",
+      ref: ProviderAvailability,
       required: true,
     },
     status: {
@@ -30,7 +32,7 @@ export const BookingSchema = new Schema(
     },
     timeSlot: {
       type: Schema.Types.ObjectId,
-      ref: "TimeslotSchema",
+      ref: Timeslot,
       required: true,
       unique: true,
     },

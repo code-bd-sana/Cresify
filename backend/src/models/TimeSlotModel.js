@@ -1,10 +1,11 @@
 import mongoose, { Schema } from "mongoose";
+import ProviderAvailability from "./ProviderAvailabilityModel.js";
 
 const TimeSlotSchema = new Schema(
   {
     availability: {
       type: Schema.Types.ObjectId,
-      ref: "ProviderAvailability",
+      ref: ProviderAvailability,
       required: true,
     },
     startTime: {

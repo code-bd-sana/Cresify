@@ -11,6 +11,7 @@ import WalletLedger from "../models/WalletLedgerModel.js";
 import Wallet from "../models/WalletModel.js";
 import WebhookLog from "../models/WebhookLogModel.js";
 import { toTwo } from "../utils/money.js";
+import Booking from "../models/BookingModel.js";
 
 dotenv.config();
 
@@ -47,17 +48,19 @@ export const stripeWebhook = async (req, res) => {
      ===================================================== */
   if (event.type === "checkout.session.completed") {
     const stripeSession = event.data.object;
+      const dbSession = await mongoose.startSession();
     const session = await mongoose.startSession();
 
+    console.log(stripeSession, 'stripeSession in webhook alalh goooo');
     try {
       await session.withTransaction(async () => {
         // Find the payment by stripeSessionId
         const payment = await Payment.findOne({
-          stripeSessionId: session.id,
+          stripeSessionId: stripeSession.id,
         }).session(session);
 
         if (!payment) {
-          throw new Error(`Payment not found for session: ${session.id}`);
+          throw new Error(`Payment not found for session: ${stripeSession.id}`);
         }
 
         if (stripeSession.metadata?.itemType === "product") {
@@ -203,87 +206,94 @@ export const stripeWebhook = async (req, res) => {
             if (txDocs.length)
               await Transaction.insertMany(txDocs, { session });
           }
-        } else if (stripeSession.metadata?.itemType === "service") {
-          const order = await Order.findById(
-            new mongoose.Types.ObjectId(stripeSession.metadata.orderId)
-          ).session(session);
+        }  else if (stripeSession.metadata?.itemType === "service") {
+          if (payment.status === "paid") return;
 
-          // Find the booking
           const booking = await Booking.findById(payment.booking).session(
-            session
+            dbSession
           );
           if (!booking) {
-            throw new Error(`Booking not found for payment: ${payment._id}`);
+            throw new Error(`Booking not found for payment ${payment._id}`);
           }
 
-          // Update payment status
+          /* ---- PROVIDER PAYOUT CALCULATION ---- */
+          const providerPayout =
+            payment.amount -
+            (payment.commissionAmount || 0) -
+            (payment.commissionVATAmount || 0);
+
+          if (typeof providerPayout !== "number" || isNaN(providerPayout)) {
+            throw new Error(
+              `Invalid provider payout for payment ${payment._id}`
+            );
+          }
+
+          /* ---- UPDATE PAYMENT ---- */
           payment.status = "paid";
-          payment.paymentId = session.payment_intent;
+          payment.paymentId = stripeSession.payment_intent;
           payment.capturedAt = new Date();
           payment.metadata = {
             ...payment.metadata,
-            stripePaymentIntent: session.payment_intent,
-            stripeCustomer: session.customer,
+            stripePaymentIntent: stripeSession.payment_intent,
+            stripeCustomer: stripeSession.customer,
           };
 
-          await payment.save({ session });
+          await payment.save({ session: dbSession });
 
-          // Update booking status
+          /* ---- UPDATE BOOKING ---- */
           booking.paymentStatus = "completed";
-          booking.status = "accept"; // Automatically accept when paid
-          await booking.save({ session });
+          booking.status = "accept";
+          await booking.save({ session: dbSession });
 
-          // Create wallet transaction for provider payout (when they withdraw)
+          /* ---- WALLET UPDATE ---- */
+          await Wallet.findOneAndUpdate(
+            { user: payment.provider },
+            {
+              $inc: {
+                currentBalance: providerPayout,
+                reserved: providerPayout,
+              },
+            },
+            { upsert: true, new: true, session: dbSession }
+          );
+
+          /* ---- WALLET LEDGER ---- */
+          await WalletLedger.create(
+            [
+              {
+                provider: payment.provider,
+                type: "credit",
+                amount: providerPayout,
+                reason: "service_sale",
+                refId: booking._id,
+              },
+            ],
+            { session: dbSession }
+          );
+
+          /* ---- TRANSACTION HOLD ---- */
           await Transaction.create(
             [
               {
-                transactionId: `payout_${Date.now()}_${payment.provider}`,
-                type: "hold", // Hold the money until service is completed
+                transactionId: `hold_${payment._id}_${Date.now()}`,
+                type: "hold",
                 user: payment.provider,
                 payment: payment._id,
-                amount: payment.providerPayout,
+                amount: providerPayout,
                 currency: payment.currency,
                 metadata: {
                   bookingId: booking._id,
-                  paymentId: payment._id,
-                  providerPayout: payment.providerPayout,
                   commissionAmount: payment.commissionAmount,
                   commissionVATAmount: payment.commissionVATAmount,
                 },
               },
             ],
-            { session }
-          );
-
-          // Update or create wallet for provider
-          const providerWallet = await Wallet.findOneAndUpdate(
-            { user: payment.provider },
-            {
-              $inc: {
-                currentBalance: payment.providerPayout,
-                reserved: payment.providerPayout, // Reserve until service completed
-              },
-            },
-            { upsert: true, new: true, session }
-          );
-
-          // Create ledger entry
-          await WalletLedger.create(
-            [
-              {
-                seller: payment.provider,
-                type: "credit",
-                amount: payment.providerPayout,
-                reason: "sale",
-                refId: booking._id,
-              },
-            ],
-            { session }
+            { session: dbSession }
           );
         }
       });
 
-      return res.json({ received: true });
+      return res.json({ received: true });Payment
     } catch (err) {
       console.error("Webhook success error:", err);
       return res.status(500).send("Webhook processing failed");
@@ -371,14 +381,27 @@ export const stripeWebhook = async (req, res) => {
           payment.failedAt = new Date();
           await payment.save({ session });
 
-          /* Update order */
-          const order = await Order.findById(
-            new mongoose.Types.ObjectId(payment.order)
-          ).session(session);
-          if (!order) return;
+           // Find the booking
+          const booking = await Booking.findById(payment.booking);
 
-          order.paymentStatus = "failed";
-          await order.save({ session });
+          if (!booking) {
+            throw new Error(`Booking not found for payment: ${payment._id}`);
+          }
+
+          
+          // Update booking status
+          booking.paymentStatus = "cancelled";
+          booking.status = "failed"; // Automatically accept when paid
+          await booking.save({ session });
+
+          /* Update order */
+          // const order = await Order.findById(
+          //   new mongoose.Types.ObjectId(payment.order)
+          // ).session(session);
+          // if (!order) return;
+
+          // order.paymentStatus = "failed";
+          // await order.save({ session });
         }
       });
 

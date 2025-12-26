@@ -55,6 +55,20 @@ export const ProviderApi = createApi({
       }),
       invalidatesTags: ["ProviderAvailability", "TimeSlots"],
     }),
+    getUserBookings: builder.query({
+      query: (id) => `/booking/userBookings/${id}`,
+      providesTags: ["Bookings"],
+    }),
+
+    getProviderBookings: builder.query({
+      query: (id) => `/booking/providerBookings/${id}`,
+      providesTags: ["Bookings"],
+    }),
+
+    getAllBookings: builder.query({
+      query: () => `/booking`,
+      providesTags: ["Bookings"],
+    }),
   }),
 });
 
@@ -66,5 +80,8 @@ export const {
   useCreateTimeSlotMutation,
   useDeleteTimeslotMutation,
   useGetProviderTimeslotsQuery,
-  useBookServiceMutation
+  useBookServiceMutation,
+  useGetAllBookingsQuery,
+  useGetUserBookingsQuery,
+  useGetProviderBookingsQuery,
 } = ProviderApi;

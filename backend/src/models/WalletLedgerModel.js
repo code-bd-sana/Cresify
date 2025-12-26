@@ -5,14 +5,20 @@ const walletLedgerSchema = new Schema(
     seller: {
       type: Schema.Types.ObjectId,
       ref: "User",
-      required: true,
       unique: true,
+      default: null,
+    },
+    provider: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      unique: true,
+      default: null,
     },
     type: { type: String, enum: ["credit", "debit"], required: true },
     amount: { type: Number, required: true, min: 0 },
     reason: {
       type: String,
-      enum: ["sale", "refund", "payout"],
+      enum: ["sale", "refund", "payout", "service_sale"],
       required: true,
     },
     refId: { type: Schema.Types.ObjectId, ref: "Order" },

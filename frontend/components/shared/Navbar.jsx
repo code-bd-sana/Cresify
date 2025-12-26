@@ -22,7 +22,7 @@ export default function Navbar() {
   ];
 
   const { data } = useSession();
-  console.log(data?.user, "kire mamaur beta");
+
   const user = data?.user;
   
 

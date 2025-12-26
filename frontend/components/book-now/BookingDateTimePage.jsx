@@ -289,6 +289,7 @@ export default function BookingDateTimePage() {
 try {
 
   const result = await bookService(bookingData).unwrap();
+  window.location.href =result?.checkoutUrl
 
   if(isError){
     console.log(error, 'error is here');
