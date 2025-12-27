@@ -1,8 +1,7 @@
-
 import mongoose, { Schema } from "mongoose";
-import User from "./UserModel.js";
 import ProviderAvailability from "./ProviderAvailabilityModel.js";
 import Timeslot from "./TimeSlotModel.js";
+import User from "./UserModel.js";
 
 export const BookingSchema = new Schema(
   {
@@ -23,7 +22,14 @@ export const BookingSchema = new Schema(
     },
     status: {
       type: String,
-      enum: ["pending", "rejected", "accept", "processing", "completed", "cancelled"],
+      enum: [
+        "pending",
+        "rejected",
+        "accept",
+        "processing",
+        "completed",
+        "cancelled",
+      ],
       default: "pending",
     },
     paymentMethod: {

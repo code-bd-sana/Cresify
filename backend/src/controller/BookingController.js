@@ -884,7 +884,32 @@ export const userBooking = async (req, res) => {
       .lean() // FASTEST: returns plain objects, no Mongoose overhead
       .exec();
 
-    console.log(bookings);
+    // Attach paymentId (Payment._id) to each booking if a Payment exists
+    try {
+      const bookingIds = bookings.map((b) => b._id).filter(Boolean);
+      if (bookingIds.length > 0) {
+        const payments = await Payment.find({ booking: { $in: bookingIds } })
+          .select("_id booking")
+          .lean()
+          .exec();
+
+        const paymentMap = payments.reduce((acc, p) => {
+          if (p && p.booking) acc[p.booking.toString()] = p._id.toString();
+          return acc;
+        }, {});
+
+        // mutate plain booking objects to include paymentId when available
+        for (const b of bookings) {
+          const bid = b._id?.toString();
+          if (bid && paymentMap[bid]) b.paymentId = paymentMap[bid];
+          else b.paymentId = undefined;
+        }
+      }
+    } catch (attachErr) {
+      console.error("Failed to attach paymentId to bookings:", attachErr);
+      // non-fatal — return bookings without paymentId if lookup fails
+    }
+
     res.status(200).json({
       message: "Success",
       data: {

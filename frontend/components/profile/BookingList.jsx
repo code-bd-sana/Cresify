@@ -80,6 +80,8 @@ export default function BookingList() {
 
     const bookings = bookingData.data.bookings;
 
+    console.log(bookingData);
+
     // Determine if a booking is "upcoming" (accepted and future date)
     const upcomingCount = bookings.filter((booking) => {
       if (booking.status !== "accept") return false;
@@ -263,8 +265,6 @@ export default function BookingList() {
       (link) => link.url.trim() !== ""
     );
 
-    console.log(selectedBooking, "Selected booking for refund");
-
     const paymentId = selectedBooking?.paymentId;
 
     const refundData = {
@@ -276,10 +276,6 @@ export default function BookingList() {
       evidence: validLinks.length > 0 ? validLinks : undefined,
       paymentId: paymentId || undefined,
     };
-
-    console.log("Submitting refund request:", refundData);
-
-    return;
 
     try {
       const result = await providerCreateRefund(refundData).unwrap();
