@@ -22,7 +22,7 @@ endpoints:(builder)=>({
     }),
 
     getReviewBySellerId:builder.query({
-        query:(id)=> `/review/service/${id}`
+        query:(id)=> `/review/seller/${id}`
     })
 })
 
