@@ -1,8 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import { useTranslation } from "react-i18next";
 
 export default function CTASection() {
+  const {t} = useTranslation('cta');
   return (
     <section
       className="
@@ -14,13 +16,12 @@ export default function CTASection() {
       <div className="max-w-[1350px] mx-auto px-6">
         {/* Heading */}
         <h2 className="text-white text-[32px] font-semibold mb-3">
-          Ready to Get Started?
+          {t('title')}
         </h2>
 
         {/* Subheading */}
         <p className="text-[#E8E8E8CC] text-[15px] font-semibold leading-[22px] mb-10">
-          Join thousands of satisfied customers and discover the best products
-          and services in your area today.
+          {t('subtitle')}
         </p>
 
         {/* Buttons */}
@@ -37,7 +38,7 @@ export default function CTASection() {
               transition hover:opacity-90
             "
             >
-              Contact Us Now
+              {t('buttons.contact_us')}
             </button>
           </Link>
 
@@ -54,7 +55,7 @@ export default function CTASection() {
               transition hover:bg-white/10
             "
             >
-              Browse Marketplace
+              {t('buttons.browse_marketplace')}
             </button>
           </Link>
         </div>

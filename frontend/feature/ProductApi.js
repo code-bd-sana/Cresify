@@ -61,6 +61,9 @@ allProduct: builder.query({
       search = "",
       category = "",
       location = "",
+      country = "",
+      region = "",
+      city = "",
       minPrice = 0,
       maxPrice = 1000,
       sortBy = "createdAt",
@@ -72,6 +75,9 @@ allProduct: builder.query({
     if (search) queryString += `&search=${encodeURIComponent(search)}`;
     if (category) queryString += `&category=${encodeURIComponent(category)}`;
     if (location) queryString += `&location=${encodeURIComponent(location)}`;
+    if (country) queryString += `&country=${encodeURIComponent(country)}`;
+    if (region) queryString += `&region=${encodeURIComponent(region)}`;
+    if (city) queryString += `&city=${encodeURIComponent(city)}`;
     queryString += `&minPrice=${minPrice}`;
     queryString += `&maxPrice=${maxPrice}`;
     queryString += `&sortBy=${sortBy}`;
@@ -83,6 +89,10 @@ allProduct: builder.query({
   providesTags: ["Products"],
 }),
 
+allLocation:builder.query({
+  query:()=>'/product/location',
+
+})
   }),
 });
 
@@ -93,5 +103,6 @@ export const {
   useDeleteProductMutation,
   useSingleProductQuery,
   useEditProductMutation,
-  useAllProductQuery
+  useAllProductQuery,
+  useAllLocationQuery
 } = ProductApi;

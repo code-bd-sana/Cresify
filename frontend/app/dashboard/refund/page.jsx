@@ -22,6 +22,8 @@ const SellerRefundpage = () => {
   // Extract data
   const refunds = data?.refunds || [];
   const pagination = data?.pagination || { page: 1, limit: 10, total: 0, pages: 1 };
+
+  console.log(refunds, 'refunds ---- all');
   
   // Format amount with currency
   const formatAmount = (amount, currency) => {

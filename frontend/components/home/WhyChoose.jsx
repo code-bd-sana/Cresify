@@ -1,25 +1,42 @@
 "use client";
 
 import { LuShieldCheck, LuMapPin, LuHeadphones } from "react-icons/lu";
+import { useTranslation } from "react-i18next";
 
 export default function WhyChoose() {
+  const { t } = useTranslation('whyChoose');
+  
+  // Translation থেকে items নাও
   const items = [
     {
-      title: "Trusted & Verified",
-      desc: "All our sellers and service providers are thoroughly verified and rated by our community to ensure quality and reliability.",
+      title: t('items.0.title'),
+      desc: t('items.0.description'),
       icon: <LuShieldCheck size={34} color="white" />,
     },
     {
-      title: "Local & Convenient",
-      desc: "Find products and services right in your neighborhood. Support local businesses while enjoying fast delivery and service.",
+      title: t('items.1.title'),
+      desc: t('items.1.description'),
       icon: <LuMapPin size={34} color="white" />,
     },
     {
-      title: "24/7 Support",
-      desc: "Our dedicated customer support team is always ready to help you with any questions or concerns you may have.",
+      title: t('items.2.title'),
+      desc: t('items.2.description'),
       icon: <LuHeadphones size={34} color="white" />,
     },
   ];
+
+  // অথবা dynamic way তে
+  // const getTranslatedItems = () => {
+  //   const itemsData = t('items', { returnObjects: true });
+  //   const icons = [LuShieldCheck, LuMapPin, LuHeadphones];
+    
+  //   return itemsData.map((item, index) => ({
+  //     ...item,
+  //     icon: icons[index] ? React.createElement(icons[index], { size: 34, color: "white" }) : null
+  //   }));
+  // };
+  
+  // const items = getTranslatedItems();
 
   return (
     <section className="w-full py-20 px-10">
@@ -27,13 +44,12 @@ export default function WhyChoose() {
 
         {/* Heading */}
         <h2 className="text-[36px] font-bold text-center mb-2">
-          Why Choose CRESIFY?
+          {t('title')}
         </h2>
 
         {/* Subheading */}
         <p className="text-center text-[#AC65EE] font-bold text-[15px] leading-[22px] mb-16">
-          We&apos;re committed to providing the best marketplace experience for<br />
-          our users
+          {t('subtitle')}
         </p>
 
         {/* Card Grid */}

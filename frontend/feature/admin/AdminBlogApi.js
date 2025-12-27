@@ -84,6 +84,9 @@ export const AdminBlogApi = createApi({
       }),
       invalidatesTags: ["AdminBlogs"],
     }),
+    singleBlog: builder.query({
+      query:(id)=> `/admin/blog/${id}`
+    })
   }),
 });
 
@@ -92,4 +95,5 @@ export const {
   useCreateBlogMutation,
   useEditBlogMutation,
   useDeleteBlogMutation,
+  useSingleBlogQuery
 } = AdminBlogApi;

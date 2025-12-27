@@ -1,0 +1,37 @@
+{
+  "dashboard": "Dashboard",
+  "user_management": "User Management",
+  "products": "Products",
+  "services": "Services",
+  "orders": "Orders",
+  "bookings": "Bookings",
+  "store_profile": "Store Profile",
+  "payments": "Payments",
+  "content": "Content",
+  "reviews": "Reviews",
+  "product_refunds": "Product Refunds",
+  "service_refunds": "Service Refunds",
+  "settings": "Settings",
+  "refund": "Refund",
+  "wallet_details": "Wallet Details",
+  "messages": "Messages",
+  "calendar": "Calendar",
+  "analytics": "Analytics",
+  "logout": "Logout",
+  
+  "role_specific": {
+    "admin": {
+      "dashboard": "Admin Dashboard",
+      "users": "User Management",
+      "services": "Service Management"
+    },
+    "seller": {
+      "dashboard": "Seller Dashboard",
+      "store_profile": "Store Profile"
+    },
+    "provider": {
+      "dashboard": "Service Provider Dashboard",
+      "booking": "Booking Management"
+    }
+  }
+}

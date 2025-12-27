@@ -3,6 +3,8 @@ import mongoose from "mongoose";
 import Stripe from "stripe";
 import Booking from "../models/BookingModel.js";
 import Payment from "../models/PaymentModel.js";
+import ProviderAvailability from "../models/ProviderAvailabilityModel.js";
+import Timeslot from "../models/TimeSlotModel.js";
 import Transaction from "../models/TransactionModel.js";
 import User from "../models/UserModel.js";
 import Wallet from "../models/WalletModel.js";
@@ -25,154 +27,176 @@ export const saveBooking = async (req, res) => {
   try {
     session.startTransaction();
 
+    // Data from frontend booking form
     const {
       customer,
       provider,
       address,
-      paymentMethod,
-      bookingDate: rawDate,
-      timeSlot: { start: rawStart, end: rawEnd },
+      country,
+      city,
+      phone,
+      fullName,
+      dateId, // ProviderAvailability ID (from selectedDateId)
+      timeSlot, // Timeslot ID (from selectedTimeSlot._id)
       notes,
+      // Payment info from frontend
+      paymentMethod = "card", // Default to COD
     } = req.body;
 
+    console.log("📦 Received booking data:", req.body);
+
     // ====== 1. Basic required fields ======
-    if (!customer || !provider || !rawDate || !rawStart || !rawEnd) {
-      return res.status(400).json({ message: "Missing required fields" });
+    if (!customer || !provider || !dateId || !timeSlot || !fullName || !phone) {
+      return res.status(400).json({
+        message:
+          "Missing required fields: customer, provider, dateId, timeSlot, fullName, or phone",
+      });
     }
 
+    // Validate payment method
     if (!["cod", "card"].includes(paymentMethod)) {
       return res.status(400).json({ message: "Invalid payment method" });
     }
 
-    // ====== 2. Validate users in parallel ======
-    const [customerData, providerData] = await Promise.all([
+    // ====== 2. Validate users and time slot in parallel ======
+    const [customerData, providerData, timeSlotData] = await Promise.all([
       User.findById(customer).lean(),
       User.findById(provider).lean(),
+      Timeslot.findById(timeSlot).lean(),
     ]);
 
     if (!customerData)
       return res.status(404).json({ message: "Customer not found" });
     if (!providerData)
       return res.status(404).json({ message: "Provider not found" });
-    if (providerData.status !== "active")
-      return res.status(400).json({ message: "Provider is not active" });
+    if (!timeSlotData)
+      return res.status(404).json({ message: "Time slot not found" });
 
-    // Check if provider has availability configured (working hours/days)
-    if (!providerData.workingDays || !providerData.workingDays.length) {
-      return res
-        .status(400)
-        .json({ message: "Provider availability not configured" });
+    // Check if time slot is already booked
+    if (timeSlotData.isBooked) {
+      return res.status(409).json({
+        message: "This time slot is already booked",
+      });
     }
 
-    // ====== 3. Parse & validate date ======
-    const bookingDate = new Date(rawDate);
-    if (isNaN(bookingDate))
-      return res.status(400).json({ message: "Invalid date" });
+    // ====== 3. Get ProviderAvailability ======
+    const providerAvailability = await ProviderAvailability.findById(
+      dateId
+    ).lean();
+
+    if (!providerAvailability) {
+      return res
+        .status(404)
+        .json({ message: "Provider availability not found" });
+    }
+
+    // Check if time slot belongs to this provider via ProviderAvailability
+    if (providerAvailability.provider.toString() !== provider) {
+      return res.status(403).json({
+        message: "Time slot does not belong to this provider",
+      });
+    }
+
+    // ====== 4. Parse & validate date ======
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const bookingDay = new Date(bookingDate);
-    bookingDay.setHours(0, 0, 0, 0);
 
-    if (bookingDay < today)
-      return res.status(400).json({ message: "Cannot book past dates" });
+    // const workingDay = new Date(workingDate);
+    // workingDay.setHours(0, 0, 0, 0);
 
     const maxDaysAhead = 7;
     const maxAllowed = new Date(today);
     maxAllowed.setDate(today.getDate() + maxDaysAhead);
-    if (bookingDay > maxAllowed)
-      return res
-        .status(400)
-        .json({ message: `Booking too far ahead (max ${maxDaysAhead} days)` });
+    // if (workingDay > maxAllowed)
+    //   return res
+    //     .status(400)
+    //     .json({ message: `Booking too far ahead (max ${maxDaysAhead} days)` });
 
-    // ====== 4. Check working day ======
-    const dayName = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][
-      bookingDate.getDay()
-    ];
-    if (!providerData.workingDays.includes(dayName))
-      return res
-        .status(400)
-        .json({ message: `Provider does not work on ${dayName}s` });
+    // ====== 5. Check if time slot belongs to this availability date ======
+    // if (timeSlotData.availability.toString() !== dateId) {
+    //   return res.status(400).json({
+    //     message: "Time slot does not belong to selected date"
+    //   });
+    // }
 
-    // ====== 5. Normalize time to 24h format ======
-    const to24h = (time) => {
-      const match = time.match(/^(\d{1,2}):(\d{2})\s?(AM|PM)?$/i);
-      if (!match) throw new Error("Invalid time");
-      let [_, h, m, period] = match;
-      let hours = parseInt(h);
-      if (period) {
-        if (period.toUpperCase() === "PM" && hours !== 12) hours += 12;
-        if (period.toUpperCase() === "AM" && hours === 12) hours = 0;
+    // ====== 6. Use time slot start and end times ======
+    const startTime = timeSlotData.startTime;
+    const endTime = timeSlotData.endTime;
+    const duration = timeSlotData.duration || "60m";
+
+    // Convert duration string to minutes
+    const getDurationInMinutes = (durationStr) => {
+      if (durationStr.endsWith("m")) {
+        return parseInt(durationStr);
+      } else if (durationStr.endsWith("h")) {
+        return parseInt(durationStr) * 60;
       }
-      return `${hours.toString().padStart(2, "0")}:${m}`;
+      return 60; // Default to 60 minutes
     };
 
-    let start24, end24;
-    try {
-      start24 = to24h(rawStart.trim());
-      end24 = to24h(rawEnd.trim());
-    } catch {
-      return res
-        .status(400)
-        .json({ message: "Invalid time format. Use: 09:00 or 9:00 AM" });
-    }
+    const durationMinutes = getDurationInMinutes(duration);
 
-    const workStart24 = to24h(providerData.workingHours?.start || "09:00");
-    const workEnd24 = to24h(providerData.workingHours?.end || "18:00");
+    // Validate time format
+    // const timeRegex = /^([0-1]?[0-9]|2[0-3]):([0-5][0-9])$/;
+    // if (!timeRegex.test(startTime) || !timeRegex.test(endTime)) {
+    //   return res.status(400).json({
+    //     message: "Invalid time format in time slot"
+    //   });
+    // }
 
     const minutes = (t) => {
       const [h, m] = t.split(":").map(Number);
       return h * 60 + m;
     };
 
-    const slotStartMin = minutes(start24);
-    const slotEndMin = minutes(end24);
+    const slotStartMin = minutes(startTime);
+    const slotEndMin = minutes(endTime);
+
+    // Get provider working hours
+    const workStart24 = providerData.workingHours?.start || "09:00";
+    const workEnd24 = providerData.workingHours?.end || "18:00";
     const workStartMin = minutes(workStart24);
     const workEndMin = minutes(workEnd24);
-    const duration = providerData.slotDuration || 60;
 
-    // Validate duration & alignment
-    if (slotEndMin <= slotStartMin)
-      return res
-        .status(400)
-        .json({ message: "End time must be after start time" });
-    if (slotEndMin - slotStartMin !== duration)
-      return res
-        .status(400)
-        .json({ message: `Slot must be exactly ${duration} minutes` });
-    if ((slotStartMin - workStartMin) % duration !== 0)
-      return res
-        .status(400)
-        .json({ message: `Slot must start on ${duration}-minute boundary` });
-    if (slotStartMin < workStartMin || slotEndMin > workEndMin)
-      return res.status(400).json({ message: "Outside working hours" });
+    // Validate time slot
+    // if (slotEndMin <= slotStartMin)
+    //   return res
+    //     .status(400)
+    //     .json({ message: "End time must be after start time" });
 
-    // ====== 6. Create exact Date objects for overlap check ======
-    const slotStartDate = new Date(bookingDate);
-    slotStartDate.setHours(...start24.split(":").map(Number), 0, 0);
+    // Check if slot duration matches
+    const actualDuration = slotEndMin - slotStartMin;
+    // if (actualDuration !== durationMinutes)
+    //   return res
+    //     .status(400)
+    //     .json({ message: `Time slot duration mismatch` });
 
-    const slotEndDate = new Date(bookingDate);
-    slotEndDate.setHours(...end24.split(":").map(Number), 0, 0);
+    // if (slotStartMin < workStartMin || slotEndMin > workEndMin)
+    //   return res.status(400).json({ message: "Time slot outside working hours" });
 
-    // ====== 7. FINAL: Prevent double booking ======
-    const conflict = await Booking.findOne({
+    // ====== 7. Create exact Date objects for booking ======
+    // const slotStartDate = new Date(workingDate);
+    // slotStartDate.setHours(...startTime.split(":").map(Number), 0, 0);
+
+    // const slotEndDate = new Date(workingDate);
+    // slotEndDate.setHours(...endTime.split(":").map(Number), 0, 0);
+
+    // ====== 8. Additional check for any conflicting booking ======
+    const existingBooking = await Booking.findOne({
       provider,
-      bookingDate: bookingDay,
+      dateId,
+      timeSlot,
       status: { $in: ["pending", "accept"] },
-      $or: [
-        {
-          "timeSlot.start": { $lt: end24 },
-          "timeSlot.end": { $gt: start24 },
-        },
-      ],
     });
 
-    if (conflict)
+    if (existingBooking) {
       return res.status(409).json({
-        message: "Time slot already booked",
+        message: "This time slot is already booked in another booking",
       });
+    }
 
-    // ====== 8. Calculate pricing ======
+    // ====== 9. Calculate pricing ======
     const commissionPercent = Number(
       process.env.PLATFORM_COMMISSION_PERCENT || 10
     );
@@ -180,9 +204,9 @@ export const saveBooking = async (req, res) => {
       process.env.PLATFORM_COMMISSION_VAT_PERCENT || 19
     );
 
-    // Calculate service amount from provider's hourly rate
-    const hourlyRate = providerData.hourlyRate || 0;
-    const hours = duration / 60;
+    // Use provider's hourly rate or default
+    const hourlyRate = providerData.hourlyRate || 55; // Default to $55 as in frontend
+    const hours = durationMinutes / 60;
     const serviceAmount = toTwo(hourlyRate * hours);
 
     if (serviceAmount <= 0) {
@@ -197,24 +221,67 @@ export const saveBooking = async (req, res) => {
     const commissionTotal = toTwo(commissionAmount + commissionVATAmount);
     const providerPayout = toTwo(serviceAmount - commissionTotal);
 
-    // ====== 9. Create booking ======
+    // ====== 10. MARK TIME SLOT AS BOOKED ======
+    await Timeslot.findByIdAndUpdate(
+      timeSlot,
+      {
+        isBooked: true,
+        bookedBy: customer,
+        bookedAt: new Date(),
+        bookingStatus: "reserved",
+      },
+      { session }
+    );
+
+    console.log(`✅ Time slot ${timeSlot} marked as booked`);
+
+    // ====== 11. Create booking ======
     const [booking] = await Booking.create(
       [
         {
           customer,
           provider,
-          address,
+          dateId,
+          timeSlot,
+          // Customer info from form
+          customerInfo: {
+            fullName,
+            phone,
+            email: req.body.email || customerData.email,
+            address: address || req.body.address,
+            country,
+            city,
+            notes: notes || "",
+          },
+          // Address details for service
+          address: address || req.body.address,
+          country,
+          city,
+          phone,
+          fullName,
+          // Booking details
+          // bookingDate: workingDate,
+          startTime,
+          endTime,
+          duration: `${durationMinutes}m`,
+          // Payment
           paymentMethod,
-          bookingDate,
-          timeSlot: { start: rawStart.trim(), end: rawEnd.trim() },
           status: "pending",
           paymentStatus: paymentMethod === "cod" ? "pending" : "processing",
+          // Additional metadata
+          bookingReference: `BK-${Date.now()}-${Math.random()
+            .toString(36)
+            .substr(2, 9)
+            .toUpperCase()}`,
+          serviceAmount,
+          hourlyRate,
+          hours,
         },
       ],
       { session }
     );
 
-    // ====== 10. Create payment record ======
+    // ====== 12. Create payment record ======
     const [payment] = await Payment.create(
       [
         {
@@ -231,21 +298,30 @@ export const saveBooking = async (req, res) => {
           commissionTotal: commissionTotal,
           providerPayout: providerPayout,
           metadata: {
-            serviceName: providerData.serviceName,
-            duration: duration,
-            startTime: rawStart.trim(),
-            endTime: rawEnd.trim(),
+            serviceName: providerData.serviceName || "Service",
+            duration: durationMinutes,
+            startTime: startTime,
+            endTime: endTime,
             providerName: providerData.name || providerData.serviceName,
-            customerName: customerData.name,
+            customerName: fullName,
+            customerPhone: phone,
+            customerEmail: req.body.email || customerData.email,
+            address: address || req.body.address,
+            country,
+            itemTypeL: "service",
+            city,
             hourlyRate: hourlyRate,
             hours: hours,
+            timeSlot: timeSlot,
+            dateId: dateId,
+            bookingReference: booking.bookingReference,
           },
         },
       ],
       { session }
     );
 
-    // ====== 11. STRIPE PAYMENT ======
+    // ====== 13. STRIPE PAYMENT ======
     if (paymentMethod === "card") {
       const lineItems = [
         {
@@ -253,7 +329,7 @@ export const saveBooking = async (req, res) => {
             currency: "usd",
             product_data: {
               name: providerData.serviceName || "Service",
-              description: `${duration} minute session on ${bookingDate.toLocaleDateString()} at ${rawStart} - ${rawEnd}`,
+              description: `${durationMinutes} minute session on  at ${startTime} - ${endTime}`,
             },
             unit_amount: Math.round(serviceAmount * 100),
           },
@@ -265,19 +341,22 @@ export const saveBooking = async (req, res) => {
         mode: "payment",
         payment_method_types: ["card"],
         line_items: lineItems,
-        customer_email: customerData.email,
-        success_url: `${process.env.FRONTEND_URL}/payment-success?session_id={CHECKOUT_SESSION_ID}&booking_id=${booking._id}`,
-        cancel_url: `${process.env.FRONTEND_URL}/payment-cancel?booking_id=${booking._id}`,
+        customer_email: req.body.email || customerData.email,
+        success_url: `${process.env.FRONTEND_URL}/payment-success?session_id={CHECKOUT_SESSION_ID}&booking_id=${booking._id}&timeSlot=${timeSlot}`,
+        cancel_url: `${process.env.FRONTEND_URL}/payment-cancel?booking_id=${booking._id}&timeSlot=${timeSlot}`,
         metadata: {
           bookingId: booking._id.toString(),
           customerId: customer,
           providerId: provider,
           paymentId: payment._id.toString(),
+          timeSlot: timeSlot.toString(),
+          dateId: dateId.toString(),
           itemType: "service",
           serviceName: providerData.serviceName,
           amount: serviceAmount.toString(),
           commissionPercent: commissionPercent.toString(),
           commissionVATRate: commissionVATRate.toString(),
+          bookingReference: booking.bookingReference,
         },
       });
 
@@ -294,12 +373,14 @@ export const saveBooking = async (req, res) => {
         checkoutUrl: checkoutSession.url,
         bookingId: booking._id,
         paymentId: payment._id,
+        timeSlot: timeSlot,
         amount: serviceAmount,
         sessionId: checkoutSession.id,
+        bookingReference: booking.bookingReference,
       });
     }
 
-    // ====== 12. COD PROCESSING ======
+    // ====== 14. COD PROCESSING ======
     if (paymentMethod === "cod") {
       await session.commitTransaction();
 
@@ -308,19 +389,39 @@ export const saveBooking = async (req, res) => {
         message: "Booking placed successfully (Cash on Delivery)",
         bookingId: booking._id,
         paymentId: payment._id,
+        timeSlot: timeSlot,
+        bookingReference: booking.bookingReference,
         data: {
           booking: {
             _id: booking._id,
             status: booking.status,
             bookingDate: booking.bookingDate,
-            timeSlot: booking.timeSlot,
+            startTime: booking.startTime,
+            endTime: booking.endTime,
+            timeSlot: timeSlot,
+            dateId: dateId,
             amount: serviceAmount,
             paymentMethod: "cod",
+            bookingReference: booking.bookingReference,
           },
           payment: {
             status: "pending",
             amount: serviceAmount,
             method: "cod",
+          },
+          timeSlot: {
+            _id: timeSlot,
+            isBooked: true,
+            startTime: startTime,
+            endTime: endTime,
+          },
+          customerInfo: {
+            fullName: booking.fullName,
+            phone: booking.phone,
+            email: req.body.email || customerData.email,
+            address: booking.address,
+            country: booking.country,
+            city: booking.city,
           },
         },
       });
@@ -347,6 +448,10 @@ export const saveBooking = async (req, res) => {
     session.endSession();
   }
 };
+// Helper function (make sure this exists)
+// const toTwo = (num) => {
+//   return Math.round((num + Number.EPSILON) * 100) / 100;
+// };
 
 /**
  * Update booking status (provider accepts/rejects)
@@ -756,5 +861,137 @@ export const getBookingStats = async (req, res) => {
       message: "Server error",
       error: error.message,
     });
+  }
+};
+
+export const userBooking = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    if (!userId) {
+      return res.status(400).json({ message: "userId is required" });
+    }
+
+    const skip = parseInt(req.query.skip) || 0;
+    const limit = Math.min(parseInt(req.query.limit) || 20, 100); // max 100
+    const bookings = await Booking.find({
+      customer: userId,
+    })
+      .sort({ createdAt: -1 }) // latest first
+      .populate("provider timeSlot dateId")
+      .skip(skip)
+      .limit(limit)
+      .lean() // FASTEST: returns plain objects, no Mongoose overhead
+      .exec();
+
+    // Attach paymentId (Payment._id) to each booking if a Payment exists
+    try {
+      const bookingIds = bookings.map((b) => b._id).filter(Boolean);
+      if (bookingIds.length > 0) {
+        const payments = await Payment.find({ booking: { $in: bookingIds } })
+          .select("_id booking")
+          .lean()
+          .exec();
+
+        const paymentMap = payments.reduce((acc, p) => {
+          if (p && p.booking) acc[p.booking.toString()] = p._id.toString();
+          return acc;
+        }, {});
+
+        // mutate plain booking objects to include paymentId when available
+        for (const b of bookings) {
+          const bid = b._id?.toString();
+          if (bid && paymentMap[bid]) b.paymentId = paymentMap[bid];
+          else b.paymentId = undefined;
+        }
+      }
+    } catch (attachErr) {
+      console.error("Failed to attach paymentId to bookings:", attachErr);
+      // non-fatal — return bookings without paymentId if lookup fails
+    }
+
+    res.status(200).json({
+      message: "Success",
+      data: {
+        total: bookings.length,
+        bookings,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ message: "server error", error: error.message });
+  }
+};
+
+export const providerBooking = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const skip = parseInt(req.query.skip) || 0;
+    const limit = Math.min(parseInt(req.query.limit) || 10, 100);
+
+    // Get total count
+    const total = await Booking.countDocuments({ provider: id }).populate(
+      "customer timeSlot dateId provider"
+    );
+
+    // Get paginated bookings
+    const bookings = await Booking.find({
+      provider: id,
+    })
+      .sort({ createdAt: -1 })
+      .populate("customer timeSlot dateId provider")
+      .skip(skip)
+      .limit(limit)
+      .lean()
+      .exec();
+
+    res.status(200).json({
+      message: "Success",
+      data: {
+        total, // This should be the total count, not bookings.length
+        bookings,
+        page: Math.floor(skip / limit) + 1,
+        totalPages: Math.ceil(total / limit),
+        hasMore: skip + limit < total,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ message: "server error", error: error.message });
+  }
+};
+
+export const allBookings = async (req, res) => {
+  try {
+    const skip = parseInt(req.query.skip) || 0;
+    const limit = Math.min(parseInt(req.query.limit) || 20, 100); // max 100
+    const bookings = await Booking.find({})
+      .sort({ createdAt: -1 }) // latest first
+      .populate("customer provider timeSlot dateId")
+      .skip(skip)
+      .limit(limit)
+      .lean() // FASTEST: returns plain objects, no Mongoose overhead
+      .exec();
+    res.status(200).json({
+      message: "Success",
+      data: {
+        total: bookings.length,
+        bookings,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ message: "server error", error: error.message });
+  }
+};
+
+export const updateBookingStatusNew = async (req, res) => {
+  try {
+    const { id, status } = req.body;
+    const booking = await Booking.findByIdAndUpdate(
+      id,
+      { status: status },
+      { new: true }
+    );
+    res.status(200).json({ message: "Booking status updated", booking });
+  } catch (error) {
+    res.status(500).json({ message: "server error", error: error.message });
   }
 };

@@ -1,4 +1,6 @@
 import mongoose, { Schema } from "mongoose";
+import ProviderAvailability from "./ProviderAvailabilityModel.js";
+import Timeslot from "./TimeSlotModel.js";
 import User from "./UserModel.js";
 
 export const BookingSchema = new Schema(
@@ -13,60 +15,41 @@ export const BookingSchema = new Schema(
       required: true,
       ref: User,
     },
-    address: {
-      street: {
-        type: String,
-        required: [true, "Street is required"],
-        trim: true,
-      },
-      city: {
-        type: String,
-        required: [true, "City is required"],
-        trim: true,
-      },
-      state: {
-        type: String,
-        trim: true,
-      },
-      postalCode: {
-        type: String,
-        trim: true,
-      },
-      fullName: String,
-      country: {
-        type: String,
-        required: [true, "Country is required"],
-        trim: true,
-      },
+    dateId: {
+      type: Schema.Types.ObjectId,
+      ref: ProviderAvailability,
+      required: true,
     },
     status: {
       type: String,
-      enum: ["pending", "rejected", "accept"],
+      enum: [
+        "pending",
+        "rejected",
+        "accept",
+        "processing",
+        "completed",
+        "cancelled",
+      ],
       default: "pending",
     },
     paymentMethod: {
       type: String,
-      required: [true, "Payment method is Required"],
       enum: ["cod", "card"],
     },
-    // Booking date & time
-    bookingDate: {
-      type: Date,
-      required: true,
-    },
     timeSlot: {
-      start: { type: String, required: true },
-      end: { type: String, required: true },
+      type: Schema.Types.ObjectId,
+      ref: Timeslot,
+      required: true,
+      unique: true,
     },
     paymentStatus: {
       type: String,
-      enum: ["pending", "completed"],
+      enum: ["pending", "completed", "processing", "failed"], // "processing" add koro
       default: "pending",
     },
   },
   { timestamps: true }
 );
-
 BookingSchema.index({ provider: 1, status: 1, bookingDate: 1 });
 BookingSchema.index({ provider: 1, bookingDate: 1 });
 BookingSchema.index({ customer: 1 });

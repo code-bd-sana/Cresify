@@ -34,6 +34,8 @@ export default function ChatUI() {
     { skip: userRole !== "provider" || !userId }
   );
 
+  console.log(providerChatList, 'kire ascosc tui');
+
   const chatList = userRole === "seller" ? sellerChatList?.data : providerChatList?.data;
   const isLoadingChats = userRole === "seller" ? isLoadingSellerChats : isLoadingProviderChats;
 
