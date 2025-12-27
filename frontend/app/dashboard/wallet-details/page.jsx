@@ -1412,7 +1412,7 @@ export default function WalletDetailsPage() {
                             {txn.title}
                           </div>
                           <div className='text-xs text-gray-500'>
-                            Ref: {txn.reference}
+                            Ref: {txn.transactionId}
                           </div>
                         </div>
                       </td>
