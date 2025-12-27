@@ -19,6 +19,7 @@ import Link from "next/link";
 import { useAllProductQuery } from "@/feature/ProductApi";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
+import { useTranslation } from "react-i18next";
 
 const CATEGORY_ICONS = [
   LuShirt,
@@ -33,6 +34,7 @@ const CATEGORY_ICONS = [
 
 export default function ProductsPage({ searchTerm = "" }) {
   const searchParams = useSearchParams();
+  const {t} = useTranslation('marketPlace');
   
   // Get query parameters from URL
   const queryCountry = searchParams.get('country') || "";
@@ -210,13 +212,16 @@ export default function ProductsPage({ searchTerm = "" }) {
             {/* Header */}
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-[17px] font-semibold text-[#1B1B1B]">
-                Filters
+                {t('filters.filters_title')}
               </h3>
               <button 
                 onClick={clearFilters}
                 className="text-[12px] text-[#F78D25] font-medium hover:underline"
-              >
-                Clean everything
+            >
+            {
+
+              t('filters.clear_all')
+          }
               </button>
             </div>
 
@@ -247,7 +252,7 @@ export default function ProductsPage({ searchTerm = "" }) {
             {/* Manual Location Filters */}
             <div className="mb-6">
               <p className="text-[14px] font-semibold text-[#1B1B1B] mb-3">
-                Location Filters
+                {t('filters.location_filters')}
               </p>
               
               {/* Country Filter */}
@@ -318,7 +323,9 @@ export default function ProductsPage({ searchTerm = "" }) {
             {/* Price Range */}
             <div className="mb-8">
               <p className="text-[14px] text-[#1B1B1B] font-semibold mb-3">
-                Price Range
+         {
+          t('filters.price_range')
+         }
               </p>
 
               {/* Labels */}
@@ -409,7 +416,9 @@ export default function ProductsPage({ searchTerm = "" }) {
         bg-[linear-gradient(90deg,#9838E1,#F68E44)]
         shadow-[0_4px_14px_rgba(0,0,0,0.15)] hover:opacity-90"
             >
-              Apply Filters
+        {
+          t('filters.apply_filters')
+        }
             </button>
           </div>
         </aside>

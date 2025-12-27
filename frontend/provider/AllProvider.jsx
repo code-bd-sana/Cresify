@@ -1,18 +1,17 @@
-'use client'
-import { store } from '@/store/store';
-import { SessionProvider } from 'next-auth/react';
-import React from 'react';
-import { Provider } from 'react-redux';
+"use client";
 
-const AllProvider = ({children}) => {
-    return (
-       <Provider store={store}>
-    <SessionProvider>
+import { SessionProvider } from "next-auth/react";
+import LanguageProvider from "./LanguageProvider";
+import { Provider } from "react-redux";
+import { store } from "@/store/store";
 
-            {children}
+export default function AllProvider({ children }) {
+  return (
+<Provider store={store}>
+
+       <SessionProvider>
+      <LanguageProvider>{children}</LanguageProvider>
     </SessionProvider>
-       </Provider>
-    );
-};
-
-export default AllProvider;
+</Provider>
+  );
+}

@@ -1,0 +1,35 @@
+{
+  "company_description": "Entrepreneurs creating a digital future. Simple and secure platform for online digital businesses.",
+  
+  "navigation": {
+    "title": "Navigation",
+    "items": [
+      "FAQ",
+      "Terms",
+      "Privacy"
+    ]
+  },
+  
+  "resources": {
+    "title": "Resources",
+    "items": [
+      "Blog",
+      "Contact"
+    ]
+  },
+  
+  "contact": {
+    "title": "Contact",
+    "email": "hello@cresify.com",
+    "phone": "+1 234 567 890"
+  },
+  
+  "copyright": "© 2025 Cresify. All rights reserved.",
+  
+  "social_media": {
+    "facebook": "Facebook",
+    "twitter": "Twitter",
+    "instagram": "Instagram",
+    "youtube": "YouTube"
+  }
+}

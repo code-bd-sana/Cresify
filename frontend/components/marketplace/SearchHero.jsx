@@ -2,9 +2,11 @@
 
 import { FiSearch } from "react-icons/fi";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 export default function SearchHero({ onSearch, initialSearch = "" }) {
   const [search, setSearch] = useState(initialSearch);
+  const { t } = useTranslation('marketPlace');
 
   const handleSearchClick = () => {
     if (onSearch && typeof onSearch === 'function') {
@@ -24,13 +26,12 @@ export default function SearchHero({ onSearch, initialSearch = "" }) {
       <div className="max-w-[900px] mx-auto px-6">
         {/* Heading */}
         <h2 className="text-[36px] font-bold leading-[44px] text-[#1E1E1E] mb-3">
-          Discover Unique Products from Local <br /> Entrepreneurs
+          {t('search_hero.title_line1')} <br /> {t('search_hero.title_line2')}
         </h2>
 
         {/* Subheading */}
         <p className="text-[15px] text-[#8F63E8] font-medium mb-10">
-          Explore thousands of innovative products created by passionate
-          entrepreneurs.
+          {t('search_hero.subtitle')}
         </p>
 
         {/* Search Bar */}
@@ -44,16 +45,16 @@ export default function SearchHero({ onSearch, initialSearch = "" }) {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             onKeyPress={handleKeyPress}
-            placeholder="Search for product or stores...."
+            placeholder={t('search_hero.search_placeholder')}
             className="flex-1 text-[15px] text-[#444] placeholder:text-[#A3A3A3] outline-none py-1"
           />
 
           {/* Button */}
           <button
             onClick={handleSearchClick}
-            className="ml-3 px-6 py-2 text-white text-[15px] font-medium rounded-[10px] bg-gradient-to-r from-[#9838E1] to-[#F68E44] hover:opacity-90 transition-opacity"
+            className="ml-3 px-6 py-2 text-white text-[15px] font-medium rounded-[10px] bg-gradient-to-r from-[#9838E1] to-[#F68E44] hover:opacity-90 transition-opacity hover:scale-[1.02] active:scale-[0.98]"
           >
-            Search
+            {t('search_hero.search_button')}
           </button>
         </div>
       </div>

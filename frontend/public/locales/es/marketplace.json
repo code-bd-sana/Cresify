@@ -1,0 +1,24 @@
+{
+  "search_hero": {
+    "title_line1": "Descubre Productos Únicos de",
+    "title_line2": "Emprendedores Locales",
+    "subtitle": "Explora miles de productos innovadores creados por emprendedores apasionados.",
+    "search_placeholder": "Buscar productos o tiendas...",
+    "search_button": "Buscar"
+  },
+  
+  "filters": {
+    "filters_title": "Filtros",
+    "clear_all": "Limpiar Todo",
+    "location_filters": "Filtros de Ubicación",
+    "apply_filters": "Aplicar Filtros",
+    "price_range": "Rango de Precio",
+    "product_locations": "Ubicaciones de Productos"
+  },
+  
+  "sidebar": {
+    "button": "Comienza a comprar ahora",
+    "support_local": "Apoya a emprendedores locales. Cada compra hace la diferencia.",
+    "community_impact": "Únete a miles de compradores que están transformando vidas a través de sus decisiones de compra."
+  }
+}
