@@ -7,17 +7,14 @@ import { useBookServiceMutation, useGetProviderDatesQuery, useGetProviderTimeslo
 import { toast, Toaster } from "react-hot-toast";
 import { useSession } from "next-auth/react";
 
-export default function BookingDateTimePage() {
+export default function BookingDateTimeContent() {
   const GRADIENT_FROM = "#9838E1";
   const GRADIENT_TO = "#F68E44";
 
-  const [bookService, {isLoading, isError, error}] = useBookServiceMutation();
+  const [bookService, {isLoading: isBookingLoading, isError, error}] = useBookServiceMutation();
   
-
-
-
-    const { data: session } = useSession();
-      const userId = session?.user?.id;
+  const { data: session } = useSession();
+  const userId = session?.user?.id;
 
   const searchParams = useSearchParams();
   const providerId = searchParams.get("id");
@@ -37,9 +34,21 @@ export default function BookingDateTimePage() {
     notes: ""
   });
 
+  // Check if providerId is available
+  useEffect(() => {
+    if (!providerId) {
+      toast.error("Provider ID is required");
+    }
+  }, [providerId]);
+
   // ---------------- API CALLS ----------------
-  const { data: datesResponse, isLoading: datesLoading } = useGetProviderDatesQuery(providerId);
-  const { data: timeslotsResponse, isLoading: timeslotsLoading } = useGetProviderTimeslotsQuery(selectedDateId);
+  const { data: datesResponse, isLoading: datesLoading } = useGetProviderDatesQuery(providerId, {
+    skip: !providerId // Skip if no providerId
+  });
+  
+  const { data: timeslotsResponse, isLoading: timeslotsLoading } = useGetProviderTimeslotsQuery(selectedDateId, {
+    skip: !selectedDateId // Skip if no date selected
+  });
 
   const availableDates = datesResponse?.data || [];
   const timeSlots = timeslotsResponse?.data || [];
@@ -237,14 +246,11 @@ export default function BookingDateTimePage() {
       // Provider Info
       provider: providerId,
       customer: userId,
-      address:bookingForm.address,
+      address: bookingForm.address,
       country: bookingForm.country,
       city: bookingForm.city,
       phone: bookingForm.telephone,
       fullName: bookingForm.fullName,
-
-
-      
 
       dateId: selectedDateId,
       timeSlot: selectedTimeSlot._id,
@@ -282,52 +288,38 @@ export default function BookingDateTimePage() {
       bookingReference: `BK-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
     };
 
-    // Log to console
-    console.log("✅ BOOKING CONFIRMED:", bookingData);
-    
-    // Log in table format
-
-try {
-
-  const result = await bookService(bookingData).unwrap();
-  window.location.href =result?.checkoutUrl
-
-  if(isError){
-    console.log(error, 'error is here');
-    toast.error(error.data?.message || "Failed to confirm booking");
-    return;
-  }
-
-  console.log(result, 'booking confiming');
-
-  if(result?.data?.error){
-
-    toast.error(result.data.error || "Failed to confirm booking");
-  }
-
-  return;
-  
-} catch (error) {
-  console.log(error);
-}
-    // Show success message
-    toast.success("Booking confirmed! Check console for details.");
-    
-    // Reset form after 2 seconds
-    setTimeout(() => {
-      setShowBookingForm(false);
-      setSelectedTimeSlot(null);
-      setBookingForm({
-        fullName: "",
-        email: "",
-        telephone: "",
-        address: "",
-        country: "",
-        city: "",
-        notes: ""
-      });
-      toast.success("Form reset. You can book another slot.");
-    }, 2000);
+    try {
+      const result = await bookService(bookingData).unwrap();
+      
+      if (result?.checkoutUrl) {
+        window.location.href = result.checkoutUrl;
+      } else if (isError) {
+        console.log(error, 'error is here');
+        toast.error(error.data?.message || "Failed to confirm booking");
+      } else if (result?.data?.error) {
+        toast.error(result.data.error || "Failed to confirm booking");
+      } else {
+        toast.success("Booking confirmed!");
+        
+        // Reset form after 2 seconds
+        setTimeout(() => {
+          setShowBookingForm(false);
+          setSelectedTimeSlot(null);
+          setBookingForm({
+            fullName: "",
+            email: "",
+            telephone: "",
+            address: "",
+            country: "",
+            city: "",
+            notes: ""
+          });
+        }, 2000);
+      }
+    } catch (error) {
+      console.log(error);
+      toast.error("An error occurred while booking");
+    }
   };
 
   // Calculate total price
@@ -352,14 +344,26 @@ try {
     "Other"
   ];
 
-  // --------------------------------------------------
-  //                        UI
-  // --------------------------------------------------
+  // Show loading state
+  if (!providerId) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-red-500 text-5xl mb-4">⚠️</div>
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">Provider ID Missing</h2>
+          <p className="text-gray-600">Please provide a provider ID in the URL</p>
+          <Link href="/services" className="mt-4 inline-block px-6 py-2 bg-blue-600 text-white rounded-lg">
+            Back to Services
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <section className='w-full bg-[#F7F7FA] py-10 px-6'>
       <Toaster position="top-center" />
-      <div className='mx-auto max-w-[1250px] grid gap-8 ]'>
+      <div className='mx-auto max-w-[1250px] grid gap-8'>
         
         {/* ---------------- LEFT CARD ---------------- */}
         <div className='rounded-[20px] border border-[#ECE6F7] bg-white px-8 py-6 shadow-[0_10px_30px_rgba(15,23,42,0.06)]'>
@@ -554,162 +558,6 @@ try {
             </button>
           </div>
         </div>
-
-        {/* ---------------- RIGHT ORDER SUMMARY ---------------- */}
-        {/* <aside
-          className='w-full rounded-[18px] border border-[#E9E5F4] bg-white px-6 py-6 
-             shadow-[0_6px_20px_rgba(0,0,0,0.05)] h-fit sticky top-6'>
-          
-       
-          <h3 className='text-[15px] font-semibold text-[#1B1B1B] mb-5'>
-            Order Summary
-          </h3>
-
-
-          <div className='flex items-center justify-between mb-5'>
-            <div className='flex items-center gap-3'>
-              <div className='h-[48px] w-[48px] rounded-[12px] overflow-hidden bg-[#F5F4FA]'>
-                <img
-                  src='/services/serv1.jpg'
-                  className='h-full w-full object-cover'
-                  alt="Service"
-                />
-              </div>
-              <div>
-                <p className='text-[13px] font-semibold text-[#222]'>
-                  Smart Electricians
-                </p>
-                <p className='text-[11px] text-[#8B6FEA]'>Electrical</p>
-              </div>
-            </div>
-            <p className='text-[14px] font-semibold text-[#F26A00]'>$55.00</p>
-          </div>
-
-
-          <div className='border-t border-[#EEEAF7] pt-4 pb-3'>
-            <div className="flex items-center gap-2 mb-1">
-              <div className='h-[28px] w-[28px] rounded-full bg-[#F7F7FA] flex items-center justify-center'>
-                <svg width='15' height='15' fill='#8A42D9'>
-                  <path d='M4 1v2M11 1v2M2 5h11M3 3h9c.6 0 1 .4 1 1v8c0 .6-.4 1-1 1H3c-.6 0-1-.4-1-1V4c0-.6.4-1 1-1z' />
-                </svg>
-              </div>
-              <p className='text-[12px] text-[#6F6F6F] font-medium'>Date</p>
-            </div>
-            {selectedDateId ? (
-              <p className='text-[13px] text-[#404040] ml-[34px]'>
-                {formatDateDisplay(selectedDate)}
-              </p>
-            ) : (
-              <p className='text-[13px] text-gray-400 ml-[34px] italic'>Not selected</p>
-            )}
-          </div>
-
-
-          <div className='border-t border-[#EEEAF7] pt-4 pb-3'>
-            <div className="flex items-center gap-2 mb-1">
-              <div className='h-[28px] w-[28px] rounded-full bg-[#F7F7FA] flex items-center justify-center'>
-                <svg width='15' height='15' fill='#8A42D9'>
-                  <path d='M7.5 3v4l3 1.8M7.5 1a6.5 6.5 0 110 13 6.5 6.5 0 010-13z' />
-                </svg>
-              </div>
-              <p className='text-[12px] text-[#6F6F6F] font-medium'>Time Slot</p>
-            </div>
-            {selectedTimeSlot ? (
-              <div className="ml-[34px]">
-                <div className='text-[13px] text-[#404040] font-medium'>
-                  {formatTimeDisplay(selectedTimeSlot.startTime)} - {formatTimeDisplay(selectedTimeSlot.endTime)}
-                </div>
-                <div className="flex items-center gap-2 mt-1">
-                  <span className='text-[11px] text-gray-500'>
-                    Duration: {calculateSlotDuration(selectedTimeSlot.startTime, selectedTimeSlot.endTime)}
-                  </span>
-                  <span className="text-xs text-purple-600 bg-purple-100 px-2 py-0.5 rounded">
-                    Fixed Slot
-                  </span>
-                </div>
-              </div>
-            ) : (
-              <p className='text-[13px] text-gray-400 ml-[34px] italic'>Not selected</p>
-            )}
-          </div>
-
-     
-          <div className='border-t border-[#EEEAF7] pt-4 space-y-2 text-[12px] text-[#666] mb-4'>
-            <div className='flex justify-between'>
-              <span>Service Fee</span>
-              <span className='text-[#333]'>$55.00</span>
-            </div>
-            <div className='flex justify-between'>
-              <span>Service Charge</span>
-              <span className='text-[#333]'>$5.00</span>
-            </div>
-            <div className='flex justify-between'>
-              <span>Tax (5%)</span>
-              <span className='text-[#333]'>
-                ${((55 + 5) * 0.05).toFixed(2)}
-              </span>
-            </div>
-          </div>
-
-    
-          <div className='flex items-center justify-between mb-5 text-[13px] font-semibold border-t border-gray-200 pt-4'>
-            <div>
-              <span>Total Amount</span>
-              <p className="text-[10px] text-gray-500 mt-1">
-                Fixed price for this slot
-              </p>
-            </div>
-            <div className="text-right">
-              <span className='text-[#F26A00] text-lg'>
-                ${calculateTotalPrice()}
-              </span>
-              <p className="text-[10px] text-gray-500 mt-1">
-                incl. tax & charges
-              </p>
-            </div>
-          </div>
-
-
-          {selectedTimeSlot && !showBookingForm && (
-            <div className="mb-5 p-3 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                <p className="text-xs text-green-800">
-                  Ready to book! Click "Book This Time Slot"
-                </p>
-              </div>
-            </div>
-          )}
-
-
-          <div className='flex items-center justify-center gap-2 mb-4'>
-            <svg width='16' height='16' fill='#52B788'>
-              <path d='M8 1l6 3v4c0 3.9-2.7 7.4-6 8-3.3-.6-6-4.1-6-8V4l6-3z' />
-            </svg>
-            <p className='text-[11px] text-[#6F6F6F]'>
-              100% secure and encrypted payment.
-            </p>
-          </div>
-
-   
-          <div className='border-t border-[#EEEAF7] pt-3 text-center'>
-            <p className='text-[11px] text-[#999] mb-2'>
-              Accepted payment methods
-            </p>
-
-            <div className='flex justify-center gap-2'>
-              <span className='px-2 py-[2px] bg-[#1A1F71] rounded-[4px] text-white text-[10px] font-semibold'>
-                VISA
-              </span>
-              <span className='px-2 py-[2px] bg-[#EB001B] rounded-[4px] text-white text-[10px] font-semibold'>
-                MC
-              </span>
-              <span className='px-2 py-[2px] bg-[#F79E1B] rounded-[4px] text-white text-[10px] font-semibold'>
-                AMEX
-              </span>
-            </div>
-          </div>
-        </aside> */}
       </div>
 
       {/* BOOKING FORM MODAL */}
@@ -924,12 +772,22 @@ try {
                   </button>
                   <button
                     type="submit"
-                    className="flex-1 px-6 py-3 bg-gradient-to-r from-[#9838E1] to-[#F68E44] text-white font-medium rounded-lg hover:opacity-90 transition flex items-center justify-center gap-2"
+                    disabled={isBookingLoading}
+                    className="flex-1 px-6 py-3 bg-gradient-to-r from-[#9838E1] to-[#F68E44] text-white font-medium rounded-lg hover:opacity-90 transition flex items-center justify-center gap-2 disabled:opacity-50"
                   >
-                    <svg width="17" height="17" fill="white">
-                      <path d="M4 7l4 4 8-8" />
-                    </svg>
-                    Confirm Booking
+                    {isBookingLoading ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                        Processing...
+                      </>
+                    ) : (
+                      <>
+                        <svg width="17" height="17" fill="white">
+                          <path d="M4 7l4 4 8-8" />
+                        </svg>
+                        Confirm Booking
+                      </>
+                    )}
                   </button>
                 </div>
               </div>
