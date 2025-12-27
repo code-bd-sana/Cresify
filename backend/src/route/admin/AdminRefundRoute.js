@@ -1,12 +1,12 @@
 import { Router } from "express";
 import {
   getRefund,
-  listRefunds,
+  listSellerRefunds,
   reviewRefund,
 } from "../../controller/admin/AdminRefundController.js";
 const router = Router();
 
-router.get("/", listRefunds);
+router.get("/", listSellerRefunds);
 router.get("/:id", getRefund);
 router.post("/review", reviewRefund);
 
