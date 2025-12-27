@@ -3,12 +3,12 @@ import mongoose from "mongoose";
 import Stripe from "stripe";
 import Booking from "../models/BookingModel.js";
 import Payment from "../models/PaymentModel.js";
+import ProviderAvailability from "../models/ProviderAvailabilityModel.js";
+import Timeslot from "../models/TimeSlotModel.js";
 import Transaction from "../models/TransactionModel.js";
 import User from "../models/UserModel.js";
 import Wallet from "../models/WalletModel.js";
 import { toTwo } from "../utils/money.js";
-import Timeslot from "../models/TimeSlotModel.js";
-import ProviderAvailability from "../models/ProviderAvailabilityModel.js";
 
 dotenv.config();
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
@@ -36,8 +36,8 @@ export const saveBooking = async (req, res) => {
       city,
       phone,
       fullName,
-      dateId,           // ProviderAvailability ID (from selectedDateId)
-      timeSlot,         // Timeslot ID (from selectedTimeSlot._id)
+      dateId, // ProviderAvailability ID (from selectedDateId)
+      timeSlot, // Timeslot ID (from selectedTimeSlot._id)
       notes,
       // Payment info from frontend
       paymentMethod = "card", // Default to COD
@@ -47,8 +47,9 @@ export const saveBooking = async (req, res) => {
 
     // ====== 1. Basic required fields ======
     if (!customer || !provider || !dateId || !timeSlot || !fullName || !phone) {
-      return res.status(400).json({ 
-        message: "Missing required fields: customer, provider, dateId, timeSlot, fullName, or phone" 
+      return res.status(400).json({
+        message:
+          "Missing required fields: customer, provider, dateId, timeSlot, fullName, or phone",
       });
     }
 
@@ -61,7 +62,7 @@ export const saveBooking = async (req, res) => {
     const [customerData, providerData, timeSlotData] = await Promise.all([
       User.findById(customer).lean(),
       User.findById(provider).lean(),
-      Timeslot.findById(timeSlot).lean()
+      Timeslot.findById(timeSlot).lean(),
     ]);
 
     if (!customerData)
@@ -70,38 +71,39 @@ export const saveBooking = async (req, res) => {
       return res.status(404).json({ message: "Provider not found" });
     if (!timeSlotData)
       return res.status(404).json({ message: "Time slot not found" });
-    
+
     // Check if time slot is already booked
     if (timeSlotData.isBooked) {
-      return res.status(409).json({ 
-        message: "This time slot is already booked" 
+      return res.status(409).json({
+        message: "This time slot is already booked",
       });
     }
 
     // ====== 3. Get ProviderAvailability ======
-    const providerAvailability = await ProviderAvailability.findById(dateId).lean();
-    
+    const providerAvailability = await ProviderAvailability.findById(
+      dateId
+    ).lean();
+
     if (!providerAvailability) {
-      return res.status(404).json({ message: "Provider availability not found" });
+      return res
+        .status(404)
+        .json({ message: "Provider availability not found" });
     }
 
     // Check if time slot belongs to this provider via ProviderAvailability
     if (providerAvailability.provider.toString() !== provider) {
-      return res.status(403).json({ 
-        message: "Time slot does not belong to this provider" 
+      return res.status(403).json({
+        message: "Time slot does not belong to this provider",
       });
     }
 
-
     // ====== 4. Parse & validate date ======
-
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
     // const workingDay = new Date(workingDate);
     // workingDay.setHours(0, 0, 0, 0);
-
 
     const maxDaysAhead = 7;
     const maxAllowed = new Date(today);
@@ -113,8 +115,8 @@ export const saveBooking = async (req, res) => {
 
     // ====== 5. Check if time slot belongs to this availability date ======
     // if (timeSlotData.availability.toString() !== dateId) {
-    //   return res.status(400).json({ 
-    //     message: "Time slot does not belong to selected date" 
+    //   return res.status(400).json({
+    //     message: "Time slot does not belong to selected date"
     //   });
     // }
 
@@ -125,21 +127,21 @@ export const saveBooking = async (req, res) => {
 
     // Convert duration string to minutes
     const getDurationInMinutes = (durationStr) => {
-      if (durationStr.endsWith('m')) {
+      if (durationStr.endsWith("m")) {
         return parseInt(durationStr);
-      } else if (durationStr.endsWith('h')) {
+      } else if (durationStr.endsWith("h")) {
         return parseInt(durationStr) * 60;
       }
       return 60; // Default to 60 minutes
     };
 
     const durationMinutes = getDurationInMinutes(duration);
-    
+
     // Validate time format
     // const timeRegex = /^([0-1]?[0-9]|2[0-3]):([0-5][0-9])$/;
     // if (!timeRegex.test(startTime) || !timeRegex.test(endTime)) {
-    //   return res.status(400).json({ 
-    //     message: "Invalid time format in time slot" 
+    //   return res.status(400).json({
+    //     message: "Invalid time format in time slot"
     //   });
     // }
 
@@ -150,7 +152,7 @@ export const saveBooking = async (req, res) => {
 
     const slotStartMin = minutes(startTime);
     const slotEndMin = minutes(endTime);
-    
+
     // Get provider working hours
     const workStart24 = providerData.workingHours?.start || "09:00";
     const workEnd24 = providerData.workingHours?.end || "18:00";
@@ -162,14 +164,14 @@ export const saveBooking = async (req, res) => {
     //   return res
     //     .status(400)
     //     .json({ message: "End time must be after start time" });
-    
+
     // Check if slot duration matches
     const actualDuration = slotEndMin - slotStartMin;
     // if (actualDuration !== durationMinutes)
     //   return res
     //     .status(400)
     //     .json({ message: `Time slot duration mismatch` });
-    
+
     // if (slotStartMin < workStartMin || slotEndMin > workEndMin)
     //   return res.status(400).json({ message: "Time slot outside working hours" });
 
@@ -222,11 +224,11 @@ export const saveBooking = async (req, res) => {
     // ====== 10. MARK TIME SLOT AS BOOKED ======
     await Timeslot.findByIdAndUpdate(
       timeSlot,
-      { 
-        isBooked: true, 
+      {
+        isBooked: true,
         bookedBy: customer,
         bookedAt: new Date(),
-        bookingStatus: "reserved"
+        bookingStatus: "reserved",
       },
       { session }
     );
@@ -249,7 +251,7 @@ export const saveBooking = async (req, res) => {
             address: address || req.body.address,
             country,
             city,
-            notes: notes || ""
+            notes: notes || "",
           },
           // Address details for service
           address: address || req.body.address,
@@ -267,7 +269,10 @@ export const saveBooking = async (req, res) => {
           status: "pending",
           paymentStatus: paymentMethod === "cod" ? "pending" : "processing",
           // Additional metadata
-          bookingReference: `BK-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
+          bookingReference: `BK-${Date.now()}-${Math.random()
+            .toString(36)
+            .substr(2, 9)
+            .toUpperCase()}`,
           serviceAmount,
           hourlyRate,
           hours,
@@ -417,7 +422,7 @@ export const saveBooking = async (req, res) => {
             address: booking.address,
             country: booking.country,
             city: booking.city,
-          }
+          },
         },
       });
     }
@@ -859,16 +864,8 @@ export const getBookingStats = async (req, res) => {
   }
 };
 
-
-
-
-
-export const userBooking= async(req, res)=> {
-
-
+export const userBooking = async (req, res) => {
   try {
-
-
     const { userId } = req.params;
 
     if (!userId) {
@@ -881,44 +878,47 @@ export const userBooking= async(req, res)=> {
       customer: userId,
     })
       .sort({ createdAt: -1 }) // latest first
-      .populate('provider timeSlot dateId')
+      .populate("provider timeSlot dateId")
       .skip(skip)
       .limit(limit)
       .lean() // FASTEST: returns plain objects, no Mongoose overhead
       .exec();
-    res.status(200).json({message: "Success",
-    data: {
-      total: bookings.length,
-      bookings,
-    },
-  });
-    
+
+    console.log(bookings);
+    res.status(200).json({
+      message: "Success",
+      data: {
+        total: bookings.length,
+        bookings,
+      },
+    });
   } catch (error) {
-    res.status(500).json({message:"server error", error: error.message})
+    res.status(500).json({ message: "server error", error: error.message });
   }
-}
+};
 
-
-export const providerBooking = async(req, res)=> {
+export const providerBooking = async (req, res) => {
   try {
     const { id } = req.params;
     const skip = parseInt(req.query.skip) || 0;
     const limit = Math.min(parseInt(req.query.limit) || 10, 100);
-    
+
     // Get total count
-    const total = await Booking.countDocuments({ provider: id }).populate('customer timeSlot dateId provider');
-    
+    const total = await Booking.countDocuments({ provider: id }).populate(
+      "customer timeSlot dateId provider"
+    );
+
     // Get paginated bookings
     const bookings = await Booking.find({
       provider: id,
     })
       .sort({ createdAt: -1 })
-      .populate('customer timeSlot dateId provider')
+      .populate("customer timeSlot dateId provider")
       .skip(skip)
       .limit(limit)
       .lean()
       .exec();
-    
+
     res.status(200).json({
       message: "Success",
       data: {
@@ -926,54 +926,47 @@ export const providerBooking = async(req, res)=> {
         bookings,
         page: Math.floor(skip / limit) + 1,
         totalPages: Math.ceil(total / limit),
-        hasMore: skip + limit < total
+        hasMore: skip + limit < total,
       },
-    });    
+    });
   } catch (error) {
-    res.status(500).json({message:"server error", error: error.message});
+    res.status(500).json({ message: "server error", error: error.message });
   }
-}
+};
 
-
-
-export const allBookings = async(req, res)=> {
+export const allBookings = async (req, res) => {
   try {
-    
-
     const skip = parseInt(req.query.skip) || 0;
     const limit = Math.min(parseInt(req.query.limit) || 20, 100); // max 100
     const bookings = await Booking.find({})
       .sort({ createdAt: -1 }) // latest first
-      .populate('customer provider timeSlot dateId')
+      .populate("customer provider timeSlot dateId")
       .skip(skip)
       .limit(limit)
       .lean() // FASTEST: returns plain objects, no Mongoose overhead
       .exec();
-    res.status(200).json({message: "Success",
-    data: {
-      total: bookings.length,
-      bookings,
-    },
-  }); 
+    res.status(200).json({
+      message: "Success",
+      data: {
+        total: bookings.length,
+        bookings,
+      },
+    });
   } catch (error) {
-    res.status(500).json({message:"server error", error: error.message})
+    res.status(500).json({ message: "server error", error: error.message });
   }
-}
-
+};
 
 export const updateBookingStatusNew = async (req, res) => {
   try {
-    const {id, status} = req.body;
+    const { id, status } = req.body;
     const booking = await Booking.findByIdAndUpdate(
       id,
       { status: status },
       { new: true }
     );
-    res.status(200).json({message: "Booking status updated", booking});
-
+    res.status(200).json({ message: "Booking status updated", booking });
   } catch (error) {
-    res.status(500).json({message:"server error", error: error.message})
+    res.status(500).json({ message: "server error", error: error.message });
   }
-}
-
-
+};

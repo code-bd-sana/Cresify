@@ -20,6 +20,7 @@ export const requestProviderRefund = async (req, res) => {
       amount = 0,
       reason,
       evidence,
+      paymentId,
     } = req.body;
     if (!providerId || !bookingId || !customerId) {
       return res
@@ -51,7 +52,7 @@ export const requestProviderRefund = async (req, res) => {
       }
     }
 
-    const refundDoc = await Refund.create({
+    const payload = {
       // For service refunds we don't have payment/order models; store booking in `order` for reference when available
       order: bookingId ? new mongoose.Types.ObjectId(bookingId) : undefined,
       requestedBy: new mongoose.Types.ObjectId(customerId),
@@ -61,19 +62,28 @@ export const requestProviderRefund = async (req, res) => {
       evidence: uploadedEvidence,
       provider: new mongoose.Types.ObjectId(providerId),
       status: "requested",
-    });
+    };
+
+    if (paymentId) {
+      try {
+        payload.payment = new mongoose.Types.ObjectId(paymentId);
+      } catch (e) {
+        // fallback to raw id if it's not an ObjectId
+        payload.payment = paymentId;
+      }
+    }
+
+    const refundDoc = await Refund.create(payload);
 
     return res
       .status(201)
       .json({ message: "Provider refund requested", refund: refundDoc });
   } catch (err) {
     console.error("requestProviderRefund error", err);
-    return res
-      .status(500)
-      .json({
-        message: "Failed to request provider refund",
-        error: err.message,
-      });
+    return res.status(500).json({
+      message: "Failed to request provider refund",
+      error: err.message,
+    });
   }
 };
 

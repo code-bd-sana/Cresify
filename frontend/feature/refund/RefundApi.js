@@ -52,6 +52,13 @@ export const RefundApi = createApi({
         body: data,
       }),
     }),
+    adminServiceRefund: builder.mutation({
+      query: (data) => ({
+        url: "/admin/refund/service-review",
+        method: "POST",
+        body: data,
+      }),
+    }),
   }),
 });
 
@@ -61,6 +68,7 @@ export const {
   useSellerRefundRequestQuery,
   useProviderRefundRequestQuery,
   useProviderCreateRefundMutation,
+  useAdminServiceRefundMutation,
   useAdminRefundQuery,
   useProcessRefundMutation,
   useRefundActionMutation,
