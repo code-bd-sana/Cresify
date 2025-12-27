@@ -1,0 +1,9 @@
+{
+  "step1_title": "Select Date & Time",
+  "step2_title": "Booking Details & Payment",
+  "available_dates": "dates available",
+  "available_slots": "slots available",
+  "select_date": "Select a date to see available time slots",
+  "error_loading_data": "Error loading booking data. Please try again.",
+  "no_provider_id": "No provider ID provided. Please select a service provider."
+}

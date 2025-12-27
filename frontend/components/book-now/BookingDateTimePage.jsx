@@ -1,18 +1,22 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import { useBookServiceMutation, useGetProviderDatesQuery, useGetProviderTimeslotsQuery } from "@/feature/provider/ProviderApi";
+import {
+  useBookServiceMutation,
+  useGetProviderDatesQuery,
+  useGetProviderTimeslotsQuery,
+} from "@/feature/provider/ProviderApi";
 import { toast, Toaster } from "react-hot-toast";
 import { useSession } from "next-auth/react";
-
-export default function BookingDateTimeContent() {
+function BookingDateTimeContentPage() {
   const GRADIENT_FROM = "#9838E1";
   const GRADIENT_TO = "#F68E44";
 
-  const [bookService, {isLoading: isBookingLoading, isError, error}] = useBookServiceMutation();
-  
+  const [bookService, { isLoading: isBookingLoading, isError, error }] =
+    useBookServiceMutation();
+
   const { data: session } = useSession();
   const userId = session?.user?.id;
 
@@ -31,7 +35,7 @@ export default function BookingDateTimeContent() {
     address: "",
     country: "",
     city: "",
-    notes: ""
+    notes: "",
   });
 
   // Check if providerId is available
@@ -42,13 +46,15 @@ export default function BookingDateTimeContent() {
   }, [providerId]);
 
   // ---------------- API CALLS ----------------
-  const { data: datesResponse, isLoading: datesLoading } = useGetProviderDatesQuery(providerId, {
-    skip: !providerId // Skip if no providerId
-  });
-  
-  const { data: timeslotsResponse, isLoading: timeslotsLoading } = useGetProviderTimeslotsQuery(selectedDateId, {
-    skip: !selectedDateId // Skip if no date selected
-  });
+  const { data: datesResponse, isLoading: datesLoading } =
+    useGetProviderDatesQuery(providerId, {
+      skip: !providerId, // Skip if no providerId
+    });
+
+  const { data: timeslotsResponse, isLoading: timeslotsLoading } =
+    useGetProviderTimeslotsQuery(selectedDateId, {
+      skip: !selectedDateId, // Skip if no date selected
+    });
 
   const availableDates = datesResponse?.data || [];
   const timeSlots = timeslotsResponse?.data || [];
@@ -77,13 +83,15 @@ export default function BookingDateTimeContent() {
     const daysInMonth = new Date(year, month + 1, 0).getDate();
     for (let i = 1; i <= daysInMonth; i++) {
       const d = new Date(year, month, i);
-      
+
       // Check if this date is available
-      const isAvailable = availableDates.some(date => {
+      const isAvailable = availableDates.some((date) => {
         const dateObj = new Date(date.workingDate);
-        return dateObj.getFullYear() === d.getFullYear() &&
-               dateObj.getMonth() === d.getMonth() &&
-               dateObj.getDate() === d.getDate();
+        return (
+          dateObj.getFullYear() === d.getFullYear() &&
+          dateObj.getMonth() === d.getMonth() &&
+          dateObj.getDate() === d.getDate()
+        );
       });
 
       cells.push({
@@ -117,7 +125,7 @@ export default function BookingDateTimeContent() {
     return date.toLocaleTimeString("en-US", {
       hour: "2-digit",
       minute: "2-digit",
-      hour12: true
+      hour12: true,
     });
   };
 
@@ -125,20 +133,20 @@ export default function BookingDateTimeContent() {
   const calculateSlotDuration = (startTime, endTime) => {
     const start = parseTime(startTime);
     const end = parseTime(endTime);
-    
+
     const diffMs = end - start;
     const diffHours = diffMs / (1000 * 60 * 60);
     const hours = Math.floor(diffHours);
     const minutes = Math.floor((diffHours - hours) * 60);
-    
+
     if (hours === 0) return `${minutes} minutes`;
-    if (minutes === 0) return `${hours} hour${hours > 1 ? 's' : ''}`;
+    if (minutes === 0) return `${hours} hour${hours > 1 ? "s" : ""}`;
     return `${hours}h ${minutes}m`;
   };
 
   // Parse time string to Date object
   const parseTime = (timeString) => {
-    const [hours, minutes] = timeString.split(':').map(Number);
+    const [hours, minutes] = timeString.split(":").map(Number);
     const date = new Date();
     date.setHours(hours, minutes, 0, 0);
     return date;
@@ -152,9 +160,9 @@ export default function BookingDateTimeContent() {
     }
 
     setSelectedDate(day.date);
-    
+
     // Find the date object from availableDates
-    const foundDate = availableDates.find(date => {
+    const foundDate = availableDates.find((date) => {
       const dateObj = new Date(date.workingDate);
       return isSameDay(dateObj, day.date);
     });
@@ -163,12 +171,12 @@ export default function BookingDateTimeContent() {
       setSelectedDateId(foundDate._id);
       setSelectedTimeSlot(null); // Reset selected time slot
       setShowBookingForm(false); // Hide booking form
-      
+
       console.log("📅 Selected Date:", {
         dateId: foundDate._id,
         workingDate: foundDate.workingDate,
         provider: foundDate.provider,
-        date: day.date.toDateString()
+        date: day.date.toDateString(),
       });
     }
   };
@@ -179,17 +187,17 @@ export default function BookingDateTimeContent() {
       toast.error("This time slot is already booked");
       return;
     }
-    
+
     setSelectedTimeSlot(slot);
     setShowBookingForm(false); // Hide form until confirmed
-    
+
     console.log("⏰ Selected Time Slot:", {
       slotId: slot._id,
       startTime: slot.startTime,
       endTime: slot.endTime,
       duration: calculateSlotDuration(slot.startTime, slot.endTime),
       availabilityId: slot.availability,
-      isBooked: slot.isBooked
+      isBooked: slot.isBooked,
     });
   };
 
@@ -205,31 +213,37 @@ export default function BookingDateTimeContent() {
 
   // Get selected date object
   const getSelectedDateObject = () => {
-    return availableDates.find(date => {
+    return availableDates.find((date) => {
       const dateObj = new Date(date.workingDate);
       return isSameDay(dateObj, selectedDate);
     });
   };
 
   // Check if selected date has available slots
-  const hasAvailableSlots = timeSlots.some(slot => !slot.isBooked);
+  const hasAvailableSlots = timeSlots.some((slot) => !slot.isBooked);
 
   // Handle booking form change
   const handleBookingFormChange = (e) => {
     const { name, value } = e.target;
-    setBookingForm(prev => ({
+    setBookingForm((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
   // Handle confirm booking
-  const handleConfirmBooking = async(e) => {
+  const handleConfirmBooking = async (e) => {
     e.preventDefault();
-    
+
     // Validate form
-    if (!bookingForm.fullName || !bookingForm.email || !bookingForm.telephone || 
-        !bookingForm.address || !bookingForm.country || !bookingForm.city) {
+    if (
+      !bookingForm.fullName ||
+      !bookingForm.email ||
+      !bookingForm.telephone ||
+      !bookingForm.address ||
+      !bookingForm.country ||
+      !bookingForm.city
+    ) {
       toast.error("Please fill all required fields");
       return;
     }
@@ -254,14 +268,17 @@ export default function BookingDateTimeContent() {
 
       dateId: selectedDateId,
       timeSlot: selectedTimeSlot._id,
-      
+
       // Booking Details
       date: selectedDate.toISOString(),
       startTime: selectedTimeSlot.startTime,
       endTime: selectedTimeSlot.endTime,
-      duration: calculateSlotDuration(selectedTimeSlot.startTime, selectedTimeSlot.endTime),
+      duration: calculateSlotDuration(
+        selectedTimeSlot.startTime,
+        selectedTimeSlot.endTime
+      ),
       bookingDate: new Date().toISOString(),
-      
+
       // Customer Info
       customerInfo: {
         fullName: bookingForm.fullName,
@@ -270,9 +287,9 @@ export default function BookingDateTimeContent() {
         address: bookingForm.address,
         country: bookingForm.country,
         city: bookingForm.city,
-        notes: bookingForm.notes
+        notes: bookingForm.notes,
       },
-      
+
       // Payment Info
       payment: {
         subtotal: 55,
@@ -280,27 +297,29 @@ export default function BookingDateTimeContent() {
         tax: ((55 + 5) * 0.05).toFixed(2),
         total: ((55 + 5) * 1.05).toFixed(2),
         currency: "USD",
-        paymentStatus: "pending"
+        paymentStatus: "pending",
       },
-      
+
       // Booking Status
       status: "confirmed",
-      bookingReference: `BK-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+      bookingReference: `BK-${Date.now()}-${Math.random()
+        .toString(36)
+        .substr(2, 9)}`,
     };
 
     try {
       const result = await bookService(bookingData).unwrap();
-      
+
       if (result?.checkoutUrl) {
         window.location.href = result.checkoutUrl;
       } else if (isError) {
-        console.log(error, 'error is here');
+        console.log(error, "error is here");
         toast.error(error.data?.message || "Failed to confirm booking");
       } else if (result?.data?.error) {
         toast.error(result.data.error || "Failed to confirm booking");
       } else {
         toast.success("Booking confirmed!");
-        
+
         // Reset form after 2 seconds
         setTimeout(() => {
           setShowBookingForm(false);
@@ -312,7 +331,7 @@ export default function BookingDateTimeContent() {
             address: "",
             country: "",
             city: "",
-            notes: ""
+            notes: "",
           });
         }, 2000);
       }
@@ -341,7 +360,7 @@ export default function BookingDateTimeContent() {
     "Japan",
     "India",
     "Bangladesh",
-    "Other"
+    "Other",
   ];
 
   // Show loading state
@@ -350,9 +369,16 @@ export default function BookingDateTimeContent() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="text-red-500 text-5xl mb-4">⚠️</div>
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">Provider ID Missing</h2>
-          <p className="text-gray-600">Please provide a provider ID in the URL</p>
-          <Link href="/services" className="mt-4 inline-block px-6 py-2 bg-blue-600 text-white rounded-lg">
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">
+            Provider ID Missing
+          </h2>
+          <p className="text-gray-600">
+            Please provide a provider ID in the URL
+          </p>
+          <Link
+            href="/services"
+            className="mt-4 inline-block px-6 py-2 bg-blue-600 text-white rounded-lg"
+          >
             Back to Services
           </Link>
         </div>
@@ -361,88 +387,90 @@ export default function BookingDateTimeContent() {
   }
 
   return (
-    <section className='w-full bg-[#F7F7FA] py-10 px-6'>
+    <section className="w-full bg-[#F7F7FA] py-10 px-6">
       <Toaster position="top-center" />
-      <div className='mx-auto max-w-[1250px] grid gap-8'>
-        
+      <div className="mx-auto max-w-[1250px] grid gap-8">
         {/* ---------------- LEFT CARD ---------------- */}
-        <div className='rounded-[20px] border border-[#ECE6F7] bg-white px-8 py-6 shadow-[0_10px_30px_rgba(15,23,42,0.06)]'>
-          
+        <div className="rounded-[20px] border border-[#ECE6F7] bg-white px-8 py-6 shadow-[0_10px_30px_rgba(15,23,42,0.06)]">
           {/* HEADER */}
-          <div className='mb-4 flex items-center justify-between'>
-            <p className='text-[13px] font-medium text-[#111827]'>
+          <div className="mb-4 flex items-center justify-between">
+            <p className="text-[13px] font-medium text-[#111827]">
               Select Date & Time
             </p>
 
-            <div className='flex items-center'>
-              <span className='text-[14px] font-semibold text-[#111827]'>
+            <div className="flex items-center">
+              <span className="text-[14px] font-semibold text-[#111827]">
                 {monthLabel}
               </span>
             </div>
           </div>
 
           {/* CALENDAR */}
-          <div className='rounded-[16px] border border-[#F0E6FF] bg-[#FBFAFF] px-5 pt-4 pb-3'>
-            
+          <div className="rounded-[16px] border border-[#F0E6FF] bg-[#FBFAFF] px-5 pt-4 pb-3">
             {/* Day Names */}
-            <div className='mb-3 grid grid-cols-7 text-center text-[11px] font-medium text-[#A3A3B1]'>
+            <div className="mb-3 grid grid-cols-7 text-center text-[11px] font-medium text-[#A3A3B1]">
               {dayNames.map((d) => (
                 <div key={d}>{d}</div>
               ))}
             </div>
 
             {/* Calendar Grid */}
-            <div className='grid grid-cols-7 gap-[6px] text-center'>
-              {days.map(({ date, isCurrentMonth, isEmpty, isAvailable }, index) => {
-                if (isEmpty) {
+            <div className="grid grid-cols-7 gap-[6px] text-center">
+              {days.map(
+                ({ date, isCurrentMonth, isEmpty, isAvailable }, index) => {
+                  if (isEmpty) {
+                    return (
+                      <div
+                        key={`empty-${index}`}
+                        className="flex h-[52px] items-center justify-center rounded-[10px] text-[12px]"
+                      />
+                    );
+                  }
+
+                  const isSelected = date && isSameDay(date, selectedDate);
+                  const isToday = date && isSameDay(date, new Date());
+
+                  let classes =
+                    "flex h-[52px] items-center justify-center rounded-[10px] text-[12px] transition relative ";
+
+                  if (!isAvailable) {
+                    classes += "text-gray-400 cursor-not-allowed opacity-50";
+                  } else {
+                    classes +=
+                      "cursor-pointer text-[#4B4B5C] hover:bg-[#F1E8FF]";
+                  }
+
+                  if (isSelected) {
+                    classes =
+                      "flex h-[52px] items-center justify-center rounded-[10px] text-[12px] border border-[#9D5CFF] bg-[#F6EEFF] text-[#7C35D8] shadow-[0_0_0_1px_rgba(152,56,225,0.12)]";
+                  }
+
+                  if (!isSelected && isToday) {
+                    classes += " border border-[#E2D4FF]";
+                  }
+
                   return (
-                    <div
-                      key={`empty-${index}`}
-                      className='flex h-[52px] items-center justify-center rounded-[10px] text-[12px]'
-                    />
+                    <button
+                      key={date.toISOString()}
+                      onClick={() => handleDateSelect({ date, isAvailable })}
+                      disabled={!isAvailable}
+                      className={classes}
+                    >
+                      {date.getDate()}
+                      {isAvailable && !isSelected && (
+                        <div className="absolute top-1 right-1 w-1.5 h-1.5 bg-green-500 rounded-full"></div>
+                      )}
+                    </button>
                   );
                 }
-
-                const isSelected = date && isSameDay(date, selectedDate);
-                const isToday = date && isSameDay(date, new Date());
-
-                let classes = "flex h-[52px] items-center justify-center rounded-[10px] text-[12px] transition relative ";
-
-                if (!isAvailable) {
-                  classes += "text-gray-400 cursor-not-allowed opacity-50";
-                } else {
-                  classes += "cursor-pointer text-[#4B4B5C] hover:bg-[#F1E8FF]";
-                }
-
-                if (isSelected) {
-                  classes = "flex h-[52px] items-center justify-center rounded-[10px] text-[12px] border border-[#9D5CFF] bg-[#F6EEFF] text-[#7C35D8] shadow-[0_0_0_1px_rgba(152,56,225,0.12)]";
-                }
-
-                if (!isSelected && isToday) {
-                  classes += " border border-[#E2D4FF]";
-                }
-
-                return (
-                  <button
-                    key={date.toISOString()}
-                    onClick={() => handleDateSelect({ date, isAvailable })}
-                    disabled={!isAvailable}
-                    className={classes}
-                  >
-                    {date.getDate()}
-                    {isAvailable && !isSelected && (
-                      <div className="absolute top-1 right-1 w-1.5 h-1.5 bg-green-500 rounded-full"></div>
-                    )}
-                  </button>
-                );
-              })}
+              )}
             </div>
           </div>
 
           {/* TIME SLOTS */}
-          <div className='mt-6'>
+          <div className="mt-6">
             <div className="flex items-center justify-between mb-2">
-              <p className='text-[13px] font-medium text-[#111827]'>
+              <p className="text-[13px] font-medium text-[#111827]">
                 Available Time Slots
               </p>
               {getSelectedDateObject() && (
@@ -454,30 +482,47 @@ export default function BookingDateTimeContent() {
 
             {!selectedDateId ? (
               <div className="text-center py-6 border-2 border-dashed border-gray-300 rounded-lg">
-                <p className="text-gray-500 mb-1">Select an available date first</p>
-                <p className="text-xs text-gray-400">Dates with green dots are available</p>
+                <p className="text-gray-500 mb-1">
+                  Select an available date first
+                </p>
+                <p className="text-xs text-gray-400">
+                  Dates with green dots are available
+                </p>
               </div>
             ) : timeslotsLoading ? (
               <div className="text-center py-6">
                 <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-purple-600"></div>
-                <p className="mt-2 text-xs text-gray-500">Loading time slots...</p>
+                <p className="mt-2 text-xs text-gray-500">
+                  Loading time slots...
+                </p>
               </div>
             ) : timeSlots.length === 0 ? (
               <div className="text-center py-6 border-2 border-dashed border-gray-300 rounded-lg">
-                <p className="text-gray-500 mb-1">No time slots available for this date</p>
-                <p className="text-xs text-gray-400">Please select another date</p>
+                <p className="text-gray-500 mb-1">
+                  No time slots available for this date
+                </p>
+                <p className="text-xs text-gray-400">
+                  Please select another date
+                </p>
               </div>
             ) : !hasAvailableSlots ? (
               <div className="text-center py-6 border-2 border-dashed border-red-300 rounded-lg">
-                <p className="text-red-500 mb-1">All slots are booked for this date</p>
-                <p className="text-xs text-red-400">Please select another date</p>
+                <p className="text-red-500 mb-1">
+                  All slots are booked for this date
+                </p>
+                <p className="text-xs text-red-400">
+                  Please select another date
+                </p>
               </div>
             ) : (
-              <div className='grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3'>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                 {timeSlots.map((slot) => {
                   const isActive = selectedTimeSlot?._id === slot._id;
                   const isBooked = slot.isBooked;
-                  const slotDuration = calculateSlotDuration(slot.startTime, slot.endTime);
+                  const slotDuration = calculateSlotDuration(
+                    slot.startTime,
+                    slot.endTime
+                  );
 
                   return (
                     <button
@@ -486,16 +531,16 @@ export default function BookingDateTimeContent() {
                       disabled={isBooked}
                       className={
                         "p-4 rounded-[12px] text-center transition relative " +
-                        (isBooked 
+                        (isBooked
                           ? "bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200"
                           : isActive
-                            ? "bg-gradient-to-r from-[#F7F4FF] to-[#FFF7F0] text-[#7A3CE5] shadow-[0_4px_14px_rgba(0,0,0,0.12)] relative overflow-hidden border-2 border-[#9D5CFF]"
-                            : "border border-[#E4DDF5] bg-white text-[#4B4B5C] hover:border-[#C5B5FF] hover:bg-gray-50")
+                          ? "bg-gradient-to-r from-[#F7F4FF] to-[#FFF7F0] text-[#7A3CE5] shadow-[0_4px_14px_rgba(0,0,0,0.12)] relative overflow-hidden border-2 border-[#9D5CFF]"
+                          : "border border-[#E4DDF5] bg-white text-[#4B4B5C] hover:border-[#C5B5FF] hover:bg-gray-50")
                       }
                     >
                       {isActive && (
                         <span
-                          className='absolute inset-0 rounded-[10px]'
+                          className="absolute inset-0 rounded-[10px]"
                           style={{
                             padding: "2px",
                             backgroundImage:
@@ -507,7 +552,7 @@ export default function BookingDateTimeContent() {
                           }}
                         />
                       )}
-                      
+
                       <div className="relative">
                         <div className="text-sm font-medium mb-1">
                           {formatTimeDisplay(slot.startTime)}
@@ -520,13 +565,13 @@ export default function BookingDateTimeContent() {
                           {slotDuration}
                         </div>
                       </div>
-                      
+
                       {isBooked && (
                         <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full flex items-center justify-center">
                           <span className="text-white text-xs">×</span>
                         </span>
                       )}
-                      
+
                       {isActive && !isBooked && (
                         <span className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full flex items-center justify-center">
                           <span className="text-white text-xs">✓</span>
@@ -540,7 +585,7 @@ export default function BookingDateTimeContent() {
           </div>
 
           {/* BOOK SLOT BUTTON */}
-          <div className='mt-6'>
+          <div className="mt-6">
             <button
               onClick={() => {
                 if (!selectedDateId || !selectedTimeSlot) {
@@ -550,10 +595,11 @@ export default function BookingDateTimeContent() {
                 setShowBookingForm(true);
               }}
               disabled={!selectedDateId || !selectedTimeSlot}
-              className='w-full h-[46px] rounded-[12px] text-white text-[13px] font-medium shadow-[0_6px_18px_rgba(0,0,0,0.20)] transition disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-[0_8px_24px_rgba(0,0,0,0.25)]'
+              className="w-full h-[46px] rounded-[12px] text-white text-[13px] font-medium shadow-[0_6px_18px_rgba(0,0,0,0.20)] transition disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-[0_8px_24px_rgba(0,0,0,0.25)]"
               style={{
                 backgroundImage: "linear-gradient(90deg,#9838E1,#F68E44)",
-              }}>
+              }}
+            >
               Book This Time Slot
             </button>
           </div>
@@ -568,7 +614,9 @@ export default function BookingDateTimeContent() {
             <div className="sticky top-0 bg-white px-8 py-6 border-b border-gray-200 rounded-t-2xl">
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-xl font-bold text-gray-800">Complete Your Booking</h2>
+                  <h2 className="text-xl font-bold text-gray-800">
+                    Complete Your Booking
+                  </h2>
                   <p className="text-gray-600 text-sm mt-1">
                     Please fill in your details to confirm the booking
                   </p>
@@ -580,18 +628,21 @@ export default function BookingDateTimeContent() {
                   ×
                 </button>
               </div>
-              
+
               {/* Booking Summary */}
               <div className="mt-4 p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg border border-purple-200">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <p className="text-xs text-gray-600">Date</p>
-                    <p className="font-medium text-gray-800">{formatDateDisplay(selectedDate)}</p>
+                    <p className="font-medium text-gray-800">
+                      {formatDateDisplay(selectedDate)}
+                    </p>
                   </div>
                   <div>
                     <p className="text-xs text-gray-600">Time Slot</p>
                     <p className="font-medium text-gray-800">
-                      {formatTimeDisplay(selectedTimeSlot.startTime)} - {formatTimeDisplay(selectedTimeSlot.endTime)}
+                      {formatTimeDisplay(selectedTimeSlot.startTime)} -{" "}
+                      {formatTimeDisplay(selectedTimeSlot.endTime)}
                     </p>
                   </div>
                 </div>
@@ -603,8 +654,10 @@ export default function BookingDateTimeContent() {
               <div className="space-y-6">
                 {/* Personal Information */}
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-800 mb-4">Personal Information</h3>
-                  
+                  <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                    Personal Information
+                  </h3>
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -620,7 +673,7 @@ export default function BookingDateTimeContent() {
                         required
                       />
                     </div>
-                    
+
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         Email <span className="text-red-500">*</span>
@@ -636,7 +689,7 @@ export default function BookingDateTimeContent() {
                       />
                     </div>
                   </div>
-                  
+
                   <div className="mt-4">
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Telephone <span className="text-red-500">*</span>
@@ -655,8 +708,10 @@ export default function BookingDateTimeContent() {
 
                 {/* Address Information */}
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-800 mb-4">Address Information</h3>
-                  
+                  <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                    Address Information
+                  </h3>
+
                   <div className="space-y-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -672,7 +727,7 @@ export default function BookingDateTimeContent() {
                         required
                       />
                     </div>
-                    
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -686,12 +741,14 @@ export default function BookingDateTimeContent() {
                           required
                         >
                           <option value="">Select Country</option>
-                          {countries.map(country => (
-                            <option key={country} value={country}>{country}</option>
+                          {countries.map((country) => (
+                            <option key={country} value={country}>
+                              {country}
+                            </option>
                           ))}
                         </select>
                       </div>
-                      
+
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                           City <span className="text-red-500">*</span>
@@ -712,8 +769,10 @@ export default function BookingDateTimeContent() {
 
                 {/* Additional Notes */}
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-800 mb-4">Additional Information</h3>
-                  
+                  <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                    Additional Information
+                  </h3>
+
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Notes (Optional)
@@ -731,8 +790,10 @@ export default function BookingDateTimeContent() {
 
                 {/* Price Summary */}
                 <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
-                  <h3 className="text-lg font-semibold text-gray-800 mb-4">Price Summary</h3>
-                  
+                  <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                    Price Summary
+                  </h3>
+
                   <div className="space-y-2 text-sm text-gray-600">
                     <div className="flex justify-between">
                       <span>Service Fee</span>
@@ -744,7 +805,9 @@ export default function BookingDateTimeContent() {
                     </div>
                     <div className="flex justify-between">
                       <span>Tax (5%)</span>
-                      <span className="text-gray-800">${((55 + 5) * 0.05).toFixed(2)}</span>
+                      <span className="text-gray-800">
+                        ${((55 + 5) * 0.05).toFixed(2)}
+                      </span>
                     </div>
                     <div className="border-t border-gray-300 pt-2 mt-2">
                       <div className="flex justify-between text-lg font-bold text-gray-800">
@@ -753,10 +816,11 @@ export default function BookingDateTimeContent() {
                       </div>
                     </div>
                   </div>
-                  
+
                   <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
                     <p className="text-sm text-yellow-800">
-                      <span className="font-semibold">Note:</span> Payment will be collected at the time of service.
+                      <span className="font-semibold">Note:</span> Payment will
+                      be collected at the time of service.
                     </p>
                   </div>
                 </div>
@@ -798,3 +862,18 @@ export default function BookingDateTimeContent() {
     </section>
   );
 }
+
+import React from 'react';
+
+const BookingDateTimePage = () => {
+  return (
+    <div>
+      <Suspense fallback={<div>Loading...</div>}>
+        <BookingDateTimeContentPage />
+      </Suspense>
+      
+    </div>
+  );
+};
+
+export default BookingDateTimePage;

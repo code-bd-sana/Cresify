@@ -3,7 +3,7 @@
 import { FiSearch } from "react-icons/fi";
 import { AiFillStar } from "react-icons/ai";
 import { IoChevronDown } from "react-icons/io5";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { Range } from "react-range";
 import {
   LuShirt,
@@ -32,7 +32,7 @@ const CATEGORY_ICONS = [
   LuBookOpen,
 ];
 
-export default function ProductsPage({ searchTerm = "" }) {
+ function ProductsPagePage({ searchTerm = "" }) {
   const searchParams = useSearchParams();
   const {t} = useTranslation('marketPlace');
   
@@ -846,3 +846,20 @@ export default function ProductsPage({ searchTerm = "" }) {
     </main>
   );
 }
+
+
+import React from 'react';
+
+const ProductsPage = () => {
+  return (
+    <div>
+
+      <Suspense fallback={<div>Loading...</div>}>
+        < ProductsPagePage />
+      </Suspense>
+      
+    </div>
+  );
+};
+
+export default ProductsPage;

@@ -23,9 +23,9 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { Suspense, useState } from "react";
 
-export default function ServiceDetails() {
+ function ServiceDetailsPage() {
   const searchParams = useSearchParams();
   const id = searchParams.get("id");
 
@@ -553,3 +553,18 @@ export default function ServiceDetails() {
     </section>
   );
 }
+
+import React from 'react';
+
+const ServiceDetails = () => {
+  return (
+    <div>
+      <Suspense fallback={<>Loading...</>}>
+
+        <ServiceDetailsPage/>
+      </Suspense>
+    </div>
+  );
+};
+
+export default ServiceDetails;

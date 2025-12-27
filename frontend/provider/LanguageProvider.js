@@ -24,6 +24,7 @@ const loadTranslations = () => {
       missionVision: require("@/public/locales/en/missionVision.json"),
        sidebar: require("@/public/locales/en/sidebar.json"),
        dashboard: require("@/public/locales/en/dashboard.json"),
+       booking: require("@/public/locales/en/booking.json"),
 
       // Add more namespaces as needed
     },
@@ -43,6 +44,7 @@ const loadTranslations = () => {
       missionVision: require("@/public/locales/es/missionVision.json"),
       sidebar: require("@/public/locales/es/sidebar.json"),
       dashboard: require("@/public/locales/es/dashboard.json"),
+      booking: require("@/public/locales/es/booking.json"),
       // Add more namespaces as needed
     }
   };

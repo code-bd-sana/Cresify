@@ -2,7 +2,7 @@
 
 import { useGetAllServiceProvidersQuery } from "@/feature/UserApi";
 import Link from "next/link";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, Suspense } from "react";
 import { AiFillStar } from "react-icons/ai";
 import { LuMapPin } from "react-icons/lu";
 import {
@@ -20,7 +20,7 @@ import {
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslation } from "react-i18next";
 
-export default function AllServiceProviders() {
+function AllServiceProvidersPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { t } = useTranslation("serviceHeading");
@@ -1042,3 +1042,20 @@ export default function AllServiceProviders() {
     </section>
   );
 }
+
+
+import React from 'react';
+
+const AllServiceProviders = () => {
+  return (
+    <div>
+
+      <Suspense fallback={<>Loading...</>}>
+        <AllServiceProvidersPage/>
+      </Suspense>
+      
+    </div>
+  );
+};
+
+export default AllServiceProviders;
