@@ -1,12 +1,14 @@
 import BookingCalendar from "@/components/book-now/BookingDateTimePage";
 import BookingSteps from "@/components/book-now/BookingSteps";
-import React from "react";
+import React, { Suspense } from "react";
 
 const page = () => {
   return (
     <div>
-      <BookingSteps />
+ <Suspense fallback={<div>Loading...</div>}>
+       <BookingSteps />
       <BookingCalendar />
+ </Suspense>
     </div>
   );
 };

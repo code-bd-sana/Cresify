@@ -15,6 +15,7 @@ export const saveReview = async (req, res) => {
       review: data?.reviewText,
       product: data?.review?.productId,
       seller: sellerId?.seller,
+      provider: data?.provider,
     };
 
     const newReview = new Review(reviewData);
@@ -24,6 +25,8 @@ export const saveReview = async (req, res) => {
       data: saved,
     });
   } catch (error) {
+
+    console.log(error, 'eta ami chai allah');
     res.status(500).json({
       error,
       message: error?.message,
@@ -93,6 +96,21 @@ export const getReviewBySellerId = async (req, res) => {
   try {
     const id = req.params.id;
     const reviews = await Review.find({ seller: id }).populate("user product");
+    res.status(200).json({
+      message: "Success",
+      data: reviews,
+    });
+  } catch (error) {
+    res.status(500).json({
+      error,
+      message: error?.message,
+    });
+  }
+};
+export const getReviewByProviderId = async (req, res) => {
+  try {
+    const id = req.params.id;
+    const reviews = await Review.find({ provider: id }).populate("user product");
     res.status(200).json({
       message: "Success",
       data: reviews,

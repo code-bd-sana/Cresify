@@ -8,7 +8,7 @@ const page = () => {
   return (
     <div>
       <ServicesHeading />
-      <ServiceCategories />
+      {/* <ServiceCategories /> */}
       <AllServiceProviders />
       <SupportEntrepreneurs />
     </div>
