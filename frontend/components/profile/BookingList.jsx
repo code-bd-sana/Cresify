@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Calendar,
   Clock,
@@ -21,9 +21,15 @@ import {
   Link as LinkIcon,
   Plus,
   Trash2,
+  Star,
+  MessageSquare,
+  StarIcon,
+  ThumbsUp,
+  ThumbsDown,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useGetUserBookingsQuery } from "@/feature/provider/ProviderApi";
+import { useSaveReviewMutation } from "@/feature/review/ReviewApi";
 
 export default function BookingList() {
   const { data: session } = useSession();
@@ -38,7 +44,17 @@ export default function BookingList() {
     evidenceLinks: [{ url: "", description: "" }],
   });
   
-  const { data: bookingData, isLoading, error } = useGetUserBookingsQuery(userId);
+  // New state for review
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [selectedProviderForReview, setSelectedProviderForReview] = useState(null);
+  const [reviewRating, setReviewRating] = useState(0);
+  const [reviewText, setReviewText] = useState("");
+  const [reviewReply, setReviewReply] = useState("");
+  const [reviewExperience, setReviewExperience] = useState(""); // good, neutral, bad
+  
+  const { data: bookingData, isLoading, error, refetch } = useGetUserBookingsQuery(userId);
+  const [saveReview, { isLoading: isSavingReview }] = useSaveReviewMutation();
+  
   console.log(bookingData, 'Actual booking data from API');
 
   // Tabs configuration
@@ -88,6 +104,17 @@ export default function BookingList() {
       cancelled: { label: "Cancelled", color: "#6B7280", bg: "#F3F4F6" },
     };
     return statusMap[status] || { label: status, color: "#6B7280", bg: "#F3F4F6" };
+  };
+
+  // Check if booking is eligible for review
+  const canReviewBooking = (booking) => {
+    // শুধুমাত্র completed bookings এর জন্য রিভিউ দেয়া যাবে
+    if (booking.status !== 'completed') return false;
+    
+    // চেক করুন যে ইতিমধ্যে রিভিউ দেয়া হয়েছে কিনা
+    // এখানে আপনি API থেকে রিভিউ ডাটা চেক করতে পারেন
+    // এখনি আমরা ধরে নিচ্ছি সব completed booking রিভিউযোগ্য
+    return true;
   };
 
   // Format date
@@ -141,6 +168,57 @@ export default function BookingList() {
   const handleViewDetails = (booking) => {
     setSelectedBooking(booking);
     setShowDetailsModal(true);
+  };
+
+  // Review handler
+  const handleReviewClick = (booking) => {
+    setSelectedProviderForReview(booking);
+    setReviewRating(0);
+    setReviewText("");
+    setReviewReply("");
+    setReviewExperience("");
+    setShowReviewModal(true);
+  };
+
+  // Submit review
+  const handleSubmitReview = async (e) => {
+    e.preventDefault();
+    
+    if (!selectedProviderForReview || !reviewText.trim() || reviewRating === 0) {
+      alert("Please provide a rating and review text");
+      return;
+    }
+
+    const reviewData = {
+      id: userId,
+      rating: reviewRating,
+      review: reviewText,
+      provider: selectedProviderForReview.provider._id,
+      seller: selectedProviderForReview.provider._id, // same as provider in your case
+      reply: reviewReply,
+      // Additional fields based on your Review model
+      experience: reviewExperience,
+      bookingId: selectedProviderForReview._id
+    };
+
+    console.log('Submitting review:', reviewData);
+
+    try {
+      const result = await saveReview(reviewData).unwrap();
+      
+      if (result.success) {
+        alert('Review submitted successfully!');
+        setShowReviewModal(false);
+        setSelectedProviderForReview(null);
+        // Refetch bookings to update UI
+        refetch();
+      } else {
+        alert('Failed to submit review: ' + result.message);
+      }
+    } catch (error) {
+      console.error('Review submission error:', error);
+      alert('Failed to submit review. Please try again.');
+    }
   };
 
   // Refund handler - opens modal
@@ -263,7 +341,16 @@ export default function BookingList() {
     return (
       <section className="w-full bg-[#F7F7FA] pb-10 px-4">
         <div className="max-w-[850px] mx-auto pt-8 text-center">
-          <p className="text-gray-500">No bookings found</p>
+          <div className="bg-white rounded-[20px] p-8 max-w-md mx-auto">
+            <div className="h-16 w-16 mx-auto rounded-full bg-gradient-to-r from-[#9838E1] to-[#F68E44] flex items-center justify-center mb-4">
+              <Calendar className="text-white" size={24} />
+            </div>
+            <h3 className="text-lg font-semibold text-gray-800 mb-2">No Bookings Yet</h3>
+            <p className="text-gray-600 mb-6">You haven't made any bookings yet.</p>
+            <button className="px-6 py-3 bg-gradient-to-r from-[#9838E1] to-[#F68E44] text-white rounded-[10px] hover:opacity-90 transition-opacity">
+              Browse Services
+            </button>
+          </div>
         </div>
       </section>
     );
@@ -315,6 +402,7 @@ export default function BookingList() {
               const statusInfo = getStatusInfo(booking.status);
               const formattedDate = formatDate(booking.dateId.workingDate);
               const price = booking.provider.hourlyRate;
+              const isReviewable = canReviewBooking(booking);
 
               return (
                 <div
@@ -402,6 +490,25 @@ export default function BookingList() {
                       View Details
                     </button>
 
+                    {/* Review Button - Only for completed bookings */}
+                    {isReviewable && (
+                      <button
+                        onClick={() => handleReviewClick(booking)}
+                        className="
+                          flex-1 flex items-center justify-center gap-2
+                          text-[13px] font-medium
+                          text-[#F78D25]
+                          py-[10px] rounded-[10px]
+                          border border-[#FBC9A3]
+                          bg-white
+                          hover:bg-orange-50 transition-colors
+                        "
+                      >
+                        <Star size={16} className="text-[#F78D25]" />
+                        Write Review
+                      </button>
+                    )}
+
                     {/* Refund Button */}
                     {booking.paymentStatus === 'processing' || booking.paymentStatus === 'completed' ? (
                       <button
@@ -420,25 +527,6 @@ export default function BookingList() {
                         Request Refund
                       </button>
                     ) : null}
-
-                    {/* Cancel Button - Only for pending/accepted bookings */}
-                    {/* {booking.status === 'pending' || booking.status === 'accept' ? (
-                      <button
-                        onClick={() => handleCancel(booking._id)}
-                        className="
-                          flex-1 flex items-center justify-center gap-2
-                          text-[13px] font-medium
-                          text-[#F78D25]
-                          py-[10px] rounded-[10px]
-                          border border-[#FBC9A3]
-                          bg-white
-                          hover:bg-orange-50 transition-colors
-                        "
-                      >
-                        <X size={16} className="text-[#F78D25]" />
-                        Cancel Booking
-                      </button>
-                    ) : null} */}
                   </div>
                 </div>
               );
@@ -491,6 +579,19 @@ export default function BookingList() {
                     </button>
                   );
                 })}
+
+                {/* Ellipsis for many pages */}
+                {totalPages > 5 && page < totalPages - 2 && (
+                  <>
+                    <span className="px-1">...</span>
+                    <button
+                      onClick={() => handlePageChange(totalPages)}
+                      className="px-3 py-1.5 rounded-lg text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      {totalPages}
+                    </button>
+                  </>
+                )}
               </div>
 
               <button
@@ -515,6 +616,235 @@ export default function BookingList() {
           </div>
         </div>
       </section>
+
+      {/* ---------------- REVIEW MODAL ---------------- */}
+      {showReviewModal && selectedProviderForReview && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-[20px] max-w-md w-full max-h-[90vh] overflow-y-auto">
+            {/* Modal Header */}
+            <div className="p-6 border-b border-gray-200 sticky top-0 bg-white z-10 rounded-t-[20px]">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="h-12 w-12 rounded-[12px] bg-gradient-to-r from-[#F78D25] to-[#FFB74D] flex items-center justify-center">
+                    <Star className="text-white" size={24} />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">
+                      Write a Review
+                    </h3>
+                    <p className="text-sm text-gray-500 mt-1">
+                      {selectedProviderForReview.provider.serviceName}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    setShowReviewModal(false);
+                    setSelectedProviderForReview(null);
+                  }}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+            </div>
+
+            {/* Provider Info */}
+            <div className="p-6 border-b border-gray-200">
+              <div className="flex items-center gap-3">
+                <div className="h-16 w-16 rounded-[14px] bg-gradient-to-r from-[#9838E1] to-[#F68E44] flex items-center justify-center">
+                  <span className="text-white text-xl font-bold">
+                    {selectedProviderForReview.provider.serviceName.charAt(0)}
+                  </span>
+                </div>
+                <div>
+                  <h4 className="font-medium text-gray-900">
+                    {selectedProviderForReview.provider.fullName}
+                  </h4>
+                  <p className="text-sm text-gray-600">
+                    {selectedProviderForReview.provider.serviceName}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    Booking: {formatDate(selectedProviderForReview.dateId.workingDate)}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Review Form */}
+            <form onSubmit={handleSubmitReview} className="p-6">
+              {/* Rating */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-900 mb-3">
+                  How would you rate this service? <span className="text-red-500">*</span>
+                </label>
+                <div className="flex items-center gap-1">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      key={star}
+                      type="button"
+                      onClick={() => setReviewRating(star)}
+                      className="p-1 transition-transform hover:scale-110"
+                    >
+                      <StarIcon
+                        size={32}
+                        className={
+                          star <= reviewRating
+                            ? "text-yellow-500 fill-yellow-500"
+                            : "text-gray-300"
+                        }
+                      />
+                    </button>
+                  ))}
+                </div>
+                <div className="mt-2 text-center">
+                  <p className="text-sm text-gray-600">
+                    {reviewRating === 0 ? "Select a rating" :
+                     reviewRating === 1 ? "Poor" :
+                     reviewRating === 2 ? "Fair" :
+                     reviewRating === 3 ? "Good" :
+                     reviewRating === 4 ? "Very Good" :
+                     "Excellent"}
+                  </p>
+                </div>
+              </div>
+
+              {/* Overall Experience */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-900 mb-3">
+                  How was your overall experience?
+                </label>
+                <div className="grid grid-cols-3 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setReviewExperience("good")}
+                    className={`p-3 rounded-[10px] border-2 flex flex-col items-center gap-2 transition-all ${
+                      reviewExperience === "good"
+                        ? "border-green-500 bg-green-50"
+                        : "border-gray-200 hover:border-green-300"
+                    }`}
+                  >
+                    <ThumbsUp size={20} className={reviewExperience === "good" ? "text-green-600" : "text-gray-400"} />
+                    <span className="text-sm font-medium">Good</span>
+                  </button>
+                  
+                  <button
+                    type="button"
+                    onClick={() => setReviewExperience("neutral")}
+                    className={`p-3 rounded-[10px] border-2 flex flex-col items-center gap-2 transition-all ${
+                      reviewExperience === "neutral"
+                        ? "border-yellow-500 bg-yellow-50"
+                        : "border-gray-200 hover:border-yellow-300"
+                    }`}
+                  >
+                    <div className="h-5 w-5 flex items-center justify-center">
+                      <div className="h-1 w-4 bg-gray-400 rounded"></div>
+                    </div>
+                    <span className="text-sm font-medium">Neutral</span>
+                  </button>
+                  
+                  <button
+                    type="button"
+                    onClick={() => setReviewExperience("bad")}
+                    className={`p-3 rounded-[10px] border-2 flex flex-col items-center gap-2 transition-all ${
+                      reviewExperience === "bad"
+                        ? "border-red-500 bg-red-50"
+                        : "border-gray-200 hover:border-red-300"
+                    }`}
+                  >
+                    <ThumbsDown size={20} className={reviewExperience === "bad" ? "text-red-600" : "text-gray-400"} />
+                    <span className="text-sm font-medium">Not Good</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Review Text */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-900 mb-2">
+                  Your Review <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  value={reviewText}
+                  onChange={(e) => setReviewText(e.target.value)}
+                  placeholder="Share your experience with this service. What did you like or dislike? How was the quality of service?"
+                  rows={5}
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-[10px] text-sm focus:outline-none focus:ring-2 focus:ring-[#9838E1] focus:border-transparent"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Be honest and specific about your experience
+                </p>
+              </div>
+
+              {/* Reply (Optional) */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-900 mb-2">
+                  Any additional comments (optional)
+                </label>
+                <textarea
+                  value={reviewReply}
+                  onChange={(e) => setReviewReply(e.target.value)}
+                  placeholder="Any additional comments or suggestions for improvement..."
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-[10px] text-sm focus:outline-none focus:ring-2 focus:ring-[#9838E1] focus:border-transparent"
+                />
+              </div>
+
+              {/* Guidelines */}
+              <div className="bg-blue-50 border border-blue-200 rounded-[10px] p-4 mb-6">
+                <div className="flex items-start gap-2">
+                  <AlertCircle size={16} className="text-blue-500 mt-0.5 flex-shrink-0" />
+                  <div className="text-xs text-blue-700">
+                    <p className="font-medium mb-1">Review Guidelines:</p>
+                    <ul className="space-y-1">
+                      <li>• Be honest and fair in your assessment</li>
+                      <li>• Focus on the service quality and professionalism</li>
+                      <li>• Avoid personal attacks or offensive language</li>
+                      <li>• Your review will help other customers</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+              {/* Form Actions */}
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowReviewModal(false);
+                    setSelectedProviderForReview(null);
+                  }}
+                  className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-[10px] text-sm font-medium hover:bg-gray-50"
+                  disabled={isSavingReview}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSavingReview || reviewRating === 0 || !reviewText.trim()}
+                  className={`flex-1 px-4 py-3 rounded-[10px] text-sm font-medium flex items-center justify-center gap-2 ${
+                    isSavingReview || reviewRating === 0 || !reviewText.trim()
+                      ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                      : "bg-gradient-to-r from-[#F78D25] to-[#FFB74D] text-white hover:opacity-90"
+                  }`}
+                >
+                  {isSavingReview ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      Submitting...
+                    </>
+                  ) : (
+                    <>
+                      <Star size={16} />
+                      Submit Review
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* ---------------- VIEW DETAILS MODAL ---------------- */}
       {showDetailsModal && selectedBooking && (
@@ -694,6 +1024,23 @@ export default function BookingList() {
                 >
                   Close
                 </button>
+                
+                {/* Review Button in Details Modal */}
+                {canReviewBooking(selectedBooking) && (
+                  <button
+                    onClick={() => {
+                      setShowDetailsModal(false);
+                      handleReviewClick(selectedBooking);
+                    }}
+                    className="flex-1 px-4 py-3 bg-gradient-to-r from-[#F78D25] to-[#FFB74D] text-white rounded-[10px] text-sm font-medium hover:opacity-90"
+                  >
+                    <div className="flex items-center justify-center gap-2">
+                      <Star size={16} />
+                      Write Review
+                    </div>
+                  </button>
+                )}
+                
                 {(selectedBooking.paymentStatus === 'processing' || selectedBooking.paymentStatus === 'completed') && (
                   <button
                     onClick={() => {

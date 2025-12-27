@@ -507,7 +507,7 @@ export default function ServiceDetails() {
         </div>
 
         {/* Availability Section */}
-        <div className="mt-12 bg-white rounded-xl p-6 shadow-sm">
+        {/* <div className="mt-12 bg-white rounded-xl p-6 shadow-sm">
           <h3 className="text-xl font-semibold text-gray-800 mb-4">Availability</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
@@ -548,7 +548,7 @@ export default function ServiceDetails() {
               </div>
             </div>
           </div>
-        </div>
+        </div> */}
       </div>
     </section>
   );

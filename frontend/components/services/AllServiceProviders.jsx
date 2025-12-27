@@ -2,7 +2,7 @@
 
 import { useGetAllServiceProvidersQuery } from "@/feature/UserApi";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { AiFillStar } from "react-icons/ai";
 import { LuMapPin } from "react-icons/lu";
 import {
@@ -15,9 +15,19 @@ import {
   MapPin,
   Globe,
   Building,
+  X,
 } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
 
 export default function AllServiceProviders() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  
+  // Get query parameters from URL
+  const countryParam = searchParams.get('country') || '';
+  const regionParam = searchParams.get('region') || '';
+  const cityParam = searchParams.get('city') || '';
+  
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [allProviders, setAllProviders] = useState([]);
@@ -27,6 +37,11 @@ export default function AllServiceProviders() {
   const [totalPages, setTotalPages] = useState(1);
   const [totalProviders, setTotalProviders] = useState(0);
   const [uniqueLocations, setUniqueLocations] = useState([]);
+  
+  // Active location filters from URL
+  const [activeCountry, setActiveCountry] = useState(countryParam);
+  const [activeRegion, setActiveRegion] = useState(regionParam);
+  const [activeCity, setActiveCity] = useState(cityParam);
 
   const { data, isLoading, isFetching, error } = useGetAllServiceProvidersQuery(
     { page, limit },
@@ -47,6 +62,36 @@ export default function AllServiceProviders() {
     "handyman",
     "other"
   ];
+
+  // Update URL with current filters
+  const updateURL = useCallback(() => {
+    const params = new URLSearchParams();
+    
+    if (activeCountry) params.set('country', activeCountry);
+    if (activeRegion) params.set('region', activeRegion);
+    if (activeCity) params.set('city', activeCity);
+    
+    const queryString = params.toString();
+    const newUrl = queryString ? `/services?${queryString}` : '/services';
+    
+    router.push(newUrl, { scroll: false });
+  }, [activeCountry, activeRegion, activeCity, router]);
+
+  // Initialize URL parameters on component mount
+  useEffect(() => {
+    if (countryParam || regionParam || cityParam) {
+      setPage(1);
+      updateURL();
+    }
+  }, []);
+
+  // Handle URL parameter changes
+  useEffect(() => {
+    if (countryParam || regionParam || cityParam) {
+      setPage(1);
+      setLocationFilter("custom");
+    }
+  }, [countryParam, regionParam, cityParam]);
 
   // Handle initial data load
   useEffect(() => {
@@ -88,9 +133,9 @@ export default function AllServiceProviders() {
   // Reset to page 1 when filters change
   useEffect(() => {
     setPage(1);
-  }, [searchQuery, serviceFilter, locationFilter]);
+  }, [searchQuery, serviceFilter, activeCountry, activeRegion, activeCity]);
 
-  // Filter providers based on search, service filter, and location filter
+  // Filter providers based on all criteria
   const filteredProviders = allProviders.filter((p) => {
     // Search query matching
     const matchesSearch = !searchQuery || 
@@ -107,15 +152,84 @@ export default function AllServiceProviders() {
     const matchesService = serviceFilter === "all" || 
       (p.serviceCategory || "").toLowerCase() === serviceFilter.toLowerCase();
 
-    // Location filter matching
-    const matchesLocation = locationFilter === "all" || 
+    // URL parameter matching (country, region, city)
+    const matchesURLParams = 
+      (!activeCountry || (p.country || "").toLowerCase() === activeCountry.toLowerCase()) &&
+      (!activeRegion || (p.region || "").toLowerCase() === activeRegion.toLowerCase()) &&
+      (!activeCity || (p.city || "").toLowerCase() === activeCity.toLowerCase());
+
+    // Location filter matching (for dropdown)
+    const matchesLocationFilter = locationFilter === "all" || locationFilter === "custom" ||
       (p.country || "").toLowerCase() === locationFilter.toLowerCase() ||
       (p.region || "").toLowerCase() === locationFilter.toLowerCase() ||
       (p.city || "").toLowerCase() === locationFilter.toLowerCase() ||
       (p.serviceArea || "").toLowerCase() === locationFilter.toLowerCase();
 
-    return matchesSearch && matchesService && matchesLocation;
+    return matchesSearch && matchesService && matchesURLParams && matchesLocationFilter;
   });
+
+  // Handle location filter from dropdown
+  const handleLocationFilterChange = (value) => {
+    setLocationFilter(value);
+    if (value === "all") {
+      clearAllLocationFilters();
+    } else if (value !== "custom") {
+      clearAllLocationFilters();
+      setLocationFilter(value);
+    }
+  };
+
+  // Set location from URL parameters
+  const setLocationFromParams = useCallback(() => {
+    if (countryParam) setActiveCountry(countryParam);
+    if (regionParam) setActiveRegion(regionParam);
+    if (cityParam) setActiveCity(cityParam);
+  }, [countryParam, regionParam, cityParam]);
+
+  // Clear specific location filter
+  const clearLocationFilter = (type) => {
+    switch(type) {
+      case 'country':
+        setActiveCountry('');
+        break;
+      case 'region':
+        setActiveRegion('');
+        break;
+      case 'city':
+        setActiveCity('');
+        break;
+    }
+    updateURL();
+  };
+
+  // Clear all location filters
+  const clearAllLocationFilters = () => {
+    setActiveCountry('');
+    setActiveRegion('');
+    setActiveCity('');
+    setLocationFilter('all');
+    router.push('/services', { scroll: false });
+  };
+
+  // Apply location filter
+  const applyLocationFilter = (type, value) => {
+    switch(type) {
+      case 'country':
+        setActiveCountry(value);
+        break;
+      case 'region':
+        setActiveRegion(value);
+        break;
+      case 'city':
+        setActiveCity(value);
+        break;
+      case 'area':
+        // Handle area filter differently
+        setLocationFilter(value.toLowerCase());
+        break;
+    }
+    updateURL();
+  };
 
   // Get location display text
   const getLocationDisplay = (provider) => {
@@ -156,6 +270,9 @@ export default function AllServiceProviders() {
   // Calculate display range
   const startIndex = (page - 1) * limit + 1;
   const endIndex = Math.min(page * limit, totalProviders);
+
+  // Check if URL parameters exist
+  const hasURLParams = Boolean(countryParam || regionParam || cityParam);
 
   if (isLoading && page === 1) {
     return (
@@ -222,10 +339,73 @@ export default function AllServiceProviders() {
           </h2>
           <p className="text-gray-600 mb-6">Find and book professional service providers near you</p>
           
+          {/* URL Parameters Info Banner */}
+          {hasURLParams && (
+            <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl border border-blue-200 shadow-sm">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Globe className="w-5 h-5 text-blue-600" />
+                  <div>
+                    <h4 className="text-sm font-medium text-blue-800 mb-1">Filtering by URL parameters:</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {countryParam && (
+                        <span className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">
+                          <Globe className="w-3 h-3" />
+                          Country: {countryParam}
+                          <button
+                            onClick={() => clearLocationFilter('country')}
+                            className="ml-1 text-blue-600 hover:text-blue-800"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </span>
+                      )}
+                      {regionParam && (
+                        <span className="inline-flex items-center gap-1 px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-xs">
+                          <MapPin className="w-3 h-3" />
+                          Region: {regionParam}
+                          <button
+                            onClick={() => clearLocationFilter('region')}
+                            className="ml-1 text-purple-600 hover:text-purple-800"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </span>
+                      )}
+                      {cityParam && (
+                        <span className="inline-flex items-center gap-1 px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs">
+                          <Building className="w-3 h-3" />
+                          City: {cityParam}
+                          <button
+                            onClick={() => clearLocationFilter('city')}
+                            className="ml-1 text-green-600 hover:text-green-800"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                <button
+                  onClick={clearAllLocationFilters}
+                  className="flex items-center gap-1 px-3 py-1.5 text-sm text-gray-600 hover:text-gray-800 hover:bg-white rounded-lg transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                  Clear URL filters
+                </button>
+              </div>
+              <p className="text-xs text-gray-500 mt-2">
+                These filters are applied from the URL. Clear them to see all providers.
+              </p>
+            </div>
+          )}
+
           {/* Stats */}
           <div className="flex items-center justify-between mb-6">
             <div className="text-sm text-gray-600">
               Showing {startIndex} - {endIndex} of {totalProviders} providers
+              {hasURLParams && " (filtered by URL)"}
             </div>
             <div className="text-sm text-gray-600">
               Page {page} of {totalPages}
@@ -271,17 +451,24 @@ export default function AllServiceProviders() {
               <div className="flex items-center gap-2">
                 <MapPin className="text-gray-400 w-5 h-5" />
                 <select
-                  value={locationFilter}
-                  onChange={(e) => setLocationFilter(e.target.value)}
+                  value={hasURLParams ? "custom" : locationFilter}
+                  onChange={(e) => handleLocationFilterChange(e.target.value)}
                   className="border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  disabled={hasURLParams}
                 >
                   <option value="all">All Locations</option>
-                  {uniqueLocations.map((location) => (
+                  {hasURLParams && <option value="custom">Custom URL Filter</option>}
+                  {!hasURLParams && uniqueLocations.map((location) => (
                     <option key={`${location.type}:${location.value}`} value={location.value.toLowerCase()}>
                       {location.value} ({location.type})
                     </option>
                   ))}
                 </select>
+                {hasURLParams && (
+                  <span className="text-xs text-gray-500 ml-2">
+                    (Using URL filters)
+                  </span>
+                )}
               </div>
 
               {/* Items Per Page */}
@@ -301,7 +488,7 @@ export default function AllServiceProviders() {
             </div>
 
             {/* Active Filters */}
-            {(serviceFilter !== 'all' || locationFilter !== 'all' || searchQuery) && (
+            {(serviceFilter !== 'all' || hasURLParams || searchQuery) && (
               <div className="mt-4 pt-4 border-t border-gray-200">
                 <div className="flex items-center flex-wrap gap-2">
                   <span className="text-sm text-gray-600">Active filters:</span>
@@ -318,12 +505,39 @@ export default function AllServiceProviders() {
                     </span>
                   )}
                   
-                  {locationFilter !== 'all' && (
+                  {countryParam && (
                     <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                      Location: {locationFilter}
+                      <Globe className="w-3 h-3 mr-1" />
+                      Country: {countryParam}
                       <button
-                        onClick={() => setLocationFilter('all')}
+                        onClick={() => clearLocationFilter('country')}
                         className="ml-1 text-blue-600 hover:text-blue-800"
+                      >
+                        ×
+                      </button>
+                    </span>
+                  )}
+                  
+                  {regionParam && (
+                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                      <MapPin className="w-3 h-3 mr-1" />
+                      Region: {regionParam}
+                      <button
+                        onClick={() => clearLocationFilter('region')}
+                        className="ml-1 text-purple-600 hover:text-purple-800"
+                      >
+                        ×
+                      </button>
+                    </span>
+                  )}
+                  
+                  {cityParam && (
+                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                      <Building className="w-3 h-3 mr-1" />
+                      City: {cityParam}
+                      <button
+                        onClick={() => clearLocationFilter('city')}
+                        className="ml-1 text-green-600 hover:text-green-800"
                       >
                         ×
                       </button>
@@ -342,11 +556,11 @@ export default function AllServiceProviders() {
                     </span>
                   )}
                   
-                  {(serviceFilter !== 'all' || locationFilter !== 'all' || searchQuery) && (
+                  {(serviceFilter !== 'all' || hasURLParams || searchQuery) && (
                     <button
                       onClick={() => {
                         setServiceFilter('all');
-                        setLocationFilter('all');
+                        clearAllLocationFilters();
                         setSearchQuery('');
                       }}
                       className="text-sm text-gray-600 hover:text-gray-800 underline"
@@ -365,27 +579,50 @@ export default function AllServiceProviders() {
               <div className="flex items-center gap-2 mb-2">
                 <Globe className="w-4 h-4 text-blue-600" />
                 <h4 className="text-sm font-medium text-blue-800">Available Locations</h4>
+                <span className="text-xs text-gray-500 ml-auto">
+                  Click to filter by location
+                </span>
               </div>
               <div className="flex flex-wrap gap-2">
-                {uniqueLocations.slice(0, 8).map((location) => (
+                {uniqueLocations.slice(0, 12).map((location) => (
                   <button
                     key={`${location.type}:${location.value}`}
-                    onClick={() => setLocationFilter(location.value.toLowerCase())}
-                    className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs ${
-                      locationFilter === location.value.toLowerCase()
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-white text-gray-700 border border-gray-300 hover:border-blue-400'
+                    onClick={() => applyLocationFilter(location.type, location.value)}
+                    className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs ${
+                      (location.type === 'country' && activeCountry === location.value.toLowerCase()) ||
+                      (location.type === 'region' && activeRegion === location.value.toLowerCase()) ||
+                      (location.type === 'city' && activeCity === location.value.toLowerCase())
+                        ? 'bg-blue-600 text-white shadow-sm'
+                        : 'bg-white text-gray-700 border border-gray-300 hover:border-blue-400 hover:bg-blue-50'
                     }`}
                   >
                     {getLocationIcon(location.type)}
                     {location.value}
+                    <span className="text-[10px] opacity-75 ml-1">({location.type})</span>
                   </button>
                 ))}
-                {uniqueLocations.length > 8 && (
-                  <span className="text-xs text-gray-500">
-                    +{uniqueLocations.length - 8} more locations
+                {uniqueLocations.length > 12 && (
+                  <span className="text-xs text-gray-500 self-center">
+                    +{uniqueLocations.length - 12} more locations
                   </span>
                 )}
+              </div>
+            </div>
+          )}
+
+          {/* URL Filter Info */}
+          {hasURLParams && filteredProviders.length > 0 && (
+            <div className="mb-6 p-3 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-200">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                <p className="text-sm text-green-800">
+                  Showing providers from{' '}
+                  {cityParam && <strong>{cityParam}</strong>}
+                  {cityParam && regionParam && ', '}
+                  {regionParam && <strong>{regionParam}</strong>}
+                  {(cityParam || regionParam) && countryParam && ' in '}
+                  {countryParam && <strong>{countryParam}</strong>}
+                </p>
               </div>
             </div>
           )}
@@ -400,24 +637,38 @@ export default function AllServiceProviders() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">No providers found</h3>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                {hasURLParams ? "No providers found in this location" : "No providers found"}
+              </h3>
               <p className="text-gray-600 mb-4">
-                {searchQuery || serviceFilter !== 'all' || locationFilter !== 'all' 
-                  ? "Try adjusting your filters or search criteria" 
-                  : "No service providers available yet"}
+                {hasURLParams 
+                  ? `No service providers found in ${cityParam || regionParam || countryParam}. Try a different location.`
+                  : searchQuery || serviceFilter !== 'all' 
+                    ? "Try adjusting your filters or search criteria" 
+                    : "No service providers available yet"}
               </p>
-              {(searchQuery || serviceFilter !== 'all' || locationFilter !== 'all') && (
-                <button
-                  onClick={() => {
-                    setSearchQuery('');
-                    setServiceFilter('all');
-                    setLocationFilter('all');
-                  }}
-                  className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
-                >
-                  Clear all filters
-                </button>
-              )}
+              <div className="flex gap-3 justify-center">
+                {(searchQuery || serviceFilter !== 'all' || hasURLParams) && (
+                  <button
+                    onClick={() => {
+                      setSearchQuery('');
+                      setServiceFilter('all');
+                      if (hasURLParams) clearAllLocationFilters();
+                    }}
+                    className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+                  >
+                    Clear all filters
+                  </button>
+                )}
+                {hasURLParams && (
+                  <button
+                    onClick={() => router.push('/services')}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                  >
+                    View all providers
+                  </button>
+                )}
+              </div>
             </div>
           ) : (
             filteredProviders.map((p) => (
@@ -559,6 +810,7 @@ export default function AllServiceProviders() {
               <div className="flex flex-col md:flex-row items-center justify-between gap-4">
                 <div className="text-sm text-gray-600">
                   Showing {startIndex} to {endIndex} of {totalProviders} entries
+                  {hasURLParams && ` in ${countryParam || regionParam || cityParam}`}
                   {searchQuery && ` matching "${searchQuery}"`}
                 </div>
                 
@@ -682,12 +934,34 @@ export default function AllServiceProviders() {
             {/* Page Info */}
             <div className="mt-4 text-center text-sm text-gray-500">
               Page {page} of {totalPages} • {limit} providers per page
-              {(serviceFilter !== 'all' || locationFilter !== 'all') && (
+              {hasURLParams && (
+                <span className="ml-2 text-blue-600 font-medium">
+                  • Filtered by URL parameters
+                </span>
+              )}
+              {(serviceFilter !== 'all' || searchQuery) && !hasURLParams && (
                 <span className="ml-2 text-purple-600">
                   • Filtered results
                 </span>
               )}
             </div>
+
+            {/* Clear Filters Button at Bottom */}
+            {(serviceFilter !== 'all' || searchQuery || hasURLParams) && (
+              <div className="mt-6 text-center">
+                <button
+                  onClick={() => {
+                    setServiceFilter('all');
+                    setSearchQuery('');
+                    if (hasURLParams) clearAllLocationFilters();
+                  }}
+                  className="inline-flex items-center gap-2 px-4 py-2 text-sm bg-white text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400"
+                >
+                  <X className="w-4 h-4" />
+                  Clear all filters and show all providers
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>
