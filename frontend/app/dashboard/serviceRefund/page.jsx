@@ -41,6 +41,9 @@ const ServiceRefundPage = () => {
     pages: 1,
   };
 
+  const [adminServiceRefund, { isLoading: isProcessing }] =
+    useAdminServiceRefundMutation();
+
   // Helpers
   const formatAmount = (amount, currency = "usd") => {
     const symbol = currency === "usd" ? "$" : currency === "eur" ? "€" : "₹";
@@ -79,6 +82,21 @@ const ServiceRefundPage = () => {
         text: "text-[#3182CE]",
         label: "Processing",
       },
+      refunded_full: {
+        bg: "bg-[#E2FFE9]",
+        text: "text-[#38A169]",
+        label: "Refunded",
+      },
+      partial_refunded: {
+        bg: "bg-[#FFF9E2]",
+        text: "text-[#D69E2E]",
+        label: "Partially Refunded",
+      },
+      under_review: {
+        bg: "bg-[#E2F3FF]",
+        text: "text-[#3182CE]",
+        label: "Under Review",
+      },
     };
     return (
       config[status] || {
@@ -88,9 +106,6 @@ const ServiceRefundPage = () => {
       }
     );
   };
-
-  const [adminServiceRefund, { isLoading: isProcessing }] =
-    useAdminServiceRefundMutation();
 
   const getEvidenceIcon = (type) => {
     return type === "image" ? (
@@ -104,6 +119,21 @@ const ServiceRefundPage = () => {
     if (newPage >= 1 && newPage <= pagination.pages) {
       setPage(newPage);
     }
+  };
+
+  // Check if refund is already fully processed
+  const isRefundFullyProcessed = (status) => {
+    return status === "refunded_full" || status === "partial_refunded";
+  };
+
+  // Check if admin can process refund
+  const canAdminProcessRefund = (refund) => {
+    // Only show process button if user is admin AND refund is not already fully processed
+    return (
+      session?.user?.role === "admin" &&
+      !isRefundFullyProcessed(refund.status) &&
+      (refund.status === "approved" || refund.status === "processing")
+    );
   };
 
   if (isLoading) {
@@ -319,6 +349,7 @@ const ServiceRefundPage = () => {
             ) : (
               refunds.map((refund) => {
                 const statusBadge = getStatusBadge(refund.status);
+                const canProcess = canAdminProcessRefund(refund);
 
                 return (
                   <tr key={refund._id} className='hover:bg-gray-50'>
@@ -353,64 +384,77 @@ const ServiceRefundPage = () => {
                       <div className='flex gap-2'>
                         <button
                           onClick={() => setSelectedRefund(refund)}
-                          className='inline-flex items-center gap-1 px-3 py-2 text-sm font-medium text-white bg-[#9810FA]'>
+                          className='inline-flex items-center gap-1 px-3 py-2 text-sm font-medium text-white bg-[#9810FA] rounded hover:opacity-90'>
                           <FiEye /> View Details
                         </button>
                         {session?.user?.role === "admin" && (
                           <>
-                            <button
-                              onClick={async () => {
-                                try {
-                                  await adminServiceRefund({
-                                    refundId: refund._id,
-                                    action: "approve",
-                                    adminId: session.user.id,
-                                  }).unwrap();
-                                  refetch();
-                                } catch (e) {
-                                  console.error(e);
-                                  alert("Failed to approve refund");
-                                }
-                              }}
-                              className='inline-flex items-center gap-1 px-3 py-2 text-sm font-medium text-white bg-green-600'>
-                              Approve
-                            </button>
-                            <button
-                              onClick={async () => {
-                                try {
-                                  await adminServiceRefund({
-                                    refundId: refund._id,
-                                    action: "reject",
-                                    adminId: session.user.id,
-                                  }).unwrap();
-                                  refetch();
-                                } catch (e) {
-                                  console.error(e);
-                                  alert("Failed to reject refund");
-                                }
-                              }}
-                              className='inline-flex items-center gap-1 px-3 py-2 text-sm font-medium text-white bg-red-600'>
-                              Reject
-                            </button>
-                            <button
-                              onClick={async () => {
-                                if (!confirm("Process this refund now?"))
-                                  return;
-                                try {
-                                  await adminServiceRefund({
-                                    refundId: refund._id,
-                                    action: "process",
-                                    adminId: session.user.id,
-                                  }).unwrap();
-                                  refetch();
-                                } catch (e) {
-                                  console.error(e);
-                                  alert("Failed to process refund");
-                                }
-                              }}
-                              className='inline-flex items-center gap-1 px-3 py-2 text-sm font-medium text-white bg-blue-600'>
-                              Process
-                            </button>
+                            {refund.status === "requested" && (
+                              <>
+                                <button
+                                  onClick={async () => {
+                                    if (
+                                      !confirm("Approve this refund request?")
+                                    )
+                                      return;
+                                    try {
+                                      await adminServiceRefund({
+                                        refundId: refund._id,
+                                        action: "approve",
+                                        adminId: session.user.id,
+                                      }).unwrap();
+                                      refetch();
+                                    } catch (e) {
+                                      console.error(e);
+                                      alert("Failed to approve refund");
+                                    }
+                                  }}
+                                  className='inline-flex items-center gap-1 px-3 py-2 text-sm font-medium text-white bg-green-600 rounded hover:bg-green-700'>
+                                  Approve
+                                </button>
+                                <button
+                                  onClick={async () => {
+                                    if (!confirm("Reject this refund request?"))
+                                      return;
+                                    try {
+                                      await adminServiceRefund({
+                                        refundId: refund._id,
+                                        action: "reject",
+                                        adminId: session.user.id,
+                                      }).unwrap();
+                                      refetch();
+                                    } catch (e) {
+                                      console.error(e);
+                                      alert("Failed to reject refund");
+                                    }
+                                  }}
+                                  className='inline-flex items-center gap-1 px-3 py-2 text-sm font-medium text-white bg-red-600 rounded hover:bg-red-700'>
+                                  Reject
+                                </button>
+                              </>
+                            )}
+                            {/* Show Process button only for approved/processing statuses AND not already fully processed */}
+                            {canProcess && (
+                              <button
+                                onClick={async () => {
+                                  if (!confirm("Process this refund now?"))
+                                    return;
+                                  try {
+                                    await adminServiceRefund({
+                                      refundId: refund._id,
+                                      action: "process",
+                                      adminId: session.user.id,
+                                    }).unwrap();
+                                    refetch();
+                                  } catch (e) {
+                                    console.error(e);
+                                    alert("Failed to process refund");
+                                  }
+                                }}
+                                className='inline-flex items-center gap-1 px-3 py-2 text-sm font-medium text-white bg-blue-600 rounded hover:bg-blue-700'>
+                                {isProcessing ? "Processing..." : "Process"}
+                              </button>
+                            )}
                           </>
                         )}
                       </div>
