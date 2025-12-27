@@ -17,6 +17,7 @@ import wishList from "./customer/WishListRoute.js";
 import review from "./reviewRoute.js";
 import sellerOrderRoute from "./seller/OrderRoute.js";
 import sellerPayoutRoute from "./seller/PayoutRoute.js";
+import sellerStripeRoute from "./seller/StripeRoute.js";
 import sellerRefundRoute from "./seller/RefundRoute.js";
 
 const router = Router();
@@ -39,6 +40,7 @@ router.use("/admin/blog", adminBlogRoute);
 router.use("/customer/order", customerOrderRoute);
 router.use("/admin/refund", adminRefundRoute);
 router.use("/seller/wallet", sellerPayoutRoute);
+router.use("/seller/stripe", sellerStripeRoute);
 router.use("/seller/order", sellerOrderRoute);
 router.use("/chat", chat);
 router.use("/seller/overview", sellerOverview);

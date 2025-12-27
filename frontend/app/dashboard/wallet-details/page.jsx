@@ -3,6 +3,8 @@
 import {
   useGetWalletQuery,
   useRequestPayoutMutation,
+  useConnectStripeMutation,
+  useUnlinkStripeMutation,
 } from "@/feature/seller/WalletApi";
 import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
@@ -243,6 +245,7 @@ function StripeAccountForm({
   onSave,
   mode = "connect",
 }) {
+  const [connectStripe] = useConnectStripeMutation();
   const [formData, setFormData] = useState({
     email: "",
     businessName: "",
@@ -350,12 +353,15 @@ function StripeAccountForm({
   const handleConnectStripe = async () => {
     setLoading(true);
     try {
-      // Redirect to Stripe Connect with Express type
-      window.location.href = `/api/stripe/connect?type=express&returnUrl=${encodeURIComponent(
-        window.location.href
-      )}`;
+      const res = await connectStripe({ sellerId: localStorage.getItem("userId"), returnUrl: window.location.href }).unwrap();
+      if (res?.url) {
+        window.location.href = res.url;
+      } else {
+        throw new Error("No URL returned from server");
+      }
     } catch (error) {
       console.error("Stripe connect error:", error);
+      alert("Failed to initiate Stripe connect: " + (error?.data?.message || error.message));
       setLoading(false);
     }
   };
@@ -1035,6 +1041,7 @@ export default function WalletDetailsPage() {
   );
 
   const [requestPayout] = useRequestPayoutMutation();
+  const [unlinkStripe] = useUnlinkStripeMutation();
 
   // Populate state when API returns
   useEffect(() => {
@@ -1085,10 +1092,15 @@ export default function WalletDetailsPage() {
       )
     ) {
       setLoading(true);
-      setTimeout(() => {
+      try {
+        await unlinkStripe({ sellerId: user?.id || localStorage.getItem("userId") }).unwrap();
+      } catch (err) {
+        console.error("unlink failed", err);
+        alert("Failed to unlink Stripe account: " + (err?.data?.message || err.message));
+      } finally {
         setStripeAccount(null);
         setLoading(false);
-      }, 800);
+      }
     }
   };
 

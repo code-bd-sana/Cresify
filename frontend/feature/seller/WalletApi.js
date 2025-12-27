@@ -19,7 +19,27 @@ export const WalletApi = createApi({
       }),
       invalidatesTags: ["Wallet"],
     }),
+    connectStripe: builder.mutation({
+      query: (body) => ({
+        url: `/seller/stripe/connect`,
+        method: "POST",
+        body,
+      }),
+    }),
+    unlinkStripe: builder.mutation({
+      query: (body) => ({
+        url: `/seller/stripe/unlink`,
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: ["Wallet"],
+    }),
   }),
 });
 
-export const { useGetWalletQuery, useRequestPayoutMutation } = WalletApi;
+export const {
+  useGetWalletQuery,
+  useRequestPayoutMutation,
+  useConnectStripeMutation,
+  useUnlinkStripeMutation,
+} = WalletApi;
