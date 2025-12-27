@@ -18,16 +18,18 @@ import {
   X,
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useTranslation } from "react-i18next";
 
 export default function AllServiceProviders() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  
+  const { t } = useTranslation("serviceHeading");
+
   // Get query parameters from URL
-  const countryParam = searchParams.get('country') || '';
-  const regionParam = searchParams.get('region') || '';
-  const cityParam = searchParams.get('city') || '';
-  
+  const countryParam = searchParams.get("country") || "";
+  const regionParam = searchParams.get("region") || "";
+  const cityParam = searchParams.get("city") || "";
+
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [allProviders, setAllProviders] = useState([]);
@@ -37,7 +39,7 @@ export default function AllServiceProviders() {
   const [totalPages, setTotalPages] = useState(1);
   const [totalProviders, setTotalProviders] = useState(0);
   const [uniqueLocations, setUniqueLocations] = useState([]);
-  
+
   // Active location filters from URL
   const [activeCountry, setActiveCountry] = useState(countryParam);
   const [activeRegion, setActiveRegion] = useState(regionParam);
@@ -60,20 +62,20 @@ export default function AllServiceProviders() {
     "moving",
     "appliance repair",
     "handyman",
-    "other"
+    "other",
   ];
 
   // Update URL with current filters
   const updateURL = useCallback(() => {
     const params = new URLSearchParams();
-    
-    if (activeCountry) params.set('country', activeCountry);
-    if (activeRegion) params.set('region', activeRegion);
-    if (activeCity) params.set('city', activeCity);
-    
+
+    if (activeCountry) params.set("country", activeCountry);
+    if (activeRegion) params.set("region", activeRegion);
+    if (activeCity) params.set("city", activeCity);
+
     const queryString = params.toString();
-    const newUrl = queryString ? `/services?${queryString}` : '/services';
-    
+    const newUrl = queryString ? `/services?${queryString}` : "/services";
+
     router.push(newUrl, { scroll: false });
   }, [activeCountry, activeRegion, activeCity, router]);
 
@@ -97,28 +99,30 @@ export default function AllServiceProviders() {
   useEffect(() => {
     if (data && data.data) {
       const providers = data.data.providers || data.data;
-      
+
       if (data.pagination?.page === 1) {
         setAllProviders(providers);
       } else {
         setAllProviders((prev) => [...prev, ...providers]);
       }
-      
+
       // Extract unique locations for filter
       if (data.pagination?.page === 1) {
         const locations = new Set();
-        providers.forEach(p => {
+        providers.forEach((p) => {
           if (p.country) locations.add(`country:${p.country}`);
           if (p.region) locations.add(`region:${p.region}`);
           if (p.city) locations.add(`city:${p.city}`);
           if (p.serviceArea) locations.add(`area:${p.serviceArea}`);
         });
-        setUniqueLocations(Array.from(locations).map(loc => {
-          const [type, value] = loc.split(':');
-          return { type, value, label: `${value} (${type})` };
-        }));
+        setUniqueLocations(
+          Array.from(locations).map((loc) => {
+            const [type, value] = loc.split(":");
+            return { type, value, label: `${value} (${type})` };
+          })
+        );
       }
-      
+
       // Update pagination info
       if (data.pagination) {
         setTotalPages(data.pagination.totalPages || 1);
@@ -138,10 +142,13 @@ export default function AllServiceProviders() {
   // Filter providers based on all criteria
   const filteredProviders = allProviders.filter((p) => {
     // Search query matching
-    const matchesSearch = !searchQuery || 
+    const matchesSearch =
+      !searchQuery ||
       (p.name || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
       (p.serviceName || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (p.serviceCategory || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (p.serviceCategory || "")
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase()) ||
       (p.serviceArea || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
       (p.country || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
       (p.region || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -149,23 +156,34 @@ export default function AllServiceProviders() {
       (p.address || "").toLowerCase().includes(searchQuery.toLowerCase());
 
     // Service category matching
-    const matchesService = serviceFilter === "all" || 
+    const matchesService =
+      serviceFilter === "all" ||
       (p.serviceCategory || "").toLowerCase() === serviceFilter.toLowerCase();
 
     // URL parameter matching (country, region, city)
-    const matchesURLParams = 
-      (!activeCountry || (p.country || "").toLowerCase() === activeCountry.toLowerCase()) &&
-      (!activeRegion || (p.region || "").toLowerCase() === activeRegion.toLowerCase()) &&
-      (!activeCity || (p.city || "").toLowerCase() === activeCity.toLowerCase());
+    const matchesURLParams =
+      (!activeCountry ||
+        (p.country || "").toLowerCase() === activeCountry.toLowerCase()) &&
+      (!activeRegion ||
+        (p.region || "").toLowerCase() === activeRegion.toLowerCase()) &&
+      (!activeCity ||
+        (p.city || "").toLowerCase() === activeCity.toLowerCase());
 
     // Location filter matching (for dropdown)
-    const matchesLocationFilter = locationFilter === "all" || locationFilter === "custom" ||
+    const matchesLocationFilter =
+      locationFilter === "all" ||
+      locationFilter === "custom" ||
       (p.country || "").toLowerCase() === locationFilter.toLowerCase() ||
       (p.region || "").toLowerCase() === locationFilter.toLowerCase() ||
       (p.city || "").toLowerCase() === locationFilter.toLowerCase() ||
       (p.serviceArea || "").toLowerCase() === locationFilter.toLowerCase();
 
-    return matchesSearch && matchesService && matchesURLParams && matchesLocationFilter;
+    return (
+      matchesSearch &&
+      matchesService &&
+      matchesURLParams &&
+      matchesLocationFilter
+    );
   });
 
   // Handle location filter from dropdown
@@ -188,15 +206,15 @@ export default function AllServiceProviders() {
 
   // Clear specific location filter
   const clearLocationFilter = (type) => {
-    switch(type) {
-      case 'country':
-        setActiveCountry('');
+    switch (type) {
+      case "country":
+        setActiveCountry("");
         break;
-      case 'region':
-        setActiveRegion('');
+      case "region":
+        setActiveRegion("");
         break;
-      case 'city':
-        setActiveCity('');
+      case "city":
+        setActiveCity("");
         break;
     }
     updateURL();
@@ -204,26 +222,26 @@ export default function AllServiceProviders() {
 
   // Clear all location filters
   const clearAllLocationFilters = () => {
-    setActiveCountry('');
-    setActiveRegion('');
-    setActiveCity('');
-    setLocationFilter('all');
-    router.push('/services', { scroll: false });
+    setActiveCountry("");
+    setActiveRegion("");
+    setActiveCity("");
+    setLocationFilter("all");
+    router.push("/services", { scroll: false });
   };
 
   // Apply location filter
   const applyLocationFilter = (type, value) => {
-    switch(type) {
-      case 'country':
+    switch (type) {
+      case "country":
         setActiveCountry(value);
         break;
-      case 'region':
+      case "region":
         setActiveRegion(value);
         break;
-      case 'city':
+      case "city":
         setActiveCity(value);
         break;
-      case 'area':
+      case "area":
         // Handle area filter differently
         setLocationFilter(value.toLowerCase());
         break;
@@ -235,21 +253,28 @@ export default function AllServiceProviders() {
   const getLocationDisplay = (provider) => {
     const locationParts = [];
     if (provider.city) locationParts.push(provider.city);
-    if (provider.region && provider.region !== provider.city) locationParts.push(provider.region);
+    if (provider.region && provider.region !== provider.city)
+      locationParts.push(provider.region);
     if (provider.country) locationParts.push(provider.country);
-    
-    return locationParts.length > 0 ? locationParts.join(", ") : 
-           provider.serviceArea || provider.address || "Location not specified";
+
+    return locationParts.length > 0
+      ? locationParts.join(", ")
+      : provider.serviceArea || provider.address || "Location not specified";
   };
 
   // Get location icon
   const getLocationIcon = (type) => {
-    switch(type) {
-      case 'country': return <Globe className="w-3 h-3" />;
-      case 'region': return <MapPin className="w-3 h-3" />;
-      case 'city': return <Building className="w-3 h-3" />;
-      case 'area': return <LuMapPin className="w-3 h-3" />;
-      default: return <LuMapPin className="w-3 h-3" />;
+    switch (type) {
+      case "country":
+        return <Globe className="w-3 h-3" />;
+      case "region":
+        return <MapPin className="w-3 h-3" />;
+      case "city":
+        return <Building className="w-3 h-3" />;
+      case "area":
+        return <LuMapPin className="w-3 h-3" />;
+      default:
+        return <LuMapPin className="w-3 h-3" />;
     }
   };
 
@@ -257,7 +282,7 @@ export default function AllServiceProviders() {
   const handlePageChange = (newPage) => {
     if (newPage >= 1 && newPage <= totalPages) {
       setPage(newPage);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
 
@@ -276,12 +301,12 @@ export default function AllServiceProviders() {
 
   if (isLoading && page === 1) {
     return (
-      <section className='w-full py-10 px-5 bg-[#F5F5F7]'>
-        <div className='max-w-[1350px] mx-auto'>
-          <h2 className='text-[36px] px-4 font-bold text-[#1B1B1B] mb-6'>
-            All Service Providers
+      <section className="w-full py-10 px-5 bg-[#F5F5F7]">
+        <div className="max-w-[1350px] mx-auto">
+          <h2 className="text-[36px] px-4 font-bold text-[#1B1B1B] mb-6">
+            {t("all_providers")}
           </h2>
-          
+
           {/* Search and Filter Skeleton */}
           <div className="mb-8 px-4">
             <div className="animate-pulse">
@@ -295,17 +320,18 @@ export default function AllServiceProviders() {
           </div>
 
           {/* Cards Skeleton */}
-          <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8'>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {[...Array(6)].map((_, i) => (
               <div
                 key={i}
-                className='bg-white rounded-[20px] p-[14px] animate-pulse'>
-                <div className='w-full h-[210px] bg-gray-300 rounded-[16px] mb-4'></div>
-                <div className='h-4 bg-gray-300 rounded mb-2'></div>
-                <div className='h-3 bg-gray-300 rounded mb-3'></div>
-                <div className='h-3 bg-gray-300 rounded mb-4'></div>
-                <div className='h-4 bg-gray-300 rounded mb-5'></div>
-                <div className='h-10 bg-gray-300 rounded-[12px]'></div>
+                className="bg-white rounded-[20px] p-[14px] animate-pulse"
+              >
+                <div className="w-full h-[210px] bg-gray-300 rounded-[16px] mb-4"></div>
+                <div className="h-4 bg-gray-300 rounded mb-2"></div>
+                <div className="h-3 bg-gray-300 rounded mb-3"></div>
+                <div className="h-3 bg-gray-300 rounded mb-4"></div>
+                <div className="h-4 bg-gray-300 rounded mb-5"></div>
+                <div className="h-10 bg-gray-300 rounded-[12px]"></div>
               </div>
             ))}
           </div>
@@ -316,12 +342,12 @@ export default function AllServiceProviders() {
 
   if (error) {
     return (
-      <section className='w-full py-10 px-5 bg-[#F5F5F7]'>
-        <div className='max-w-[1350px] mx-auto text-center'>
-          <h2 className='text-[36px] px-4 font-bold text-[#1B1B1B] mb-6'>
-            All Service Providers
+      <section className="w-full py-10 px-5 bg-[#F5F5F7]">
+        <div className="max-w-[1350px] mx-auto text-center">
+          <h2 className="text-[36px] px-4 font-bold text-[#1B1B1B] mb-6">
+            {t("all_providers")}
           </h2>
-          <p className='text-red-500'>
+          <p className="text-red-500">
             Error loading service providers. Please try again later.
           </p>
         </div>
@@ -330,15 +356,17 @@ export default function AllServiceProviders() {
   }
 
   return (
-    <section className='w-full py-10 px-5 bg-[#F5F5F7]'>
-      <div className='max-w-[1350px] mx-auto'>
+    <section className="w-full py-10 px-5 bg-[#F5F5F7]">
+      <div className="max-w-[1350px] mx-auto">
         {/* Header */}
         <div className="mb-8 px-4">
-          <h2 className='text-[36px] font-bold text-[#1B1B1B] mb-2'>
-            All Service Providers
+          <h2 className="text-[36px] font-bold text-[#1B1B1B] mb-2">
+            {t("all_providers")}
           </h2>
-          <p className="text-gray-600 mb-6">Find and book professional service providers near you</p>
-          
+          <p className="text-gray-600 mb-6">
+            {t('find_providers')}
+          </p>
+
           {/* URL Parameters Info Banner */}
           {hasURLParams && (
             <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl border border-blue-200 shadow-sm">
@@ -346,14 +374,16 @@ export default function AllServiceProviders() {
                 <div className="flex items-center gap-2">
                   <Globe className="w-5 h-5 text-blue-600" />
                   <div>
-                    <h4 className="text-sm font-medium text-blue-800 mb-1">Filtering by URL parameters:</h4>
+                    <h4 className="text-sm font-medium text-blue-800 mb-1">
+                      Filtering by URL parameters:
+                    </h4>
                     <div className="flex flex-wrap gap-2">
                       {countryParam && (
                         <span className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">
                           <Globe className="w-3 h-3" />
                           Country: {countryParam}
                           <button
-                            onClick={() => clearLocationFilter('country')}
+                            onClick={() => clearLocationFilter("country")}
                             className="ml-1 text-blue-600 hover:text-blue-800"
                           >
                             <X className="w-3 h-3" />
@@ -365,7 +395,7 @@ export default function AllServiceProviders() {
                           <MapPin className="w-3 h-3" />
                           Region: {regionParam}
                           <button
-                            onClick={() => clearLocationFilter('region')}
+                            onClick={() => clearLocationFilter("region")}
                             className="ml-1 text-purple-600 hover:text-purple-800"
                           >
                             <X className="w-3 h-3" />
@@ -377,7 +407,7 @@ export default function AllServiceProviders() {
                           <Building className="w-3 h-3" />
                           City: {cityParam}
                           <button
-                            onClick={() => clearLocationFilter('city')}
+                            onClick={() => clearLocationFilter("city")}
                             className="ml-1 text-green-600 hover:text-green-800"
                           >
                             <X className="w-3 h-3" />
@@ -396,7 +426,8 @@ export default function AllServiceProviders() {
                 </button>
               </div>
               <p className="text-xs text-gray-500 mt-2">
-                These filters are applied from the URL. Clear them to see all providers.
+                These filters are applied from the URL. Clear them to see all
+                providers.
               </p>
             </div>
           )}
@@ -457,12 +488,18 @@ export default function AllServiceProviders() {
                   disabled={hasURLParams}
                 >
                   <option value="all">All Locations</option>
-                  {hasURLParams && <option value="custom">Custom URL Filter</option>}
-                  {!hasURLParams && uniqueLocations.map((location) => (
-                    <option key={`${location.type}:${location.value}`} value={location.value.toLowerCase()}>
-                      {location.value} ({location.type})
-                    </option>
-                  ))}
+                  {hasURLParams && (
+                    <option value="custom">Custom URL Filter</option>
+                  )}
+                  {!hasURLParams &&
+                    uniqueLocations.map((location) => (
+                      <option
+                        key={`${location.type}:${location.value}`}
+                        value={location.value.toLowerCase()}
+                      >
+                        {location.value} ({location.type})
+                      </option>
+                    ))}
                 </select>
                 {hasURLParams && (
                   <span className="text-xs text-gray-500 ml-2">
@@ -488,80 +525,80 @@ export default function AllServiceProviders() {
             </div>
 
             {/* Active Filters */}
-            {(serviceFilter !== 'all' || hasURLParams || searchQuery) && (
+            {(serviceFilter !== "all" || hasURLParams || searchQuery) && (
               <div className="mt-4 pt-4 border-t border-gray-200">
                 <div className="flex items-center flex-wrap gap-2">
                   <span className="text-sm text-gray-600">Active filters:</span>
-                  
-                  {serviceFilter !== 'all' && (
+
+                  {serviceFilter !== "all" && (
                     <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
                       Service: {serviceFilter}
                       <button
-                        onClick={() => setServiceFilter('all')}
+                        onClick={() => setServiceFilter("all")}
                         className="ml-1 text-purple-600 hover:text-purple-800"
                       >
                         ×
                       </button>
                     </span>
                   )}
-                  
+
                   {countryParam && (
                     <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                       <Globe className="w-3 h-3 mr-1" />
                       Country: {countryParam}
                       <button
-                        onClick={() => clearLocationFilter('country')}
+                        onClick={() => clearLocationFilter("country")}
                         className="ml-1 text-blue-600 hover:text-blue-800"
                       >
                         ×
                       </button>
                     </span>
                   )}
-                  
+
                   {regionParam && (
                     <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
                       <MapPin className="w-3 h-3 mr-1" />
                       Region: {regionParam}
                       <button
-                        onClick={() => clearLocationFilter('region')}
+                        onClick={() => clearLocationFilter("region")}
                         className="ml-1 text-purple-600 hover:text-purple-800"
                       >
                         ×
                       </button>
                     </span>
                   )}
-                  
+
                   {cityParam && (
                     <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
                       <Building className="w-3 h-3 mr-1" />
                       City: {cityParam}
                       <button
-                        onClick={() => clearLocationFilter('city')}
+                        onClick={() => clearLocationFilter("city")}
                         className="ml-1 text-green-600 hover:text-green-800"
                       >
                         ×
                       </button>
                     </span>
                   )}
-                  
+
                   {searchQuery && (
                     <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
                       Search: {searchQuery}
                       <button
-                        onClick={() => setSearchQuery('')}
+                        onClick={() => setSearchQuery("")}
                         className="ml-1 text-green-600 hover:text-green-800"
                       >
                         ×
                       </button>
                     </span>
                   )}
-                  
-                  {(serviceFilter !== 'all' || hasURLParams || searchQuery) && (
+
+                  {(serviceFilter !== "all" || hasURLParams || searchQuery) && (
                     <button
                       onClick={() => {
-                        setServiceFilter('all');
+                        setServiceFilter("all");
                         clearAllLocationFilters();
-                        setSearchQuery('');
+                        setSearchQuery("");
                       }}
                       className="text-sm text-gray-600 hover:text-gray-800 underline"
                     >
@@ -578,7 +615,9 @@ export default function AllServiceProviders() {
             <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
               <div className="flex items-center gap-2 mb-2">
                 <Globe className="w-4 h-4 text-blue-600" />
-                <h4 className="text-sm font-medium text-blue-800">Available Locations</h4>
+                <h4 className="text-sm font-medium text-blue-800">
+                  Available Locations
+                </h4>
                 <span className="text-xs text-gray-500 ml-auto">
                   Click to filter by location
                 </span>
@@ -587,18 +626,25 @@ export default function AllServiceProviders() {
                 {uniqueLocations.slice(0, 12).map((location) => (
                   <button
                     key={`${location.type}:${location.value}`}
-                    onClick={() => applyLocationFilter(location.type, location.value)}
+                    onClick={() =>
+                      applyLocationFilter(location.type, location.value)
+                    }
                     className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs ${
-                      (location.type === 'country' && activeCountry === location.value.toLowerCase()) ||
-                      (location.type === 'region' && activeRegion === location.value.toLowerCase()) ||
-                      (location.type === 'city' && activeCity === location.value.toLowerCase())
-                        ? 'bg-blue-600 text-white shadow-sm'
-                        : 'bg-white text-gray-700 border border-gray-300 hover:border-blue-400 hover:bg-blue-50'
+                      (location.type === "country" &&
+                        activeCountry === location.value.toLowerCase()) ||
+                      (location.type === "region" &&
+                        activeRegion === location.value.toLowerCase()) ||
+                      (location.type === "city" &&
+                        activeCity === location.value.toLowerCase())
+                        ? "bg-blue-600 text-white shadow-sm"
+                        : "bg-white text-gray-700 border border-gray-300 hover:border-blue-400 hover:bg-blue-50"
                     }`}
                   >
                     {getLocationIcon(location.type)}
                     {location.value}
-                    <span className="text-[10px] opacity-75 ml-1">({location.type})</span>
+                    <span className="text-[10px] opacity-75 ml-1">
+                      ({location.type})
+                    </span>
                   </button>
                 ))}
                 {uniqueLocations.length > 12 && (
@@ -616,11 +662,11 @@ export default function AllServiceProviders() {
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                 <p className="text-sm text-green-800">
-                  Showing providers from{' '}
+                  Showing providers from{" "}
                   {cityParam && <strong>{cityParam}</strong>}
-                  {cityParam && regionParam && ', '}
+                  {cityParam && regionParam && ", "}
                   {regionParam && <strong>{regionParam}</strong>}
-                  {(cityParam || regionParam) && countryParam && ' in '}
+                  {(cityParam || regionParam) && countryParam && " in "}
                   {countryParam && <strong>{countryParam}</strong>}
                 </p>
               </div>
@@ -629,30 +675,44 @@ export default function AllServiceProviders() {
         </div>
 
         {/* Providers Grid */}
-        <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8'>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
           {filteredProviders.length === 0 ? (
             <div className="col-span-3 text-center py-12">
               <div className="text-gray-400 mb-4">
-                <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                <svg
+                  className="w-16 h-16 mx-auto"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={1}
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                  />
                 </svg>
               </div>
               <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                {hasURLParams ? "No providers found in this location" : "No providers found"}
+                {hasURLParams
+                  ? "No providers found in this location"
+                  : "No providers found"}
               </h3>
               <p className="text-gray-600 mb-4">
-                {hasURLParams 
-                  ? `No service providers found in ${cityParam || regionParam || countryParam}. Try a different location.`
-                  : searchQuery || serviceFilter !== 'all' 
-                    ? "Try adjusting your filters or search criteria" 
-                    : "No service providers available yet"}
+                {hasURLParams
+                  ? `No service providers found in ${
+                      cityParam || regionParam || countryParam
+                    }. Try a different location.`
+                  : searchQuery || serviceFilter !== "all"
+                  ? "Try adjusting your filters or search criteria"
+                  : "No service providers available yet"}
               </p>
               <div className="flex gap-3 justify-center">
-                {(searchQuery || serviceFilter !== 'all' || hasURLParams) && (
+                {(searchQuery || serviceFilter !== "all" || hasURLParams) && (
                   <button
                     onClick={() => {
-                      setSearchQuery('');
-                      setServiceFilter('all');
+                      setSearchQuery("");
+                      setServiceFilter("all");
                       if (hasURLParams) clearAllLocationFilters();
                     }}
                     className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
@@ -662,7 +722,7 @@ export default function AllServiceProviders() {
                 )}
                 {hasURLParams && (
                   <button
-                    onClick={() => router.push('/services')}
+                    onClick={() => router.push("/services")}
                     className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
                   >
                     View all providers
@@ -672,30 +732,32 @@ export default function AllServiceProviders() {
             </div>
           ) : (
             filteredProviders.map((p) => (
-              <div key={p._id} className='p-3'>
+              <div key={p._id} className="p-3">
                 <Link href={`/service-details?id=${p._id}`}>
-                  <div className='bg-white rounded-[20px] overflow-hidden p-3.5 hover:shadow-lg transition-shadow duration-300 h-full flex flex-col'>
+                  <div className="bg-white rounded-[20px] overflow-hidden p-3.5 hover:shadow-lg transition-shadow duration-300 h-full flex flex-col">
                     {/* Image */}
-                    <div className='relative w-full h-[210px] mb-4 flex-shrink-0'>
+                    <div className="relative w-full h-[210px] mb-4 flex-shrink-0">
                       {p.servicesImage && p.servicesImage.length > 0 ? (
                         <img
                           src={p.servicesImage[0] || "/blog/blog1.jpg"}
-                          className='w-full h-full object-cover rounded-[16px]'
+                          className="w-full h-full object-cover rounded-[16px]"
                           alt={p.serviceName || p.name}
                         />
                       ) : (
                         <div className="w-full h-full bg-gradient-to-br from-purple-100 to-orange-100 rounded-[16px] flex items-center justify-center">
                           <div className="text-center">
                             <div className="text-4xl mb-2">🔧</div>
-                            <p className="text-sm text-gray-600">{p.serviceName}</p>
+                            <p className="text-sm text-gray-600">
+                              {p.serviceName}
+                            </p>
                           </div>
                         </div>
                       )}
-                      <span className='absolute top-3 right-3 px-3 py-[3px] bg-[#A46CFF] text-white text-[12px] rounded-full shadow-[0_2px_8px_rgba(0,0,0,0.20)]'>
+                      <span className="absolute top-3 right-3 px-3 py-[3px] bg-[#A46CFF] text-white text-[12px] rounded-full shadow-[0_2px_8px_rgba(0,0,0,0.20)]">
                         {p.serviceCategory || "Service"}
                       </span>
                       {p.yearsOfExperience && (
-                        <span className='absolute top-3 left-3 px-3 py-[3px] bg-green-500 text-white text-[12px] rounded-full shadow-[0_2px_8px_rgba(0,0,0,0.20)]'>
+                        <span className="absolute top-3 left-3 px-3 py-[3px] bg-green-500 text-white text-[12px] rounded-full shadow-[0_2px_8px_rgba(0,0,0,0.20)]">
                           {p.yearsOfExperience}
                         </span>
                       )}
@@ -703,25 +765,28 @@ export default function AllServiceProviders() {
 
                     {/* Name and Service */}
                     <div className="flex-grow">
-                      <h3 className='text-[16px] font-semibold text-[#1A1A1A] mb-0.5'>
+                      <h3 className="text-[16px] font-semibold text-[#1A1A1A] mb-0.5">
                         {p.name || "Unnamed Provider"}
                       </h3>
-                      <h4 className='text-[15px] font-medium text-purple-600 mb-2'>
+                      <h4 className="text-[15px] font-medium text-purple-600 mb-2">
                         {p.serviceName}
                       </h4>
 
                       {/* Service Description */}
-                      <p className='text-[13px] text-gray-600 mb-3 line-clamp-2'>
-                        {p.serviceDescription || "Professional service provider"}
+                      <p className="text-[13px] text-gray-600 mb-3 line-clamp-2">
+                        {p.serviceDescription ||
+                          "Professional service provider"}
                       </p>
 
                       {/* Location Details */}
-                      <div className='mb-3'>
-                        <div className='flex items-center gap-2 text-[13px] text-[#6A6A6A] mb-1'>
-                          <LuMapPin className='text-[14px] flex-shrink-0' />
-                          <span className="line-clamp-1">{getLocationDisplay(p)}</span>
+                      <div className="mb-3">
+                        <div className="flex items-center gap-2 text-[13px] text-[#6A6A6A] mb-1">
+                          <LuMapPin className="text-[14px] flex-shrink-0" />
+                          <span className="line-clamp-1">
+                            {getLocationDisplay(p)}
+                          </span>
                         </div>
-                        
+
                         {/* Detailed Location Info */}
                         {(p.country || p.region || p.city) && (
                           <div className="flex items-center gap-2 text-[11px] text-gray-500 ml-6">
@@ -751,16 +816,20 @@ export default function AllServiceProviders() {
                       <div className="mb-4 space-y-1">
                         <div className="flex items-center justify-between text-sm">
                           <span className="text-gray-600">Radius:</span>
-                          <span className="font-medium">{p.serviceRedius || "N/A"} km</span>
+                          <span className="font-medium">
+                            {p.serviceRedius || "N/A"} km
+                          </span>
                         </div>
                         <div className="flex items-center justify-between text-sm">
                           <span className="text-gray-600">Experience:</span>
-                          <span className="font-medium">{p.yearsOfExperience || "Not specified"}</span>
+                          <span className="font-medium">
+                            {p.yearsOfExperience || "Not specified"}
+                          </span>
                         </div>
                       </div>
 
                       {/* Rating */}
-                      <div className='flex items-center text-[14px] text-[#6A6A6A] mb-3'>
+                      <div className="flex items-center text-[14px] text-[#6A6A6A] mb-3">
                         {[...Array(5)].map((_, i) => (
                           <AiFillStar
                             key={i}
@@ -769,7 +838,7 @@ export default function AllServiceProviders() {
                             }`}
                           />
                         ))}
-                        <span className='ml-1'>4.5 (0 reviews)</span>
+                        <span className="ml-1">4.5 (0 reviews)</span>
                       </div>
                     </div>
 
@@ -777,22 +846,28 @@ export default function AllServiceProviders() {
                     <div className="flex-shrink-0">
                       <div className="flex items-center justify-between mb-4">
                         <div>
-                          <p className='text-[12px] text-[#6B6B6B]'>Starting at</p>
-                          <p className='text-[20px] font-semibold text-[#F78D25]'>
+                          <p className="text-[12px] text-[#6B6B6B]">
+                            Starting at
+                          </p>
+                          <p className="text-[20px] font-semibold text-[#F78D25]">
                             ${p.hourlyRate || 50}/hr
                           </p>
                         </div>
-                        <div className={`text-xs px-2 py-1 rounded ${
-                          p.workingDays && p.workingDays.length > 0 
-                            ? 'bg-green-100 text-green-800' 
-                            : 'bg-gray-100 text-gray-800'
-                        }`}>
-                          {p.workingDays && p.workingDays.length > 0 ? 'Available' : 'Check availability'}
+                        <div
+                          className={`text-xs px-2 py-1 rounded ${
+                            p.workingDays && p.workingDays.length > 0
+                              ? "bg-green-100 text-green-800"
+                              : "bg-gray-100 text-gray-800"
+                          }`}
+                        >
+                          {p.workingDays && p.workingDays.length > 0
+                            ? "Available"
+                            : "Check availability"}
                         </div>
                       </div>
 
                       {/* Button */}
-                      <button className='w-full py-3 text-[15px] font-medium text-white rounded-xl bg-gradient-to-r from-[#9838E1] to-[#F68E44] shadow-[0_4px_14px_rgba(0,0,0,0.15)] hover:opacity-90 transition-opacity'>
+                      <button className="w-full py-3 text-[15px] font-medium text-white rounded-xl bg-gradient-to-r from-[#9838E1] to-[#F68E44] shadow-[0_4px_14px_rgba(0,0,0,0.15)] hover:opacity-90 transition-opacity">
                         View Details
                       </button>
                     </div>
@@ -810,10 +885,11 @@ export default function AllServiceProviders() {
               <div className="flex flex-col md:flex-row items-center justify-between gap-4">
                 <div className="text-sm text-gray-600">
                   Showing {startIndex} to {endIndex} of {totalProviders} entries
-                  {hasURLParams && ` in ${countryParam || regionParam || cityParam}`}
+                  {hasURLParams &&
+                    ` in ${countryParam || regionParam || cityParam}`}
                   {searchQuery && ` matching "${searchQuery}"`}
                 </div>
-                
+
                 <div className="flex items-center gap-2">
                   {/* First Page */}
                   <button
@@ -821,8 +897,8 @@ export default function AllServiceProviders() {
                     disabled={page === 1}
                     className={`p-2 rounded-lg ${
                       page === 1
-                        ? 'text-gray-400 bg-gray-100 cursor-not-allowed'
-                        : 'text-gray-700 hover:bg-gray-100'
+                        ? "text-gray-400 bg-gray-100 cursor-not-allowed"
+                        : "text-gray-700 hover:bg-gray-100"
                     }`}
                   >
                     <ChevronsLeft className="w-5 h-5" />
@@ -834,8 +910,8 @@ export default function AllServiceProviders() {
                     disabled={page === 1}
                     className={`p-2 rounded-lg ${
                       page === 1
-                        ? 'text-gray-400 bg-gray-100 cursor-not-allowed'
-                        : 'text-gray-700 hover:bg-gray-100'
+                        ? "text-gray-400 bg-gray-100 cursor-not-allowed"
+                        : "text-gray-700 hover:bg-gray-100"
                     }`}
                   >
                     <ChevronLeft className="w-5 h-5" />
@@ -861,8 +937,8 @@ export default function AllServiceProviders() {
                           onClick={() => handlePageChange(pageNumber)}
                           className={`px-3 py-1.5 rounded-lg text-sm font-medium ${
                             page === pageNumber
-                              ? 'bg-purple-600 text-white'
-                              : 'text-gray-700 hover:bg-gray-100'
+                              ? "bg-purple-600 text-white"
+                              : "text-gray-700 hover:bg-gray-100"
                           }`}
                         >
                           {pageNumber}
@@ -890,8 +966,8 @@ export default function AllServiceProviders() {
                     disabled={page === totalPages}
                     className={`p-2 rounded-lg ${
                       page === totalPages
-                        ? 'text-gray-400 bg-gray-100 cursor-not-allowed'
-                        : 'text-gray-700 hover:bg-gray-100'
+                        ? "text-gray-400 bg-gray-100 cursor-not-allowed"
+                        : "text-gray-700 hover:bg-gray-100"
                     }`}
                   >
                     <ChevronRight className="w-5 h-5" />
@@ -903,8 +979,8 @@ export default function AllServiceProviders() {
                     disabled={page === totalPages}
                     className={`p-2 rounded-lg ${
                       page === totalPages
-                        ? 'text-gray-400 bg-gray-100 cursor-not-allowed'
-                        : 'text-gray-700 hover:bg-gray-100'
+                        ? "text-gray-400 bg-gray-100 cursor-not-allowed"
+                        : "text-gray-700 hover:bg-gray-100"
                     }`}
                   >
                     <ChevronsRight className="w-5 h-5" />
@@ -939,20 +1015,18 @@ export default function AllServiceProviders() {
                   • Filtered by URL parameters
                 </span>
               )}
-              {(serviceFilter !== 'all' || searchQuery) && !hasURLParams && (
-                <span className="ml-2 text-purple-600">
-                  • Filtered results
-                </span>
+              {(serviceFilter !== "all" || searchQuery) && !hasURLParams && (
+                <span className="ml-2 text-purple-600">• Filtered results</span>
               )}
             </div>
 
             {/* Clear Filters Button at Bottom */}
-            {(serviceFilter !== 'all' || searchQuery || hasURLParams) && (
+            {(serviceFilter !== "all" || searchQuery || hasURLParams) && (
               <div className="mt-6 text-center">
                 <button
                   onClick={() => {
-                    setServiceFilter('all');
-                    setSearchQuery('');
+                    setServiceFilter("all");
+                    setSearchQuery("");
                     if (hasURLParams) clearAllLocationFilters();
                   }}
                   className="inline-flex items-center gap-2 px-4 py-2 text-sm bg-white text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400"

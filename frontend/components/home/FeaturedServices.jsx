@@ -17,6 +17,7 @@ import { FaUserCircle } from "react-icons/fa";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { useGetAllServiceProvidersQuery } from "@/feature/UserApi";
+import { useTranslation } from "react-i18next";
 
 // Service icons mapping
 const serviceIcons = {
@@ -141,6 +142,10 @@ export default function FeaturedServices() {
   const { data, isLoading, error } = useGetAllServiceProvidersQuery({ limit: 10 });
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
+  const {t} = useTranslation('service');
+
+  // Process data when fetched  
+
 
   useEffect(() => {
     if (data?.data) {
@@ -269,7 +274,7 @@ export default function FeaturedServices() {
       <section className="w-full py-20 px-10 bg-[#F5F5F7]">
         <div className="max-w-[1350px] mx-auto">
           <h2 className="text-[36px] font-bold text-center mb-2">
-            Featured Services
+        {t('featured_services')}adfsdfas
           </h2>
           <p className="text-center text-[#AC65EE] font-bold text-[15px] mb-12">
             Find trusted professionals for any service you need in your area
@@ -343,7 +348,7 @@ export default function FeaturedServices() {
       <section className="w-full py-20 px-10 bg-[#F5F5F7]">
         <div className="max-w-[1350px] mx-auto">
           <h2 className="text-[36px] font-bold text-center mb-2">
-            Featured Services
+           {t('featured_services')}
           </h2>
           <p className="text-center text-[#AC65EE] font-bold text-[15px] mb-12">
             Find trusted professionals for any service you need in your area
@@ -386,16 +391,16 @@ export default function FeaturedServices() {
       <div className="max-w-[1350px] mx-auto">
         {/* Heading */}
         <h2 className="text-[36px] font-bold text-center mb-2">
-          Featured Services
+   {t('featured_services')}
         </h2>
 
         {/* Subheading */}
         <p className="text-center text-[#AC65EE] font-bold text-[15px] mb-12">
-          Find trusted professionals for any service you need in your area
+{t('services_subtitle')}
         </p>
 
         {/* Stats */}
-        <div className="mb-8 text-center">
+        {/* <div className="mb-8 text-center">
           <div className="inline-flex items-center gap-4 bg-white px-6 py-3 rounded-full shadow-sm">
             <span className="text-sm text-gray-600">
               <span className="font-bold text-purple-600">{services.length}</span> services available
@@ -407,7 +412,7 @@ export default function FeaturedServices() {
               </span> total providers
             </span>
           </div>
-        </div>
+        </div> */}
 
         {/* Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
@@ -475,7 +480,7 @@ export default function FeaturedServices() {
               flex items-center gap-2
             "
             >
-              View All Categories
+        {t('view_all_categories')}
               <svg 
                 className="w-4 h-4" 
                 fill="none" 

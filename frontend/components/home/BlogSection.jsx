@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useTranslation } from "react-i18next";
 import { IoArrowForwardOutline } from "react-icons/io5";
 
 export default function BlogSection() {
@@ -31,19 +32,19 @@ export default function BlogSection() {
       read: "6 min read",
     },
   ];
-
+const {t} = useTranslation('blog');
   return (
     <section className="w-full py-20 px-10">
       <div className="max-w-[1350px] mx-auto">
 
         {/* Heading */}
         <h2 className="text-[36px] font-bold text-center mb-2">
-          Latest from Our Blog
+      {t('section_title')}
         </h2>
 
         {/* Subheading */}
         <p className="text-center font-bold text-[#AC65EE] text-[15px] mb-14">
-          Stay updated with tips, guides, and stories from our community
+          {t('section_subtitle')}
         </p>
 
         {/* Blog Cards */}
@@ -104,7 +105,7 @@ export default function BlogSection() {
             bg-gradient-to-r from-[#9838E1] to-[#F68E44]
             shadow-[0px_4px_16px_rgba(0,0,0,0.15)]
           ">
-            View All Posts
+      {t('view_all_posts')}
           </button>
           </Link>
         </div>

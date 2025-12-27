@@ -19,7 +19,7 @@ const MarketplacePage = () => {
       <ProductsPage 
         searchTerm={searchTerm}
       />
-      <FeaturedStores />
+      {/* <FeaturedStores /> */}
       <SupportEntrepreneurs />
      </Suspense>
     </div>

@@ -5,6 +5,8 @@ import Image from "next/image";
 import { IoChevronDownOutline, IoSearchOutline } from "react-icons/io5";
 import Link from "next/link";
 import { useAllLocationQuery } from "@/feature/ProductApi";
+import { useTranslation } from "react-i18next"; // Add this import
+import { usePathname } from "next/navigation"; // Add this import
 
 export default function HomeBanner() {
   const [filters, setFilters] = useState({
@@ -21,6 +23,14 @@ export default function HomeBanner() {
   // Fetch location data
   const { data: locationData, isLoading, isError } = useAllLocationQuery();
   
+  // Translation hook
+  const { t, i18n } = useTranslation("home"); // Use "home" namespace
+  const pathname = usePathname();
+
+  // Extract current locale from pathname
+  const pathSegments = pathname.split("/").filter(Boolean);
+  const currentLocale = ["en", "es"].includes(pathSegments[0]) ? pathSegments[0] : "en";
+
   // Extract data from API response
   const countries = locationData?.data?.countries || [];
   const regions = locationData?.data?.regions || [];
@@ -60,7 +70,7 @@ export default function HomeBanner() {
     setCitySearch("");
   };
 
-  // Build query string from filters
+  // Build query string from filters with locale
   const buildQueryString = () => {
     const params = new URLSearchParams();
     
@@ -69,6 +79,14 @@ export default function HomeBanner() {
     if (filters.city) params.append('city', filters.city);
     
     return params.toString() ? `?${params.toString()}` : '';
+  };
+
+  // Create localized href
+  const createLocalizedHref = (path) => {
+    if (path.startsWith(`/${currentLocale}`)) {
+      return path;
+    }
+    return `/${currentLocale}${path.startsWith("/") ? path : `/${path}`}`;
   };
 
   return (
@@ -103,9 +121,9 @@ export default function HomeBanner() {
             mb-5
           "
           >
-            Discover Amazing <br className="hidden lg:block" />
-            Products & <br className="hidden lg:block" />
-            Services Near You
+            {t("title_line1")} <br className="hidden lg:block" />
+            {t("title_line2")} <br className="hidden lg:block" />
+            {t("title_line3")}
           </h1>
 
           {/* Subtext */}
@@ -118,8 +136,7 @@ export default function HomeBanner() {
             mb-10
           "
           >
-            Connect with local businesses and find exactly what you need in your
-            area. From products to professional services, we've got you covered.
+            {t("subtitle")}
           </p>
 
           {/* Glass Card */}
@@ -142,12 +159,12 @@ export default function HomeBanner() {
               text-transparent bg-clip-text
             "
             >
-              Select your Location
+              {t("select_location")}
             </p>
 
             <EnhancedDropdown 
-              label="Country" 
-              placeholder={isLoading ? "Loading countries..." : "Select Country"}
+              label={t("country")} 
+              placeholder={isLoading ? t("loading_countries") : t("select_country")}
               value={filters.country}
               onChange={(value) => updateFilter('country', value)}
               options={filteredCountries}
@@ -156,11 +173,13 @@ export default function HomeBanner() {
               onClose={clearSearches}
               isLoading={isLoading}
               isError={isError}
+              t={t}
+              itemType="countries"
             />
             
             <EnhancedDropdown 
-              label="Region" 
-              placeholder={isLoading ? "Loading regions..." : "Select Region"}
+              label={t("region")} 
+              placeholder={isLoading ? t("loading_regions") : t("select_region")}
               value={filters.region}
               onChange={(value) => updateFilter('region', value)}
               options={filteredRegions}
@@ -169,11 +188,13 @@ export default function HomeBanner() {
               onClose={clearSearches}
               isLoading={isLoading}
               isError={isError}
+              t={t}
+              itemType="regions"
             />
             
             <EnhancedDropdown 
-              label="City" 
-              placeholder={isLoading ? "Loading cities..." : "Select City"}
+              label={t("city")} 
+              placeholder={isLoading ? t("loading_cities") : t("select_city")}
               value={filters.city}
               onChange={(value) => updateFilter('city', value)}
               options={filteredCities}
@@ -182,6 +203,8 @@ export default function HomeBanner() {
               onClose={clearSearches}
               isLoading={isLoading}
               isError={isError}
+              t={t}
+              itemType="cities"
             />
           </div>
 
@@ -196,7 +219,7 @@ export default function HomeBanner() {
           >
             {/* Explore Marketplace with query parameters */}
             <Link 
-              href={`/marketplace${buildQueryString()}`}
+              href={createLocalizedHref(`/marketplace${buildQueryString()}`)}
               className="w-full sm:w-auto"
             >
               <button
@@ -212,13 +235,13 @@ export default function HomeBanner() {
                 disabled:opacity-50 disabled:cursor-not-allowed
               "
               >
-                {isLoading ? "Loading..." : "Explore Marketplace"}
+                {isLoading ? t("loading") : t("explore_marketplace")}
               </button>
             </Link>
 
             {/* Browse Services with query parameters */}
             <Link 
-              href={`/services${buildQueryString()}`}
+              href={createLocalizedHref(`/services${buildQueryString()}`)}
               className="w-full sm:w-auto"
             >
               <button
@@ -233,50 +256,19 @@ export default function HomeBanner() {
                 disabled:opacity-50 disabled:cursor-not-allowed
               "
               >
-                Browse Services
+                {t("browse_services")}
               </button>
             </Link>
           </div>
-
-          {/* Stats Display */}
-          {/* {locationData?.stats && (
-            <div className="mt-4 p-3 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-100">
-              <p className="text-xs font-semibold text-gray-700 mb-2">
-                Available Locations:
-              </p>
-              <div className="grid grid-cols-2 gap-2 text-xs">
-                <div className="flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-blue-500"></span>
-                  <span className="text-gray-600">Countries:</span>
-                  <span className="font-semibold text-blue-600">{locationData.stats.totalCountries}</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-purple-500"></span>
-                  <span className="text-gray-600">Regions:</span>
-                  <span className="font-semibold text-purple-600">{locationData.stats.totalRegions}</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-green-500"></span>
-                  <span className="text-gray-600">Cities:</span>
-                  <span className="font-semibold text-green-600">{locationData.stats.totalCities}</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-orange-500"></span>
-                  <span className="text-gray-600">Total Locations:</span>
-                  <span className="font-semibold text-orange-600">{locationData.stats.totalAll}</span>
-                </div>
-              </div>
-            </div>
-          )} */}
 
           {/* Filter status display */}
           {Object.values(filters).some(value => value) && (
             <div className="mt-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
               <p className="text-xs text-gray-700">
-                <span className="font-semibold">Active Filters:</span>
-                {filters.country && ` Country: ${filters.country}`}
-                {filters.region && ` | Region: ${filters.region}`}
-                {filters.city && ` | City: ${filters.city}`}
+                <span className="font-semibold">{t("active_filters")}:</span>
+                {filters.country && ` ${t("country")}: ${filters.country}`}
+                {filters.region && ` | ${t("region")}: ${filters.region}`}
+                {filters.city && ` | ${t("city")}: ${filters.city}`}
               </p>
               <button
                 onClick={() => {
@@ -285,7 +277,7 @@ export default function HomeBanner() {
                 }}
                 className="mt-2 text-xs text-red-600 hover:text-red-800"
               >
-                Clear All Filters
+                {t("clear_all_filters")}
               </button>
             </div>
           )}
@@ -320,7 +312,9 @@ function EnhancedDropdown({
   onSearchChange, 
   onClose,
   isLoading = false,
-  isError = false
+  isError = false,
+  t, // Translation function passed from parent
+  itemType = "" // countries, regions, cities
 }) {
   const [open, setOpen] = useState(false);
 
@@ -345,6 +339,30 @@ function EnhancedDropdown({
       return option.name || option.value || String(option);
     }
     return String(option);
+  };
+
+  // Get placeholder text for search
+  const getSearchPlaceholder = () => {
+    if (itemType === "countries") return t("search_country");
+    if (itemType === "regions") return t("search_region");
+    if (itemType === "cities") return t("search_city");
+    return `Search ${label.toLowerCase()}...`;
+  };
+
+  // Get no results message
+  const getNoResultsMessage = () => {
+    if (searchValue) {
+      return t("no_results", { 
+        item: itemType, 
+        search: searchValue 
+      });
+    }
+    
+    // Default no items message
+    if (itemType === "countries") return t("no_countries");
+    if (itemType === "regions") return t("no_regions");
+    if (itemType === "cities") return t("no_cities");
+    return `No ${itemType} available`;
   };
 
   return (
@@ -397,7 +415,7 @@ function EnhancedDropdown({
                 type="text"
                 value={searchValue}
                 onChange={(e) => onSearchChange(e.target.value)}
-                placeholder={`Search ${label.toLowerCase()}...`}
+                placeholder={getSearchPlaceholder()}
                 className="w-full pl-10 pr-4 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#9838E1]/40"
                 onClick={(e) => e.stopPropagation()}
                 autoFocus
@@ -410,7 +428,7 @@ function EnhancedDropdown({
             {isLoading ? (
               <div className="px-4 py-8 text-center">
                 <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#9838E1] mx-auto"></div>
-                <p className="text-xs text-gray-500 mt-2">Loading...</p>
+                <p className="text-xs text-gray-500 mt-2">{t("loading")}</p>
               </div>
             ) : isError ? (
               <div className="px-4 py-8 text-center">
@@ -419,7 +437,7 @@ function EnhancedDropdown({
                   className="mt-2 text-xs text-blue-600 hover:underline"
                   onClick={handleClose}
                 >
-                  Close
+                  {t("close")}
                 </button>
               </div>
             ) : options.length === 0 ? (
@@ -427,18 +445,18 @@ function EnhancedDropdown({
                 {searchValue ? (
                   <>
                     <p className="text-sm text-gray-500">
-                      No {label.toLowerCase()} found for "{searchValue}"
+                      {getNoResultsMessage()}
                     </p>
                     <button 
                       className="mt-2 text-xs text-blue-600 hover:underline"
                       onClick={() => onSearchChange("")}
                     >
-                      Clear search
+                      {t("clear_search")}
                     </button>
                   </>
                 ) : (
                   <p className="text-sm text-gray-500">
-                    No {label.toLowerCase()} available
+                    {getNoResultsMessage()}
                   </p>
                 )}
               </div>
@@ -481,7 +499,7 @@ function EnhancedDropdown({
               onClick={handleClose}
               className="w-full text-sm text-gray-600 hover:text-gray-800 py-2"
             >
-              Close
+              {t("close")}
             </button>
           </div>
         </div>
