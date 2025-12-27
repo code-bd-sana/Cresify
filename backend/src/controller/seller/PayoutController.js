@@ -16,7 +16,14 @@ export const getWallet = async (req, res) => {
     const { sellerId } = req.params;
     const wallet = await Wallet.findOne({ user: sellerId });
     if (!wallet) return res.status(404).json({ message: "Wallet not found" });
-    return res.json({ wallet });
+
+    // recent transactions for this user
+    const transactions = await Transaction.find({ user: sellerId })
+      .sort({ createdAt: -1 })
+      .limit(200)
+      .lean();
+
+    return res.json({ wallet, transactions });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ message: "Failed to get wallet" });

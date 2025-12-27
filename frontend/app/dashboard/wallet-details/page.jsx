@@ -1,5 +1,10 @@
 "use client";
 
+import {
+  useGetWalletQuery,
+  useRequestPayoutMutation,
+} from "@/feature/seller/WalletApi";
+import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import {
   FaArrowDown,
@@ -1016,91 +1021,47 @@ export default function WalletDetailsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [stripeFormMode, setStripeFormMode] = useState("connect");
 
+  // Get user id from localStorage (app should store it on login)
+
+  const { data } = useSession();
+
+  const user = data?.user;
+
+  const { data: walletData, isLoading: walletLoading } = useGetWalletQuery(
+    user?.id,
+    {
+      skip: !user?.id,
+    }
+  );
+
+  const [requestPayout] = useRequestPayoutMutation();
+
+  // Populate state when API returns
   useEffect(() => {
-    setTimeout(() => {
+    if (walletLoading) {
+      setLoading(true);
+      return;
+    }
+
+    if (walletData && walletData.wallet) {
+      const w = walletData.wallet;
       setWallet({
-        balance: 1240.5,
-        totalEarned: 3560.75,
-        pending: 320.25,
-        lastPayout: 780.5,
-        currency: "$",
-        nextPayoutDate: "2025-02-01",
-        payoutFrequency: "weekly",
-        totalWithdrawn: 2320.25,
-        thisMonthEarnings: 890.5,
+        balance: w.currentBalance ?? w.balance ?? 0,
+        totalEarned: w.totalEarned ?? 0,
+        pending: w.reserved ?? 0,
+        lastPayout: w.lastPayoutAt ?? null,
+        currency: w.currency === "usd" || !w.currency ? "$" : w.currency,
+        nextPayoutDate: w.nextPayoutDate ?? null,
+        payoutFrequency: w.payoutFrequency ?? "monthly",
+        totalWithdrawn: w.totalWithdrawn ?? 0,
+        thisMonthEarnings: w.thisMonthEarnings ?? 0,
       });
 
-      // Mock Stripe Express account data
-      setStripeAccount({
-        accountId: "acct_1MnpWjP9NtFqXy2L",
-        email: "provider@example.com",
-        businessName: "Professional Property Inspections LLC",
-        phone: "+1 (555) 123-4567",
-        status: "verified",
-        type: "express",
-        country: "US",
-        currency: "usd",
-        defaultCurrency: "usd",
-        chargesEnabled: true,
-        payoutsEnabled: true,
-        requirementsDue: [],
-        address: {
-          line1: "123 Main St",
-          city: "New York",
-          state: "NY",
-          postal_code: "10001",
-          country: "US",
-        },
-        createdAt: "2024-01-15",
-        updatedAt: "2024-01-20",
-      });
-
-      setTransactions([
-        {
-          id: "TXN-1001",
-          type: "credit",
-          title: "Service Payment - Property Inspection",
-          amount: 120,
-          status: "completed",
-          createdAt: "2025-01-20",
-          method: "stripe",
-          reference: "INV-2025-001",
-        },
-        {
-          id: "TXN-1002",
-          type: "debit",
-          title: "Platform Commission",
-          amount: 12,
-          status: "completed",
-          createdAt: "2025-01-20",
-          method: "system",
-          reference: "COM-2025-001",
-        },
-        {
-          id: "TXN-1003",
-          type: "credit",
-          title: "Service Payment - Commercial Inspection",
-          amount: 200,
-          status: "pending",
-          createdAt: "2025-01-18",
-          method: "stripe",
-          reference: "INV-2025-002",
-        },
-        {
-          id: "TXN-1004",
-          type: "debit",
-          title: "Withdrawal via Stripe",
-          amount: 500,
-          status: "completed",
-          createdAt: "2025-01-15",
-          method: "stripe",
-          reference: "WTH-2025-001",
-        },
-      ]);
-
+      setStripeAccount(w.stripeDetails || null);
+      setTransactions(walletData.transactions || []);
       setLoading(false);
-    }, 800);
-  }, []);
+    }
+  }, [walletData, walletLoading]);
 
   const handleStripeAccountSave = async (data) => {
     console.log("Saving Stripe Express account:", data);
@@ -1139,32 +1100,44 @@ export default function WalletDetailsPage() {
   };
 
   const handleWithdrawalSubmit = async (withdrawalData) => {
-    console.log("Submitting withdrawal:", withdrawalData);
-    setLoading(true);
-    setTimeout(() => {
-      // Update wallet balance
+    // Call backend to request payout
+    try {
+      setLoading(true);
+      const body = {
+        sellerId: userId,
+        amount: withdrawalData.amount,
+        method: withdrawalData.method || "stripe_connect",
+      };
+
+      const res = await requestPayout(body).unwrap();
+
+      // Update UI locally
       setWallet({
         ...wallet,
-        balance: wallet.balance - withdrawalData.amount,
-        totalWithdrawn: wallet.totalWithdrawn + withdrawalData.amount,
+        balance: (wallet.balance || 0) - withdrawalData.amount,
+        totalWithdrawn: (wallet.totalWithdrawn || 0) + withdrawalData.amount,
       });
 
-      // Add transaction
       const newTransaction = {
         id: `TXN-${Date.now()}`,
         type: "debit",
-        title: `Withdrawal via Stripe Express`,
+        title: `Withdrawal via ${body.method}`,
         amount: withdrawalData.amount,
         status: "pending",
         createdAt: new Date().toISOString().split("T")[0],
-        method: "stripe",
-        reference: `WTH-${Date.now().toString().slice(-6)}`,
+        method: body.method,
+        reference:
+          res.payout?.payoutId || `WTH-${Date.now().toString().slice(-6)}`,
       };
 
-      setTransactions([newTransaction, ...transactions]);
-      setLoading(false);
+      setTransactions([newTransaction, ...(transactions || [])]);
       setShowWithdrawalModal(false);
-    }, 1500);
+    } catch (err) {
+      console.error("Withdrawal request failed", err);
+      alert("Failed to request payout: " + (err?.data?.message || err.message));
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (loading || !wallet) {
