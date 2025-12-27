@@ -5,16 +5,15 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  FiGrid,
   FiBox,
-  FiShoppingCart,
-  FiUser,
   FiCreditCard,
-  FiBarChart2,
+  FiGrid,
+  FiLogOut,
   FiMessageSquare,
   FiSettings,
-  FiLogOut,
+  FiShoppingCart,
   FiStar,
+  FiUser,
 } from "react-icons/fi";
 import { SlCalender } from "react-icons/sl";
 import { TbReceiptRefund } from "react-icons/tb";
@@ -23,11 +22,7 @@ export default function Sidebar({ open, onClose }) {
   const pathname = usePathname();
   const { data } = useSession();
 
-
   const role = data?.user?.role;
-
-
-
 
   const adminItem = [
     { label: "Dashboard", icon: FiGrid, path: "/dashboard/admin-dashboard" },
@@ -70,6 +65,7 @@ export default function Sidebar({ open, onClose }) {
     { label: "Payments", icon: FiCreditCard, path: "/dashboard/payments" },
     { label: "refund", icon: TbReceiptRefund, path: "/dashboard/refund" },
 
+    { label: "Wallet Details", icon: FiBox, path: "/dashboard/wallet-details" },
     // { label: "Analytics", icon: FiBarChart2, path: "/dashboard/analytics" },
     { label: "Reviews", icon: FiStar, path: "/dashboard/reviews" },
     { label: "Messages", icon: FiMessageSquare, path: "/dashboard/messages" },
@@ -85,7 +81,12 @@ export default function Sidebar({ open, onClose }) {
       icon: SlCalender,
       path: "/dashboard/service-provider-dashboard/calender",
     },
-    { label: "Payments", icon: FiCreditCard, path: "/dashboard/providerPayments" },
+    { label: "Wallet Details", icon: FiBox, path: "/dashboard/wallet-details" },
+    {
+      label: "Payments",
+      icon: FiCreditCard,
+      path: "/dashboard/providerPayments",
+    },
     { label: "Messages", icon: FiMessageSquare, path: "/dashboard/messages" },
     { label: "Reviews", icon: FiStar, path: "/dashboard/reviews" },
     { label: "Settings", icon: FiSettings, path: "/dashboard/settings" },
@@ -106,7 +107,7 @@ export default function Sidebar({ open, onClose }) {
       {open && (
         <div
           onClick={onClose}
-          className="fixed inset-0 bg-black/30 z-40 lg:hidden"
+          className='fixed inset-0 bg-black/30 z-40 lg:hidden'
         />
       )}
 
@@ -117,23 +118,22 @@ export default function Sidebar({ open, onClose }) {
           flex flex-col pt-6 pb-6 px-4
           transition-all duration-300
           ${open ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
-        `}
-      >
+        `}>
         {/* LOGO */}
-        <Link href="/">
-          <div className="px-2 mb-8">
+        <Link href='/'>
+          <div className='px-2 mb-8'>
             <Image
-              src="/logo.png"
-              alt="Cresify Logo"
+              src='/logo.png'
+              alt='Cresify Logo'
               width={170}
               height={32}
-              className="rounded-xl mx-auto"
+              className='rounded-xl mx-auto'
             />
           </div>
         </Link>
 
         {/* NAVIGATION */}
-        <nav className="flex-1 overflow-y-auto scrollbar-hide space-y-1">
+        <nav className='flex-1 overflow-y-auto scrollbar-hide space-y-1'>
           {menuItems.map((item) => {
             const isActive = pathname === item.path;
 
@@ -147,8 +147,7 @@ export default function Sidebar({ open, onClose }) {
                       ? "bg-[#F4F0FF] text-[#4C1D95] font-semibold shadow-sm"
                       : "text-[#6F6C90] hover:bg-[#F7F6FF]"
                   }
-                `}
-              >
+                `}>
                 <item.icon
                   className={`text-[18px] ${
                     isActive ? "text-[#4C1D95]" : "text-[#6F6C90]"
@@ -161,17 +160,15 @@ export default function Sidebar({ open, onClose }) {
         </nav>
 
         {/* LOGOUT BUTTON */}
-        <div className="border-t border-[#F1F1F1] pt-4 mt-4">
-          <button 
-          
-          onClick={() => {
-  signOut({
-    callbackUrl: "/",
-  });
-}}
-
-          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-[15px] text-[#FF6A3D] hover:bg-[#FFF3EC] transition">
-            <FiLogOut className="text-[18px]" />
+        <div className='border-t border-[#F1F1F1] pt-4 mt-4'>
+          <button
+            onClick={() => {
+              signOut({
+                callbackUrl: "/",
+              });
+            }}
+            className='w-full flex items-center gap-3 px-4 py-3 rounded-xl text-[15px] text-[#FF6A3D] hover:bg-[#FFF3EC] transition'>
+            <FiLogOut className='text-[18px]' />
             Logout
           </button>
         </div>
