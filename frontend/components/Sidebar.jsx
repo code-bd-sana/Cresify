@@ -90,6 +90,7 @@ export default function Sidebar({ open, onClose }) {
     { label: "Messages", icon: FiMessageSquare, path: "/dashboard/messages" },
     { label: "Reviews", icon: FiStar, path: "/dashboard/reviews" },
     { label: "Settings", icon: FiSettings, path: "/dashboard/settings" },
+        { label: "refund", icon: TbReceiptRefund, path: "/dashboard/providerRefund" },
   ];
 
   const menuItems =

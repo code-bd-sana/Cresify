@@ -4,7 +4,10 @@ import { useGetProductReviewQuery, useGetServiceReviewQuery } from "@/feature/re
 import { Star, User } from "lucide-react";
 
 export default function CustomerReviews({ id }) {
+
+  console.log(id, 'kire id somosa to ekhaen');
   const { data: review, isLoading, isError } = useGetServiceReviewQuery(id);
+  console.log(review, 'review is hererererererer');
   
   // Get user data from reviews
   const reviews = review?.data || [];

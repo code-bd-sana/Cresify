@@ -108,12 +108,10 @@ export default function BookingList() {
 
   // Check if booking is eligible for review
   const canReviewBooking = (booking) => {
-    // শুধুমাত্র completed bookings এর জন্য রিভিউ দেয়া যাবে
+
     if (booking.status !== 'completed') return false;
     
-    // চেক করুন যে ইতিমধ্যে রিভিউ দেয়া হয়েছে কিনা
-    // এখানে আপনি API থেকে রিভিউ ডাটা চেক করতে পারেন
-    // এখনি আমরা ধরে নিচ্ছি সব completed booking রিভিউযোগ্য
+
     return true;
   };
 
@@ -192,7 +190,7 @@ export default function BookingList() {
     const reviewData = {
       id: userId,
       rating: reviewRating,
-      review: reviewText,
+      reviewText: reviewText,
       provider: selectedProviderForReview.provider._id,
       seller: selectedProviderForReview.provider._id, // same as provider in your case
       reply: reviewReply,
