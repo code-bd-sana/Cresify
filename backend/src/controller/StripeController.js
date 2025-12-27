@@ -2,6 +2,7 @@ import dotenv from "dotenv";
 import mongoose from "mongoose";
 import Stripe from "stripe";
 
+import Booking from "../models/BookingModel.js";
 import Order from "../models/OrderModel.js";
 import OrderVendor from "../models/OrderVendorModel.js";
 import Payment from "../models/PaymentModel.js";
@@ -11,7 +12,6 @@ import WalletLedger from "../models/WalletLedgerModel.js";
 import Wallet from "../models/WalletModel.js";
 import WebhookLog from "../models/WebhookLogModel.js";
 import { toTwo } from "../utils/money.js";
-import Booking from "../models/BookingModel.js";
 
 dotenv.config();
 
@@ -48,10 +48,10 @@ export const stripeWebhook = async (req, res) => {
      ===================================================== */
   if (event.type === "checkout.session.completed") {
     const stripeSession = event.data.object;
-      const dbSession = await mongoose.startSession();
+    const dbSession = await mongoose.startSession();
     const session = await mongoose.startSession();
 
-    console.log(stripeSession, 'stripeSession in webhook alalh goooo');
+    console.log(stripeSession, "stripeSession in webhook alalh goooo");
     try {
       await session.withTransaction(async () => {
         // Find the payment by stripeSessionId
@@ -206,7 +206,7 @@ export const stripeWebhook = async (req, res) => {
             if (txDocs.length)
               await Transaction.insertMany(txDocs, { session });
           }
-        }  else if (stripeSession.metadata?.itemType === "service") {
+        } else if (stripeSession.metadata?.itemType === "service") {
           if (payment.status === "paid") return;
 
           const booking = await Booking.findById(payment.booking).session(
@@ -243,6 +243,7 @@ export const stripeWebhook = async (req, res) => {
           /* ---- UPDATE BOOKING ---- */
           booking.paymentStatus = "completed";
           booking.status = "accept";
+          booking.paymentId = new mongoose.Types.ObjectId(payment._id);
           await booking.save({ session: dbSession });
 
           /* ---- WALLET UPDATE ---- */
@@ -293,7 +294,8 @@ export const stripeWebhook = async (req, res) => {
         }
       });
 
-      return res.json({ received: true });Payment
+      return res.json({ received: true });
+      Payment;
     } catch (err) {
       console.error("Webhook success error:", err);
       return res.status(500).send("Webhook processing failed");
@@ -381,14 +383,13 @@ export const stripeWebhook = async (req, res) => {
           payment.failedAt = new Date();
           await payment.save({ session });
 
-           // Find the booking
+          // Find the booking
           const booking = await Booking.findById(payment.booking);
 
           if (!booking) {
             throw new Error(`Booking not found for payment: ${payment._id}`);
           }
 
-          
           // Update booking status
           booking.paymentStatus = "cancelled";
           booking.status = "failed"; // Automatically accept when paid

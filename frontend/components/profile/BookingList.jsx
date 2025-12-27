@@ -263,6 +263,10 @@ export default function BookingList() {
       (link) => link.url.trim() !== ""
     );
 
+    console.log(selectedBooking, "Selected booking for refund");
+
+    const paymentId = selectedBooking?.paymentId;
+
     const refundData = {
       providerId: selectedBooking.provider._id,
       bookingId: selectedBooking._id,
@@ -270,9 +274,12 @@ export default function BookingList() {
       amount: selectedBooking.provider?.hourlyRate || 0,
       reason: refundForm.reason || undefined,
       evidence: validLinks.length > 0 ? validLinks : undefined,
+      paymentId: paymentId || undefined,
     };
 
     console.log("Submitting refund request:", refundData);
+
+    return;
 
     try {
       const result = await providerCreateRefund(refundData).unwrap();
