@@ -21,6 +21,9 @@ const refundSchema = new Schema(
     // Seller responsible for the refunded item(s)
     seller: { type: Schema.Types.ObjectId, ref: "User" },
 
+    // Provider (for service bookings) - may differ from `seller`/vendor
+    provider: { type: Schema.Types.ObjectId, ref: "User" },
+
     requestedBy: { type: Schema.Types.ObjectId, ref: "User", required: true },
     // Refund total amount (sum of refunded items + related shipping + taxes)
     amount: { type: Number, required: true, min: 0 },

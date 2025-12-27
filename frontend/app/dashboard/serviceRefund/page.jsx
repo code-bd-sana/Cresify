@@ -1,5 +1,5 @@
 "use client";
-import { useSellerRefundRequestQuery } from "@/feature/refund/RefundApi";
+import { useProviderRefundRequestQuery } from "@/feature/refund/RefundApi";
 import { useSession } from "next-auth/react";
 import { useState } from "react";
 import {
@@ -24,8 +24,8 @@ const ServiceRefundPage = () => {
   const [selectedRefund, setSelectedRefund] = useState(null);
 
   // API calls
-  const { data, isLoading, refetch } = useSellerRefundRequestQuery(
-    { sellerId, page, limit },
+  const { data, isLoading, refetch } = useProviderRefundRequestQuery(
+    { providerId: sellerId, page, limit },
     { skip: !sellerId }
   );
 
