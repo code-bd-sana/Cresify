@@ -1,5 +1,6 @@
 import Product from "../models/ProductModel.js";
 import Review from "../models/ReviewModel.js";
+import User from "../models/UserModel.js";
 
 export const saveReview = async (req, res) => {
   console.log(req.body, "reviw preview");
@@ -92,21 +93,41 @@ export const getReviewByProducts = async (req, res) => {
   }
 };
 
+
+
 export const getReviewBySellerId = async (req, res) => {
   try {
-    const id = req.params.id;
-    const reviews = await Review.find({ seller: id }).populate("user product");
+    const userId = req.params.id;
+
+    // User role fetch করা
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    let filter = {};
+    if (user.role === "provider") {
+      filter.provider = userId; // provider reviews
+    } else if (user.role === "seller") {
+      filter.seller = userId; // seller reviews
+    } else {
+      return res.status(400).json({ message: "Invalid user role" });
+    }
+
+    const reviews = await Review.find(filter).populate("user product");
+
     res.status(200).json({
       message: "Success",
       data: reviews,
     });
   } catch (error) {
     res.status(500).json({
+      message: error?.message || "Something went wrong",
       error,
-      message: error?.message,
     });
   }
 };
+
 export const getReviewByProviderId = async (req, res) => {
   try {
     const id = req.params.id;
