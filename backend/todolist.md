@@ -5,5 +5,5 @@
 1. wallet details page with withdraw request
 
 - wallet details show korte hobe ✅
-- seller and provider er strip account connect korte hobe
+- seller and provider er strip account connect korte hobe ✅
 - withdraw request korte hobe
