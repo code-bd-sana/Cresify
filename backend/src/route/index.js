@@ -17,8 +17,8 @@ import wishList from "./customer/WishListRoute.js";
 import review from "./reviewRoute.js";
 import sellerOrderRoute from "./seller/OrderRoute.js";
 import sellerPayoutRoute from "./seller/PayoutRoute.js";
-import sellerStripeRoute from "./seller/StripeRoute.js";
 import sellerRefundRoute from "./seller/RefundRoute.js";
+import sellerStripeRoute from "./seller/StripeRoute.js";
 
 const router = Router();
 

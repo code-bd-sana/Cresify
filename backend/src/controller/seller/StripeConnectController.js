@@ -22,7 +22,10 @@ export const createConnectLink = async (req, res) => {
     // If seller already has a stripe account id, reuse it
     let accountId = wallet.stripeAccountId;
     if (!accountId) {
-      const acct = await stripe.accounts.create({ type: "express", country: "US" });
+      const acct = await stripe.accounts.create({
+        type: "express",
+        country: "US",
+      });
       accountId = acct.id;
       wallet.stripeAccountId = accountId;
       wallet.stripeDetails = acct;
@@ -33,7 +36,9 @@ export const createConnectLink = async (req, res) => {
 
     const frontendReturn =
       returnUrl || process.env.FRONTEND_URL || "http://localhost:3000";
-    const refreshUrl = (process.env.FRONTEND_URL || "http://localhost:3000") + "/dashboard/wallet";
+    const refreshUrl =
+      (process.env.FRONTEND_URL || "http://localhost:3000") +
+      "/dashboard/wallet";
 
     const link = await stripe.accountLinks.create({
       account: accountId,
@@ -45,7 +50,9 @@ export const createConnectLink = async (req, res) => {
     return res.json({ url: link.url, accountId });
   } catch (err) {
     console.error("createConnectLink error", err);
-    return res.status(500).json({ message: "Failed to create connect link", error: err.message });
+    return res
+      .status(500)
+      .json({ message: "Failed to create connect link", error: err.message });
   }
 };
 
@@ -78,6 +85,8 @@ export const unlinkAccount = async (req, res) => {
     return res.json({ message: "Unlinked Stripe account" });
   } catch (err) {
     console.error("unlinkAccount error", err);
-    return res.status(500).json({ message: "Failed to unlink account", error: err.message });
+    return res
+      .status(500)
+      .json({ message: "Failed to unlink account", error: err.message });
   }
 };

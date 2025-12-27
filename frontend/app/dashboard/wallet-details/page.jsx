@@ -1,9 +1,9 @@
 "use client";
 
 import {
+  useConnectStripeMutation,
   useGetWalletQuery,
   useRequestPayoutMutation,
-  useConnectStripeMutation,
   useUnlinkStripeMutation,
 } from "@/feature/seller/WalletApi";
 import { useSession } from "next-auth/react";
@@ -267,6 +267,10 @@ function StripeAccountForm({
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState(1);
 
+  const { data } = useSession();
+
+  const user = data?.user;
+
   useEffect(() => {
     if (account && mode === "edit") {
       setFormData({
@@ -353,7 +357,10 @@ function StripeAccountForm({
   const handleConnectStripe = async () => {
     setLoading(true);
     try {
-      const res = await connectStripe({ sellerId: localStorage.getItem("userId"), returnUrl: window.location.href }).unwrap();
+      const res = await connectStripe({
+        sellerId: user?.id,
+        returnUrl: window.location.href,
+      }).unwrap();
       if (res?.url) {
         window.location.href = res.url;
       } else {
@@ -361,7 +368,10 @@ function StripeAccountForm({
       }
     } catch (error) {
       console.error("Stripe connect error:", error);
-      alert("Failed to initiate Stripe connect: " + (error?.data?.message || error.message));
+      alert(
+        "Failed to initiate Stripe connect: " +
+          (error?.data?.message || error.message)
+      );
       setLoading(false);
     }
   };
@@ -1093,10 +1103,15 @@ export default function WalletDetailsPage() {
     ) {
       setLoading(true);
       try {
-        await unlinkStripe({ sellerId: user?.id || localStorage.getItem("userId") }).unwrap();
+        await unlinkStripe({
+          sellerId: user?.id || localStorage.getItem("userId"),
+        }).unwrap();
       } catch (err) {
         console.error("unlink failed", err);
-        alert("Failed to unlink Stripe account: " + (err?.data?.message || err.message));
+        alert(
+          "Failed to unlink Stripe account: " +
+            (err?.data?.message || err.message)
+        );
       } finally {
         setStripeAccount(null);
         setLoading(false);

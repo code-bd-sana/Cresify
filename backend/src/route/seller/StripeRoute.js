@@ -1,5 +1,8 @@
 import { Router } from "express";
-import { createConnectLink, unlinkAccount } from "../../controller/seller/StripeConnectController.js";
+import {
+  createConnectLink,
+  unlinkAccount,
+} from "../../controller/seller/StripeConnectController.js";
 
 const router = Router();
 
