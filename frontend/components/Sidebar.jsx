@@ -64,6 +64,7 @@ export default function Sidebar({ open, onClose }) {
     { label: "Payments", icon: FiCreditCard, path: "/dashboard/payments" },
     { label: "refund", icon: TbReceiptRefund, path: "/dashboard/refund" },
 
+    { label: "Wallet Details", icon: FiBox, path: "/dashboard/wallet-details" },
     // { label: "Analytics", icon: FiBarChart2, path: "/dashboard/analytics" },
     { label: "Reviews", icon: FiStar, path: "/dashboard/reviews" },
     { label: "Messages", icon: FiMessageSquare, path: "/dashboard/messages" },

@@ -4,10 +4,8 @@ import { useEffect, useState } from "react";
 import {
   FaArrowDown,
   FaArrowUp,
-  FaBank,
   FaBuilding,
   FaCalendarAlt,
-  FaChartLine,
   FaCheck,
   FaCheckCircle,
   FaClock,
@@ -18,10 +16,7 @@ import {
   FaIdCard,
   FaInfoCircle,
   FaLink,
-  FaMobileAlt,
   FaMoneyBillAlt,
-  FaPaypal,
-  FaPercent,
   FaPhone,
   FaSearch,
   FaShieldAlt,
@@ -45,8 +40,6 @@ function SummaryCard({ title, value, icon, color, subtitle, onClick }) {
       "bg-gradient-to-br from-amber-50 to-orange-50 text-amber-700 border-amber-200",
     purple:
       "bg-gradient-to-br from-purple-50 to-violet-50 text-purple-700 border-purple-200",
-    red: "bg-gradient-to-br from-red-50 to-pink-50 text-red-700 border-red-200",
-    teal: "bg-gradient-to-br from-teal-50 to-cyan-50 text-teal-700 border-teal-200",
   };
 
   return (
@@ -79,15 +72,15 @@ function StripeAccountCard({ account, onEdit, onUnlink, onRefresh }) {
             <SiStripe className='text-3xl text-gray-400' />
           </div>
           <h3 className='text-lg font-semibold text-gray-700 mb-2'>
-            No Stripe Account Connected
+            No Stripe Express Account Connected
           </h3>
           <p className='text-gray-600 mb-4'>
-            Connect your Stripe account to receive payments
+            Connect your Stripe Express account to receive payments
           </p>
           <button
             onClick={() => onEdit(true)}
             className='px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg hover:from-purple-700 hover:to-indigo-700 transition-all flex items-center gap-2'>
-            <FaLink /> Connect Stripe Account
+            <FaLink /> Connect Stripe Express Account
           </button>
           <p className='text-xs text-gray-500 mt-3'>
             Secure • Verified • Instant Transfers
@@ -105,7 +98,9 @@ function StripeAccountCard({ account, onEdit, onUnlink, onRefresh }) {
             <SiStripe className='text-2xl text-purple-600' />
           </div>
           <div>
-            <h3 className='font-bold text-lg text-gray-900'>Stripe Account</h3>
+            <h3 className='font-bold text-lg text-gray-900'>
+              Stripe Express Account
+            </h3>
             <div className='flex items-center gap-2 mt-1'>
               <span
                 className={`px-2 py-1 rounded-full text-xs font-medium ${
@@ -120,6 +115,9 @@ function StripeAccountCard({ account, onEdit, onUnlink, onRefresh }) {
                   : account.status === "pending"
                   ? "⏳ Pending"
                   : "✗ Unverified"}
+              </span>
+              <span className='px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium'>
+                Express Type
               </span>
               <span className='text-xs text-gray-500'>
                 ID: {account.accountId?.substring(0, 8)}...
@@ -138,7 +136,7 @@ function StripeAccountCard({ account, onEdit, onUnlink, onRefresh }) {
       <div className='grid grid-cols-2 gap-4 mb-6'>
         <div className='bg-white p-3 rounded-lg border'>
           <p className='text-xs text-gray-500 mb-1'>Account Type</p>
-          <p className='font-semibold capitalize'>{account.type}</p>
+          <p className='font-semibold capitalize'>Express</p>
         </div>
         <div className='bg-white p-3 rounded-lg border'>
           <p className='text-xs text-gray-500 mb-1'>Currency</p>
@@ -171,7 +169,7 @@ function StripeAccountCard({ account, onEdit, onUnlink, onRefresh }) {
       <div className='bg-white p-4 rounded-lg border mb-4'>
         <h4 className='font-semibold text-gray-800 mb-2 flex items-center gap-2'>
           <FaUser className='text-purple-500' />
-          Account Details
+          Express Account Details
         </h4>
         <div className='space-y-2 text-sm'>
           <div className='flex justify-between'>
@@ -331,7 +329,10 @@ function StripeAccountForm({
     if (validateStep(step)) {
       setLoading(true);
       try {
-        await onSave(formData);
+        await onSave({
+          ...formData,
+          type: "express", // Force Express type
+        });
         onClose();
       } catch (error) {
         console.error("Form submission error:", error);
@@ -344,8 +345,8 @@ function StripeAccountForm({
   const handleConnectStripe = async () => {
     setLoading(true);
     try {
-      // Redirect to Stripe Connect
-      window.location.href = `/api/stripe/connect?returnUrl=${encodeURIComponent(
+      // Redirect to Stripe Connect with Express type
+      window.location.href = `/api/stripe/connect?type=express&returnUrl=${encodeURIComponent(
         window.location.href
       )}`;
     } catch (error) {
@@ -362,6 +363,19 @@ function StripeAccountForm({
             <h4 className='font-semibold text-gray-900 mb-4'>
               Basic Information
             </h4>
+
+            <div className='bg-blue-50 p-3 rounded-lg border border-blue-200 mb-4'>
+              <div className='flex items-center gap-2'>
+                <SiStripe className='text-purple-600' />
+                <p className='text-sm font-medium text-blue-800'>
+                  Stripe Express Account
+                </p>
+              </div>
+              <p className='text-xs text-blue-700 mt-1'>
+                You're connecting a Stripe Express account for receiving
+                payments
+              </p>
+            </div>
 
             <div>
               <label className='block text-sm font-medium text-gray-700 mb-2'>
@@ -579,8 +593,8 @@ function StripeAccountForm({
               Bank Account Details
             </h4>
             <p className='text-sm text-gray-600 mb-4'>
-              This information is securely transmitted to Stripe for payout
-              processing.
+              This information is securely transmitted to Stripe for Express
+              account payout processing.
             </p>
 
             <div>
@@ -677,13 +691,13 @@ function StripeAccountForm({
             <h3 className='text-xl font-bold text-gray-900 flex items-center gap-2'>
               <SiStripe className='text-purple-600' />
               {mode === "connect"
-                ? "Connect Stripe Account"
-                : "Update Stripe Account"}
+                ? "Connect Stripe Express Account"
+                : "Update Stripe Express Account"}
             </h3>
             <p className='text-sm text-gray-600'>
               {mode === "connect"
-                ? "Connect your Stripe account to receive payments"
-                : "Update your Stripe account information"}
+                ? "Connect your Stripe Express account to receive payments"
+                : "Update your Stripe Express account information"}
             </p>
           </div>
           <button
@@ -731,8 +745,9 @@ function StripeAccountForm({
                 Secure & Encrypted
               </p>
               <p className='text-xs text-blue-700 mt-1'>
-                All information is encrypted and securely transmitted to Stripe.
-                We never store your bank account details on our servers.
+                All information is encrypted and securely transmitted to Stripe
+                Express. We never store your bank account details on our
+                servers.
               </p>
             </div>
           </div>
@@ -756,7 +771,7 @@ function StripeAccountForm({
                 disabled={loading}
                 className='flex-1 px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg hover:from-purple-700 hover:to-indigo-700 transition-all disabled:opacity-50 flex items-center justify-center gap-2'>
                 <SiStripe className='text-xl' />
-                Connect via Stripe Dashboard
+                Connect Stripe Express
               </button>
             )}
 
@@ -787,78 +802,10 @@ function StripeAccountForm({
 }
 
 /* ======================================================
-  PAYOUT METHOD CARD COMPONENT
-====================================================== */
-function PayoutMethodCard({
-  title,
-  icon,
-  description,
-  fee,
-  processingTime,
-  isSelected,
-  onClick,
-  isConnected = false,
-}) {
-  return (
-    <div
-      className={`p-4 rounded-lg border-2 cursor-pointer transition-all hover:border-blue-400 relative ${
-        isSelected ? "border-blue-500 bg-blue-50" : "border-gray-200 bg-white"
-      }`}
-      onClick={onClick}>
-      {isConnected && (
-        <div className='absolute top-2 right-2'>
-          <span className='text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full'>
-            Connected
-          </span>
-        </div>
-      )}
-
-      <div className='flex items-start gap-3'>
-        <div
-          className={`p-3 rounded-lg ${
-            isSelected ? "bg-blue-100" : "bg-gray-100"
-          }`}>
-          <div className='text-xl text-gray-700'>{icon}</div>
-        </div>
-        <div className='flex-1'>
-          <div className='flex justify-between items-start'>
-            <h3 className='font-semibold text-gray-900'>{title}</h3>
-            {isSelected && (
-              <span className='text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full'>
-                Selected
-              </span>
-            )}
-          </div>
-          <p className='text-sm text-gray-600 mt-1'>{description}</p>
-          <div className='flex items-center gap-4 mt-3 text-xs text-gray-500'>
-            <span className='flex items-center gap-1'>
-              <FaPercent className='w-3 h-3' />
-              Fee: {fee}
-            </span>
-            <span className='flex items-center gap-1'>
-              <FaClock className='w-3 h-3' />
-              {processingTime}
-            </span>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ======================================================
   WITHDRAWAL REQUEST MODAL
 ====================================================== */
-function WithdrawalModal({
-  isOpen,
-  onClose,
-  wallet,
-  selectedMethod,
-  onSubmit,
-  stripeAccount,
-}) {
+function WithdrawalModal({ isOpen, onClose, wallet, onSubmit, stripeAccount }) {
   const [amount, setAmount] = useState("");
-  const [accountDetails, setAccountDetails] = useState("");
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
 
@@ -875,12 +822,8 @@ function WithdrawalModal({
       newErrors.amount = "Amount exceeds available balance";
     }
 
-    if (parseFloat(amount) < (selectedMethod?.minAmount || 10)) {
-      newErrors.amount = `Minimum withdrawal is $${selectedMethod.minAmount}`;
-    }
-
-    if (!accountDetails.trim() && selectedMethod.requiresAccountDetails) {
-      newErrors.accountDetails = "Please provide account details";
+    if (parseFloat(amount) < 10) {
+      newErrors.amount = "Minimum withdrawal is $10";
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -892,11 +835,10 @@ function WithdrawalModal({
     try {
       await onSubmit({
         amount: parseFloat(amount),
-        method: selectedMethod.id,
-        accountDetails,
+        method: "stripe",
         currency: wallet.currency,
-        fee: selectedMethod.fee || 0,
-        netAmount: parseFloat(amount) * (1 - (selectedMethod.fee || 0) / 100),
+        fee: 1.5,
+        netAmount: parseFloat(amount) * 0.985,
         stripeAccountId: stripeAccount?.accountId,
       });
       onClose();
@@ -907,9 +849,7 @@ function WithdrawalModal({
     }
   };
 
-  const feeAmount =
-    parseFloat(amount || 0) * ((selectedMethod?.fee || 0) / 100);
-  const netAmount = parseFloat(amount || 0) - feeAmount;
+  const netAmount = parseFloat(amount || 0) * 0.985;
 
   return (
     <div className='fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50'>
@@ -917,10 +857,10 @@ function WithdrawalModal({
         <div className='flex items-center justify-between mb-6'>
           <div>
             <h3 className='text-xl font-bold text-gray-900'>
-              Request Withdrawal
+              Request Stripe Withdrawal
             </h3>
             <p className='text-sm text-gray-600'>
-              Withdraw funds via {selectedMethod?.name}
+              Withdraw funds via Stripe Express
             </p>
           </div>
           <button
@@ -943,12 +883,12 @@ function WithdrawalModal({
           </div>
 
           {/* Stripe Account Info */}
-          {stripeAccount && selectedMethod.id === "stripe" && (
+          {stripeAccount && (
             <div className='bg-purple-50 p-4 rounded-lg border border-purple-200'>
               <div className='flex items-center gap-2 mb-2'>
                 <SiStripe className='text-purple-600' />
                 <span className='font-medium text-purple-800'>
-                  Stripe Account
+                  Stripe Express Account
                 </span>
               </div>
               <div className='text-sm text-purple-700'>
@@ -983,7 +923,7 @@ function WithdrawalModal({
                 } px-3 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500`}
                 placeholder='0.00'
                 step='0.01'
-                min={selectedMethod?.minAmount || 10}
+                min='10'
                 max={wallet.balance}
               />
             </div>
@@ -1008,33 +948,6 @@ function WithdrawalModal({
             </div>
           </div>
 
-          {/* Account Details */}
-          {selectedMethod?.requiresAccountDetails &&
-            selectedMethod.id !== "stripe" && (
-              <div>
-                <label className='block text-sm font-medium text-gray-700 mb-2'>
-                  {selectedMethod.accountLabel || "Account Details"}
-                </label>
-                <input
-                  type='text'
-                  value={accountDetails}
-                  onChange={(e) => {
-                    setAccountDetails(e.target.value);
-                    setErrors({ ...errors, accountDetails: null });
-                  }}
-                  className={`block w-full rounded-lg border ${
-                    errors.accountDetails ? "border-red-300" : "border-gray-300"
-                  } px-3 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500`}
-                  placeholder={selectedMethod.accountPlaceholder}
-                />
-                {errors.accountDetails && (
-                  <p className='mt-1 text-sm text-red-600'>
-                    {errors.accountDetails}
-                  </p>
-                )}
-              </div>
-            )}
-
           {/* Calculation Summary */}
           <div className='bg-gray-50 p-4 rounded-lg space-y-2'>
             <div className='flex justify-between text-sm'>
@@ -1045,12 +958,10 @@ function WithdrawalModal({
               </span>
             </div>
             <div className='flex justify-between text-sm'>
-              <span className='text-gray-600'>
-                Processing Fee ({selectedMethod?.fee || 0}%)
-              </span>
-              <span className='text-red-600'>
+              <span className='text-gray-600'>Stripe Fee (1.5%)</span>
+              <span className='font-medium text-red-600'>
                 -{wallet.currency}
-                {feeAmount.toFixed(2)}
+                {(parseFloat(amount || 0) * 0.015).toFixed(2)}
               </span>
             </div>
             <div className='flex justify-between text-sm pt-2 border-t border-gray-300'>
@@ -1066,11 +977,8 @@ function WithdrawalModal({
           <div className='flex items-start gap-2 text-xs text-gray-500'>
             <FaInfoCircle className='w-4 h-4 flex-shrink-0 mt-0.5' />
             <p>
-              Withdrawal requests are processed within{" "}
-              {selectedMethod?.processingTime}. A {selectedMethod?.fee}%
-              processing fee applies. Minimum withdrawal:
-              {wallet.currency}
-              {selectedMethod?.minAmount || 10}.
+              Withdrawal requests are processed within 2-3 business days via
+              Stripe Express. Minimum withdrawal: {wallet.currency}10.
             </p>
           </div>
 
@@ -1084,7 +992,7 @@ function WithdrawalModal({
             </button>
             <button
               onClick={handleSubmit}
-              disabled={loading}
+              disabled={loading || !stripeAccount}
               className='flex-1 px-4 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all disabled:opacity-50'>
               {loading ? "Processing..." : "Request Withdrawal"}
             </button>
@@ -1104,66 +1012,10 @@ export default function WalletDetailsPage() {
   const [transactions, setTransactions] = useState([]);
   const [showWithdrawalModal, setShowWithdrawalModal] = useState(false);
   const [showStripeForm, setShowStripeForm] = useState(false);
-  const [selectedPayoutMethod, setSelectedPayoutMethod] = useState("stripe");
   const [stripeAccount, setStripeAccount] = useState(null);
-  const [activeTab, setActiveTab] = useState("transactions");
-  const [dateFilter, setDateFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [stripeFormMode, setStripeFormMode] = useState("connect");
 
-  // Payout methods configuration
-  const payoutMethods = [
-    {
-      id: "stripe",
-      name: "Stripe Transfer",
-      icon: <SiStripe />,
-      description: "Direct transfer via Stripe to your bank account",
-      fee: 1.5,
-      processingTime: "2-3 business days",
-      minAmount: 10,
-      requiresAccountDetails: false,
-      accountLabel: "Stripe Account",
-      accountPlaceholder: "Connected via Stripe",
-    },
-    {
-      id: "bank",
-      name: "Direct Bank Transfer",
-      icon: <FaBank />,
-      description: "Direct transfer to your bank account",
-      fee: 2.0,
-      processingTime: "3-5 business days",
-      minAmount: 50,
-      requiresAccountDetails: true,
-      accountLabel: "Bank Account Number",
-      accountPlaceholder: "Enter your bank account number",
-    },
-    {
-      id: "paypal",
-      name: "PayPal",
-      icon: <FaPaypal />,
-      description: "Instant transfer to your PayPal account",
-      fee: 2.5,
-      processingTime: "Instant",
-      minAmount: 20,
-      requiresAccountDetails: true,
-      accountLabel: "PayPal Email",
-      accountPlaceholder: "your.email@example.com",
-    },
-    {
-      id: "mobile_money",
-      name: "Mobile Money",
-      icon: <FaMobileAlt />,
-      description: "Transfer to mobile wallet",
-      fee: 1.0,
-      processingTime: "Instant",
-      minAmount: 5,
-      requiresAccountDetails: true,
-      accountLabel: "Mobile Number",
-      accountPlaceholder: "+1 234 567 8900",
-    },
-  ];
-
-  /* ---------------- MOCK API ---------------- */
   useEffect(() => {
     setTimeout(() => {
       setWallet({
@@ -1178,7 +1030,7 @@ export default function WalletDetailsPage() {
         thisMonthEarnings: 890.5,
       });
 
-      // Mock Stripe account data
+      // Mock Stripe Express account data
       setStripeAccount({
         accountId: "acct_1MnpWjP9NtFqXy2L",
         email: "provider@example.com",
@@ -1251,13 +1103,13 @@ export default function WalletDetailsPage() {
   }, []);
 
   const handleStripeAccountSave = async (data) => {
-    // In a real app, this would call an API endpoint
-    console.log("Saving Stripe account:", data);
+    console.log("Saving Stripe Express account:", data);
     setLoading(true);
     setTimeout(() => {
       setStripeAccount({
         ...stripeAccount,
         ...data,
+        type: "express", // Ensure type is express
         updatedAt: new Date().toISOString().split("T")[0],
       });
       setLoading(false);
@@ -1268,13 +1120,12 @@ export default function WalletDetailsPage() {
   const handleStripeAccountUnlink = async () => {
     if (
       window.confirm(
-        "Are you sure you want to unlink your Stripe account? This will disable Stripe payouts."
+        "Are you sure you want to unlink your Stripe Express account? This will disable Stripe payouts."
       )
     ) {
       setLoading(true);
       setTimeout(() => {
         setStripeAccount(null);
-        setSelectedPayoutMethod("bank");
         setLoading(false);
       }, 800);
     }
@@ -1283,7 +1134,6 @@ export default function WalletDetailsPage() {
   const handleStripeAccountRefresh = async () => {
     setLoading(true);
     setTimeout(() => {
-      // Simulate refreshing account status
       setLoading(false);
     }, 800);
   };
@@ -1303,11 +1153,11 @@ export default function WalletDetailsPage() {
       const newTransaction = {
         id: `TXN-${Date.now()}`,
         type: "debit",
-        title: `Withdrawal via ${withdrawalData.method}`,
+        title: `Withdrawal via Stripe Express`,
         amount: withdrawalData.amount,
         status: "pending",
         createdAt: new Date().toISOString().split("T")[0],
-        method: withdrawalData.method,
+        method: "stripe",
         reference: `WTH-${Date.now().toString().slice(-6)}`,
       };
 
@@ -1328,10 +1178,6 @@ export default function WalletDetailsPage() {
     );
   }
 
-  const selectedMethod = payoutMethods.find(
-    (m) => m.id === selectedPayoutMethod
-  );
-
   return (
     <div className='min-h-screen bg-gray-50 p-4 md:p-6'>
       <div className='max-w-7xl mx-auto'>
@@ -1344,21 +1190,21 @@ export default function WalletDetailsPage() {
                 Wallet Details
               </h1>
               <p className='text-gray-600'>
-                Manage your earnings and payout methods
+                Manage your earnings and Stripe Express account
               </p>
             </div>
           </div>
 
           <button
             onClick={() => setShowWithdrawalModal(true)}
-            disabled={!stripeAccount && selectedPayoutMethod === "stripe"}
+            disabled={!stripeAccount}
             className={`px-6 py-3 rounded-lg font-medium flex items-center gap-2 transition-all ${
-              !stripeAccount && selectedPayoutMethod === "stripe"
+              !stripeAccount
                 ? "bg-gray-300 text-gray-500 cursor-not-allowed"
                 : "bg-gradient-to-r from-green-600 to-emerald-600 text-white hover:from-green-700 hover:to-emerald-700"
             }`}>
             <GiTakeMyMoney className='text-xl' />
-            Request Payout
+            Request Stripe Payout
           </button>
         </div>
 
@@ -1370,7 +1216,7 @@ export default function WalletDetailsPage() {
             icon={<GiTakeMyMoney />}
             color='green'
             subtitle='Ready for withdrawal'
-            onClick={() => setShowWithdrawalModal(true)}
+            onClick={() => stripeAccount && setShowWithdrawalModal(true)}
           />
           <SummaryCard
             title='Total Earned'
@@ -1417,110 +1263,60 @@ export default function WalletDetailsPage() {
           <div className='space-y-6'>
             <div className='bg-white rounded-xl border p-5'>
               <h3 className='font-semibold text-gray-900 mb-4 flex items-center gap-2'>
-                <FaChartLine className='text-blue-500' />
-                This Month
+                <SiStripe className='text-purple-500' />
+                Stripe Express Info
               </h3>
               <div className='space-y-3'>
                 <div className='flex justify-between'>
-                  <span className='text-gray-600'>Earnings</span>
-                  <span className='font-semibold'>
-                    {wallet.currency}
-                    {wallet.thisMonthEarnings.toFixed(2)}
+                  <span className='text-gray-600'>Payouts Enabled</span>
+                  <span
+                    className={`font-semibold ${
+                      stripeAccount?.payoutsEnabled
+                        ? "text-green-600"
+                        : "text-red-600"
+                    }`}>
+                    {stripeAccount?.payoutsEnabled ? "Yes" : "No"}
                   </span>
                 </div>
                 <div className='flex justify-between'>
-                  <span className='text-gray-600'>Withdrawn</span>
-                  <span className='font-semibold text-green-600'>
-                    {wallet.currency}
-                    {wallet.totalWithdrawn.toFixed(2)}
-                  </span>
+                  <span className='text-gray-600'>Account Type</span>
+                  <span className='font-semibold'>Express</span>
                 </div>
                 <div className='flex justify-between'>
-                  <span className='text-gray-600'>Services</span>
-                  <span className='font-semibold'>12</span>
+                  <span className='text-gray-600'>Withdrawal Fee</span>
+                  <span className='font-semibold'>1.5%</span>
+                </div>
+                <div className='flex justify-between'>
+                  <span className='text-gray-600'>Processing Time</span>
+                  <span className='font-semibold'>2-3 days</span>
                 </div>
               </div>
             </div>
 
-            <div className='bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-5'>
-              <h3 className='font-semibold text-gray-900 mb-3'>Need Help?</h3>
+            <div className='bg-gradient-to-br from-purple-50 to-indigo-50 border border-purple-200 rounded-xl p-5'>
+              <h3 className='font-semibold text-gray-900 mb-3 flex items-center gap-2'>
+                <SiStripe className='text-purple-600' />
+                Stripe Express Benefits
+              </h3>
               <ul className='space-y-2 text-sm'>
                 <li className='flex items-center gap-2'>
-                  <FaInfoCircle className='text-blue-500' />
-                  <a href='#' className='text-blue-600 hover:underline'>
-                    Payment FAQ
-                  </a>
+                  <FaCheckCircle className='text-green-500' />
+                  <span className='text-gray-700'>Direct bank transfers</span>
                 </li>
                 <li className='flex items-center gap-2'>
-                  <FaShieldAlt className='text-green-500' />
-                  <a href='#' className='text-blue-600 hover:underline'>
-                    Security Guidelines
-                  </a>
+                  <FaCheckCircle className='text-green-500' />
+                  <span className='text-gray-700'>Low 1.5% fee</span>
                 </li>
                 <li className='flex items-center gap-2'>
-                  <FaClock className='text-amber-500' />
-                  <a href='#' className='text-blue-600 hover:underline'>
-                    Processing Times
-                  </a>
+                  <FaCheckCircle className='text-green-500' />
+                  <span className='text-gray-700'>Secure & PCI compliant</span>
+                </li>
+                <li className='flex items-center gap-2'>
+                  <FaCheckCircle className='text-green-500' />
+                  <span className='text-gray-700'>24/7 support</span>
                 </li>
               </ul>
             </div>
-          </div>
-        </div>
-
-        {/* ===== PAYOUT METHODS ===== */}
-        <div className='bg-white rounded-xl shadow mb-8'>
-          <div className='px-6 py-4 border-b'>
-            <h2 className='text-lg font-semibold text-gray-800 flex items-center gap-2'>
-              <FaCreditCard />
-              Payout Methods
-            </h2>
-            <p className='text-sm text-gray-600 mt-1'>
-              Select how you want to receive payments
-            </p>
-          </div>
-
-          <div className='p-6'>
-            <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-              {payoutMethods.map((method) => (
-                <PayoutMethodCard
-                  key={method.id}
-                  title={method.name}
-                  icon={method.icon}
-                  description={method.description}
-                  fee={`${method.fee}%`}
-                  processingTime={method.processingTime}
-                  isSelected={selectedPayoutMethod === method.id}
-                  isConnected={method.id === "stripe" && stripeAccount !== null}
-                  onClick={() => {
-                    if (method.id === "stripe" && !stripeAccount) {
-                      setStripeFormMode("connect");
-                      setShowStripeForm(true);
-                    } else {
-                      setSelectedPayoutMethod(method.id);
-                    }
-                  }}
-                />
-              ))}
-            </div>
-
-            {selectedPayoutMethod === "stripe" && !stripeAccount && (
-              <div className='mt-4 p-4 bg-amber-50 border border-amber-200 rounded-lg'>
-                <div className='flex items-start gap-3'>
-                  <FaInfoCircle className='text-amber-500 text-xl flex-shrink-0' />
-                  <div>
-                    <p className='font-medium text-amber-800'>
-                      Stripe Account Required
-                    </p>
-                    <p className='text-sm text-amber-700 mt-1'>
-                      Please connect your Stripe account to use this payout
-                      method. Stripe provides secure payment processing and
-                      direct bank transfers.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
         </div>
 
@@ -1533,31 +1329,19 @@ export default function WalletDetailsPage() {
                 Wallet Transactions
               </h2>
               <p className='text-sm text-gray-600 mt-1'>
-                All your earnings and withdrawals
+                All your earnings and Stripe withdrawals
               </p>
             </div>
 
-            <div className='flex flex-col sm:flex-row gap-3'>
-              <div className='relative'>
-                <FaSearch className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400' />
-                <input
-                  type='text'
-                  placeholder='Search transactions...'
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className='pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
-                />
-              </div>
-
-              <select
-                value={dateFilter}
-                onChange={(e) => setDateFilter(e.target.value)}
-                className='border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500'>
-                <option value='all'>All Time</option>
-                <option value='today'>Today</option>
-                <option value='week'>This Week</option>
-                <option value='month'>This Month</option>
-              </select>
+            <div className='relative'>
+              <FaSearch className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400' />
+              <input
+                type='text'
+                placeholder='Search transactions...'
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className='pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+              />
             </div>
           </div>
 
@@ -1635,15 +1419,20 @@ export default function WalletDetailsPage() {
                       <td className='px-6 py-4 whitespace-nowrap'>
                         <div className='flex items-center gap-2'>
                           {txn.method === "stripe" ? (
-                            <SiStripe className='text-purple-500' />
-                          ) : txn.method === "paypal" ? (
-                            <FaPaypal className='text-blue-500' />
+                            <>
+                              <SiStripe className='text-purple-500' />
+                              <span className='text-sm text-gray-700'>
+                                Stripe Express
+                              </span>
+                            </>
                           ) : (
-                            <FaCreditCard className='text-gray-500' />
+                            <>
+                              <FaCreditCard className='text-gray-500' />
+                              <span className='text-sm text-gray-700 capitalize'>
+                                {txn.method}
+                              </span>
+                            </>
                           )}
-                          <span className='text-sm text-gray-700 capitalize'>
-                            {txn.method}
-                          </span>
                         </div>
                       </td>
                       <td className='px-6 py-4 whitespace-nowrap'>
@@ -1686,7 +1475,6 @@ export default function WalletDetailsPage() {
         isOpen={showWithdrawalModal}
         onClose={() => setShowWithdrawalModal(false)}
         wallet={wallet}
-        selectedMethod={selectedMethod}
         onSubmit={handleWithdrawalSubmit}
         stripeAccount={stripeAccount}
       />
