@@ -427,7 +427,7 @@ export default function BookingList() {
               No Bookings Yet
             </h3>
             <p className='text-gray-600 mb-6'>
-              You haven't made any bookings yet.
+              You haven&lsquo;t made any bookings yet.
             </p>
             <button className='px-6 py-3 bg-gradient-to-r from-[#9838E1] to-[#F68E44] text-white rounded-[10px] hover:opacity-90 transition-opacity'>
               Browse Services
