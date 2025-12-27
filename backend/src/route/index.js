@@ -14,6 +14,7 @@ import cart from "./customer/CartRoute.js";
 import customerOrderRoute from "./customer/OrderRoute.js";
 import customerRefundRoute from "./customer/RefundRoute.js";
 import wishList from "./customer/WishListRoute.js";
+import providerRefundRoute from "./provider/RefundRoute.js";
 import review from "./reviewRoute.js";
 import sellerOrderRoute from "./seller/OrderRoute.js";
 import sellerPayoutRoute from "./seller/PayoutRoute.js";
@@ -45,5 +46,6 @@ router.use("/seller/order", sellerOrderRoute);
 router.use("/chat", chat);
 router.use("/seller/overview", sellerOverview);
 router.use("/seller/refund", sellerRefundRoute);
+router.use("/provider/refund", providerRefundRoute);
 
 export default router;

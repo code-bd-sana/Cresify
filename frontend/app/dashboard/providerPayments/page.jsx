@@ -19,6 +19,7 @@ import {
   Receipt,
   AlertCircle,
   BarChart3,
+  Loader2,
 } from 'lucide-react';
 
 const PaymentHistory = () => {
@@ -30,6 +31,8 @@ const PaymentHistory = () => {
   const [limit, setLimit] = useState(10);
   const [searchQuery, setSearchQuery] = useState('');
   const [dateFilter, setDateFilter] = useState('all');
+  const [paymentBookings, setPaymentBookings] = useState([]);
+  const [paymentTotals, setPaymentTotals] = useState(null);
   
   // Calculate skip for pagination
   const skip = (currentPage - 1) * limit;
@@ -39,75 +42,99 @@ const PaymentHistory = () => {
     { skip: !providerId }
   );
 
-  // Debug: log the data structure
+  console.log('Payment Booking Data:', bookingsData);
+
+  // Process booking data when it loads
   useEffect(() => {
     if (bookingsData?.data?.bookings) {
-      console.log('Raw bookings data:', bookingsData.data.bookings);
-      console.log('Sample booking:', bookingsData.data.bookings[0]);
+      console.log('Processing bookings:', bookingsData.data.bookings);
+      
+      // Filter completed/accepted bookings
+      const completedBookings = bookingsData.data.bookings.filter(booking => 
+        booking.status === 'completed' || booking.status === 'accept'
+      );
+      
+      console.log('Completed bookings:', completedBookings);
+      
+      // Process each booking to add payment information
+      const processedBookings = completedBookings.map(booking => {
+        const paymentInfo = calculatePaymentForBooking(booking);
+        return {
+          ...booking,
+          paymentInfo,
+          isPaid: booking.paymentStatus === 'completed',
+          paymentDate: booking.updatedAt || booking.createdAt,
+        };
+      });
+      
+      setPaymentBookings(processedBookings);
+      
+      // Calculate totals
+      const totals = calculatePaymentTotals(processedBookings);
+      setPaymentTotals(totals);
+      
+      console.log('Processed bookings:', processedBookings);
+      console.log('Payment totals:', totals);
     }
   }, [bookingsData]);
 
+  // Default hourly rate if not provided
+  const DEFAULT_HOURLY_RATE = 50;
+  
   // Constants for commission and tax
   const COMMISSION_RATE = 0.10; // 10% commission
   const TAX_RATE = 0.19; // 19% tax on commission
   
-  const bookings = bookingsData?.data?.bookings || [];
-  const totalBookings = bookingsData?.data?.total || 0;
-  const totalPages = Math.ceil(totalBookings / limit);
-
-  // Filter to only show accepted bookings
-  const acceptedBookings = bookings.filter(booking => booking.status === 'accept');
-  
-  // Helper function to convert duration string to hours
-  const parseDurationToHours = (duration) => {
-    if (!duration) return 1; // Default to 1 hour if not specified
-    
-    // If duration is a number, return it directly
-    if (typeof duration === 'number') return duration;
-    
-    // If duration is a string like "60m", "1h", "2.5h", etc.
-    const durationStr = duration.toString().toLowerCase();
-    
-    // Check for minutes format like "60m"
-    if (durationStr.includes('m')) {
-      const minutes = parseFloat(durationStr.replace('m', '').trim());
-      return minutes / 60; // Convert minutes to hours
+  // Helper function to get hourly rate
+  const getHourlyRate = (booking) => {
+    // Try to get hourly rate from provider
+    if (booking.provider?.hourlyRate) {
+      return parseFloat(booking.provider.hourlyRate);
     }
     
-    // Check for hours format like "2h" or "1.5h"
-    if (durationStr.includes('h')) {
-      return parseFloat(durationStr.replace('h', '').trim());
+    // Try to get from service details
+    if (booking.provider?.serviceDetails?.hourlyRate) {
+      return parseFloat(booking.provider.serviceDetails.hourlyRate);
     }
     
-    // If it's just a number, assume it's in minutes if less than 10
-    const num = parseFloat(durationStr);
-    if (!isNaN(num)) {
-      return num < 10 ? num : num / 60; // If < 10, assume hours, else assume minutes
+    // Check booking itself
+    if (booking.hourlyRate) {
+      return parseFloat(booking.hourlyRate);
     }
     
-    return 1; // Default to 1 hour
+    // Default rate
+    return DEFAULT_HOURLY_RATE;
   };
 
-  // Calculate payment breakdown for each booking
-  const calculatePaymentBreakdown = (booking) => {
+  // Calculate payment for a single booking
+  const calculatePaymentForBooking = (booking) => {
     try {
-      const hourlyRate = parseFloat(booking.provider?.hourlyRate) || 0;
+      console.log('Calculating payment for booking:', booking._id, booking);
       
-      // Get duration from timeSlot or dateId
-      let durationInHours = 1; // Default
+      const hourlyRate = getHourlyRate(booking);
+      
+      // Get duration - check multiple possible locations
+      let durationInHours = 1; // Default 1 hour
       
       // Check timeSlot first
       if (booking.timeSlot?.duration) {
         durationInHours = parseDurationToHours(booking.timeSlot.duration);
       } 
-      // Fallback to dateId duration
+      // Check dateId
       else if (booking.dateId?.duration) {
         durationInHours = parseDurationToHours(booking.dateId.duration);
       }
+      // Check booking directly
+      else if (booking.duration) {
+        durationInHours = parseDurationToHours(booking.duration);
+      }
       
-      console.log('Calculation for booking:', booking._id);
-      console.log('Hourly rate:', hourlyRate);
-      console.log('Duration (hours):', durationInHours);
+      console.log('Calculation details:', {
+        hourlyRate,
+        durationInHours,
+        timeSlot: booking.timeSlot,
+        dateId: booking.dateId
+      });
       
       // Calculate total earned
       const totalEarned = hourlyRate * durationInHours;
@@ -122,51 +149,65 @@ const PaymentHistory = () => {
       const netPayout = totalEarned - commission - taxOnCommission;
       
       return {
+        hourlyRate: parseFloat(hourlyRate.toFixed(2)),
+        durationHours: parseFloat(durationInHours.toFixed(2)),
         totalEarned: parseFloat(totalEarned.toFixed(2)),
         commission: parseFloat(commission.toFixed(2)),
         taxOnCommission: parseFloat(taxOnCommission.toFixed(2)),
         netPayout: parseFloat(netPayout.toFixed(2)),
-        serviceDuration: parseFloat(durationInHours.toFixed(2)),
-        hourlyRate: parseFloat(hourlyRate.toFixed(2)),
         paymentStatus: booking.paymentStatus || 'processing',
-        breakdownDetails: {
-          hourlyRate,
-          durationInHours,
-          calculation: `$${hourlyRate} × ${durationInHours} hours = $${totalEarned.toFixed(2)}`,
-        }
+        calculation: `$${hourlyRate.toFixed(2)} × ${durationInHours.toFixed(2)} hours = $${totalEarned.toFixed(2)}`,
       };
     } catch (error) {
-      console.error('Error calculating payment breakdown:', error);
+      console.error('Error calculating payment:', error);
       return {
-        totalEarned: 0,
-        commission: 0,
-        taxOnCommission: 0,
-        netPayout: 0,
-        serviceDuration: 0,
-        hourlyRate: 0,
+        hourlyRate: DEFAULT_HOURLY_RATE,
+        durationHours: 1,
+        totalEarned: DEFAULT_HOURLY_RATE,
+        commission: (DEFAULT_HOURLY_RATE * COMMISSION_RATE).toFixed(2),
+        taxOnCommission: (DEFAULT_HOURLY_RATE * COMMISSION_RATE * TAX_RATE).toFixed(2),
+        netPayout: (DEFAULT_HOURLY_RATE * (1 - COMMISSION_RATE - (COMMISSION_RATE * TAX_RATE))).toFixed(2),
         paymentStatus: 'error',
-        breakdownDetails: {
-          hourlyRate: 0,
-          durationInHours: 0,
-          calculation: 'Calculation error',
-        }
+        calculation: 'Default calculation',
       };
     }
   };
 
-  // Calculate totals for all accepted bookings
-  const calculateTotals = () => {
-    const totals = acceptedBookings.reduce((acc, booking) => {
-      const breakdown = calculatePaymentBreakdown(booking);
+  // Calculate total payments
+  const calculatePaymentTotals = (bookings) => {
+    if (!bookings || bookings.length === 0) {
+      return {
+        totalBookings: 0,
+        totalEarned: 0,
+        totalCommission: 0,
+        totalTax: 0,
+        totalNetPayout: 0,
+        completedPayments: 0,
+        pendingPayments: 0,
+      };
+    }
+
+    const totals = bookings.reduce((acc, booking) => {
+      const payment = booking.paymentInfo || calculatePaymentForBooking(booking);
       
       return {
-        totalEarned: acc.totalEarned + breakdown.totalEarned,
-        totalCommission: acc.totalCommission + breakdown.commission,
-        totalTax: acc.totalTax + breakdown.taxOnCommission,
-        totalNetPayout: acc.totalNetPayout + breakdown.netPayout,
-        count: acc.count + 1,
+        totalEarned: acc.totalEarned + payment.totalEarned,
+        totalCommission: acc.totalCommission + payment.commission,
+        totalTax: acc.totalTax + payment.taxOnCommission,
+        totalNetPayout: acc.totalNetPayout + payment.netPayout,
+        totalBookings: acc.totalBookings + 1,
+        completedPayments: acc.completedPayments + (payment.paymentStatus === 'completed' ? 1 : 0),
+        pendingPayments: acc.pendingPayments + (payment.paymentStatus !== 'completed' ? 1 : 0),
       };
-    }, { totalEarned: 0, totalCommission: 0, totalTax: 0, totalNetPayout: 0, count: 0 });
+    }, {
+      totalEarned: 0,
+      totalCommission: 0,
+      totalTax: 0,
+      totalNetPayout: 0,
+      totalBookings: 0,
+      completedPayments: 0,
+      pendingPayments: 0,
+    });
 
     return {
       ...totals,
@@ -174,10 +215,36 @@ const PaymentHistory = () => {
       totalCommission: parseFloat(totals.totalCommission.toFixed(2)),
       totalTax: parseFloat(totals.totalTax.toFixed(2)),
       totalNetPayout: parseFloat(totals.totalNetPayout.toFixed(2)),
+      averagePerBooking: totals.totalBookings > 0 
+        ? parseFloat((totals.totalNetPayout / totals.totalBookings).toFixed(2))
+        : 0,
     };
   };
 
-  const totals = calculateTotals();
+  // Helper function to convert duration string to hours
+  const parseDurationToHours = (duration) => {
+    if (!duration) return 1;
+    
+    // If duration is a number, return it directly
+    if (typeof duration === 'number') return duration;
+    
+    const durationStr = duration.toString().toLowerCase().trim();
+    
+    // Handle "60m", "1.5h", etc.
+    if (durationStr.includes('m')) {
+      const minutes = parseFloat(durationStr.replace('m', '').trim());
+      return !isNaN(minutes) ? minutes / 60 : 1;
+    }
+    
+    if (durationStr.includes('h')) {
+      const hours = parseFloat(durationStr.replace('h', '').trim());
+      return !isNaN(hours) ? hours : 1;
+    }
+    
+    // Try to parse as number
+    const num = parseFloat(durationStr);
+    return !isNaN(num) ? (num < 10 ? num : num / 60) : 1;
+  };
 
   // Format date
   const formatDate = (dateString) => {
@@ -209,10 +276,10 @@ const PaymentHistory = () => {
   };
 
   // Filter bookings based on search and date
-  const filteredBookings = acceptedBookings.filter(booking => {
+  const filteredBookings = paymentBookings.filter(booking => {
     const matchesSearch = !searchQuery || 
       booking._id?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (booking.customer?.fullName || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (booking.customer?.fullName || booking.customer?.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
       (booking.provider?.serviceName || '').toLowerCase().includes(searchQuery.toLowerCase());
 
     if (!matchesSearch) return false;
@@ -239,13 +306,14 @@ const PaymentHistory = () => {
           return true;
       }
     } catch (error) {
+      console.error('Date filtering error:', error);
       return true;
     }
   });
 
   // Handle page change
   const handlePageChange = (page) => {
-    if (page >= 1 && page <= totalPages) {
+    if (page >= 1 && page <= Math.ceil(paymentBookings.length / limit)) {
       setCurrentPage(page);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
@@ -256,24 +324,29 @@ const PaymentHistory = () => {
     const csvData = [
       ['Booking ID', 'Customer', 'Service', 'Date', 'Time', 'Hourly Rate', 'Duration', 'Total Earned', 'Commission (10%)', 'Tax on Commission (19%)', 'Net Payout', 'Payment Status'],
       ...filteredBookings.map(booking => {
-        const breakdown = calculatePaymentBreakdown(booking);
+        const payment = booking.paymentInfo || calculatePaymentForBooking(booking);
         return [
           `#${booking._id?.slice(-8) || ''}`,
-          booking.customer?.fullName || '',
-          booking.provider?.serviceName || '',
-          formatDate(booking.dateId?.workingDate),
-          `${formatTime(booking.timeSlot?.startTime)} - ${formatTime(booking.timeSlot?.endTime)}`,
-          `$${breakdown.hourlyRate}`,
-          `${breakdown.serviceDuration} hour${breakdown.serviceDuration !== 1 ? 's' : ''}`,
-          `$${breakdown.totalEarned}`,
-          `$${breakdown.commission}`,
-          `$${breakdown.taxOnCommission}`,
-          `$${breakdown.netPayout}`,
-          breakdown.paymentStatus,
+          booking.customer?.fullName || booking.customer?.name || '',
+          booking.provider?.serviceName || 'Service',
+          formatDate(booking.dateId?.workingDate || booking.createdAt),
+          booking.timeSlot ? `${formatTime(booking.timeSlot.startTime)} - ${formatTime(booking.timeSlot.endTime)}` : 'N/A',
+          `$${payment.hourlyRate}`,
+          `${payment.durationHours} hour${payment.durationHours !== 1 ? 's' : ''}`,
+          `$${payment.totalEarned}`,
+          `$${payment.commission}`,
+          `$${payment.taxOnCommission}`,
+          `$${payment.netPayout}`,
+          payment.paymentStatus,
         ];
       }),
       [],
-      ['Total', '', '', '', '', '', '', `$${totals.totalEarned}`, `$${totals.totalCommission}`, `$${totals.totalTax}`, `$${totals.totalNetPayout}`, ''],
+      ['Total', '', '', '', '', '', '', 
+       `$${paymentTotals?.totalEarned || 0}`, 
+       `$${paymentTotals?.totalCommission || 0}`, 
+       `$${paymentTotals?.totalTax || 0}`, 
+       `$${paymentTotals?.totalNetPayout || 0}`, 
+       `${paymentTotals?.completedPayments || 0} completed, ${paymentTotals?.pendingPayments || 0} pending`],
     ];
 
     const csvContent = csvData.map(row => row.join(',')).join('\n');
@@ -285,24 +358,18 @@ const PaymentHistory = () => {
     a.click();
   };
 
+  // Calculate pagination
+  const startIndex = (currentPage - 1) * limit;
+  const endIndex = startIndex + limit;
+  const paginatedBookings = filteredBookings.slice(startIndex, endIndex);
+  const totalPages = Math.ceil(filteredBookings.length / limit);
+
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 p-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="animate-pulse">
-            <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-              {[...Array(4)].map((_, i) => (
-                <div key={i} className="h-32 bg-gray-200 rounded-lg"></div>
-              ))}
-            </div>
-            <div className="bg-white rounded-lg shadow">
-              <div className="h-12 bg-gray-200 rounded-t-lg"></div>
-              {[...Array(5)].map((_, i) => (
-                <div key={i} className="h-16 border-b border-gray-200"></div>
-              ))}
-            </div>
-          </div>
+      <div className="min-h-screen bg-gray-50 p-6 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-12 h-12 text-blue-600 animate-spin mx-auto mb-4" />
+          <p className="text-gray-600">Loading payment history...</p>
         </div>
       </div>
     );
@@ -312,16 +379,17 @@ const PaymentHistory = () => {
     return (
       <div className="min-h-screen bg-gray-50 p-6">
         <div className="max-w-7xl mx-auto">
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-            <div className="flex items-center">
-              <AlertCircle className="w-5 h-5 text-red-400 mr-2" />
-              <p className="text-red-700">Error loading payment history. Please try again.</p>
+          <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+            <div className="flex items-center mb-4">
+              <AlertCircle className="w-6 h-6 text-red-400 mr-3" />
+              <h3 className="text-lg font-semibold text-red-800">Error Loading Data</h3>
             </div>
+            <p className="text-red-700 mb-4">Failed to load payment history. Please try again.</p>
             <button 
               onClick={() => refetch()}
-              className="mt-2 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+              className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
             >
-              Retry
+              Retry Loading
             </button>
           </div>
         </div>
@@ -333,93 +401,132 @@ const PaymentHistory = () => {
     <div className="min-h-screen bg-gray-50 p-4 md:p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Payment History</h1>
-          <p className="text-gray-600 mt-1">Track your earnings, commissions, and tax breakdown</p>
-          
-          {/* Debug Info - Remove in production */}
-          <div className="mt-2 p-2 bg-gray-100 rounded text-xs">
-            <p className="font-medium">Data Status:</p>
-            <p>Total Bookings: {bookings.length}</p>
-            <p>Accepted Bookings: {acceptedBookings.length}</p>
-            <p>Provider Hourly Rate: ${acceptedBookings[0]?.provider?.hourlyRate || 'N/A'}</p>
+        <div className="mb-8">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Payment History</h1>
+              <p className="text-gray-600 mt-1">Track your earnings, commissions, and tax breakdown</p>
+            </div>
+            
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-gray-600">
+                {paymentBookings.length} completed bookings
+              </span>
+              <button
+                onClick={() => refetch()}
+                className="px-3 py-1.5 text-sm bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors"
+              >
+                Refresh Data
+              </button>
+            </div>
           </div>
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           {/* Total Earnings */}
-          <div className="bg-white rounded-lg shadow p-4">
+          <div className="bg-white rounded-xl shadow p-5">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Total Earnings</p>
-                <p className="text-2xl font-bold text-gray-900">${totals.totalEarned}</p>
-                <p className="text-xs text-gray-500 mt-1">{totals.count} accepted bookings</p>
+                <p className="text-sm text-gray-600 font-medium">Total Earnings</p>
+                <p className="text-2xl font-bold text-gray-900 mt-1">
+                  ${paymentTotals?.totalEarned?.toLocaleString() || '0.00'}
+                </p>
+                <div className="flex items-center gap-2 mt-2">
+                  <div className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded-full">
+                    {paymentTotals?.totalBookings || 0} bookings
+                  </div>
+                </div>
               </div>
-              <div className="p-2 bg-blue-100 rounded-lg">
+              <div className="p-3 bg-blue-100 rounded-xl">
                 <DollarSign className="w-6 h-6 text-blue-600" />
               </div>
             </div>
           </div>
           
           {/* Platform Commission */}
-          <div className="bg-white rounded-lg shadow p-4">
+          <div className="bg-white rounded-xl shadow p-5">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Platform Commission</p>
-                <p className="text-2xl font-bold text-red-600">${totals.totalCommission}</p>
-                <p className="text-xs text-gray-500 mt-1">10% of earnings</p>
+                <p className="text-sm text-gray-600 font-medium">Platform Commission</p>
+                <p className="text-2xl font-bold text-red-600 mt-1">
+                  ${paymentTotals?.totalCommission?.toLocaleString() || '0.00'}
+                </p>
+                <p className="text-xs text-gray-500 mt-2">10% of total earnings</p>
               </div>
-              <div className="p-2 bg-red-100 rounded-lg">
+              <div className="p-3 bg-red-100 rounded-xl">
                 <Percent className="w-6 h-6 text-red-600" />
               </div>
             </div>
           </div>
           
           {/* Tax on Commission */}
-          <div className="bg-white rounded-lg shadow p-4">
+          <div className="bg-white rounded-xl shadow p-5">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Tax on Commission</p>
-                <p className="text-2xl font-bold text-yellow-600">${totals.totalTax}</p>
-                <p className="text-xs text-gray-500 mt-1">19% of commission</p>
+                <p className="text-sm text-gray-600 font-medium">Tax on Commission</p>
+                <p className="text-2xl font-bold text-yellow-600 mt-1">
+                  ${paymentTotals?.totalTax?.toLocaleString() || '0.00'}
+                </p>
+                <p className="text-xs text-gray-500 mt-2">19% of commission</p>
               </div>
-              <div className="p-2 bg-yellow-100 rounded-lg">
+              <div className="p-3 bg-yellow-100 rounded-xl">
                 <Receipt className="w-6 h-6 text-yellow-600" />
               </div>
             </div>
           </div>
           
           {/* Net Payout */}
-          <div className="bg-white rounded-lg shadow p-4">
+          <div className="bg-white rounded-xl shadow p-5">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Net Payout</p>
-                <p className="text-2xl font-bold text-green-600">${totals.totalNetPayout}</p>
-                <p className="text-xs text-gray-500 mt-1">Amount you receive</p>
+                <p className="text-sm text-gray-600 font-medium">Net Payout</p>
+                <p className="text-2xl font-bold text-green-600 mt-1">
+                  ${paymentTotals?.totalNetPayout?.toLocaleString() || '0.00'}
+                </p>
+                <div className="flex items-center gap-2 mt-2">
+                  <div className="text-xs px-2 py-1 bg-green-100 text-green-700 rounded-full">
+                    ${paymentTotals?.averagePerBooking || '0.00'} avg/booking
+                  </div>
+                </div>
               </div>
-              <div className="p-2 bg-green-100 rounded-lg">
+              <div className="p-3 bg-green-100 rounded-xl">
                 <TrendingUp className="w-6 h-6 text-green-600" />
               </div>
             </div>
           </div>
         </div>
 
-        {/* Commission & Tax Info */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-          <div className="flex items-start">
-            <div className="flex-shrink-0 mt-0.5">
-              <BarChart3 className="w-5 h-5 text-blue-500" />
+        {/* Payment Calculation Info */}
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-5 mb-8">
+          <div className="flex items-start gap-4">
+            <div className="flex-shrink-0">
+              <BarChart3 className="w-6 h-6 text-blue-600 mt-1" />
             </div>
-            <div className="ml-3">
-              <h3 className="text-sm font-medium text-blue-800">Payment Calculation Formula</h3>
-              <div className="mt-2 text-sm text-blue-700 space-y-1">
-                <p>• <span className="font-semibold">Total Earnings</span> = Hourly Rate × Service Duration</p>
-                <p>• <span className="font-semibold">Platform Commission</span> = Total Earnings × 10%</p>
-                <p>• <span className="font-semibold">Tax on Commission</span> = Platform Commission × 19%</p>
-                <p>• <span className="font-semibold">Net Payout</span> = Total Earnings - Commission - Tax</p>
-                <p className="mt-2 text-xs text-blue-600 bg-blue-100 p-2 rounded">
-                  Example: $100/hour × 2 hours = $200 → $20 commission → $3.80 tax → $176.20 net payout
+            <div className="flex-1">
+              <h3 className="text-lg font-semibold text-blue-800 mb-3">How Your Earnings Are Calculated</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="bg-white p-3 rounded-lg">
+                  <p className="text-sm font-medium text-gray-700">Hourly Rate × Duration</p>
+                  <p className="text-xs text-gray-600 mt-1">Your rate multiplied by service hours</p>
+                </div>
+                <div className="bg-white p-3 rounded-lg">
+                  <p className="text-sm font-medium text-red-600">-10% Platform Fee</p>
+                  <p className="text-xs text-gray-600 mt-1">Service platform commission</p>
+                </div>
+                <div className="bg-white p-3 rounded-lg">
+                  <p className="text-sm font-medium text-yellow-600">-19% Tax on Fee</p>
+                  <p className="text-xs text-gray-600 mt-1">Tax applied to platform commission</p>
+                </div>
+                <div className="bg-white p-3 rounded-lg border-2 border-green-200">
+                  <p className="text-sm font-medium text-green-600">= Your Net Earnings</p>
+                  <p className="text-xs text-gray-600 mt-1">Amount deposited to your account</p>
+                </div>
+              </div>
+              <div className="mt-4 p-3 bg-blue-100 rounded-lg">
+                <p className="text-sm text-blue-800 font-medium">Example Calculation:</p>
+                <p className="text-sm text-blue-700 mt-1">
+                  $50/hour × 2 hours = $100 → -$10 platform fee → -$1.90 tax → $88.10 net payout
                 </p>
               </div>
             </div>
@@ -427,28 +534,28 @@ const PaymentHistory = () => {
         </div>
 
         {/* Controls */}
-        <div className="bg-white rounded-lg shadow mb-6 p-4">
-          <div className="flex flex-col md:flex-row gap-4 justify-between items-center">
-            <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
+        <div className="bg-white rounded-xl shadow mb-8 p-5">
+          <div className="flex flex-col lg:flex-row gap-4 justify-between items-start lg:items-center">
+            <div className="flex flex-col md:flex-row gap-4 w-full lg:w-auto">
               {/* Search */}
               <div className="relative flex-1 md:w-64">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                 <input
                   type="text"
-                  placeholder="Search bookings..."
+                  placeholder="Search by booking ID, customer name..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
 
               {/* Date Filter */}
-              <div className="flex items-center gap-2">
-                <Calendar className="text-gray-400 w-4 h-4" />
+              <div className="flex items-center gap-3">
+                <Calendar className="text-gray-400 w-5 h-5" />
                 <select
                   value={dateFilter}
                   onChange={(e) => setDateFilter(e.target.value)}
-                  className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
                   <option value="all">All Time</option>
                   <option value="today">Today</option>
@@ -459,7 +566,7 @@ const PaymentHistory = () => {
               </div>
 
               {/* Items Per Page */}
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3">
                 <span className="text-sm text-gray-600">Show:</span>
                 <select
                   value={limit}
@@ -467,12 +574,12 @@ const PaymentHistory = () => {
                     setLimit(Number(e.target.value));
                     setCurrentPage(1);
                   }}
-                  className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
+                  <option value="5">5</option>
                   <option value="10">10</option>
-                  <option value="25">25</option>
+                  <option value="20">20</option>
                   <option value="50">50</option>
-                  <option value="100">100</option>
                 </select>
               </div>
             </div>
@@ -480,325 +587,387 @@ const PaymentHistory = () => {
             {/* Export Button */}
             <button
               onClick={handleExportCSV}
-              className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+              disabled={paymentBookings.length === 0}
+              className={`flex items-center gap-2 px-5 py-3 rounded-lg font-medium transition-colors ${
+                paymentBookings.length === 0
+                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                  : 'bg-green-600 text-white hover:bg-green-700'
+              }`}
             >
-              <Download className="w-4 h-4" />
+              <Download className="w-5 h-5" />
               Export CSV
             </button>
           </div>
         </div>
 
         {/* Table */}
-        <div className="bg-white rounded-lg shadow overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Booking Details
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Service Info
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Earnings Breakdown
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Payment Status
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {filteredBookings.length === 0 ? (
-                  <tr>
-                    <td colSpan={4} className="px-6 py-12 text-center text-gray-500">
-                      <div className="flex flex-col items-center justify-center">
-                        <CreditCard className="w-12 h-12 text-gray-400 mb-3" />
-                        <p className="text-lg font-medium text-gray-900">No payment records found</p>
-                        <p className="text-gray-600 mt-1">
-                          {acceptedBookings.length === 0 
-                            ? 'No accepted bookings yet' 
-                            : 'Try adjusting your filters'}
-                        </p>
-                      </div>
-                    </td>
-                  </tr>
-                ) : (
-                  filteredBookings.map((booking) => {
-                    const breakdown = calculatePaymentBreakdown(booking);
-                    
-                    return (
-                      <tr key={booking._id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4">
-                          <div className="flex items-center">
-                            <div className="flex-shrink-0 h-8 w-8 bg-blue-100 rounded-full flex items-center justify-center">
-                              <User className="h-4 w-4 text-blue-600" />
-                            </div>
-                            <div className="ml-3">
-                              <div className="text-sm font-medium text-gray-900">
-                                {booking.customer?.fullName || 'N/A'}
-                              </div>
-                              <div className="text-xs text-gray-500">
-                                #{booking._id?.slice(-8) || 'N/A'}
-                              </div>
-                            </div>
-                          </div>
-                          <div className="mt-2 text-sm text-gray-900">
-                            {formatDate(booking.dateId?.workingDate)}
-                          </div>
-                          <div className="text-xs text-gray-500 flex items-center gap-1">
-                            <Clock className="w-3 h-3" />
-                            {formatTime(booking.timeSlot?.startTime)} - {formatTime(booking.timeSlot?.endTime)}
-                          </div>
-                        </td>
-                        
-                        <td className="px-6 py-4">
-                          <div className="text-sm font-medium text-gray-900">
-                            {booking.provider?.serviceName || 'N/A'}
-                          </div>
-                          <div className="text-xs text-gray-500 mt-1">
-                            Hourly Rate: <span className="font-semibold">${breakdown.hourlyRate}/hr</span>
-                          </div>
-                          <div className="text-xs text-gray-500">
-                            Duration: <span className="font-semibold">{breakdown.serviceDuration} hour{breakdown.serviceDuration !== 1 ? 's' : ''}</span>
-                            {booking.timeSlot?.duration && (
-                              <span className="text-gray-400 ml-1">({booking.timeSlot.duration})</span>
-                            )}
-                          </div>
-                          <div className="mt-1 text-xs text-blue-600">
-                            {breakdown.breakdownDetails.calculation}
-                          </div>
-                        </td>
-                        
-                        <td className="px-6 py-4">
-                          <div className="space-y-1">
-                            {/* Total Earned */}
-                            <div className="flex justify-between text-sm">
-                              <span className="text-gray-600">Total Earned:</span>
-                              <span className="font-medium text-gray-900">${breakdown.totalEarned}</span>
-                            </div>
-                            
-                            {/* Commission */}
-                            <div className="flex justify-between text-sm">
-                              <div className="flex items-center gap-1 text-gray-600">
-                                <Percent className="w-3 h-3" />
-                                <span>Commission (10%):</span>
-                              </div>
-                              <span className="font-medium text-red-600">-${breakdown.commission}</span>
-                            </div>
-                            
-                            {/* Tax on Commission */}
-                            <div className="flex justify-between text-sm">
-                              <div className="flex items-center gap-1 text-gray-600">
-                                <Receipt className="w-3 h-3" />
-                                <span>Tax on Commission (19%):</span>
-                              </div>
-                              <span className="font-medium text-yellow-600">-${breakdown.taxOnCommission}</span>
-                            </div>
-                            
-                            {/* Net Payout */}
-                            <div className="flex justify-between text-sm pt-1 border-t border-gray-100">
-                              <span className="font-medium text-gray-700">Net Payout:</span>
-                              <span className="font-bold text-green-600">${breakdown.netPayout}</span>
-                            </div>
-                          </div>
-                        </td>
-                        
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex flex-col items-start gap-2">
-                            <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                              breakdown.paymentStatus === 'completed' 
-                                ? 'bg-green-100 text-green-800' 
-                                : breakdown.paymentStatus === 'processing'
-                                ? 'bg-yellow-100 text-yellow-800'
-                                : 'bg-gray-100 text-gray-800'
-                            }`}>
-                              {breakdown.paymentStatus === 'completed' 
-                                ? <CheckCircle className="w-3 h-3 mr-1" />
-                                : <Clock className="w-3 h-3 mr-1" />
-                              }
-                              {breakdown.paymentStatus?.charAt(0).toUpperCase() + breakdown.paymentStatus?.slice(1) || 'Processing'}
-                            </span>
-                            
-                            <div className="text-xs text-gray-500">
-                              {booking.paymentMethod?.charAt(0)?.toUpperCase() + booking.paymentMethod?.slice(1) || 'N/A'}
-                            </div>
-                            
-                            <button
-                              onClick={() => console.log('View receipt for:', booking._id, 'Breakdown:', breakdown)}
-                              className="text-xs text-blue-600 hover:text-blue-800 hover:underline"
-                            >
-                              View Details
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Pagination */}
-          {totalPages > 0 && (
-            <div className="px-6 py-4 border-t border-gray-200">
-              <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-                <div className="text-sm text-gray-700">
-                  Showing <span className="font-medium">{Math.min((currentPage - 1) * limit + 1, totalBookings)}</span> to{' '}
-                  <span className="font-medium">{Math.min(currentPage * limit, totalBookings)}</span> of{' '}
-                  <span className="font-medium">{totalBookings}</span> bookings
-                </div>
-                
-                <div className="flex items-center gap-2">
-                  {/* Previous Button */}
-                  <button
-                    onClick={() => handlePageChange(currentPage - 1)}
-                    disabled={currentPage === 1}
-                    className={`px-3 py-2 rounded border flex items-center ${
-                      currentPage === 1
-                        ? 'text-gray-400 bg-gray-100 cursor-not-allowed'
-                        : 'text-gray-700 border-gray-300 hover:bg-gray-50 transition-colors'
-                    }`}
-                  >
-                    <ChevronLeft className="w-4 h-4" />
-                  </button>
-                  
-                  {/* Page Numbers */}
-                  <div className="flex items-center gap-1">
-                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                      let pageNumber;
-                      if (totalPages <= 5) {
-                        pageNumber = i + 1;
-                      } else if (currentPage <= 3) {
-                        pageNumber = i + 1;
-                      } else if (currentPage >= totalPages - 2) {
-                        pageNumber = totalPages - 4 + i;
-                      } else {
-                        pageNumber = currentPage - 2 + i;
-                      }
-                      
-                      return (
-                        <button
-                          key={pageNumber}
-                          onClick={() => handlePageChange(pageNumber)}
-                          className={`px-3 py-2 rounded min-w-[40px] ${
-                            currentPage === pageNumber
-                              ? 'bg-blue-600 text-white'
-                              : 'text-gray-700 border border-gray-300 hover:bg-gray-50 transition-colors'
-                          }`}
-                        >
-                          {pageNumber}
-                        </button>
-                      );
-                    })}
-                    
-                    {totalPages > 5 && currentPage < totalPages - 2 && (
-                      <>
-                        <span className="px-1">...</span>
-                        <button
-                          onClick={() => handlePageChange(totalPages)}
-                          className="px-3 py-2 rounded text-gray-700 border border-gray-300 hover:bg-gray-50 transition-colors"
-                        >
-                          {totalPages}
-                        </button>
-                      </>
-                    )}
-                  </div>
-                  
-                  {/* Next Button */}
-                  <button
-                    onClick={() => handlePageChange(currentPage + 1)}
-                    disabled={currentPage === totalPages}
-                    className={`px-3 py-2 rounded border flex items-center ${
-                      currentPage === totalPages
-                        ? 'text-gray-400 bg-gray-100 cursor-not-allowed'
-                        : 'text-gray-700 border-gray-300 hover:bg-gray-50 transition-colors'
-                    }`}
-                  >
-                    <ChevronRight className="w-4 h-4" />
-                  </button>
-                </div>
+        <div className="bg-white rounded-xl shadow overflow-hidden">
+          {paymentBookings.length === 0 ? (
+            <div className="p-12 text-center">
+              <CreditCard className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+              <h3 className="text-xl font-semibold text-gray-700 mb-2">No Payment Records Yet</h3>
+              <p className="text-gray-500 max-w-md mx-auto mb-6">
+                You don't have any completed bookings with payments yet. Once you complete services, your payment history will appear here.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <button
+                  onClick={() => refetch()}
+                  className="px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  Check for New Bookings
+                </button>
+                <button
+                  onClick={() => window.location.href = '/dashboard'}
+                  className="px-5 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  Go to Dashboard
+                </button>
               </div>
             </div>
+          ) : filteredBookings.length === 0 ? (
+            <div className="p-12 text-center">
+              <Search className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+              <h3 className="text-xl font-semibold text-gray-700 mb-2">No Matching Results</h3>
+              <p className="text-gray-500 max-w-md mx-auto">
+                No payment records match your search criteria. Try adjusting your filters.
+              </p>
+            </div>
+          ) : (
+            <>
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                        Booking Details
+                      </th>
+                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                        Service & Duration
+                      </th>
+                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                        Earnings Breakdown
+                      </th>
+                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                        Payment Status
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-100">
+                    {paginatedBookings.map((booking) => {
+                      const payment = booking.paymentInfo || calculatePaymentForBooking(booking);
+                      const isCompleted = payment.paymentStatus === 'completed';
+                      
+                      return (
+                        <tr key={booking._id} className="hover:bg-gray-50 transition-colors">
+                          {/* Booking Details */}
+                          <td className="px-6 py-5">
+                            <div className="flex items-start gap-3">
+                              <div className="flex-shrink-0">
+                                <div className="h-10 w-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg flex items-center justify-center">
+                                  <User className="h-5 w-5 text-white" />
+                                </div>
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-semibold text-gray-900 truncate">
+                                  {booking.customer?.fullName || booking.customer?.name || 'Customer'}
+                                </p>
+                                <p className="text-xs text-gray-500 mt-1">
+                                  ID: #{booking._id?.slice(-8) || 'N/A'}
+                                </p>
+                                <div className="mt-2 space-y-1">
+                                  <div className="flex items-center gap-2 text-xs text-gray-600">
+                                    <Calendar className="w-3 h-3" />
+                                    {formatDate(booking.dateId?.workingDate || booking.createdAt)}
+                                  </div>
+                                  {booking.timeSlot && (
+                                    <div className="flex items-center gap-2 text-xs text-gray-600">
+                                      <Clock className="w-3 h-3" />
+                                      {formatTime(booking.timeSlot.startTime)} - {formatTime(booking.timeSlot.endTime)}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+                          
+                          {/* Service & Duration */}
+                          <td className="px-6 py-5">
+                            <div className="space-y-2">
+                              <div>
+                                <p className="text-sm font-medium text-gray-900">
+                                  {booking.provider?.serviceName || 'Service'}
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                  Category: {booking.provider?.serviceCategory || 'General'}
+                                </p>
+                              </div>
+                              <div className="space-y-1">
+                                <div className="flex justify-between text-sm">
+                                  <span className="text-gray-600">Hourly Rate:</span>
+                                  <span className="font-semibold text-blue-600">${payment.hourlyRate}/hr</span>
+                                </div>
+                                <div className="flex justify-between text-sm">
+                                  <span className="text-gray-600">Duration:</span>
+                                  <span className="font-semibold">{payment.durationHours} hour{payment.durationHours !== 1 ? 's' : ''}</span>
+                                </div>
+                                <div className="text-xs text-gray-500 italic mt-2">
+                                  {payment.calculation}
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+                          
+                          {/* Earnings Breakdown */}
+                          <td className="px-6 py-5">
+                            <div className="space-y-3">
+                              {/* Total Earned */}
+                              <div className="flex justify-between items-center">
+                                <span className="text-sm text-gray-600">Total Earned:</span>
+                                <span className="text-sm font-bold text-gray-900">${payment.totalEarned}</span>
+                              </div>
+                              
+                              {/* Commission */}
+                              <div className="flex justify-between items-center">
+                                <div className="flex items-center gap-1">
+                                  <Percent className="w-3 h-3 text-red-500" />
+                                  <span className="text-sm text-gray-600">Commission (10%):</span>
+                                </div>
+                                <span className="text-sm font-medium text-red-600">-${payment.commission}</span>
+                              </div>
+                              
+                              {/* Tax */}
+                              <div className="flex justify-between items-center">
+                                <div className="flex items-center gap-1">
+                                  <Receipt className="w-3 h-3 text-yellow-500" />
+                                  <span className="text-sm text-gray-600">Tax on Commission (19%):</span>
+                                </div>
+                                <span className="text-sm font-medium text-yellow-600">-${payment.taxOnCommission}</span>
+                              </div>
+                              
+                              {/* Net Payout */}
+                              <div className="pt-2 border-t border-gray-200">
+                                <div className="flex justify-between items-center">
+                                  <span className="text-sm font-semibold text-gray-700">Net Payout:</span>
+                                  <span className="text-lg font-bold text-green-600">${payment.netPayout}</span>
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+                          
+                          {/* Payment Status */}
+                          <td className="px-6 py-5">
+                            <div className="space-y-3">
+                              <div className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold ${
+                                isCompleted
+                                  ? 'bg-green-100 text-green-800'
+                                  : 'bg-yellow-100 text-yellow-800'
+                              }`}>
+                                {isCompleted ? (
+                                  <CheckCircle className="w-3 h-3 mr-1.5" />
+                                ) : (
+                                  <Clock className="w-3 h-3 mr-1.5" />
+                                )}
+                                {isCompleted ? 'Paid' : 'Processing'}
+                              </div>
+                              
+                              <div className="text-xs text-gray-600">
+                                Method: {booking.paymentMethod?.toUpperCase() || 'Card'}
+                              </div>
+                              
+                              <div className="text-xs text-gray-500">
+                                {formatDate(booking.updatedAt || booking.createdAt)}
+                              </div>
+                              
+                              {/* <button
+                                onClick={() => {
+                                  // Handle view details
+                                  console.log('View booking details:', booking);
+                                  alert(`Booking Details:\nID: ${booking._id}\nCustomer: ${booking.customer?.name}\nStatus: ${payment.paymentStatus}\nNet Payout: $${payment.netPayout}`);
+                                }}
+                                className="text-xs text-blue-600 hover:text-blue-800 hover:underline"
+                              >
+                                View Receipt
+                              </button> */}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="px-6 py-4 border-t border-gray-200">
+                  <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+                    <div className="text-sm text-gray-700">
+                      Showing <span className="font-semibold">{startIndex + 1}</span> to{' '}
+                      <span className="font-semibold">{Math.min(endIndex, filteredBookings.length)}</span> of{' '}
+                      <span className="font-semibold">{filteredBookings.length}</span> records
+                    </div>
+                    
+                    <div className="flex items-center gap-2">
+                      {/* Previous Button */}
+                      <button
+                        onClick={() => handlePageChange(currentPage - 1)}
+                        disabled={currentPage === 1}
+                        className={`p-2 rounded-lg border ${
+                          currentPage === 1
+                            ? 'text-gray-400 bg-gray-100 border-gray-200 cursor-not-allowed'
+                            : 'text-gray-700 border-gray-300 hover:bg-gray-50'
+                        }`}
+                      >
+                        <ChevronLeft className="w-5 h-5" />
+                      </button>
+                      
+                      {/* Page Numbers */}
+                      <div className="flex items-center gap-1">
+                        {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                          let pageNum;
+                          if (totalPages <= 5) {
+                            pageNum = i + 1;
+                          } else if (currentPage <= 3) {
+                            pageNum = i + 1;
+                          } else if (currentPage >= totalPages - 2) {
+                            pageNum = totalPages - 4 + i;
+                          } else {
+                            pageNum = currentPage - 2 + i;
+                          }
+                          
+                          return (
+                            <button
+                              key={pageNum}
+                              onClick={() => handlePageChange(pageNum)}
+                              className={`min-w-[40px] h-10 rounded-lg text-sm font-medium ${
+                                currentPage === pageNum
+                                  ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white'
+                                  : 'text-gray-700 hover:bg-gray-100 border border-gray-300'
+                              }`}
+                            >
+                              {pageNum}
+                            </button>
+                          );
+                        })}
+                        
+                        {totalPages > 5 && currentPage < totalPages - 2 && (
+                          <>
+                            <span className="px-2 text-gray-400">...</span>
+                            <button
+                              onClick={() => handlePageChange(totalPages)}
+                              className="min-w-[40px] h-10 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100 border border-gray-300"
+                            >
+                              {totalPages}
+                            </button>
+                          </>
+                        )}
+                      </div>
+                      
+                      {/* Next Button */}
+                      <button
+                        onClick={() => handlePageChange(currentPage + 1)}
+                        disabled={currentPage === totalPages}
+                        className={`p-2 rounded-lg border ${
+                          currentPage === totalPages
+                            ? 'text-gray-400 bg-gray-100 border-gray-200 cursor-not-allowed'
+                            : 'text-gray-700 border-gray-300 hover:bg-gray-50'
+                        }`}
+                      >
+                        <ChevronRight className="w-5 h-5" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </div>
 
         {/* Summary Section */}
-        {filteredBookings.length > 0 && (
-          <div className="mt-6 bg-white rounded-lg shadow p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Payment Summary</h3>
+        {paymentTotals && paymentTotals.totalBookings > 0 && (
+          <div className="mt-8 bg-gradient-to-r from-gray-900 to-gray-800 rounded-xl shadow-lg p-6 text-white">
+            <h3 className="text-xl font-semibold mb-6">Payment Summary</h3>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="p-4 bg-gray-50 rounded-lg">
-                <div className="text-sm text-gray-600">Accepted Bookings</div>
-                <div className="text-2xl font-bold text-gray-900">{acceptedBookings.length}</div>
-                <div className="text-xs text-gray-500 mt-1">Total completed services</div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div>
+                <p className="text-sm text-gray-300">Total Completed Bookings</p>
+                <p className="text-3xl font-bold mt-2">{paymentTotals.totalBookings}</p>
+                <div className="mt-2 flex items-center gap-2">
+                  <div className={`text-xs px-2 py-1 rounded-full ${paymentTotals.completedPayments > 0 ? 'bg-green-900 text-green-300' : 'bg-gray-700 text-gray-300'}`}>
+                    {paymentTotals.completedPayments} paid
+                  </div>
+                  <div className="text-xs px-2 py-1 bg-yellow-900 text-yellow-300 rounded-full">
+                    {paymentTotals.pendingPayments} pending
+                  </div>
+                </div>
               </div>
               
-              <div className="p-4 bg-blue-50 rounded-lg">
-                <div className="text-sm text-blue-600">Average Earnings per Booking</div>
-                <div className="text-2xl font-bold text-blue-700">
-                  ${acceptedBookings.length > 0 ? (totals.totalEarned / acceptedBookings.length).toFixed(2) : '0.00'}
-                </div>
-                <div className="text-xs text-blue-500 mt-1">Mean value per service</div>
+              <div>
+                <p className="text-sm text-gray-300">Average Per Booking</p>
+                <p className="text-3xl font-bold text-green-400 mt-2">${paymentTotals.averagePerBooking}</p>
+                <p className="text-xs text-gray-400 mt-1">Net payout per service</p>
               </div>
               
-              <div className="p-4 bg-green-50 rounded-lg">
-                <div className="text-sm text-green-600">Average Net Payout</div>
-                <div className="text-2xl font-bold text-green-700">
-                  ${acceptedBookings.length > 0 ? (totals.totalNetPayout / acceptedBookings.length).toFixed(2) : '0.00'}
+              <div>
+                <p className="text-sm text-gray-300">Total Fees</p>
+                <p className="text-3xl font-bold text-red-400 mt-2">
+                  ${(paymentTotals.totalCommission + paymentTotals.totalTax).toFixed(2)}
+                </p>
+                <div className="text-xs text-gray-400 mt-1">
+                  Commission + Tax
                 </div>
-                <div className="text-xs text-green-500 mt-1">After commission & tax</div>
               </div>
               
-              <div className="p-4 bg-purple-50 rounded-lg">
-                <div className="text-sm text-purple-600">Total Fees</div>
-                <div className="text-2xl font-bold text-purple-700">
-                  ${(totals.totalCommission + totals.totalTax).toFixed(2)}
-                </div>
-                <div className="text-xs text-purple-500 mt-1">Commission + Tax</div>
+              <div>
+                <p className="text-sm text-gray-300">Next Payout</p>
+                <p className="text-3xl font-bold text-blue-400 mt-2">
+                  ${paymentTotals.pendingPayments > 0 ? (paymentTotals.totalNetPayout / paymentTotals.totalBookings * paymentTotals.pendingPayments).toFixed(2) : '0.00'}
+                </p>
+                <p className="text-xs text-gray-400 mt-1">
+                  Estimated from {paymentTotals.pendingPayments} pending
+                </p>
               </div>
             </div>
             
-            <div className="mt-6 pt-6 border-t border-gray-200">
-              <h4 className="text-sm font-medium text-gray-900 mb-3">Payment Distribution</h4>
-              <div className="space-y-2">
+            {/* Progress Bars */}
+            <div className="mt-8 pt-8 border-t border-gray-700">
+              <h4 className="text-sm font-medium text-gray-300 mb-4">Earnings Distribution</h4>
+              <div className="space-y-4">
                 <div>
-                  <div className="flex justify-between text-sm text-gray-600 mb-1">
-                    <span>Your Net Payout</span>
-                    <span>${totals.totalNetPayout} ({totals.totalEarned > 0 ? ((totals.totalNetPayout / totals.totalEarned) * 100).toFixed(1) : '0'}%)</span>
+                  <div className="flex justify-between text-sm mb-1">
+                    <span className="text-green-400">Your Net Earnings</span>
+                    <span>${paymentTotals.totalNetPayout} ({paymentTotals.totalEarned > 0 ? ((paymentTotals.totalNetPayout / paymentTotals.totalEarned) * 100).toFixed(1) : '0'}%)</span>
                   </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div className="w-full bg-gray-700 rounded-full h-2.5">
                     <div 
-                      className="h-2 rounded-full bg-green-600 transition-all duration-300"
-                      style={{ width: `${totals.totalEarned > 0 ? (totals.totalNetPayout / totals.totalEarned) * 100 : 0}%` }}
+                      className="h-2.5 rounded-full bg-green-500"
+                      style={{ width: `${paymentTotals.totalEarned > 0 ? (paymentTotals.totalNetPayout / paymentTotals.totalEarned) * 100 : 0}%` }}
                     />
                   </div>
                 </div>
                 
                 <div>
-                  <div className="flex justify-between text-sm text-gray-600 mb-1">
-                    <span>Platform Commission</span>
-                    <span>${totals.totalCommission} ({totals.totalEarned > 0 ? ((totals.totalCommission / totals.totalEarned) * 100).toFixed(1) : '0'}%)</span>
+                  <div className="flex justify-between text-sm mb-1">
+                    <span className="text-red-400">Platform Commission</span>
+                    <span>${paymentTotals.totalCommission} ({paymentTotals.totalEarned > 0 ? ((paymentTotals.totalCommission / paymentTotals.totalEarned) * 100).toFixed(1) : '0'}%)</span>
                   </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div className="w-full bg-gray-700 rounded-full h-2.5">
                     <div 
-                      className="h-2 rounded-full bg-red-600 transition-all duration-300"
-                      style={{ width: `${totals.totalEarned > 0 ? (totals.totalCommission / totals.totalEarned) * 100 : 0}%` }}
+                      className="h-2.5 rounded-full bg-red-500"
+                      style={{ width: `${paymentTotals.totalEarned > 0 ? (paymentTotals.totalCommission / paymentTotals.totalEarned) * 100 : 0}%` }}
                     />
                   </div>
                 </div>
                 
                 <div>
-                  <div className="flex justify-between text-sm text-gray-600 mb-1">
-                    <span>Tax on Commission</span>
-                    <span>${totals.totalTax} ({totals.totalEarned > 0 ? ((totals.totalTax / totals.totalEarned) * 100).toFixed(1) : '0'}%)</span>
+                  <div className="flex justify-between text-sm mb-1">
+                    <span className="text-yellow-400">Tax on Commission</span>
+                    <span>${paymentTotals.totalTax} ({paymentTotals.totalEarned > 0 ? ((paymentTotals.totalTax / paymentTotals.totalEarned) * 100).toFixed(1) : '0'}%)</span>
                   </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div className="w-full bg-gray-700 rounded-full h-2.5">
                     <div 
-                      className="h-2 rounded-full bg-yellow-600 transition-all duration-300"
-                      style={{ width: `${totals.totalEarned > 0 ? (totals.totalTax / totals.totalEarned) * 100 : 0}%` }}
+                      className="h-2.5 rounded-full bg-yellow-500"
+                      style={{ width: `${paymentTotals.totalEarned > 0 ? (paymentTotals.totalTax / paymentTotals.totalEarned) * 100 : 0}%` }}
                     />
                   </div>
                 </div>

@@ -57,6 +57,9 @@ export const SellerApi = createApi({
 
     getOverview:builder.query({
       query:(id)=>`/seller/overview/${id}`
+    }),
+    getOverviewProvider:builder.query({
+      query:(id)=>`/seller/overview/provider/${id}`
     })
   }),
 });
@@ -66,5 +69,6 @@ export const {
   useUpdateOrderStatusMutation,
   usePaymentHistoryQuery,
   usePaymentHistoryPaginatedQuery,
-  useGetOverviewQuery 
+  useGetOverviewQuery,
+  useGetOverviewProviderQuery
 } = SellerApi;

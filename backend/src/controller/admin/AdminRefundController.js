@@ -16,12 +16,12 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
 });
 
 /**
- * List all refunds (admin) with pagination
+ * List all seller refunds (admin) with pagination
  * Query params: page, limit
  *
  * Returns paginated refunds
  */
-export const listRefunds = async (req, res) => {
+export const listSellerRefunds = async (req, res) => {
   try {
     // Parse query parameters with defaults
     const page = parseInt(req.query.page) || 1;
@@ -46,13 +46,14 @@ export const listRefunds = async (req, res) => {
     // Get total count for pagination metadata
     const totalCount = await Refund.countDocuments();
 
-    // Fetch paginated refunds
-    const refunds = await Refund.find()
-      .populate("requestedBy processedBy seller")
+    // Fetch paginated refunds of sellers only
+    const refunds = await Refund.find({
+      seller: { $exists: true, $ne: null },
+    })
       .sort({ createdAt: -1 })
       .skip(skip)
-      .limit(limit);
-
+      .limit(limit)
+      .populate("requestedBy processedBy seller order payment");
     return res.json({
       refunds,
       pagination: {

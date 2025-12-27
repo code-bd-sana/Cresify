@@ -13,13 +13,16 @@ const evidenceSchema = new Schema(
 const refundSchema = new Schema(
   {
     refundId: { type: String, trim: true }, // Stripe refund ID once processed
-    payment: { type: Schema.Types.ObjectId, ref: "Payment", required: true },
-    order: { type: Schema.Types.ObjectId, ref: "Order", required: true },
+    payment: { type: Schema.Types.ObjectId, ref: "Payment" },
+    order: { type: Schema.Types.ObjectId, ref: "Order" },
     // If refund is for a specific vendor's part of an order
     orderVendor: { type: Schema.Types.ObjectId, ref: "OrderVendor" },
 
     // Seller responsible for the refunded item(s)
     seller: { type: Schema.Types.ObjectId, ref: "User" },
+
+    // Provider (for service bookings) - may differ from `seller`/vendor
+    provider: { type: Schema.Types.ObjectId, ref: "User" },
 
     requestedBy: { type: Schema.Types.ObjectId, ref: "User", required: true },
     // Refund total amount (sum of refunded items + related shipping + taxes)
