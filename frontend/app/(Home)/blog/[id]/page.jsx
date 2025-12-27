@@ -121,7 +121,7 @@ const BlogDetailspage = () => {
               Article Not Found
             </h2>
             <p className="text-gray-600 mb-6">
-              The article you're looking for doesn't exist or has been removed.
+        {    `  The article you're looking for doesn't exist or has been removed.`}
             </p>
             <Link 
               href="/blog"
