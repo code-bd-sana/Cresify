@@ -82,18 +82,23 @@ export const myChatList = async (req, res) => {
 
 
 export const providerChatList = async (req, res) => {
+
+  console.log(req.params.id, 'ha id aso na kasakasi');
   try {
     const id = req.params.id; // provider id
+
+    
 
     /* ======================
        1️⃣ Booking → customers
        ====================== */
 
     const bookings = await Booking.find({ provider: id })
-      .select("customer");
+   
 
     const customerIds = bookings.map(b => b.customer);
-
+    
+    console.log(bookings, 'maybe its not possible');
     if (customerIds.length === 0) {
       return res.status(200).json({
         success: true,
@@ -129,6 +134,7 @@ export const providerChatList = async (req, res) => {
     });
 
   } catch (error) {
+    console.log(error, 'in sha allah');
     res.status(500).json({
       success: false,
       message: error?.message,

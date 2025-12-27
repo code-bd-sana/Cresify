@@ -1,0 +1,9 @@
+{
+  "step1_title": "Seleccionar Fecha y Hora",
+  "step2_title": "Detalles de Reserva y Pago",
+  "available_dates": "fechas disponibles",
+  "available_slots": "horarios disponibles",
+  "select_date": "Selecciona una fecha para ver los horarios disponibles",
+  "error_loading_data": "Error al cargar los datos de reserva. Por favor, inténtalo de nuevo.",
+  "no_provider_id": "No se proporcionó ID del proveedor. Por favor, selecciona un proveedor de servicios."
+}

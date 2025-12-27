@@ -172,6 +172,9 @@ export const allProduct = async (req, res) => {
     const search = req.query.search || "";
     const category = req.query.category || "";
     const location = req.query.location || "";
+    const country = req.query.country || "";
+    const region = req.query.region || "";
+    const city = req.query.city || "";
     const minPrice = Number(req.query.minPrice) || 0;
     const maxPrice = Number(req.query.maxPrice) || 1000000;
     const sortBy = req.query.sortBy || "createdAt";
@@ -181,6 +184,9 @@ export const allProduct = async (req, res) => {
       search,
       category,
       location,
+      country,
+      region,
+      city,
       minPrice,
       maxPrice,
       sortBy,
@@ -199,6 +205,9 @@ export const allProduct = async (req, res) => {
         { category: { $regex: search, $options: "i" } },
         { description: { $regex: search, $options: "i" } },
         { location: { $regex: search, $options: "i" } },
+        { country: { $regex: search, $options: "i" } },
+        { region: { $regex: search, $options: "i" } },
+        { city: { $regex: search, $options: "i" } },
       ];
 
       // Try to search in seller info
@@ -240,6 +249,39 @@ export const allProduct = async (req, res) => {
         .filter((l) => l !== "");
       if (locations.length > 0) {
         query.location = { $in: locations };
+      }
+    }
+
+    // Country filter
+    if (country && country.trim() !== "") {
+      const countries = country
+        .split(",")
+        .map((c) => c.trim())
+        .filter((c) => c !== "");
+      if (countries.length > 0) {
+        query.country = { $in: countries };
+      }
+    }
+
+    // Region filter
+    if (region && region.trim() !== "") {
+      const regions = region
+        .split(",")
+        .map((r) => r.trim())
+        .filter((r) => r !== "");
+      if (regions.length > 0) {
+        query.region = { $in: regions };
+      }
+    }
+
+    // City filter
+    if (city && city.trim() !== "") {
+      const cities = city
+        .split(",")
+        .map((c) => c.trim())
+        .filter((c) => c !== "");
+      if (cities.length > 0) {
+        query.city = { $in: cities };
       }
     }
 
@@ -289,6 +331,9 @@ export const allProduct = async (req, res) => {
         search,
         category,
         location,
+        country,
+        region,
+        city,
         minPrice,
         maxPrice,
         sortBy,
@@ -298,6 +343,131 @@ export const allProduct = async (req, res) => {
     });
   } catch (error) {
     console.error("Error in allProduct controller:", error);
+    res.status(500).json({
+      success: false,
+      message: error?.message || "Server error",
+      error: process.env.NODE_ENV === "development" ? error : undefined,
+    });
+  }
+};
+
+
+
+export const allLocation = async(req, res) => {
+  try {
+    // Aggregation pipeline to get all unique locations
+    const locations = await Product.aggregate([
+      {
+        $match: {
+          status: "active",
+          $or: [
+            { location: { $exists: true, $ne: "" } },
+            { country: { $exists: true, $ne: "" } },
+            { region: { $exists: true, $ne: "" } },
+            { city: { $exists: true, $ne: "" } }
+          ]
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          // Get unique locations
+          locations: { $addToSet: "$location" },
+          countries: { $addToSet: "$country" },
+          regions: { $addToSet: "$region" },
+          cities: { $addToSet: "$city" }
+        }
+      },
+      {
+        $project: {
+          _id: 0,
+          locations: {
+            $filter: {
+              input: "$locations",
+              as: "loc",
+              cond: { 
+                $and: [
+                  { $ne: ["$$loc", null] },
+                  { $ne: ["$$loc", ""] }
+                ]
+              }
+            }
+          },
+          countries: {
+            $filter: {
+              input: "$countries",
+              as: "country",
+              cond: { 
+                $and: [
+                  { $ne: ["$$country", null] },
+                  { $ne: ["$$country", ""] }
+                ]
+              }
+            }
+          },
+          regions: {
+            $filter: {
+              input: "$regions",
+              as: "region",
+              cond: { 
+                $and: [
+                  { $ne: ["$$region", null] },
+                  { $ne: ["$$region", ""] }
+                ]
+              }
+            }
+          },
+          cities: {
+            $filter: {
+              input: "$cities",
+              as: "city",
+              cond: { 
+                $and: [
+                  { $ne: ["$$city", null] },
+                  { $ne: ["$$city", ""] }
+                ]
+              }
+            }
+          }
+        }
+      }
+    ]);
+
+    // Get all locations by type
+    const locationData = locations.length > 0 ? locations[0] : {
+      locations: [],
+      countries: [],
+      regions: [],
+      cities: []
+    };
+
+    // Sort alphabetically
+    locationData.locations.sort();
+    locationData.countries.sort();
+    locationData.regions.sort();
+    locationData.cities.sort();
+
+    // Count total
+    const locationStats = {
+      totalLocations: locationData.locations.length,
+      totalCountries: locationData.countries.length,
+      totalRegions: locationData.regions.length,
+      totalCities: locationData.cities.length,
+      totalAll: locationData.locations.length + 
+                locationData.countries.length + 
+                locationData.regions.length + 
+                locationData.cities.length
+    };
+
+    res.status(200).json({
+      success: true,
+      message: "All locations retrieved successfully",
+      stats: locationStats,
+      data: locationData
+    });
+
+  } catch (error) {
+    console.error("Error in allLocation controller:", error);
     res.status(500).json({
       success: false,
       message: error?.message || "Server error",

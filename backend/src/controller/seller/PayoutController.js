@@ -16,7 +16,14 @@ export const getWallet = async (req, res) => {
     const { sellerId } = req.params;
     const wallet = await Wallet.findOne({ user: sellerId });
     if (!wallet) return res.status(404).json({ message: "Wallet not found" });
-    return res.json({ wallet });
+
+    // recent transactions for this user
+    const transactions = await Transaction.find({ user: sellerId })
+      .sort({ createdAt: -1 })
+      .limit(200)
+      .lean();
+
+    return res.json({ wallet, transactions });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ message: "Failed to get wallet" });
@@ -34,12 +41,16 @@ export const requestPayout = async (req, res) => {
     session.startTransaction();
 
     const wallet = await Wallet.findOne({ user: sellerId }).session(session);
-    if (!wallet || toTwo(wallet.balance || 0) < amount) {
+    const currentBalance = toTwo(
+      wallet?.currentBalance ?? wallet?.balance ?? 0
+    );
+    if (!wallet || currentBalance < amount) {
       if (session.inTransaction && session.inTransaction())
         await session.abortTransaction();
       return res.status(400).json({ message: "Insufficient balance" });
     }
 
+    // create payout record
     // create payout record
     const payout = await Payout.create(
       [
@@ -50,27 +61,36 @@ export const requestPayout = async (req, res) => {
           currency: wallet.currency || "usd",
           status: "queued",
           method: method || "manual",
+          metadata:
+            method === "stripe_connect" && wallet.stripeAccountId
+              ? { connectedAccountId: wallet.stripeAccountId }
+              : {},
         },
       ],
       { session }
     );
 
-    // deduct from wallet balance immediately (funds reserved for payout)
-    const before = toTwo(wallet.balance || 0);
-    wallet.balance = toTwo((wallet.balance || 0) - amount);
+    // deduct from wallet currentBalance and add to reserved (escrow)
+    const before = currentBalance;
+    // write back to model fields used in this codebase
+    wallet.currentBalance = toTwo(
+      (wallet.currentBalance ?? wallet.balance ?? 0) - amount
+    );
+    wallet.reserved = toTwo((wallet.reserved ?? 0) + amount);
     await wallet.save({ session });
 
     await Transaction.create(
       [
         {
-          transactionId: `${payout[0].payoutId}-debit`,
-          type: "payout",
+          transactionId: `${payout[0].payoutId}-hold`,
+          type: "hold",
           wallet: wallet._id,
           user: sellerId,
           amount: toTwo(amount),
           currency: wallet.currency || "usd",
           balanceBefore: before,
-          balanceAfter: wallet.balance,
+          balanceAfter: wallet.currentBalance,
+          metadata: { note: "Payout requested, funds held" },
         },
       ],
       { session }
@@ -145,7 +165,7 @@ export const processPayout = async (req, res) => {
     }
 
     // 3️⃣ Validate escrow funds
-    if (wallet.reserved < payout.amount) {
+    if (toTwo(wallet.reserved || 0) < toTwo(payout.amount || 0)) {
       if (session.inTransaction && session.inTransaction())
         await session.abortTransaction();
       return res.status(400).json({
@@ -173,18 +193,54 @@ export const processPayout = async (req, res) => {
         );
       } catch (err) {
         console.error("Stripe transfer failed", err);
-        if (session.inTransaction && session.inTransaction())
-          await session.abortTransaction();
+        // mark payout failed and refund reserved back to currentBalance
+        const reservedBefore = toTwo(wallet.reserved || 0);
+        wallet.reserved = toTwo(reservedBefore - payout.amount);
+        wallet.currentBalance = toTwo(
+          (wallet.currentBalance ?? 0) + payout.amount
+        );
+        await wallet.save({ session });
+
+        payout.status = "failed";
+        payout.processedAt = new Date();
+        payout.metadata = {
+          ...(payout.metadata || {}),
+          failureReason: err.message,
+        };
+        await payout.save({ session });
+
+        await Transaction.create(
+          [
+            {
+              transactionId: `${payout.payoutId}-failed`,
+              type: "refund",
+              wallet: wallet._id,
+              user: payout.seller,
+              amount: payout.amount,
+              currency: payout.currency || "usd",
+              balanceBefore: reservedBefore,
+              balanceAfter: wallet.reserved,
+              metadata: { stripeError: err.message },
+            },
+          ],
+          { session }
+        );
+
+        await session.commitTransaction();
+        session.endSession();
+
         return res.status(502).json({
-          message: "Stripe transfer failed",
+          message:
+            "Stripe transfer failed, payout marked as failed and funds returned",
           error: err.message,
+          payout,
         });
       }
     }
 
-    // 5️⃣ Update wallet escrow
-    const balanceBefore = wallet.reserved;
-    wallet.reserved -= payout.amount;
+    // 5️⃣ Update wallet escrow -> reduce reserved (funds leave platform)
+    const balanceBefore = toTwo(wallet.reserved || 0);
+    wallet.reserved = toTwo(balanceBefore - payout.amount);
     await wallet.save({ session });
 
     // 6️⃣ Mark payout paid

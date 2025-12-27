@@ -13,6 +13,7 @@ export default function ReviewsPage() {
   const userId = session?.user?.id;
 
   const { data: reviewData, isLoading } = useGetReviewBySellerIdQuery(userId);
+  console.log(reviewData, 'revie data');
   
   // Extract reviews from API response or use empty array
   const apiReviews = reviewData?.data || [];

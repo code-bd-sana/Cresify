@@ -1,0 +1,16 @@
+{
+  "title": "Nuestra Historia",
+  
+  "paragraphs": {
+    "p1": "CRESIFY nació de una simple observación: encontrar servicios y productos locales de calidad no debería ser complicado. En 2020, nuestros fundadores reconocieron la brecha entre los talentosos negocios locales y los clientes que los necesitaban.",
+    "p2": "Lo que comenzó como una pequeña plataforma en Buenos Aires se ha convertido en el marketplace más confiable de América Latina, conectando a millones de clientes con miles de vendedores y proveedores de servicios verificados en toda la región.",
+    "p3": "Hoy, estamos orgullosos de apoyar a más de 10,000 negocios locales y servir a más de 500,000 clientes satisfechos, ayudando a las comunidades a prosperar a través del comercio y la conexión."
+  },
+  
+  "highlighted_texts": {
+    "h1": "encontrar servicios y productos locales de calidad no debería ser complicado.",
+    "h2": "el marketplace más confiable de América Latina,",
+    "h3": "más de 10,000 negocios locales",
+    "h4": "500,000 clientes satisfechos,"
+  }
+}

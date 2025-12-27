@@ -1,11 +1,15 @@
 import { Router } from "express";
 import {
+  allBookings,
   completeService,
   getBookingStats,
   getTodaysBookings,
   getUpcomingBookings,
+  providerBooking,
   saveBooking,
   updateBookingStatus,
+  updateBookingStatusNew,
+  userBooking,
 } from "../controller/BookingController.js";
 
 const router = Router();
@@ -45,4 +49,22 @@ router.get("/upcoming", getUpcomingBookings);
  * @desc Get booking stats for chart (cancelled/completed counts)
  */
 router.get("/stats", getBookingStats);
+
+
+
+/** * @route GET /booking/userBookings
+ * @desc Get bookings for a user
+ */
+router.get('/userBookings/:userId', userBooking)
+
+/** * @route GET /booking/providerBookings
+ * @desc Get bookings for a provider
+ */
+
+router.get('/providerBookings/:id', providerBooking)
+
+router.get('/adminBookings', allBookings)
+
+router.put('/updateStatus/', updateBookingStatusNew)
+
 export default router;

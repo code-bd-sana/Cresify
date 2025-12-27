@@ -84,6 +84,10 @@ export default function ProductManagementPage() {
   };
 
   const handleStatusChange = async (productId, newStatus) => {
+
+    if(newStatus === ''){
+      return;
+    }
     try {
       const result = await Swal.fire({
         title: "Are you sure?",
@@ -254,8 +258,10 @@ export default function ProductManagementPage() {
                         className={`px-3 py-1.5 rounded-full text-xs border cursor-pointer ${
                           statusColors[item.status]
                         }`}>
-                        <option value='active'>Active</option>
+                                        <option value=''>Select a option</option>
+
                         <option value='rejected'>Rejected</option>
+                                                <option value='active'>Active</option>
                       </select>
                     </td>
 

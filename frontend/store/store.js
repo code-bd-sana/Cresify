@@ -6,13 +6,15 @@ import { AdminBlogApi } from "@/feature/admin/AdminBlogApi";
 import { AdminDashboardApi } from "@/feature/admin/AdminOverviewApi";
 import { AdminProductApi } from "@/feature/admin/AdminProductApi";
 import { AdminUserApi } from "@/feature/admin/AdminUserApi";
-import { CartApi } from "@/feature/customer/CartApi";
-import { WishlistApi } from "@/feature/customer/WishlistApi";
-import { OrderApi } from "@/feature/customer/OrderApi";
-import { SellerApi } from "@/feature/seller/SellerApi";
 import { ChatApi } from "@/feature/chat/ChatApi";
-import { ReviewAPi } from "@/feature/review/ReviewApi";
+import { CartApi } from "@/feature/customer/CartApi";
+import { OrderApi } from "@/feature/customer/OrderApi";
+import { WishlistApi } from "@/feature/customer/WishlistApi";
+import { ProviderApi } from "@/feature/provider/ProviderApi";
 import { RefundApi } from "@/feature/refund/RefundApi";
+import { ReviewAPi } from "@/feature/review/ReviewApi";
+import { SellerApi } from "@/feature/seller/SellerApi";
+import { WalletApi } from "@/feature/seller/WalletApi";
 
 export const store = configureStore({
   reducer: {
@@ -25,11 +27,13 @@ export const store = configureStore({
     [AdminBlogApi.reducerPath]: AdminBlogApi.reducer,
     [AdminUserApi.reducerPath]: AdminUserApi.reducer,
     [AdminProductApi.reducerPath]: AdminProductApi.reducer,
-    [OrderApi.reducerPath]:OrderApi.reducer,
+    [OrderApi.reducerPath]: OrderApi.reducer,
     [SellerApi.reducerPath]: SellerApi.reducer,
+    [WalletApi.reducerPath]: WalletApi.reducer,
     [ChatApi.reducerPath]: ChatApi.reducer,
     [ReviewAPi.reducerPath]: ReviewAPi.reducer,
-    [RefundApi.reducerPath]: RefundApi.reducer
+    [RefundApi.reducerPath]: RefundApi.reducer,
+    [ProviderApi.reducerPath]: ProviderApi.reducer,
   },
 
   middleware: (getDefaultMiddleware) =>
@@ -44,8 +48,10 @@ export const store = configureStore({
       AdminProductApi.middleware,
       OrderApi.middleware,
       SellerApi.middleware,
+      WalletApi.middleware,
       ChatApi.middleware,
       ReviewAPi.middleware,
-      RefundApi.middleware
+      RefundApi.middleware,
+      ProviderApi.middleware,
     ]),
 });

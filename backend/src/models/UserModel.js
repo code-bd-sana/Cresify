@@ -19,6 +19,9 @@ const userSchema = new Schema(
     name: {
       type: String,
     },
+    servicesImage:{
+      type:Array
+    },
 
     address: { type: String, default: "" },
     businessLogo: { type: String, default: "" },
@@ -46,6 +49,10 @@ const userSchema = new Schema(
     website: { type: String, default: "" },
     shopDescription: { type: String, default: "" },
     shopLogo: { type: String, default: "" },
+    country:String,
+    region:String,
+    city:String,
+    address:String,
 
     workingHours: {
       start: { type: String, default: "09:00" },

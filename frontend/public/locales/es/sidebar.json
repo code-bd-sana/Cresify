@@ -1,0 +1,37 @@
+{
+  "dashboard": "Panel de Control",
+  "user_management": "Gestión de Usuarios",
+  "products": "Productos",
+  "services": "Servicios",
+  "orders": "Pedidos",
+  "bookings": "Reservas",
+  "store_profile": "Perfil de Tienda",
+  "payments": "Pagos",
+  "content": "Contenido",
+  "reviews": "Reseñas",
+  "product_refunds": "Reembolsos de Productos",
+  "service_refunds": "Reembolsos de Servicios",
+  "settings": "Configuración",
+  "refund": "Reembolso",
+  "wallet_details": "Detalles de Billetera",
+  "messages": "Mensajes",
+  "calendar": "Calendario",
+  "analytics": "Analítica",
+  "logout": "Cerrar Sesión",
+  
+  "role_specific": {
+    "admin": {
+      "dashboard": "Panel de Administración",
+      "users": "Gestión de Usuarios",
+      "services": "Gestión de Servicios"
+    },
+    "seller": {
+      "dashboard": "Panel de Vendedor",
+      "store_profile": "Perfil de Tienda"
+    },
+    "provider": {
+      "dashboard": "Panel de Proveedor",
+      "booking": "Gestión de Reservas"
+    }
+  }
+}

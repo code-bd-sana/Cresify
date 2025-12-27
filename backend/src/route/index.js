@@ -14,10 +14,12 @@ import cart from "./customer/CartRoute.js";
 import customerOrderRoute from "./customer/OrderRoute.js";
 import customerRefundRoute from "./customer/RefundRoute.js";
 import wishList from "./customer/WishListRoute.js";
+import providerRefundRoute from "./provider/RefundRoute.js";
 import review from "./reviewRoute.js";
 import sellerOrderRoute from "./seller/OrderRoute.js";
 import sellerPayoutRoute from "./seller/PayoutRoute.js";
 import sellerRefundRoute from "./seller/RefundRoute.js";
+import sellerStripeRoute from "./seller/StripeRoute.js";
 
 const router = Router();
 
@@ -39,9 +41,11 @@ router.use("/admin/blog", adminBlogRoute);
 router.use("/customer/order", customerOrderRoute);
 router.use("/admin/refund", adminRefundRoute);
 router.use("/seller/wallet", sellerPayoutRoute);
+router.use("/seller/stripe", sellerStripeRoute);
 router.use("/seller/order", sellerOrderRoute);
 router.use("/chat", chat);
 router.use("/seller/overview", sellerOverview);
 router.use("/seller/refund", sellerRefundRoute);
+router.use("/provider/refund", providerRefundRoute);
 
 export default router;

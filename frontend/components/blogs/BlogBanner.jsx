@@ -1,60 +1,173 @@
 "use client";
 
+import { useGetBlogsQuery } from "@/feature/admin/AdminBlogApi";
 import Image from "next/image";
+import { useState } from "react";
+import Link from "next/link";
 
 export default function BlogBanner() {
+  const { data: blogData, isLoading, isError } = useGetBlogsQuery();
+  const blogs = blogData?.data || [];
+  const [imageError, setImageError] = useState(false);
+
+  // Format date function
+  const formatDate = (dateString) => {
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('en-US', {
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric'
+      });
+    } catch (error) {
+      return "March 18, 2024"; // Fallback date
+    }
+  };
+
+  // Get featured blog (first blog from the array)
+  const featuredBlog = blogs.length > 0 ? blogs[0] : null;
+
+  // Get image source
+  const getImageSrc = () => {
+    if (imageError || !featuredBlog?.img || 
+        featuredBlog.img.includes('cdn.example.com') || 
+        featuredBlog.img.includes('placehold.co')) {
+      return "/blog/blog-banner.jpg";
+    }
+    
+    if (featuredBlog.img && (featuredBlog.img.startsWith('http') || featuredBlog.img.startsWith('https'))) {
+      return featuredBlog.img;
+    }
+    
+    return "/blog/blog-banner.jpg";
+  };
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="max-w-7xl mx-auto rounded-2xl bg-gradient-to-r from-[#8736C5] via-[#9C47C6] to-[#F88D25] p-[4px] mb-12 shadow-md">
+        <div className="bg-white rounded-2xl overflow-hidden">
+          <div className="grid grid-cols-1 lg:grid-cols-2">
+            {/* Left Image Skeleton */}
+            <div className="relative w-full h-[380px] lg:h-[600px] bg-gradient-to-r from-gray-200 to-gray-300 animate-pulse rounded-l-2xl" />
+            
+            {/* Right Content Skeleton */}
+            <div className="p-8 flex flex-col justify-center">
+              <div className="w-32 h-8 bg-gradient-to-r from-gray-200 to-gray-300 rounded-full animate-pulse" />
+              <div className="mt-4 space-y-3">
+                <div className="h-10 bg-gradient-to-r from-gray-200 to-gray-300 rounded animate-pulse w-3/4" />
+                <div className="h-10 bg-gradient-to-r from-gray-200 to-gray-300 rounded animate-pulse w-2/3" />
+                <div className="h-10 bg-gradient-to-r from-gray-200 to-gray-300 rounded animate-pulse w-1/2" />
+              </div>
+              <div className="mt-4 h-4 bg-gradient-to-r from-gray-200 to-gray-300 rounded animate-pulse w-48" />
+              <div className="mt-6 w-48 h-12 bg-gradient-to-r from-gray-200 to-gray-300 rounded-lg animate-pulse" />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Error or no data state
+  if (isError || !featuredBlog) {
+    return (
+      <div className="max-w-7xl mx-auto rounded-2xl bg-gradient-to-r from-[#8736C5] via-[#9C47C6] to-[#F88D25] p-[4px] mb-12 shadow-md">
+        <div className="bg-white rounded-2xl overflow-hidden">
+          <div className="grid grid-cols-1 lg:grid-cols-2">
+            {/* Left Image - Fallback */}
+            <div className="relative w-full h-[380px] lg:h-[600px]">
+              <Image
+                src="/blog/blog-banner.jpg"
+                alt="Featured Guide"
+                fill
+                className="object-cover rounded-l-2xl"
+              />
+            </div>
+
+            {/* Right Content - Fallback */}
+            <div className="p-8 flex flex-col justify-center">
+              <span className="px-6 py-2 text-sm font-medium rounded-full bg-gradient-to-r from-[#8736C5] to-[#F88D25] text-white w-max">
+                Featured Guide
+              </span>
+
+              <h1 className="mt-4 text-[40px] font-bold leading-tight text-gray-900">
+                The Ultimate Guide to<br />Finding Quality Local<br />Services
+              </h1>
+
+              <p className="mt-4 text-[15px] w-2/3 text-[#AC65EE] leading-relaxed font-medium">
+                Discover expert tips and strategies for connecting with the best
+                service providers in your area. Learn how to evaluate reviews,
+                compare prices, and make informed decisions.
+              </p>
+
+              <div className="flex items-center gap-3 text-base text-[#525252] mt-4">
+                <span>Admin</span>
+                <span>•</span>
+                <span>{formatDate(new Date().toISOString())}</span>
+              </div>
+
+              <button className="mt-6 w-max px-10 py-4 text-white rounded-lg font-medium bg-gradient-to-r from-[#8736C5] to-[#F88D25] shadow-sm hover:opacity-90 transition">
+                Browse Articles
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-7xl mx-auto rounded-2xl bg-gradient-to-r from-[#8736C5] via-[#9C47C6] to-[#F88D25] p-[4px] mb-12 shadow-md">
-
       {/* Inner white card */}
       <div className="bg-white rounded-2xl overflow-hidden">
         <div className="grid grid-cols-1 lg:grid-cols-2">
-
           {/* Left Image */}
           <div className="relative w-full h-[380px] lg:h-[600px]">
             <Image
-              src="/blog/blog-banner.jpg"
-              alt="Featured Guide"
+              src={getImageSrc()}
+              alt={featuredBlog.title || "Featured Guide"}
               fill
               className="object-cover rounded-l-2xl"
+              onError={() => setImageError(true)}
+              sizes="(max-width: 1024px) 100vw, 50vw"
+              unoptimized={getImageSrc().includes('cdn.example.com') || getImageSrc().includes('placehold.co')}
             />
           </div>
 
           {/* Right Content */}
           <div className="p-8 flex flex-col justify-center">
-            {/* Badge */}
+            {/* Badge - Using blog category */}
             <span className="px-6 py-2 text-sm font-medium rounded-full bg-gradient-to-r from-[#8736C5] to-[#F88D25] text-white w-max">
-              Featured Guide
+              {featuredBlog.category || "Featured Guide"}
             </span>
 
             {/* Title */}
             <h1 className="mt-4 text-[40px] font-bold leading-tight text-gray-900">
-              The Ultimate Guide to<br />Finding Quality Local<br />Services
+              {featuredBlog.title || "The Ultimate Guide to Finding Quality Local Services"}
             </h1>
 
             {/* Description */}
             <p className="mt-4 text-[15px] w-2/3 text-[#AC65EE] leading-relaxed font-medium">
-              Discover expert tips and strategies for connecting with the best
-              service providers in your area. Learn how to evaluate reviews,
-              compare prices, and make informed decisions.
+              {featuredBlog.description || "Discover expert tips and strategies for connecting with the best service providers in your area. Learn how to evaluate reviews, compare prices, and make informed decisions."}
             </p>
 
             {/* Author + Date */}
             <div className="flex items-center gap-3 text-base text-[#525252] mt-4">
-              <span>Sarah Johnson</span>
+              <span>Admin</span>
               <span>•</span>
-              <span>March 18, 2024</span>
+              <span>{formatDate(featuredBlog.createdAt || new Date().toISOString())}</span>
             </div>
 
             {/* Read Button */}
-            <button className="mt-6 w-max px-10 py-4 text-white rounded-lg font-medium bg-gradient-to-r from-[#8736C5] to-[#F88D25] shadow-sm hover:opacity-90 transition">
+            <Link 
+              href={`/blog/${featuredBlog._id}`}
+              className="mt-6 w-max px-10 py-4 text-white rounded-lg font-medium bg-gradient-to-r from-[#8736C5] to-[#F88D25] shadow-sm hover:opacity-90 transition inline-block"
+            >
               Read Full Article
-            </button>
+            </Link>
           </div>
-
         </div>
       </div>
-
     </div>
   );
 }

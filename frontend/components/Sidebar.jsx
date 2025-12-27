@@ -5,89 +5,176 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  FiGrid,
   FiBox,
-  FiShoppingCart,
-  FiUser,
   FiCreditCard,
-  FiBarChart2,
+  FiGrid,
+  FiLogOut,
   FiMessageSquare,
   FiSettings,
-  FiLogOut,
+  FiShoppingCart,
   FiStar,
+  FiUser,
 } from "react-icons/fi";
+import { PiArticleFill } from "react-icons/pi";
+import { SiTemporal } from "react-icons/si";
 import { SlCalender } from "react-icons/sl";
 import { TbReceiptRefund } from "react-icons/tb";
+import { useTranslation } from "react-i18next";
 
 export default function Sidebar({ open, onClose }) {
   const pathname = usePathname();
   const { data } = useSession();
-
-
+  const { t } = useTranslation('sidebar');
+  
   const role = data?.user?.role;
 
-
-
-
   const adminItem = [
-    { label: "Dashboard", icon: FiGrid, path: "/dashboard/admin-dashboard" },
-
+    { 
+      label: t('dashboard'), 
+      icon: FiGrid, 
+      path: "/dashboard/admin-dashboard" 
+    },
     {
-      label: "User Management",
-      icon: FiGrid,
+      label: t('user_management'),
+      icon: FiUser,
       path: "/dashboard/admin-dashboard/users",
     },
-
     {
-      label: "Products",
-      icon: FiGrid,
+      label: t('products'),
+      icon: SiTemporal,
       path: "/dashboard/admin-dashboard/products",
     },
     {
-      label: "Services",
-      icon: FiGrid,
-      path: "/dashboard/admin-dashboard/services",
+      label: t('orders'),
+      icon: FiShoppingCart, 
+      path: "/dashboard/orders" 
     },
-    ,
-    { label: "Orders", icon: FiShoppingCart, path: "/dashboard/orders" },
-    { label: "Booking", icon: FiShoppingCart, path: "/dashboard/orders" },
-    // { label: "Store Profile", icon: FiUser, path: "/dashboard/store-profile" },
-    { label: "Payments", icon: FiCreditCard, path: "/dashboard/payments" },
-    { label: "Content", icon: FiCreditCard, path: "/dashboard/content" },
-
-    // { label: "Reviews", icon: FiStar, path: "/dashboard/reviews" },
-    { label: "Refund", icon: TbReceiptRefund, path: "/dashboard/adminRefund" },
-    { label: "Settings", icon: FiSettings, path: "/dashboard/settings" },
+    { 
+      label: t('payments'), 
+      icon: FiCreditCard, 
+      path: "/dashboard/payments" 
+    },
+    { 
+      label: t('content'), 
+      icon: PiArticleFill, 
+      path: "/dashboard/content" 
+    },
+    {
+      label: t('product_refunds'),
+      icon: TbReceiptRefund,
+      path: "/dashboard/adminRefund",
+    },
+    {
+      label: t('service_refunds'),
+      icon: TbReceiptRefund,
+      path: "/dashboard/serviceRefund",
+    },
+    { 
+      label: t('settings'), 
+      icon: FiSettings, 
+      path: "/dashboard/settings" 
+    },
   ];
 
   const sellerItem = [
-    { label: "Dashboard", icon: FiGrid, path: "/dashboard" },
-
-    { label: "Products", icon: FiBox, path: "/dashboard/products" },
-    { label: "Orders", icon: FiShoppingCart, path: "/dashboard/orders" },
-    { label: "Store Profile", icon: FiUser, path: "/dashboard/store-profile" },
-    { label: "Payments", icon: FiCreditCard, path: "/dashboard/payments" },
-    { label: "refund", icon: TbReceiptRefund, path: "/dashboard/refund" },
-
-    // { label: "Analytics", icon: FiBarChart2, path: "/dashboard/analytics" },
-    { label: "Reviews", icon: FiStar, path: "/dashboard/reviews" },
-    { label: "Messages", icon: FiMessageSquare, path: "/dashboard/messages" },
-    { label: "Settings", icon: FiSettings, path: "/dashboard/settings" },
-  ];
-  const providerItem = [
-    { label: "Dashboard", icon: FiGrid, path: "/dashboard" },
-
-    { label: "Booking", icon: FiShoppingCart, path: "/dashboard/booking" },
-
-    {
-      label: "Calender",
-      icon: SlCalender,
-      path: "/dashboard/service-provider-dashboard/calender",
+    { 
+      label: t('dashboard'), 
+      icon: FiGrid, 
+      path: "/dashboard" 
     },
-    { label: "Payments", icon: FiCreditCard, path: "/dashboard/payments" },
-    { label: "Messages", icon: FiMessageSquare, path: "/dashboard/messages" },
-    { label: "Reviews", icon: FiStar, path: "/dashboard/reviews" },
-    { label: "Settings", icon: FiSettings, path: "/dashboard/settings" },
+    { 
+      label: t('products'), 
+      icon: FiBox, 
+      path: "/dashboard/products" 
+    },
+    { 
+      label: t('orders'), 
+      icon: FiShoppingCart, 
+      path: "/dashboard/orders" 
+    },
+    { 
+      label: t('store_profile'), 
+      icon: FiUser, 
+      path: "/dashboard/store-profile" 
+    },
+    { 
+      label: t('payments'), 
+      icon: FiCreditCard, 
+      path: "/dashboard/payments" 
+    },
+    { 
+      label: t('refund'), 
+      icon: TbReceiptRefund, 
+      path: "/dashboard/refund" 
+    },
+    { 
+      label: t('wallet_details'), 
+      icon: FiBox, 
+      path: "/dashboard/wallet-details" 
+    },
+    { 
+      label: t('reviews'), 
+      icon: FiStar, 
+      path: "/dashboard/reviews" 
+    },
+    { 
+      label: t('messages'), 
+      icon: FiMessageSquare, 
+      path: "/dashboard/messages" 
+    },
+    { 
+      label: t('settings'), 
+      icon: FiSettings, 
+      path: "/dashboard/settings" 
+    },
+  ];
+  
+  const providerItem = [
+    { 
+      label: t('dashboard'), 
+      icon: FiGrid, 
+      path: "/dashboard/service-provider-dashboard" 
+    },
+    { 
+      label: t('bookings'), 
+      icon: FiShoppingCart, 
+      path: "/dashboard/booking" 
+    },
+    {
+      label: t('calendar'),
+      icon: SlCalender,
+      path: "/dashboard/service-provider-dashboard/calendar",
+    },
+    { 
+      label: t('wallet_details'), 
+      icon: FiBox, 
+      path: "/dashboard/wallet-details" 
+    },
+    {
+      label: t('payments'),
+      icon: FiCreditCard,
+      path: "/dashboard/providerPayments",
+    },
+    { 
+      label: t('messages'), 
+      icon: FiMessageSquare, 
+      path: "/dashboard/messages" 
+    },
+    { 
+      label: t('reviews'), 
+      icon: FiStar, 
+      path: "/dashboard/reviews" 
+    },
+    { 
+      label: t('settings'), 
+      icon: FiSettings, 
+      path: "/dashboard/settings" 
+    },
+    {
+      label: t('refund'),
+      icon: TbReceiptRefund,
+      path: "/dashboard/providerRefund",
+    },
   ];
 
   const menuItems =
@@ -105,7 +192,7 @@ export default function Sidebar({ open, onClose }) {
       {open && (
         <div
           onClick={onClose}
-          className="fixed inset-0 bg-black/30 z-40 lg:hidden"
+          className='fixed inset-0 bg-black/30 z-40 lg:hidden'
         />
       )}
 
@@ -116,23 +203,22 @@ export default function Sidebar({ open, onClose }) {
           flex flex-col pt-6 pb-6 px-4
           transition-all duration-300
           ${open ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
-        `}
-      >
+        `}>
         {/* LOGO */}
-        <Link href="/">
-          <div className="px-2 mb-8">
+        <Link href='/'>
+          <div className='px-2 mb-8'>
             <Image
-              src="/logo.png"
-              alt="Cresify Logo"
+              src='/logo.png'
+              alt='Cresify Logo'
               width={170}
               height={32}
-              className="rounded-xl mx-auto"
+              className='rounded-xl mx-auto'
             />
           </div>
         </Link>
 
         {/* NAVIGATION */}
-        <nav className="flex-1 overflow-y-auto scrollbar-hide space-y-1">
+        <nav className='flex-1 overflow-y-auto scrollbar-hide space-y-1'>
           {menuItems.map((item) => {
             const isActive = pathname === item.path;
 
@@ -146,8 +232,7 @@ export default function Sidebar({ open, onClose }) {
                       ? "bg-[#F4F0FF] text-[#4C1D95] font-semibold shadow-sm"
                       : "text-[#6F6C90] hover:bg-[#F7F6FF]"
                   }
-                `}
-              >
+                `}>
                 <item.icon
                   className={`text-[18px] ${
                     isActive ? "text-[#4C1D95]" : "text-[#6F6C90]"
@@ -160,12 +245,16 @@ export default function Sidebar({ open, onClose }) {
         </nav>
 
         {/* LOGOUT BUTTON */}
-        <div className="border-t border-[#F1F1F1] pt-4 mt-4">
-          <button onClick={async()=>{
-            await signOut()
-          }} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-[15px] text-[#FF6A3D] hover:bg-[#FFF3EC] transition">
-            <FiLogOut className="text-[18px]" />
-            Logout
+        <div className='border-t border-[#F1F1F1] pt-4 mt-4'>
+          <button
+            onClick={() => {
+              signOut({
+                callbackUrl: "/",
+              });
+            }}
+            className='w-full flex items-center gap-3 px-4 py-3 rounded-xl text-[15px] text-[#FF6A3D] hover:bg-[#FFF3EC] transition'>
+            <FiLogOut className='text-[18px]' />
+            {t('logout')}
           </button>
         </div>
       </aside>

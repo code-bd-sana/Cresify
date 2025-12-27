@@ -3,22 +3,25 @@ import FeaturedStores from "@/components/marketplace/FeaturedStores";
 import ProductsPage from "@/components/marketplace/ProductsPage";
 import SearchHero from "@/components/marketplace/SearchHero";
 import SupportEntrepreneurs from "@/components/shared/SupportEntrepreneurs";
-import React, { useState } from "react";
+import React, { Suspense, useState } from "react";
 
 const MarketplacePage = () => {
   const [searchTerm, setSearchTerm] = useState("");
 
   return (
     <div>
-      <SearchHero 
+     <Suspense fallback={<div>Loading...</div>}>
+
+       <SearchHero 
         onSearch={(term) => setSearchTerm(term)}
         initialSearch={searchTerm}
       />
       <ProductsPage 
         searchTerm={searchTerm}
       />
-      <FeaturedStores />
+      {/* <FeaturedStores /> */}
       <SupportEntrepreneurs />
+     </Suspense>
     </div>
   );
 };

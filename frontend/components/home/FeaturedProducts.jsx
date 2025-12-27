@@ -16,6 +16,7 @@ import {
   LuDumbbell,
   LuBookOpen,
 } from "react-icons/lu";
+import { useTranslation } from "react-i18next";
 
 const CATEGORY_ICONS = {
   fashion: LuShirt,
@@ -42,6 +43,8 @@ const CATEGORY_NAMES = {
 export default function FeaturedProducts() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  const {t} = useTranslation('feature')
 
   // সর্বশেষ ৪টি প্রোডাক্টের জন্য query parameters
   const queryParams = {
@@ -139,7 +142,7 @@ export default function FeaturedProducts() {
       <section className="w-full py-20 px-4 md:px-10">
         <div className="max-w-[1350px] mx-auto">
           <h2 className="text-[36px] font-bold text-center mb-2">
-            Featured Products
+          {t('title')}
           </h2>
           <p className="text-center font-bold text-[#AC65EE] text-[15px] mb-12">
             Discover our handpicked selection of top-quality products from trusted sellers
@@ -175,7 +178,7 @@ export default function FeaturedProducts() {
       <div className="max-w-[1350px] mx-auto">
         {/* Heading */}
         <h2 className="text-[36px] font-bold text-center mb-2">
-          Featured Products
+     {t('title')}
         </h2>
 
         {/* Subtext */}
@@ -273,7 +276,7 @@ export default function FeaturedProducts() {
                       "
                     >
                       <IoCartOutline className="text-[18px]" />
-                      Add
+                 { t('feature_1')}
                     </button>
                   </div>
                 </div>
@@ -292,7 +295,7 @@ export default function FeaturedProducts() {
               hover:from-[#8a2dc8] hover:to-[#e57f3a] transition-all
               hover:shadow-[0px_6px_20px_rgba(152,56,225,0.3)]
             ">
-              View More Products
+   {t('button_text')}
             </button>
           </Link>
         </div>

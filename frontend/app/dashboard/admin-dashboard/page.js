@@ -50,9 +50,9 @@ export default function DashboardPage() {
         <OrdersTable />
       </div>
 
-      <div className="mt-8 mb-10">
+      {/* <div className="mt-8 mb-10">
         <BookingsTable />
-      </div>
+      </div> */}
     </div>
   );
 }

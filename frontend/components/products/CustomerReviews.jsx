@@ -1,10 +1,13 @@
 "use client";
 
-import { useGetProductReviewQuery } from "@/feature/review/ReviewApi";
+import { useGetProductReviewQuery, useGetServiceReviewQuery } from "@/feature/review/ReviewApi";
 import { Star, User } from "lucide-react";
 
 export default function CustomerReviews({ id }) {
-  const { data: review, isLoading, isError } = useGetProductReviewQuery(id);
+
+  console.log(id, 'kire id somosa to ekhaen');
+  const { data: review, isLoading, isError } = useGetServiceReviewQuery(id);
+  console.log(review, 'review is hererererererer');
   
   // Get user data from reviews
   const reviews = review?.data || [];

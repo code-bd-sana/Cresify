@@ -1,0 +1,19 @@
+{
+  "title": "Why Choose CRESIFY?",
+  "subtitle": "We're committed to providing the best marketplace experience for our users",
+  
+  "items": [
+    {
+      "title": "Trusted & Verified",
+      "description": "All our sellers and service providers are thoroughly verified and rated by our community to ensure quality and reliability."
+    },
+    {
+      "title": "Local & Convenient", 
+      "description": "Find products and services right in your neighborhood. Support local businesses while enjoying fast delivery and service."
+    },
+    {
+      "title": "24/7 Support",
+      "description": "Our dedicated customer support team is always ready to help you with any questions or concerns you may have."
+    }
+  ]
+}

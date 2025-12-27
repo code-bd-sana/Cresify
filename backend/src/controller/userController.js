@@ -136,6 +136,7 @@ export const updateProfile = async (req, res) => {
       serviceArea,
       shopDescription,
       serviceRedius,
+      servicesImage,
 
       address,
       hourlyRate,
@@ -163,6 +164,8 @@ export const updateProfile = async (req, res) => {
           yearsofExperience,
           serviceDescription,
           shopDescription,
+      servicesImage,
+
           addresss: address,
 
           category,
@@ -301,6 +304,8 @@ export const getSingleProvider = async (req, res) => {
     ]);
 
     if (!provider) {
+
+      console.log('provider pia nai');
       return res.status(404).json({ message: "Provider not found" });
     }
 
