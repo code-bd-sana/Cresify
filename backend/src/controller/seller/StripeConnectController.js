@@ -116,3 +116,63 @@ export const unlinkAccount = async (req, res) => {
       .json({ message: "Failed to unlink account", error: err.message });
   }
 };
+
+export const updateStripeAccount = async (req, res) => {
+  try {
+    const { sellerId, account } = req.body;
+    if (!sellerId) return res.status(400).json({ message: "Missing sellerId" });
+
+    const wallet = await Wallet.findOne({ user: sellerId });
+    if (!wallet) return res.status(404).json({ message: "Wallet not found" });
+
+    // If there's a connected Stripe account, attempt to update it
+    if (wallet.stripeAccountId) {
+      try {
+        const updatePayload = {};
+        if (account.email) updatePayload.email = account.email;
+        // Map some basic business/profile fields
+        updatePayload.business_profile = {
+          ...(account.businessName ? { name: account.businessName } : {}),
+          ...(account.phone ? { support_phone: account.phone } : {}),
+        };
+
+        // Attempt to update the Stripe account and store returned details
+        const acct = await stripe.accounts.update(
+          wallet.stripeAccountId,
+          updatePayload
+        );
+        wallet.stripeDetails = acct;
+        wallet.stripePayoutsEnabled = acct.payouts_enabled || false;
+        wallet.stripeChargesEnabled = acct.charges_enabled || false;
+        await wallet.save();
+
+        return res.json({ wallet });
+      } catch (stripeErr) {
+        console.warn(
+          "stripe.accounts.update failed",
+          stripeErr?.message || stripeErr
+        );
+        // Still persist local changes if provided
+        wallet.stripeDetails = { ...(wallet.stripeDetails || {}), ...account };
+        await wallet.save();
+        return res
+          .status(200)
+          .json({
+            wallet,
+            warning: stripeErr?.message || "Stripe update failed",
+          });
+      }
+    }
+
+    // No connected stripe account yet — persist provided details locally
+    wallet.stripeDetails = { ...(wallet.stripeDetails || {}), ...account };
+    await wallet.save();
+
+    return res.json({ wallet });
+  } catch (err) {
+    console.error("updateStripeAccount error", err);
+    return res
+      .status(500)
+      .json({ message: "Failed to update stripe account", error: err.message });
+  }
+};

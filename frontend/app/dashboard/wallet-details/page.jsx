@@ -5,6 +5,7 @@ import {
   useGetWalletQuery,
   useRequestPayoutMutation,
   useUnlinkStripeMutation,
+  useUpdateStripeAccountMutation,
 } from "@/feature/seller/WalletApi";
 import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
@@ -111,15 +112,15 @@ function StripeAccountCard({ account, onEdit, onUnlink, onRefresh }) {
             <div className='flex items-center gap-2 mt-1'>
               <span
                 className={`px-2 py-1 rounded-full text-xs font-medium ${
-                  account.status === "verified"
+                  account?.status === "verified"
                     ? "bg-green-100 text-green-800"
-                    : account.status === "pending"
+                    : account?.status === "pending"
                     ? "bg-yellow-100 text-yellow-800"
                     : "bg-red-100 text-red-800"
                 }`}>
-                {account.status === "verified"
+                {account?.status === "verified"
                   ? "✓ Verified"
-                  : account.status === "pending"
+                  : account?.status === "pending"
                   ? "⏳ Pending"
                   : "✗ Unverified"}
               </span>
@@ -127,7 +128,10 @@ function StripeAccountCard({ account, onEdit, onUnlink, onRefresh }) {
                 Express Type
               </span>
               <span className='text-xs text-gray-500'>
-                ID: {account.accountId?.substring(0, 8)}...
+                ID:{" "}
+                {account?.accountId
+                  ? `${account.accountId.substring(0, 8)}...`
+                  : "-"}
               </span>
             </div>
           </div>
@@ -147,26 +151,28 @@ function StripeAccountCard({ account, onEdit, onUnlink, onRefresh }) {
         </div>
         <div className='bg-white p-3 rounded-lg border'>
           <p className='text-xs text-gray-500 mb-1'>Currency</p>
-          <p className='font-semibold uppercase'>{account.currency}</p>
+          <p className='font-semibold uppercase'>
+            {account?.currency ?? "USD"}
+          </p>
         </div>
         <div className='bg-white p-3 rounded-lg border'>
           <p className='text-xs text-gray-500 mb-1'>Payouts Enabled</p>
           <p
             className={`font-semibold ${
-              account.payoutsEnabled ? "text-green-600" : "text-red-600"
+              account?.payoutsEnabled ? "text-green-600" : "text-red-600"
             }`}>
-            {account.payoutsEnabled ? "Yes" : "No"}
+            {account?.payoutsEnabled ? "Yes" : "No"}
           </p>
         </div>
         <div className='bg-white p-3 rounded-lg border'>
           <p className='text-xs text-gray-500 mb-1'>Requirements</p>
           <p
             className={`font-semibold ${
-              account.requirementsDue.length === 0
+              (account?.requirementsDue?.length || 0) === 0
                 ? "text-green-600"
                 : "text-amber-600"
             }`}>
-            {account.requirementsDue.length === 0
+            {(account?.requirementsDue?.length || 0) === 0
               ? "Complete"
               : `${account.requirementsDue.length} pending`}
           </p>
@@ -181,38 +187,38 @@ function StripeAccountCard({ account, onEdit, onUnlink, onRefresh }) {
         <div className='space-y-2 text-sm'>
           <div className='flex justify-between'>
             <span className='text-gray-600'>Email:</span>
-            <span className='font-medium'>{account.email}</span>
+            <span className='font-medium'>{account?.email ?? "-"}</span>
           </div>
           <div className='flex justify-between'>
             <span className='text-gray-600'>Country:</span>
-            <span className='font-medium'>{account.country}</span>
+            <span className='font-medium'>{account?.country ?? "-"}</span>
           </div>
           <div className='flex justify-between'>
             <span className='text-gray-600'>Default Currency:</span>
             <span className='font-medium uppercase'>
-              {account.defaultCurrency}
+              {account?.defaultCurrency ?? account?.currency ?? "USD"}
             </span>
           </div>
           <div className='flex justify-between'>
             <span className='text-gray-600'>Charges Enabled:</span>
             <span
               className={`font-medium ${
-                account.chargesEnabled ? "text-green-600" : "text-red-600"
+                account?.chargesEnabled ? "text-green-600" : "text-red-600"
               }`}>
-              {account.chargesEnabled ? "Yes" : "No"}
+              {account?.chargesEnabled ? "Yes" : "No"}
             </span>
           </div>
         </div>
       </div>
 
-      {account.requirementsDue.length > 0 && (
+      {(account?.requirementsDue?.length || 0) > 0 && (
         <div className='bg-amber-50 border border-amber-200 rounded-lg p-4 mb-4'>
           <h4 className='font-semibold text-amber-800 mb-2 flex items-center gap-2'>
             <FaInfoCircle />
             Action Required
           </h4>
           <ul className='text-sm text-amber-700 space-y-1'>
-            {account.requirementsDue.map((req, idx) => (
+            {(account?.requirementsDue || []).map((req, idx) => (
               <li key={idx}>• {req}</li>
             ))}
           </ul>
@@ -1052,6 +1058,7 @@ export default function WalletDetailsPage() {
 
   const [requestPayout] = useRequestPayoutMutation();
   const [unlinkStripe] = useUnlinkStripeMutation();
+  const [updateStripeAccount] = useUpdateStripeAccountMutation();
 
   // Populate state when API returns
   useEffect(() => {
@@ -1081,18 +1088,34 @@ export default function WalletDetailsPage() {
   }, [walletData, walletLoading]);
 
   const handleStripeAccountSave = async (data) => {
-    console.log("Saving Stripe Express account:", data);
     setLoading(true);
-    setTimeout(() => {
-      setStripeAccount({
-        ...stripeAccount,
-        ...data,
-        type: "express", // Ensure type is express
-        updatedAt: new Date().toISOString().split("T")[0],
-      });
-      setLoading(false);
+    try {
+      const sellerId = user?.id || localStorage.getItem("userId");
+      const res = await updateStripeAccount({
+        sellerId,
+        account: data,
+      }).unwrap();
+      // backend returns updated wallet
+      const updatedWallet = res.wallet || res;
+      setStripeAccount(updatedWallet.stripeDetails || data);
+      // update wallet summary fields if present
+      setWallet((prev) => ({
+        ...(prev || {}),
+        balance: updatedWallet.currentBalance ?? prev?.balance,
+        currency:
+          updatedWallet.currency === "usd" || !updatedWallet.currency
+            ? "$"
+            : updatedWallet.currency,
+      }));
       setShowStripeForm(false);
-    }, 1000);
+    } catch (err) {
+      console.error("Failed to save stripe account", err);
+      alert(
+        "Failed to save Stripe account: " + (err?.data?.message || err.message)
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleStripeAccountUnlink = async () => {
