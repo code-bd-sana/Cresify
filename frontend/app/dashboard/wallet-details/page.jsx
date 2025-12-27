@@ -3,7 +3,9 @@
 import {
   useConnectStripeMutation,
   useGetWalletQuery,
+  useRefreshStripeAccountMutation,
   useRequestPayoutMutation,
+  useSetStripeFlagsMutation,
   useUnlinkStripeMutation,
   useUpdateStripeAccountMutation,
 } from "@/feature/seller/WalletApi";
@@ -1034,6 +1036,29 @@ function WithdrawalModal({ isOpen, onClose, wallet, onSubmit, stripeAccount }) {
   MAIN COMPONENT
 ====================================================== */
 export default function WalletDetailsPage() {
+  // normalize Stripe account object from backend/Stripe to a UI-friendly shape
+  const normalizeStripe = (acct) => {
+    if (!acct) return null;
+    return {
+      // Stripe account id
+      accountId: acct.id || acct.accountId || acct.account_id || null,
+      email: acct.email || acct.email_address || null,
+      country: acct.country || null,
+      currency:
+        acct.default_currency || acct.currency || acct.defaultCurrency || null,
+      defaultCurrency:
+        acct.default_currency || acct.defaultCurrency || acct.currency || null,
+      payoutsEnabled: acct.payouts_enabled ?? acct.payoutsEnabled ?? false,
+      chargesEnabled: acct.charges_enabled ?? acct.chargesEnabled ?? false,
+      requirementsDue:
+        acct.requirements?.currently_due ||
+        acct.requirementsDue ||
+        acct.requirements_due ||
+        [],
+      // preserve raw for debugging
+      raw: acct,
+    };
+  };
   const [loading, setLoading] = useState(true);
   const [wallet, setWallet] = useState(null);
   const [transactions, setTransactions] = useState([]);
@@ -1081,7 +1106,7 @@ export default function WalletDetailsPage() {
         thisMonthEarnings: w.thisMonthEarnings ?? 0,
       });
 
-      setStripeAccount(w.stripeDetails || null);
+      setStripeAccount(normalizeStripe(w.stripeDetails) || null);
       setTransactions(walletData.transactions || []);
       setLoading(false);
     }
@@ -1097,7 +1122,9 @@ export default function WalletDetailsPage() {
       }).unwrap();
       // backend returns updated wallet
       const updatedWallet = res.wallet || res;
-      setStripeAccount(updatedWallet.stripeDetails || data);
+      setStripeAccount(
+        normalizeStripe(updatedWallet.stripeDetails) || normalizeStripe(data)
+      );
       // update wallet summary fields if present
       setWallet((prev) => ({
         ...(prev || {}),
@@ -1142,11 +1169,29 @@ export default function WalletDetailsPage() {
     }
   };
 
+  const [refreshStripeAccount] = useRefreshStripeAccountMutation();
+  const [setStripeFlags] = useSetStripeFlagsMutation();
+
   const handleStripeAccountRefresh = async () => {
     setLoading(true);
-    setTimeout(() => {
+    try {
+      const sellerId = user?.id || localStorage.getItem("userId");
+      const res = await refreshStripeAccount({ sellerId }).unwrap();
+      const updatedWallet = res.wallet || res;
+      setStripeAccount(normalizeStripe(updatedWallet.stripeDetails) || null);
+      setWallet((prev) => ({
+        ...(prev || {}),
+        balance: updatedWallet.currentBalance ?? prev?.balance,
+      }));
+    } catch (err) {
+      console.error("Failed to refresh stripe account", err);
+      alert(
+        "Failed to refresh Stripe account: " +
+          (err?.data?.message || err.message)
+      );
+    } finally {
       setLoading(false);
-    }, 800);
+    }
   };
 
   const handleWithdrawalSubmit = async (withdrawalData) => {

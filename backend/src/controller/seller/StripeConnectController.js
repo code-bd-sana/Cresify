@@ -155,12 +155,10 @@ export const updateStripeAccount = async (req, res) => {
         // Still persist local changes if provided
         wallet.stripeDetails = { ...(wallet.stripeDetails || {}), ...account };
         await wallet.save();
-        return res
-          .status(200)
-          .json({
-            wallet,
-            warning: stripeErr?.message || "Stripe update failed",
-          });
+        return res.status(200).json({
+          wallet,
+          warning: stripeErr?.message || "Stripe update failed",
+        });
       }
     }
 
@@ -174,5 +172,58 @@ export const updateStripeAccount = async (req, res) => {
     return res
       .status(500)
       .json({ message: "Failed to update stripe account", error: err.message });
+  }
+};
+
+export const refreshStripeAccount = async (req, res) => {
+  try {
+    const { sellerId } = req.body;
+    if (!sellerId) return res.status(400).json({ message: "Missing sellerId" });
+
+    const wallet = await Wallet.findOne({ user: sellerId });
+    if (!wallet || !wallet.stripeAccountId) {
+      return res.status(404).json({ message: "No connected Stripe account" });
+    }
+
+    const acct = await stripe.accounts.retrieve(wallet.stripeAccountId);
+    // update local wallet copy
+    wallet.stripeDetails = acct;
+    wallet.stripePayoutsEnabled = acct.payouts_enabled || false;
+    wallet.stripeChargesEnabled = acct.charges_enabled || false;
+    await wallet.save();
+
+    return res.json({ wallet });
+  } catch (err) {
+    console.error("refreshStripeAccount error", err);
+    return res
+      .status(500)
+      .json({
+        message: "Failed to refresh stripe account",
+        error: err.message,
+      });
+  }
+};
+
+// Admin-only: set the local flags for payouts/charges. This does NOT change Stripe state.
+export const setStripeFlags = async (req, res) => {
+  try {
+    const { sellerId, payoutsEnabled, chargesEnabled } = req.body;
+    if (!sellerId) return res.status(400).json({ message: "Missing sellerId" });
+
+    const wallet = await Wallet.findOne({ user: sellerId });
+    if (!wallet) return res.status(404).json({ message: "Wallet not found" });
+
+    if (typeof payoutsEnabled === "boolean")
+      wallet.stripePayoutsEnabled = payoutsEnabled;
+    if (typeof chargesEnabled === "boolean")
+      wallet.stripeChargesEnabled = chargesEnabled;
+
+    await wallet.save();
+    return res.json({ wallet });
+  } catch (err) {
+    console.error("setStripeFlags error", err);
+    return res
+      .status(500)
+      .json({ message: "Failed to set stripe flags", error: err.message });
   }
 };

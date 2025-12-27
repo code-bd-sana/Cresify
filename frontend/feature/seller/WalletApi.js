@@ -42,6 +42,22 @@ export const WalletApi = createApi({
       }),
       invalidatesTags: ["Wallet"],
     }),
+    refreshStripeAccount: builder.mutation({
+      query: (body) => ({
+        url: `/seller/stripe/refresh`,
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: ["Wallet"],
+    }),
+    setStripeFlags: builder.mutation({
+      query: (body) => ({
+        url: `/seller/stripe/set-flags`,
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: ["Wallet"],
+    }),
   }),
 });
 
@@ -51,4 +67,6 @@ export const {
   useConnectStripeMutation,
   useUnlinkStripeMutation,
   useUpdateStripeAccountMutation,
+  useRefreshStripeAccountMutation,
+  useSetStripeFlagsMutation,
 } = WalletApi;
