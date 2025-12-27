@@ -1,100 +1,54 @@
-import mongoose from "mongoose";
 import Refund from "../../models/RefundModel.js";
 
 /**
- * List refunds for a provider (service provider)
- * Query params: providerId, page, limit
+ * List all provider refunds (admin) with pagination
+ * Query params: page, limit
+ *
+ * Returns paginated refunds where `provider` field is present
  */
 export const listProviderRefunds = async (req, res) => {
   try {
-    const { providerId, page = 1, limit = 20 } = req.query;
-    if (!providerId)
-      return res.status(400).json({ message: "providerId required" });
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
 
-    const pageNum = Math.max(1, Number(page));
-    const limitNum = Math.min(100, Math.max(1, Number(limit)));
-    const skip = (pageNum - 1) * limitNum;
+    if (page < 1) {
+      return res
+        .status(400)
+        .json({ message: "Page must be a positive integer" });
+    }
+    if (limit < 1 || limit > 100) {
+      return res
+        .status(400)
+        .json({ message: "Limit must be between 1 and 100" });
+    }
 
-    const providerObjectId = new mongoose.Types.ObjectId(providerId);
+    const skip = (page - 1) * limit;
 
-    // Match refunds where either the refund.seller equals providerId
-    // or the linked orderVendor.seller equals providerId
-    const pipeline = [
-      {
-        $lookup: {
-          from: "ordervendors",
-          localField: "orderVendor",
-          foreignField: "_id",
-          as: "orderVendor",
-        },
-      },
-      { $unwind: { path: "$orderVendor", preserveNullAndEmptyArrays: true } },
-      {
-        $match: {
-          provider: providerObjectId,
-        },
-      },
-      { $sort: { createdAt: -1 } },
-      {
-        $facet: {
-          metadata: [{ $count: "total" }],
-          data: [
-            { $skip: skip },
-            { $limit: limitNum },
-            {
-              $lookup: {
-                from: "users",
-                localField: "requestedBy",
-                foreignField: "_id",
-                as: "requestedBy",
-              },
-            },
-            {
-              $unwind: {
-                path: "$requestedBy",
-                preserveNullAndEmptyArrays: true,
-              },
-            },
-            {
-              $project: {
-                _id: 1,
-                amount: 1,
-                currency: 1,
-                status: 1,
-                createdAt: 1,
-                reason: 1,
-                requestedBy: {
-                  _id: "$requestedBy._id",
-                  name: "$requestedBy.firstName",
-                  email: "$requestedBy.email",
-                },
-                items: 1,
-                evidence: 1,
-              },
-            },
-          ],
-        },
-      },
-    ];
+    // Count only provider refunds
+    const totalCount = await Refund.countDocuments({
+      provider: { $exists: true, $ne: null },
+    });
 
-    const result = await Refund.aggregate(pipeline);
-    const refunds = result[0]?.data || [];
-    const total = result[0]?.metadata[0]?.total || 0;
+    const refunds = await Refund.find({
+      provider: { $exists: true, $ne: null },
+    })
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .populate("requestedBy processedBy provider order payment");
 
     return res.json({
       refunds,
       pagination: {
-        page: pageNum,
-        limit: limitNum,
-        total,
-        pages: Math.ceil(total / limitNum),
+        page,
+        limit,
+        total: totalCount,
+        pages: Math.ceil(totalCount / limit),
       },
     });
   } catch (err) {
     console.error("listProviderRefunds error", err);
-    return res
-      .status(500)
-      .json({ message: "Failed to list refunds", error: err.message });
+    return res.status(500).json({ message: "Failed to list refunds" });
   }
 };
 
