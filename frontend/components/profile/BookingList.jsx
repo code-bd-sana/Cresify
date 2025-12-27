@@ -275,7 +275,6 @@ export default function BookingList() {
         ...refundData,
         bookingId: selectedBooking._id,
         customerId: userId,
-        providerId: selectedBooking.provider._id,
         amount: selectedBooking.provider.hourlyRate,
         evidenceLinks: validLinks,
       });
