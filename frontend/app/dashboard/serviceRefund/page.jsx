@@ -1,5 +1,8 @@
 "use client";
-import { useProviderRefundRequestQuery } from "@/feature/refund/RefundApi";
+import {
+  useAdminServiceRefundMutation,
+  useProviderRefundRequestQuery,
+} from "@/feature/refund/RefundApi";
 import { useSession } from "next-auth/react";
 import { useState } from "react";
 import {
@@ -85,6 +88,9 @@ const ServiceRefundPage = () => {
       }
     );
   };
+
+  const [adminServiceRefund, { isLoading: isProcessing }] =
+    useAdminServiceRefundMutation();
 
   const getEvidenceIcon = (type) => {
     return type === "image" ? (
@@ -350,6 +356,63 @@ const ServiceRefundPage = () => {
                           className='inline-flex items-center gap-1 px-3 py-2 text-sm font-medium text-white bg-[#9810FA]'>
                           <FiEye /> View Details
                         </button>
+                        {session?.user?.role === "admin" && (
+                          <>
+                            <button
+                              onClick={async () => {
+                                try {
+                                  await adminServiceRefund({
+                                    refundId: refund._id,
+                                    action: "approve",
+                                    adminId: session.user.id,
+                                  }).unwrap();
+                                  refetch();
+                                } catch (e) {
+                                  console.error(e);
+                                  alert("Failed to approve refund");
+                                }
+                              }}
+                              className='inline-flex items-center gap-1 px-3 py-2 text-sm font-medium text-white bg-green-600'>
+                              Approve
+                            </button>
+                            <button
+                              onClick={async () => {
+                                try {
+                                  await adminServiceRefund({
+                                    refundId: refund._id,
+                                    action: "reject",
+                                    adminId: session.user.id,
+                                  }).unwrap();
+                                  refetch();
+                                } catch (e) {
+                                  console.error(e);
+                                  alert("Failed to reject refund");
+                                }
+                              }}
+                              className='inline-flex items-center gap-1 px-3 py-2 text-sm font-medium text-white bg-red-600'>
+                              Reject
+                            </button>
+                            <button
+                              onClick={async () => {
+                                if (!confirm("Process this refund now?"))
+                                  return;
+                                try {
+                                  await adminServiceRefund({
+                                    refundId: refund._id,
+                                    action: "process",
+                                    adminId: session.user.id,
+                                  }).unwrap();
+                                  refetch();
+                                } catch (e) {
+                                  console.error(e);
+                                  alert("Failed to process refund");
+                                }
+                              }}
+                              className='inline-flex items-center gap-1 px-3 py-2 text-sm font-medium text-white bg-blue-600'>
+                              Process
+                            </button>
+                          </>
+                        )}
                       </div>
                     </td>
                   </tr>

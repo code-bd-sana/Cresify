@@ -462,3 +462,236 @@ export const getRefund = async (req, res) => {
       .json({ message: "Failed to fetch refund", error: err.message });
   }
 };
+
+/**
+ * Admin review for provider/service refunds.
+ * body: { refundId, action: 'approve'|'reject'|'process', adminId }
+ */
+export const reviewServiceRefund = async (req, res) => {
+  const { refundId, action, adminId } = req.body;
+  if (!refundId || !action || !adminId)
+    return res.status(400).json({ message: "Missing fields" });
+
+  const session = await mongoose.startSession();
+  try {
+    await session.withTransaction(async () => {
+      const refund = await Refund.findById(refundId)
+        .populate("requestedBy processedBy provider evidence.uploadedBy")
+        .session(session);
+      if (!refund) throw new Error("Refund not found");
+      if (!refund.provider)
+        return res.status(400).json({ message: "Not a provider refund" });
+
+      if (action === "reject") {
+        refund.status = "rejected";
+        refund.processedBy = new mongoose.Types.ObjectId(adminId);
+        refund.processedAt = new Date();
+        await refund.save({ session });
+        return res.json({ message: "Refund rejected", refund });
+      }
+
+      // If action is approve without processing payment, just mark approved
+      if (action === "approve") {
+        refund.status = "approved";
+        refund.processedBy = new mongoose.Types.ObjectId(adminId);
+        refund.processedAt = new Date();
+        await refund.save({ session });
+        return res.json({
+          message: "Refund approved (awaiting processing)",
+          refund,
+        });
+      }
+
+      // action === 'process' -> attempt to perform refund through payment provider (Stripe)
+      const payment = refund.payment
+        ? await Payment.findById(refund.payment).session(session)
+        : null;
+
+      let stripeRefund = null;
+      const refundAmount = toTwo(refund.amount || 0);
+      if (payment) {
+        // attempt stripe refund similar to reviewRefund
+        if (
+          payment.method === "stripe_checkout" ||
+          payment.paymentId ||
+          payment.metadata?.stripePaymentIntent ||
+          payment.stripeSessionId ||
+          payment.metadata?.stripeCharge
+        ) {
+          try {
+            const refundParams = { amount: Math.round(refundAmount * 100) };
+
+            if (payment.paymentId) {
+              const pid = String(payment.paymentId);
+              if (pid.startsWith("pi_")) refundParams.payment_intent = pid;
+              else refundParams.charge = pid;
+            } else if (payment.metadata?.stripePaymentIntent) {
+              refundParams.payment_intent = String(
+                payment.metadata.stripePaymentIntent
+              );
+            } else if (payment.metadata?.stripeCharge) {
+              refundParams.charge = String(payment.metadata.stripeCharge);
+            } else if (payment.stripeSessionId || payment.stripeSession) {
+              const sessId = payment.stripeSessionId || payment.stripeSession;
+              try {
+                const sess = await stripe.checkout.sessions.retrieve(sessId, {
+                  expand: ["payment_intent"],
+                });
+                if (sess && sess.payment_intent) {
+                  const pi =
+                    typeof sess.payment_intent === "string"
+                      ? sess.payment_intent
+                      : sess.payment_intent.id;
+                  if (pi) refundParams.payment_intent = pi;
+                }
+              } catch (e) {
+                console.error(
+                  "Failed to retrieve checkout session for service refund",
+                  e?.message || e
+                );
+              }
+            }
+
+            if (!refundParams.payment_intent && !refundParams.charge) {
+              throw new Error(
+                "Missing payment identifier for stripe refund (payment_intent or charge)"
+              );
+            }
+
+            stripeRefund = await stripe.refunds.create(refundParams);
+            refund.refundId = stripeRefund.id;
+            refund.stripeRefundId = stripeRefund.id;
+          } catch (err) {
+            console.error("Stripe service refund error", err);
+            throw err;
+          }
+        }
+      }
+
+      // finalize refund status
+      if (payment) {
+        refund.status =
+          refundAmount >= (payment.amount || 0)
+            ? "refunded_full"
+            : "refunded_partial";
+        payment.refunds = payment.refunds || [];
+        payment.refunds.push(refund._id);
+        if (refund.status === "refunded_full") payment.status = "refunded";
+        await payment.save({ session });
+      } else {
+        // no payment attached, mark as processed
+        refund.status = "refunded_full";
+      }
+
+      // Adjust provider wallet: deduct from reserved first, then currentBalance
+      try {
+        if (refund.provider) {
+          const providerId =
+            refund.provider instanceof mongoose.Types.ObjectId
+              ? refund.provider
+              : new mongoose.Types.ObjectId(refund.provider);
+          const wallet = await Wallet.findOne({ user: providerId }).session(
+            session
+          );
+          if (wallet) {
+            const beforeReserved = toTwo(wallet.reserved || 0);
+            const beforeCurrent = toTwo(wallet.currentBalance || 0);
+            const deductFromReserved = toTwo(
+              Math.min(beforeReserved, refundAmount)
+            );
+            const remaining = toTwo(
+              Math.max(0, refundAmount - deductFromReserved)
+            );
+            const newReserved = toTwo(beforeReserved - deductFromReserved);
+            const newCurrent = toTwo(beforeCurrent - remaining);
+
+            // Apply wallet update
+            await Wallet.updateOne(
+              { _id: wallet._id },
+              { $set: { reserved: newReserved, currentBalance: newCurrent } },
+              { session }
+            );
+
+            const ledgerDocs = [];
+            const txDocs = [];
+
+            if (deductFromReserved > 0) {
+              ledgerDocs.push({
+                provider: providerId,
+                type: "debit",
+                amount: toTwo(deductFromReserved),
+                reason: "refund",
+                refId: refund.order,
+              });
+              txDocs.push({
+                transactionId: `${
+                  refund._id
+                }-refund-prov-${providerId}-${Date.now()}`,
+                type: "refund",
+                wallet: wallet._id,
+                user: providerId,
+                order: refund.order,
+                payment: refund.payment,
+                amount: toTwo(deductFromReserved),
+                currency: refund.currency || "usd",
+                balanceBefore: beforeReserved,
+                balanceAfter: newReserved,
+              });
+            }
+
+            if (remaining > 0) {
+              ledgerDocs.push({
+                provider: providerId,
+                type: "debit",
+                amount: toTwo(remaining),
+                reason: "refund",
+                refId: refund.order,
+              });
+              txDocs.push({
+                transactionId: `${
+                  refund._id
+                }-refund-prov-curr-${providerId}-${Date.now()}`,
+                type: "refund",
+                wallet: wallet._id,
+                user: providerId,
+                order: refund.order,
+                payment: refund.payment,
+                amount: toTwo(remaining),
+                currency: refund.currency || "usd",
+                balanceBefore: beforeCurrent,
+                balanceAfter: newCurrent,
+              });
+            }
+
+            if (ledgerDocs.length)
+              await WalletLedger.insertMany(ledgerDocs, { session });
+            if (txDocs.length)
+              await Transaction.insertMany(txDocs, { session });
+          }
+        }
+      } catch (e) {
+        console.error("Provider wallet adjustment failed", e.message || e);
+        // continue — do not abort entire transaction for ledger write failures
+      }
+
+      refund.processedBy = new mongoose.Types.ObjectId(adminId);
+      refund.processedAt = new Date();
+      await refund.save({ session });
+
+      return res.json({
+        message: "Service refund processed",
+        refund,
+        stripeRefund,
+      });
+    });
+  } catch (err) {
+    console.error("reviewServiceRefund error", err);
+    if (session.inTransaction && session.inTransaction())
+      await session.abortTransaction();
+    session.endSession();
+    return res.status(500).json({
+      message: "Failed to process service refund",
+      error: err.message,
+    });
+  }
+};
