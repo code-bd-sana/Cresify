@@ -45,14 +45,22 @@ export default function Sidebar({ open, onClose }) {
     },
     ,
     { label: "Orders", icon: FiShoppingCart, path: "/dashboard/orders" },
-    { label: "Booking", icon: FiShoppingCart, path: "/dashboard/orders" },
+    { label: "Bookings", icon: FiShoppingCart, path: "/dashboard/orders" },
     // { label: "Store Profile", icon: FiUser, path: "/dashboard/store-profile" },
     { label: "Payments", icon: FiCreditCard, path: "/dashboard/payments" },
     { label: "Content", icon: FiCreditCard, path: "/dashboard/content" },
 
     // { label: "Reviews", icon: FiStar, path: "/dashboard/reviews" },
-    { label: "Refund", icon: TbReceiptRefund, path: "/dashboard/adminRefund" },
-    { label: "Service Refund", icon: TbReceiptRefund, path: "/dashboard/serviceRefund" },
+    {
+      label: "Product Refunds",
+      icon: TbReceiptRefund,
+      path: "/dashboard/adminRefund",
+    },
+    {
+      label: "Service Refunds",
+      icon: TbReceiptRefund,
+      path: "/dashboard/serviceRefund",
+    },
     { label: "Settings", icon: FiSettings, path: "/dashboard/settings" },
   ];
 
@@ -90,7 +98,11 @@ export default function Sidebar({ open, onClose }) {
     { label: "Messages", icon: FiMessageSquare, path: "/dashboard/messages" },
     { label: "Reviews", icon: FiStar, path: "/dashboard/reviews" },
     { label: "Settings", icon: FiSettings, path: "/dashboard/settings" },
-        { label: "refund", icon: TbReceiptRefund, path: "/dashboard/providerRefund" },
+    {
+      label: "refund",
+      icon: TbReceiptRefund,
+      path: "/dashboard/providerRefund",
+    },
   ];
 
   const menuItems =
