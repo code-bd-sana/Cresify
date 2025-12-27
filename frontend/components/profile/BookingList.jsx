@@ -1,6 +1,5 @@
 "use client";
 
-
 import { useGetUserBookingsQuery } from "@/feature/provider/ProviderApi";
 import { useProviderCreateRefundMutation } from "@/feature/refund/RefundApi";
 import { useSaveReviewMutation } from "@/feature/review/ReviewApi";
@@ -29,7 +28,6 @@ import {
 import { useSession } from "next-auth/react";
 import { useState } from "react";
 
-
 export default function BookingList() {
   const { data: session } = useSession();
   const userId = session?.user?.id;
@@ -43,7 +41,6 @@ export default function BookingList() {
     evidenceLinks: [{ url: "", description: "" }],
   });
 
-
   // Review modal state
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [selectedProviderForReview, setSelectedProviderForReview] =
@@ -52,7 +49,6 @@ export default function BookingList() {
   const [reviewText, setReviewText] = useState("");
   const [reviewReply, setReviewReply] = useState("");
   const [reviewExperience, setReviewExperience] = useState("");
-
 
   // RTK Query hooks
   const {
@@ -65,12 +61,9 @@ export default function BookingList() {
   const [providerCreateRefund, { isLoading: isSubmittingRefund }] =
     useProviderCreateRefundMutation();
 
-
   console.log(bookingData, "Actual booking data from API");
 
-
   // ==================== UTILITY FUNCTIONS ====================
-
 
   // Get tab counts
   const getTabCounts = () => {
@@ -85,13 +78,7 @@ export default function BookingList() {
         cancelled: 0,
       };
 
-
     const bookings = bookingData.data.bookings;
-
-<<<<<<< HEAD
-    console.log(bookingData);
-=======
->>>>>>> 5afea9d8a77205a20d057de32fb9e82de1887f33
 
     // Determine if a booking is "upcoming" (accepted and future date)
     const upcomingCount = bookings.filter((booking) => {
@@ -100,7 +87,6 @@ export default function BookingList() {
       const now = new Date();
       return bookingDate > now;
     }).length;
-
 
     return {
       all: bookingData.data.total,
@@ -113,9 +99,7 @@ export default function BookingList() {
     };
   };
 
-
   const tabCounts = getTabCounts();
-
 
   const tabs = [
     { id: "all", label: "All Booking", count: tabCounts.all },
@@ -125,7 +109,6 @@ export default function BookingList() {
     { id: "completed", label: "Completed", count: tabCounts.completed },
     { id: "cancelled", label: "Cancelled", count: tabCounts.cancelled },
   ];
-
 
   // Get status badge styling
   const getStatusInfo = (status) => {
@@ -141,18 +124,15 @@ export default function BookingList() {
     );
   };
 
-
   // Check if booking is eligible for review
   const canReviewBooking = (booking) => {
     // Only completed bookings can be reviewed
     if (booking.status !== "completed") return false;
 
-
     // Optional: Check if already reviewed
     // Currently assuming all completed bookings are reviewable
     return true;
   };
-
 
   // Format date
   const formatDate = (dateString) => {
@@ -165,20 +145,16 @@ export default function BookingList() {
     });
   };
 
-
   // Format time
   const formatTime = (timeString) => {
     return timeString ? timeString.replace(/:\d{2}$/, "") : "";
   };
 
-
   // Filter bookings based on active tab
   const filterBookings = () => {
     if (!bookingData?.data?.bookings) return [];
 
-
     let filtered = bookingData.data.bookings;
-
 
     if (activeTab === "upcoming") {
       return filtered.filter((booking) => {
@@ -189,18 +165,14 @@ export default function BookingList() {
       });
     }
 
-
     if (activeTab !== "all") {
       filtered = filtered.filter((booking) => booking.status === activeTab);
     }
 
-
     return filtered;
   };
 
-
   const filteredBookings = filterBookings();
-
 
   // Pagination
   const itemsPerPage = 5;
@@ -209,16 +181,13 @@ export default function BookingList() {
   const endIndex = startIndex + itemsPerPage;
   const currentBookings = filteredBookings.slice(startIndex, endIndex);
 
-
   // ==================== HANDLERS ====================
-
 
   // View details handler
   const handleViewDetails = (booking) => {
     setSelectedBooking(booking);
     setShowDetailsModal(true);
   };
-
 
   // Review handler
   const handleReviewClick = (booking) => {
@@ -230,11 +199,9 @@ export default function BookingList() {
     setShowReviewModal(true);
   };
 
-
   // Submit review
   const handleSubmitReview = async (e) => {
     e.preventDefault();
-
 
     if (
       !selectedProviderForReview ||
@@ -244,7 +211,6 @@ export default function BookingList() {
       alert("Please provide a rating and review text");
       return;
     }
-
 
     const reviewData = {
       id: userId,
@@ -257,13 +223,10 @@ export default function BookingList() {
       bookingId: selectedProviderForReview._id,
     };
 
-
     console.log("Submitting review:", reviewData);
-
 
     try {
       const result = await saveReview(reviewData).unwrap();
-
 
       if (result.success) {
         alert("Review submitted successfully!");
@@ -279,7 +242,6 @@ export default function BookingList() {
     }
   };
 
-
   // Refund handler - opens modal
   const handleRefundClick = (booking) => {
     setSelectedBooking(booking);
@@ -290,14 +252,11 @@ export default function BookingList() {
     setShowRefundModal(true);
   };
 
-
   // Submit refund request
   const handleRefundSubmit = async (e) => {
     e.preventDefault();
 
-
     if (!selectedBooking) return;
-
 
     // Filter out empty links
     const validLinks = refundForm.evidenceLinks.filter(
@@ -305,7 +264,6 @@ export default function BookingList() {
     );
 
     const paymentId = selectedBooking?.paymentId;
-
 
     const refundData = {
       providerId: selectedBooking.provider._id,
@@ -317,15 +275,10 @@ export default function BookingList() {
       paymentId: paymentId || undefined,
     };
 
-<<<<<<< HEAD
-=======
-
     console.log("Submitting refund request:", refundData);
 
->>>>>>> 5afea9d8a77205a20d057de32fb9e82de1887f33
     try {
       const result = await providerCreateRefund(refundData).unwrap();
-
 
       if (result && (result.refund || result.success)) {
         const refundId = result.refund?._id || result.refundId;
@@ -355,7 +308,6 @@ export default function BookingList() {
     }
   };
 
-
   // Handle adding new evidence link
   const addEvidenceLink = () => {
     if (refundForm.evidenceLinks.length < 5) {
@@ -365,7 +317,6 @@ export default function BookingList() {
       }));
     }
   };
-
 
   // Handle removing evidence link
   const removeEvidenceLink = (index) => {
@@ -377,7 +328,6 @@ export default function BookingList() {
     }
   };
 
-
   // Update evidence link
   const updateEvidenceLink = (index, field, value) => {
     const updatedLinks = [...refundForm.evidenceLinks];
@@ -385,9 +335,7 @@ export default function BookingList() {
     setRefundForm((prev) => ({ ...prev, evidenceLinks: updatedLinks }));
   };
 
-
   // ==================== RENDER STATES ====================
-
 
   if (isLoading) {
     return (
@@ -408,7 +356,6 @@ export default function BookingList() {
     );
   }
 
-
   if (error) {
     return (
       <section className='w-full bg-[#F7F7FA] pb-10 px-4'>
@@ -418,7 +365,6 @@ export default function BookingList() {
       </section>
     );
   }
-
 
   if (!bookingData?.data?.bookings?.length) {
     return (
@@ -442,7 +388,6 @@ export default function BookingList() {
       </section>
     );
   }
-
 
   return (
     <>
@@ -484,7 +429,6 @@ export default function BookingList() {
             </div>
           </div>
 
-
           {/* ================ BOOKINGS LIST ================ */}
           <div className='space-y-6'>
             {currentBookings.map((booking) => {
@@ -492,7 +436,6 @@ export default function BookingList() {
               const formattedDate = formatDate(booking.dateId.workingDate);
               const price = booking.provider.hourlyRate;
               const isReviewable = canReviewBooking(booking);
-
 
               return (
                 <div
@@ -504,7 +447,6 @@ export default function BookingList() {
                       Booking ID #{booking._id.slice(-8)}
                     </p>
 
-
                     <div className='flex items-center gap-3'>
                       <span
                         className='text-[11px] px-2 py-[2px] rounded-full font-medium'
@@ -515,13 +457,11 @@ export default function BookingList() {
                         {statusInfo.label}
                       </span>
 
-
                       <p className='text-[14px] font-semibold text-[#F78D25]'>
                         ${price.toFixed(2)}
                       </p>
                     </div>
                   </div>
-
 
                   {/* Service Info */}
                   <div className='flex items-start gap-4 mt-4'>
@@ -530,7 +470,6 @@ export default function BookingList() {
                         {booking.provider.serviceName.charAt(0)}
                       </span>
                     </div>
-
 
                     <div className='flex-1'>
                       <p className='text-[14px] font-semibold text-[#333]'>
@@ -543,7 +482,6 @@ export default function BookingList() {
                         by {booking.provider.fullName}
                       </p>
 
-
                       {/* Details */}
                       <div className='mt-3 space-y-1'>
                         <div className='flex items-center gap-2 text-[#666] text-[12px]'>
@@ -551,13 +489,11 @@ export default function BookingList() {
                           {formattedDate}
                         </div>
 
-
                         <div className='flex items-center gap-2 text-[#666] text-[12px]'>
                           <Clock size={14} />
                           {formatTime(booking.timeSlot.startTime)} -{" "}
                           {formatTime(booking.timeSlot.endTime)}
                         </div>
-
 
                         <div className='flex items-center gap-2 text-[#666] text-[12px]'>
                           <TimerIcon size={14} />
@@ -566,7 +502,6 @@ export default function BookingList() {
                       </div>
                     </div>
                   </div>
-
 
                   {/* Action Buttons */}
                   <div className='flex flex-wrap gap-3 mt-4'>
@@ -586,7 +521,6 @@ export default function BookingList() {
                       View Details
                     </button>
 
-
                     {/* Review Button - Only for completed bookings */}
                     {isReviewable && (
                       <button
@@ -604,7 +538,6 @@ export default function BookingList() {
                         Write Review
                       </button>
                     )}
-
 
                     {/* Refund Button - Only for processing/completed payments */}
                     {(booking.paymentStatus === "processing" ||
@@ -630,7 +563,6 @@ export default function BookingList() {
             })}
           </div>
 
-
           {/* ================ PAGINATION ================ */}
           {totalPages > 1 && (
             <div className='flex justify-center items-center gap-4 mt-8'>
@@ -648,7 +580,6 @@ export default function BookingList() {
                 Previous
               </button>
 
-
               <div className='flex items-center gap-2'>
                 {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                   let pageNum;
@@ -661,7 +592,6 @@ export default function BookingList() {
                   } else {
                     pageNum = currentPage - 2 + i;
                   }
-
 
                   return (
                     <button
@@ -679,7 +609,6 @@ export default function BookingList() {
                     </button>
                   );
                 })}
-
 
                 {/* Show ellipsis and last page if many pages */}
                 {totalPages > 5 && currentPage < totalPages - 2 && (
@@ -701,7 +630,6 @@ export default function BookingList() {
                 )}
               </div>
 
-
               <button
                 onClick={() =>
                   setCurrentPage((prev) => Math.min(prev + 1, totalPages))
@@ -720,7 +648,6 @@ export default function BookingList() {
             </div>
           )}
 
-
           {/* ================ SUMMARY ================ */}
           <div className='mt-6 text-center text-[12px] text-gray-500'>
             Showing {startIndex + 1} to{" "}
@@ -729,7 +656,6 @@ export default function BookingList() {
           </div>
         </div>
       </section>
-
 
       {/* ================ REVIEW MODAL ================ */}
       {showReviewModal && selectedProviderForReview && (
@@ -762,7 +688,6 @@ export default function BookingList() {
               </div>
             </div>
 
-
             {/* Provider Info */}
             <div className='p-6 border-b border-gray-200'>
               <div className='flex items-center gap-3'>
@@ -785,7 +710,6 @@ export default function BookingList() {
                 </div>
               </div>
             </div>
-
 
             {/* Review Form */}
             <form onSubmit={handleSubmitReview} className='p-6'>
@@ -830,7 +754,6 @@ export default function BookingList() {
                 </div>
               </div>
 
-
               {/* Overall Experience */}
               <div className='mb-6'>
                 <label className='block text-sm font-medium text-gray-900 mb-3'>
@@ -856,7 +779,6 @@ export default function BookingList() {
                     <span className='text-sm font-medium'>Good</span>
                   </button>
 
-
                   <button
                     type='button'
                     onClick={() => setReviewExperience("neutral")}
@@ -870,7 +792,6 @@ export default function BookingList() {
                     </div>
                     <span className='text-sm font-medium'>Neutral</span>
                   </button>
-
 
                   <button
                     type='button'
@@ -893,7 +814,6 @@ export default function BookingList() {
                 </div>
               </div>
 
-
               {/* Review Text */}
               <div className='mb-6'>
                 <label className='block text-sm font-medium text-gray-900 mb-2'>
@@ -912,7 +832,6 @@ export default function BookingList() {
                 </p>
               </div>
 
-
               {/* Reply (Optional) */}
               <div className='mb-6'>
                 <label className='block text-sm font-medium text-gray-900 mb-2'>
@@ -926,7 +845,6 @@ export default function BookingList() {
                   className='w-full px-3 py-2 border border-gray-300 rounded-[10px] text-sm focus:outline-none focus:ring-2 focus:ring-[#9838E1] focus:border-transparent'
                 />
               </div>
-
 
               {/* Guidelines */}
               <div className='bg-blue-50 border border-blue-200 rounded-[10px] p-4 mb-6'>
@@ -948,7 +866,6 @@ export default function BookingList() {
                   </div>
                 </div>
               </div>
-
 
               {/* Form Actions */}
               <div className='flex gap-3'>
@@ -990,7 +907,6 @@ export default function BookingList() {
         </div>
       )}
 
-
       {/* ================ VIEW DETAILS MODAL ================ */}
       {showDetailsModal && selectedBooking && (
         <div className='fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4'>
@@ -1016,7 +932,6 @@ export default function BookingList() {
                 </button>
               </div>
             </div>
-
 
             {/* Content */}
             <div className='p-6'>
@@ -1049,7 +964,6 @@ export default function BookingList() {
                 </p>
               </div>
 
-
               {/* Service Information */}
               <div className='mb-8'>
                 <h4 className='text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2'>
@@ -1060,7 +974,6 @@ export default function BookingList() {
                   </div>
                   Service Information
                 </h4>
-
 
                 <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
                   <div className='space-y-3'>
@@ -1105,7 +1018,6 @@ export default function BookingList() {
                 </div>
               </div>
 
-
               {/* Provider Information */}
               <div className='mb-8'>
                 <h4 className='text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2'>
@@ -1114,7 +1026,6 @@ export default function BookingList() {
                   </div>
                   Provider Information
                 </h4>
-
 
                 <div className='bg-blue-50 rounded-[12px] p-4'>
                   <div className='space-y-3'>
@@ -1142,7 +1053,6 @@ export default function BookingList() {
                 </div>
               </div>
 
-
               {/* Additional Information */}
               <div>
                 <h4 className='text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2'>
@@ -1151,7 +1061,6 @@ export default function BookingList() {
                   </div>
                   Additional Information
                 </h4>
-
 
                 <div className='space-y-3'>
                   <DetailItem
@@ -1185,7 +1094,6 @@ export default function BookingList() {
               </div>
             </div>
 
-
             {/* Modal Footer */}
             <div className='p-6 border-t border-gray-200 sticky bottom-0 bg-white rounded-b-[20px]'>
               <div className='flex gap-3'>
@@ -1194,7 +1102,6 @@ export default function BookingList() {
                   className='flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-[10px] text-sm font-medium hover:bg-gray-50'>
                   Close
                 </button>
-
 
                 {/* Review Button in Details Modal */}
                 {canReviewBooking(selectedBooking) && (
@@ -1210,7 +1117,6 @@ export default function BookingList() {
                     </div>
                   </button>
                 )}
-
 
                 {/* Refund Button in Details Modal */}
                 {(selectedBooking.paymentStatus === "processing" ||
@@ -1229,7 +1135,6 @@ export default function BookingList() {
           </div>
         </div>
       )}
-
 
       {/* ================ REFUND MODAL ================ */}
       {showRefundModal && selectedBooking && (
@@ -1254,7 +1159,6 @@ export default function BookingList() {
               </div>
             </div>
 
-
             {/* Booking Summary */}
             <div className='p-6 border-b border-gray-200'>
               <div className='flex items-center gap-3'>
@@ -1278,7 +1182,6 @@ export default function BookingList() {
                 </div>
               </div>
             </div>
-
 
             {/* Refund Form */}
             <form onSubmit={handleRefundSubmit} className='p-6'>
@@ -1306,7 +1209,6 @@ export default function BookingList() {
                 </p>
               </div>
 
-
               {/* Evidence Links */}
               <div className='mb-6'>
                 <div className='flex items-center justify-between mb-2'>
@@ -1318,12 +1220,10 @@ export default function BookingList() {
                   </span>
                 </div>
 
-
                 <p className='text-xs text-gray-600 mb-4'>
                   Add links to photos, documents, or any supporting evidence for
                   your refund request.
                 </p>
-
 
                 {/* Evidence Links List */}
                 <div className='space-y-4'>
@@ -1348,7 +1248,6 @@ export default function BookingList() {
                         )}
                       </div>
 
-
                       <div className='space-y-3'>
                         <div>
                           <label className='block text-xs font-medium text-gray-700 mb-1'>
@@ -1364,7 +1263,6 @@ export default function BookingList() {
                             className='w-full px-3 py-2 border border-gray-300 rounded-[8px] text-sm focus:outline-none focus:ring-2 focus:ring-[#9838E1] focus:border-transparent'
                           />
                         </div>
-
 
                         <div>
                           <label className='block text-xs font-medium text-gray-700 mb-1'>
@@ -1389,7 +1287,6 @@ export default function BookingList() {
                   ))}
                 </div>
 
-
                 {/* Add Another Link Button */}
                 {refundForm.evidenceLinks.length < 5 && (
                   <button
@@ -1401,7 +1298,6 @@ export default function BookingList() {
                   </button>
                 )}
               </div>
-
 
               {/* Info Box */}
               <div className='bg-blue-50 border border-blue-200 rounded-[10px] p-3 mb-6'>
@@ -1422,7 +1318,6 @@ export default function BookingList() {
                   </div>
                 </div>
               </div>
-
 
               {/* Form Actions */}
               <div className='flex gap-3'>
@@ -1456,7 +1351,6 @@ export default function BookingList() {
   );
 }
 
-
 // Helper component for detail items
 function DetailItem({ icon, label, value }) {
   return (
@@ -1469,8 +1363,3 @@ function DetailItem({ icon, label, value }) {
     </div>
   );
 }
-
-
-
-
-
