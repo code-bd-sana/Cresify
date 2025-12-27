@@ -19,6 +19,9 @@ const userSchema = new Schema(
     name: {
       type: String,
     },
+    servicesImage:{
+      type:Array
+    },
 
     address: { type: String, default: "" },
     businessLogo: { type: String, default: "" },

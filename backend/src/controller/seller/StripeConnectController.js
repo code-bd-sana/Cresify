@@ -22,16 +22,42 @@ export const createConnectLink = async (req, res) => {
     // If seller already has a stripe account id, reuse it
     let accountId = wallet.stripeAccountId;
     if (!accountId) {
-      const acct = await stripe.accounts.create({
-        type: "express",
-        country: "US",
-      });
-      accountId = acct.id;
-      wallet.stripeAccountId = accountId;
-      wallet.stripeDetails = acct;
-      wallet.stripePayoutsEnabled = acct.payouts_enabled || false;
-      wallet.stripeChargesEnabled = acct.charges_enabled || false;
-      await wallet.save();
+      try {
+        const acct = await stripe.accounts.create({
+          type: "express",
+          country: "US",
+        });
+        accountId = acct.id;
+        wallet.stripeAccountId = accountId;
+        wallet.stripeDetails = acct;
+        wallet.stripePayoutsEnabled = acct.payouts_enabled || false;
+        wallet.stripeChargesEnabled = acct.charges_enabled || false;
+        await wallet.save();
+      } catch (createErr) {
+        // If Connect is not enabled for this Stripe key, fall back to OAuth-style URL
+        console.warn(
+          "stripe.accounts.create failed, falling back to OAuth",
+          createErr?.message || createErr
+        );
+        const clientId = process.env.STRIPE_CLIENT_ID;
+        if (!clientId) {
+          throw new Error(
+            "Stripe Connect account creation failed and STRIPE_CLIENT_ID is not configured for OAuth fallback"
+          );
+        }
+
+        const frontendReturn =
+          returnUrl || process.env.FRONTEND_URL || "http://localhost:3000";
+        // Build OAuth Express onboarding URL
+        const params = new URLSearchParams({
+          response_type: "code",
+          client_id: clientId,
+          scope: "read_write",
+          redirect_uri: frontendReturn,
+        });
+        const oauthUrl = `https://connect.stripe.com/express/oauth/authorize?${params.toString()}`;
+        return res.json({ url: oauthUrl, accountId: null, oauth: true });
+      }
     }
 
     const frontendReturn =
