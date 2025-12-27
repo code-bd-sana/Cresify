@@ -1,6 +1,7 @@
 "use client";
 
 import { useGetUserBookingsQuery } from "@/feature/provider/ProviderApi";
+import { useProviderCreateRefundMutation } from "@/feature/refund/RefundApi";
 import { useSaveReviewMutation } from "@/feature/review/ReviewApi";
 import {
   AlertCircle,
@@ -56,6 +57,8 @@ export default function BookingList() {
     refetch,
   } = useGetUserBookingsQuery(userId);
   const [saveReview, { isLoading: isSavingReview }] = useSaveReviewMutation();
+  const [providerCreateRefund, { isLoading: isSubmittingRefund }] =
+    useProviderCreateRefundMutation();
 
   console.log(bookingData, "Actual booking data from API");
 
@@ -270,31 +273,39 @@ export default function BookingList() {
     console.log("Submitting refund request:", refundData);
 
     try {
-      // Log to console as requested
-      console.log("Refund Data to be sent:", {
-        ...refundData,
+      const payload = {
+        providerId: selectedBooking.provider._id,
         bookingId: selectedBooking._id,
         customerId: userId,
-        amount: selectedBooking.provider.hourlyRate,
-        evidenceLinks: validLinks,
-      });
+        amount: selectedBooking.provider?.hourlyRate || 0,
+        reason: refundForm.reason || undefined,
+        evidence: validLinks.length > 0 ? validLinks : undefined,
+      };
 
-      alert(
-        `Refund request submitted successfully for Booking ID: ${selectedBooking._id.slice(
-          -8
-        )}`
-      );
-
-      // Reset and close modal
-      setShowRefundModal(false);
-      setSelectedBooking(null);
-      setRefundForm({
-        reason: "",
-        evidenceLinks: [{ url: "", description: "" }],
-      });
+      const result = await providerCreateRefund(payload).unwrap();
+      if (result && result.refund) {
+        alert(
+          `Refund request submitted successfully (id: ${result.refund._id.slice(
+            -8
+          )})`
+        );
+        setShowRefundModal(false);
+        setSelectedBooking(null);
+        setRefundForm({
+          reason: "",
+          evidenceLinks: [{ url: "", description: "" }],
+        });
+      } else {
+        console.error("Unexpected response from providerCreateRefund", result);
+        alert("Refund request submitted, but response was unexpected.");
+      }
     } catch (error) {
       console.error("Error submitting refund:", error);
-      alert("Failed to submit refund request. Please try again.");
+      alert(
+        error?.data?.message ||
+          error?.message ||
+          "Failed to submit refund request. Please try again."
+      );
     }
   };
 

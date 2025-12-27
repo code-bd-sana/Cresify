@@ -25,6 +25,13 @@ export const RefundApi = createApi({
       query: ({ providerId, page = 1, limit = 10 }) =>
         `/provider/refund?providerId=${providerId}&page=${page}&limit=${limit}`,
     }),
+    providerCreateRefund: builder.mutation({
+      query: (data) => ({
+        url: `/provider/refund/request`,
+        method: "POST",
+        body: data,
+      }),
+    }),
     adminRefund: builder.query({
       query: ({ page = 1, limit = 10 }) =>
         `/admin/refund/?page=${page}&limit=${limit}`,
@@ -53,6 +60,7 @@ export const {
   useMyRefundRequestQuery,
   useSellerRefundRequestQuery,
   useProviderRefundRequestQuery,
+  useProviderCreateRefundMutation,
   useAdminRefundQuery,
   useProcessRefundMutation,
   useRefundActionMutation,
