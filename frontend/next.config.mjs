@@ -27,10 +27,11 @@ globalNotFound:true
       },
     ],
   },
-  i18n: {
-    locales: ['en', 'es'],
-    defaultLocale: 'en',
-  },
+  // i18n: {
+  //   locales: ['en', 'es'],
+  //   defaultLocale: 'es',
+
+  // },
 };
 
 export default nextConfig;

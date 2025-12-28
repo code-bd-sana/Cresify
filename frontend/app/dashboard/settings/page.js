@@ -8,6 +8,7 @@ import toast, { Toaster } from "react-hot-toast";
 export default function AccountSettings() {
   const { data: session } = useSession();
   const id = session?.user?.id;
+  const role = session?.user?.role;
 
   const { data: profile, isLoading, error } = useMyProfileQuery(id);
   const [updateProfile, { isLoading: profileLoading, error: updateError }] =
@@ -427,7 +428,7 @@ export default function AccountSettings() {
       </div>
 
       {/* SERVICE INFORMATION CARD */}
-      <div className="bg-white mt-10 rounded-xl shadow-sm border border-gray-100 p-8">
+      <div className={`bg-white mt-10 rounded-xl shadow-sm border border-gray-100 p-8 ${role !== 'provider' ? 'hidden' : ''}`}>
         <h2 className="text-[20px] font-semibold text-gray-900 mb-6">
           Service Information
         </h2>
@@ -562,7 +563,7 @@ export default function AccountSettings() {
       </div>
 
       {/* HOURLY RATE CARD (For Providers) */}
-      <div className="bg-white mt-10 rounded-xl shadow-sm border border-gray-100 p-8">
+      <div className={` bg-white mt-10 rounded-xl shadow-sm border border-gray-100 p-8 ${role !== 'provider' ? 'hidden' : ''}`}>
         <h2 className="text-[20px] font-semibold text-gray-900 mb-6">
           Pricing Information
         </h2>

@@ -81,6 +81,14 @@ export const UserApi = createApi({
   providesTags: ["User"],
 }),
 
+updateProviderStatus: builder.mutation({
+  query: ({ id, status }) => ({
+    url: `/user/provider/status`,
+    method: 'PATCH',
+    body: { id, status }
+  }),
+  invalidatesTags: ["User"],
+}),
     getServiceProvider: builder.query({
       query: (id) => `/user/provider/${id}`,
       providesTags: ["User"], // <-- provide tag
@@ -138,4 +146,5 @@ export const {
   useGetProviderTodaysBookingsQuery,
   useGetProviderUpcomingBookingsQuery,
   useGetProviderBookingStatsQuery,
+  useUpdateProviderStatusMutation
 } = UserApi;

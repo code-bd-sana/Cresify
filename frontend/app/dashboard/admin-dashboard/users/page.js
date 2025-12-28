@@ -10,9 +10,10 @@ import {
 import { Dialog } from "@headlessui/react";
 import Image from "next/image";
 import { useEffect, useState } from "react";
-import { FiSearch, FiShoppingBag, FiUserCheck, FiUsers } from "react-icons/fi";
+import { FiSearch, FiShoppingBag, FiUserCheck, FiUsers, FiPieChart } from "react-icons/fi";
 import { TbUserStar } from "react-icons/tb";
 import Swal from "sweetalert2";
+import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 
 const statusColors = {
   active: "bg-[#E6F8EF] text-[#32A35A]",
@@ -49,6 +50,13 @@ export default function UserManagementPage() {
   /** Overview stats */
   const { data: overview } = useGetAdminOverviewQuery();
   const stats = overview?.data;
+
+  /** Prepare data for Pie Chart */
+  const pieChartData = stats ? [
+    { name: 'Buyers', value: stats.totalBuyers || 0, color: '#F78D25' },
+    { name: 'Sellers', value: stats.totalSellers || 0, color: '#9C6BFF' },
+    { name: 'Providers', value: stats.totalServiceProviders || 0, color: '#4ADE80' }
+  ].filter(item => item.value > 0) : [];
 
   /** Role filter */
   const role =
@@ -109,53 +117,128 @@ export default function UserManagementPage() {
             Manage all platform users
           </p>
         </div>
-
-        {/* <button className='hidden sm:flex items-center gap-2 px-5 py-2.5 rounded-lg text-white text-sm font-medium bg-linear-to-r from-[#8736C5] via-[#9C47C6] to-[#F88D25] shadow-md hover:opacity-90 transition'>
-          <span className='text-lg'>+</span>
-          Add Users
-        </button> */}
       </div>
 
-      {/* STAT CARDS */}
-      <div className='mt-6 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4'>
-        {[
-          { label: "Total Users", value: stats?.totalUsers, icon: FiUsers },
-          {
-            label: "Total Sellers",
-            value: stats?.totalSellers,
-            icon: FiUserCheck,
-          },
-          {
-            label: "Total Buyers",
-            value: stats?.totalBuyers,
-            icon: FiShoppingBag,
-          },
-          {
-            label: "Total Service Providers",
-            value: stats?.totalServiceProviders,
-            icon: TbUserStar,
-          },
-        ].map((card, i) => {
-          const Icon = card.icon;
-          return (
-            <div
-              key={i}
-              className='bg-white rounded-2xl shadow-sm border border-[#F0ECFF] px-6 py-5 flex items-center justify-between'>
-              <div>
-                <p className='text-[15px] font-medium text-[#2E2E2E]'>
-                  {card.label}
-                </p>
-                <p className='mt-1 text-[28px] font-semibold text-[#F88D25] leading-none'>
-                  {card.value ?? 0}
-                </p>
-              </div>
+      {/* STAT CARDS WITH PIE CHART */}
+      <div className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {/* Left: Stats Cards */}
+        <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {[
+            { label: "Total Users", value: stats?.totalUsers, icon: FiUsers },
+            {
+              label: "Total Sellers",
+              value: stats?.totalSellers,
+              icon: FiUserCheck,
+            },
+            {
+              label: "Total Buyers",
+              value: stats?.totalBuyers,
+              icon: FiShoppingBag,
+            },
+            {
+              label: "Total Service Providers",
+              value: stats?.totalServiceProviders,
+              icon: TbUserStar,
+            },
+          ].map((card, i) => {
+            const Icon = card.icon;
+            return (
+              <div
+                key={i}
+                className='bg-white rounded-2xl shadow-sm border border-[#F0ECFF] px-6 py-5 flex items-center justify-between'>
+                <div>
+                  <p className='text-[15px] font-medium text-[#2E2E2E]'>
+                    {card.label}
+                  </p>
+                  <p className='mt-1 text-[28px] font-semibold text-[#F88D25] leading-none'>
+                    {card.value ?? 0}
+                  </p>
+                </div>
 
-              <div className='w-12 h-12 rounded-xl bg-[#F2E9FF] flex items-center justify-center'>
-                <Icon className='text-[26px] text-[#8736C5]' />
+                <div className='w-12 h-12 rounded-xl bg-[#F2E9FF] flex items-center justify-center'>
+                  <Icon className='text-[26px] text-[#8736C5]' />
+                </div>
               </div>
+            );
+          })}
+        </div>
+
+        {/* Right: Pie Chart */}
+        <div className="bg-white rounded-2xl shadow-sm border border-[#F0ECFF] p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-[15px] font-medium text-[#2E2E2E]">
+              User Distribution
+            </h3>
+            <FiPieChart className="text-[20px] text-[#8736C5]" />
+          </div>
+          
+          {pieChartData.length > 0 ? (
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={pieChartData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={80}
+                    paddingAngle={5}
+                    dataKey="value"
+                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(1)}%`}
+                  >
+                    {pieChartData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip 
+                    formatter={(value) => [value, 'Users']}
+                    contentStyle={{ 
+                      backgroundColor: 'white', 
+                      border: '1px solid #F0ECFF',
+                      borderRadius: '8px',
+                      boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
+                    }}
+                  />
+                  <Legend 
+                    verticalAlign="bottom" 
+                    height={36}
+                    formatter={(value) => (
+                      <span style={{ color: '#2E2E2E', fontSize: '12px' }}>{value}</span>
+                    )}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
             </div>
-          );
-        })}
+          ) : (
+            <div className="h-64 flex items-center justify-center text-gray-500">
+              No data available for chart
+            </div>
+          )}
+
+          {/* Percentage breakdown */}
+          {stats && stats.totalUsers > 0 && (
+            <div className="mt-4 space-y-2">
+              {pieChartData.map((item) => {
+                const percentage = ((item.value / stats.totalUsers) * 100).toFixed(1);
+                return (
+                  <div key={item.name} className="flex items-center justify-between text-sm">
+                    <div className="flex items-center">
+                      <div 
+                        className="w-3 h-3 rounded-full mr-2" 
+                        style={{ backgroundColor: item.color }}
+                      />
+                      <span className="text-gray-700">{item.name}</span>
+                    </div>
+                    <div className="flex items-center">
+                      <span className="text-gray-900 font-medium">{item.value}</span>
+                      <span className="text-gray-500 ml-2">({percentage}%)</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* TABS + SEARCH */}
@@ -232,12 +315,6 @@ export default function UserManagementPage() {
                     }`}>
                     <td className='py-3 px-3'>
                       <div className='flex items-center gap-3'>
-                        <Image
-                          src={user.shopLogo || "/user2.png"}
-                          width={40}
-                          height={40}
-                          alt='avatar'
-                        />
                         <p className='font-medium text-gray-800'>{user.name}</p>
                       </div>
                     </td>
@@ -251,7 +328,17 @@ export default function UserManagementPage() {
                       </div>
                     </td>
 
-                    <td className='py-3 px-3'>{user.role}</td>
+                    <td className='py-3 px-3'>
+                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                        user.role === 'buyer' 
+                          ? 'bg-[#FFF3E6] text-[#F78D25]'
+                          : user.role === 'seller'
+                          ? 'bg-[#F2E9FF] text-[#8736C5]'
+                          : 'bg-[#E6F8EF] text-[#32A35A]'
+                      }`}>
+                        {user.role}
+                      </span>
+                    </td>
 
                     <td className='py-3 px-3'>
                       <select
