@@ -20,6 +20,8 @@ import { SiTemporal } from "react-icons/si";
 import { SlCalender } from "react-icons/sl";
 import { TbReceiptRefund } from "react-icons/tb";
 import { useTranslation } from "react-i18next";
+import { CiBookmark } from "react-icons/ci";
+import { MdOutlineHomeRepairService } from "react-icons/md";
 
 export default function Sidebar({ open, onClose }) {
   const pathname = usePathname();
@@ -48,6 +50,16 @@ export default function Sidebar({ open, onClose }) {
       label: t('orders'),
       icon: FiShoppingCart, 
       path: "/dashboard/orders" 
+    },
+    {
+      label: t('bookings'),
+      icon: CiBookmark, 
+      path: "/dashboard/bookings" 
+    },
+    {
+      label: t('services'),
+      icon: MdOutlineHomeRepairService, 
+      path: "/dashboard/services" 
     },
     { 
       label: t('payments'), 

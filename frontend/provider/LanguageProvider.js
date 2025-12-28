@@ -3,11 +3,28 @@
 import { useEffect, useState } from "react";
 import i18n from "i18next";
 import { initReactI18next, I18nextProvider } from "react-i18next";
-import { usePathname } from "next/navigation";
 
-// Load translations from public folder
+// localStorage key
+const LANGUAGE_KEY = "app-language";
+
+// Helper functions
+const getStoredLanguage = () => {
+  if (typeof window !== "undefined") {
+    const lang = localStorage.getItem(LANGUAGE_KEY);
+    return lang && ["en", "es"].includes(lang) ? lang : "es"; // Default Spanish
+  }
+  return "es";
+};
+
+const saveLanguageToStorage = (lang) => {
+  if (typeof window !== "undefined") {
+    localStorage.setItem(LANGUAGE_KEY, lang);
+  }
+};
+
+// Load translations
 const loadTranslations = () => {
-  const translations = {
+  return {
     en: {
       navbar: require("@/public/locales/en/navbar.json"),
       home: require("@/public/locales/en/home.json"),
@@ -20,13 +37,11 @@ const loadTranslations = () => {
       footer: require("@/public/locales/en/footer.json"),
       marketPlace: require("@/public/locales/en/marketplace.json"),
       serviceHeading: require("@/public/locales/en/serviceHeading.json"),
-         ourStory: require("@/public/locales/en/ourStory.json"),
+      ourStory: require("@/public/locales/en/ourStory.json"),
       missionVision: require("@/public/locales/en/missionVision.json"),
-       sidebar: require("@/public/locales/en/sidebar.json"),
-       dashboard: require("@/public/locales/en/dashboard.json"),
-       booking: require("@/public/locales/en/booking.json"),
-
-      // Add more namespaces as needed
+      sidebar: require("@/public/locales/en/sidebar.json"),
+      dashboard: require("@/public/locales/en/dashboard.json"),
+      booking: require("@/public/locales/en/booking.json"),
     },
     es: {
       navbar: require("@/public/locales/es/navbar.json"),
@@ -45,27 +60,28 @@ const loadTranslations = () => {
       sidebar: require("@/public/locales/es/sidebar.json"),
       dashboard: require("@/public/locales/es/dashboard.json"),
       booking: require("@/public/locales/es/booking.json"),
-      // Add more namespaces as needed
     }
   };
-  return translations;
 };
 
 export default function LanguageProvider({ children }) {
   const [initialized, setInitialized] = useState(false);
-  const pathname = usePathname();
 
   useEffect(() => {
+    // Load stored language
+    const storedLang = getStoredLanguage();
+    console.log("Initializing with stored language:", storedLang);
+    
     const translations = loadTranslations();
     
     i18n
       .use(initReactI18next)
       .init({
         resources: translations,
-        fallbackLng: "en",
+        fallbackLng: "es", // Fallback Spanish
         supportedLngs: ["en", "es"],
         defaultNS: "common",
-        lng: "en",
+        lng: storedLang, // Use stored language
         interpolation: {
           escapeValue: false,
         },
@@ -74,21 +90,27 @@ export default function LanguageProvider({ children }) {
         },
       })
       .then(() => {
-        console.log("i18n initialized");
+        console.log("i18n initialized with language:", storedLang);
         setInitialized(true);
       })
       .catch(err => console.error("i18n init error:", err));
   }, []);
 
-  // Detect language from URL
+  // Listen for language changes and save to localStorage
   useEffect(() => {
-    if (initialized && pathname) {
-      const pathSegments = pathname.split("/").filter(Boolean);
-      if (pathSegments.length > 0 && ["en", "es"].includes(pathSegments[0])) {
-        i18n.changeLanguage(pathSegments[0]);
-      }
-    }
-  }, [pathname, initialized]);
+    if (!initialized) return;
+    
+    const handleLanguageChanged = (lng) => {
+      console.log("Language changed to:", lng);
+      saveLanguageToStorage(lng);
+    };
+    
+    i18n.on("languageChanged", handleLanguageChanged);
+    
+    return () => {
+      i18n.off("languageChanged", handleLanguageChanged);
+    };
+  }, [initialized]);
 
   if (!initialized) {
     return <>{children}</>;
