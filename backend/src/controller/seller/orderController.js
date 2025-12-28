@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import OrderVendorModel from "../../models/OrderVendorModel.js";
 import User from "../../models/UserModel.js";
+import OrderModel from "../../models/OrderModel.js";
 
 /**
  * Get orders for a seller with pagination and search by order ID or customer name.
@@ -269,3 +270,43 @@ export const paymentHistory = async (req, res) => {
   }
 };
 
+
+
+
+
+export const orderStats = async(req, res)=>{
+  try {
+    const totalOrder = OrderModel.countDocuments();
+    const totalSales = OrderModel.aggregate([
+      {
+        $group: {
+          _id: null,
+          totalAmount: { $sum: "$amount" }
+        }
+      }
+    ]);
+
+    //"pending", "paid", "failed", "refunded"
+    const pendingOrders = OrderModel.countDocuments({paymentStatus: "pending"});
+    const paidOrders = OrderModel.countDocuments({paymentStatus: "paid"});
+    const failedOrders = OrderModel.countDocuments({paymentStatus: "failed"});
+    const refundedOrders = OrderModel.countDocuments({paymentStatus: "refunded"});
+    res.status(200).json({
+      message: "Success",
+      data: {
+        totalOrder: await totalOrder,
+        totalSales: (await totalSales)[0]?.totalAmount || 0,
+        pendingOrders: await pendingOrders,
+        paidOrders: await paidOrders,
+        failedOrders: await failedOrders,
+        refundedOrders: await refundedOrders,
+      }
+    });
+    
+  } catch (error) {
+    res.status(500).json({
+      error,
+      message:error?.message
+    })
+  }
+}

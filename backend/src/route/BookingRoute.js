@@ -14,6 +14,9 @@ import {
 
 const router = Router();
 
+
+router.get("/", allBookings);
+
 /**
  * @route POST /booking
  * @desc Save a new booking

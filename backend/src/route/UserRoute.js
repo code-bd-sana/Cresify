@@ -8,6 +8,7 @@ import {
   registerProvider,
   saveUser,
   updateProfile,
+  updateProviderStatus,
 } from "../controller/userController.js";
 import { changeAvailability } from "../controller/ProviderAvailabilityController.js";
 
@@ -23,4 +24,7 @@ router.put("/changeAvailability", changeAvailability);
 router.get("/all-providers", getServiceProviders);
 router.get("/provider/:id", getSingleProvider);
 router.get("/myProfile/:id", myProfile);
+router.patch(`/provider/status`, updateProviderStatus)
+
+
 export default router;
