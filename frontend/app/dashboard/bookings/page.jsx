@@ -42,6 +42,9 @@ const BookingsPage = () => {
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
+
+  console.log(data, 'all services is here re rwek jfkewaf');
+
   // Filter bookings based on search and status
   const filteredBookings = bookings.filter(booking => {
     const matchesSearch = 
@@ -476,7 +479,7 @@ const BookingsPage = () => {
                       >
                         <Eye size={18} />
                       </button>
-                      {/* <button
+                      <button
                         onClick={() => handleStatusChange(booking._id, 'accept')}
                         className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition"
                         title="Accept Booking"
@@ -494,7 +497,7 @@ const BookingsPage = () => {
                         <button className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition">
                           <MoreVertical size={18} />
                         </button>
-                      </div> */}
+                      </div>
                     </div>
                   </td>
                 </tr>
@@ -781,7 +784,7 @@ const BookingsPage = () => {
               </div>
 
               {/* Notes and Actions */}
-              {/* <div className="border rounded-xl p-5">
+              <div className="border rounded-xl p-5">
                 <div className="flex items-center gap-2 mb-4">
                   <FileText size={20} className="text-gray-600" />
                   <h4 className="font-bold text-gray-800">Notes & Actions</h4>
@@ -807,7 +810,7 @@ const BookingsPage = () => {
                     </button>
                   </div>
                 </div>
-              </div> */}
+              </div>
             </div>
 
             {/* Modal Footer */}
@@ -818,9 +821,9 @@ const BookingsPage = () => {
               >
                 Close
               </button>
-              {/* <button className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+              <button className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
                 Save Changes
-              </button> */}
+              </button>
             </div>
           </div>
         </div>

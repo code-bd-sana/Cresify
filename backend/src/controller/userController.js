@@ -14,7 +14,7 @@ export const saveUser = async (req, res) => {
     const isExist = await User.findOne({ email: data.email });
 
     if (isExist) {
-      res.status(401).json({
+      return res.status(401).json({
         message: "User already exist!",
       });
     }
@@ -23,17 +23,32 @@ export const saveUser = async (req, res) => {
     const hashPassword = await bcrypt.hash(plainPassword, 10);
     data.password = hashPassword;
 
-    const newUser = User(data);
+    // ONLY FOR PROVIDER: Set status to "pending"
+    // For other roles (buyer, seller, admin), let the model default handle it
+    if (data.role === "provider") {
+      data.status = "pending";
+    }
+    // Other roles (buyer, seller, admin) will use default "active" from model
+
+    const newUser = new User(data);
     const saved = await newUser.save();
+
+    // Remove password from response
+    const userResponse = saved.toObject();
+    delete userResponse.password;
 
     res.status(200).json({
       message: "Success",
-      data: saved,
+      data: userResponse,
+      // Additional message for provider
+      info: data.role === "provider" 
+        ? "Provider account created. Status is pending approval."
+        : "Account created successfully."
     });
   } catch (error) {
     res.status(500).json({
-      error,
-      message: error?.message,
+      error: error.message,
+      message: "Error creating user",
     });
   }
 };
@@ -58,6 +73,13 @@ export const loginUser = async (req, res) => {
 
     // remove password
     const { password: pwd, ...safeUser } = isExist._doc;
+
+
+      if (isExist.role === "provider" && isExist.status !== "active") {
+        return res.status(403).json({
+          message: `Provider account is not active. Please Wating for approval.`,
+        });
+      }
 
     res.status(200).json({
       message: "Success",
@@ -453,5 +475,57 @@ export const getSingleProvider = async (req, res) => {
   } catch (error) {
     console.error("getSingleProvider error:", error);
     res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+
+// controllers/userController.js এ add করুন
+export const updateProviderStatus = async (req, res) => {
+  try {
+    const { id, status } = req.body;
+    
+    // Validate status
+    const validStatuses = ["pending", "active", "suspend"];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({
+        message: "Invalid status. Must be one of: pending, active, suspend"
+      });
+    }
+
+    // Find and update provider
+    const provider = await User.findById(id);
+    if (!provider) {
+      return res.status(404).json({
+        message: "Provider not found"
+      });
+    }
+
+    // Check if user is a provider
+    if (provider.role !== "provider") {
+      return res.status(400).json({
+        message: "User is not a provider"
+      });
+    }
+
+    // Update status
+    provider.status = status;
+    provider.updatedAt = new Date();
+    await provider.save();
+
+    res.status(200).json({
+      message: "Provider status updated successfully",
+      data: {
+        id: provider._id,
+        name: provider.name,
+        email: provider.email,
+        status: provider.status,
+        updatedAt: provider.updatedAt
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      error: error.message,
+      message: "Error updating provider status"
+    });
   }
 };

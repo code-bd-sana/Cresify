@@ -33,11 +33,17 @@ const userSchema = new Schema(
     phoneNumber: {
       type: String,
     },
-    status: {
-      type: String,
-      enum: ["pending", "active", "suspend"],
-      default: "active",
-    },
+ status: {
+  type: String,
+  enum: ["pending", "active", "suspend"],
+  default: function () {
+    if (this.role === "provider") {
+    return "pending";
+    }
+    return "active";
+  },
+},
+
     shopName: { type: String, default: "" },
     serviceName: { type: String, default: "" },
     serviceCategory: { type: String, default: "" },
