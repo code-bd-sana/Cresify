@@ -226,7 +226,7 @@ export default function ProductManagementPage() {
                             alt={item.name}
                             width={50}
                             height={50}
-                            className='rounded-lg object-cover'
+                            className='rounded-lg w-12 h-12 object-cover'
                           />
                         ) : (
                           <div className='w-[50px] h-[50px] bg-gray-200 rounded-lg flex items-center justify-center text-gray-400 text-xs'>

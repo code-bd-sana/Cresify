@@ -5,6 +5,7 @@ import SalesChart from "@/components/SalesCard";
 import StatCard from "@/components/StatCard";
 import { useGetOverviewQuery } from "@/feature/seller/SellerApi";
 import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { FiBox, FiStar } from "react-icons/fi";
 import { IoCartOutline } from "react-icons/io5";
 import { LuClipboardPenLine } from "react-icons/lu";
@@ -12,6 +13,18 @@ import { LuClipboardPenLine } from "react-icons/lu";
 export default function DashboardPage() {
   const { data: session } = useSession();
     const userId = session?.user?.id;
+
+
+
+const role = session?.user?.role;
+
+const router = useRouter()
+
+if(role === 'admin'){
+  router.push('/dashboard/admin-dashboard')
+  return 
+}
+
     console.log(userId, "userID");
     const {data:Overview, isError, error} = useGetOverviewQuery(userId);
     console.log(Overview?.data, "kire overview tui kmn asci");

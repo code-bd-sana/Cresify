@@ -312,6 +312,8 @@ function BookingDateTimeContentPage() {
 
       if (result?.checkoutUrl) {
         window.location.href = result.checkoutUrl;
+             toast.success("Booking confirmed!")
+             return;
       } else if (isError) {
         console.log(error, "error is here");
         toast.error(error.data?.message || "Failed to confirm booking");

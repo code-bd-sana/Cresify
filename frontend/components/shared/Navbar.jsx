@@ -6,10 +6,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { FaUser } from "react-icons/fa";
-import { FiMenu, FiMessageCircle, FiShoppingCart, FiX } from "react-icons/fi";
+import { FiMenu, FiShoppingCart, FiX } from "react-icons/fi";
 import { useTranslation } from "react-i18next";
 import LanguageSwitcher from "../LanguageSwitcher";
-
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -18,24 +17,15 @@ export default function Navbar() {
   const { data } = useSession();
   const user = data?.user;
 
-  // Extract current locale from pathname
-  const pathSegments = pathname.split("/").filter(Boolean);
-  const currentLocale = ["en", "es"].includes(pathSegments[0]) ? pathSegments[0] : "en";
-
+  // সরাসরি pathname ব্যবহার করুন - language prefix থাকবে না
   const navItems = [
-    { label: t("home"), href: `/${currentLocale}` },
-    { label: t("marketplace"), href: `/${currentLocale}/marketplace` },
-    { label: t("services"), href: `/${currentLocale}/services` },
-    { label: t("blog"), href: `/${currentLocale}/blog` },
-    { label: t("about"), href: `/${currentLocale}/about` },
-    // { label: t("contact"), href: `/${currentLocale}/contact` },
+    { label: t("home"), href: "/" },
+    { label: t("marketplace"), href: "/marketplace" },
+    { label: t("services"), href: "/services" },
+    { label: t("blog"), href: "/blog" },
+    { label: t("about"), href: "/about" },
+    // { label: t("contact"), href: "/contact" },
   ];
-
-  // Function to create localized href
-  const createLocalizedHref = (href) => {
-    if (href === "/") return `/${currentLocale}`;
-    return `/${currentLocale}${href}`;
-  };
 
   return (
     <nav className='w-full bg-white border-b border-gray-100 sticky top-0 z-50'>
@@ -44,7 +34,7 @@ export default function Navbar() {
         {/* LEFT */}
         <div className='flex items-center gap-8 xl:gap-72'>
           {/* LOGO */}
-          <Link href={`/${currentLocale}`}>
+          <Link href="/">
             <Image
               src='/logo.png'
               alt='logo'
@@ -58,7 +48,7 @@ export default function Navbar() {
           <div className='flex items-center font-medium gap-8 text-[15px]'>
             {navItems.map((item) => {
               const isActive = pathname === item.href || 
-                (item.href === `/${currentLocale}` && pathname === `/${currentLocale}`);
+                (item.href === "/" && pathname === "/");
 
               return (
                 <Link
@@ -78,7 +68,7 @@ export default function Navbar() {
 
         {/* RIGHT */}
         <div className='flex items-center gap-6'>
-          <Link href={createLocalizedHref('/cart')}>
+          <Link href='/cart'>
             <FiShoppingCart className='text-[22px] text-black cursor-pointer' />
           </Link>
 
@@ -87,11 +77,11 @@ export default function Navbar() {
 
           {/* BUTTON */}
           {user?.role === "buyer" ? (
-            <Link href={createLocalizedHref("/profile")}>
+            <Link href="/profile">
               <FaUser className='text-2xl cursor-pointer' />
             </Link>
           ) : (
-            <Link href={createLocalizedHref('/dashboard')}>
+            <Link href='/dashboard'>
               <button className='px-6 py-[10px] text-white font-medium rounded-md bg-gradient-to-r from-[#9838E1] to-[#F68E44] cursor-pointer'>
                 {t("getStarted")}
               </button>
@@ -103,7 +93,7 @@ export default function Navbar() {
       {/* ---------------- MOBILE NAV ---------------- */}
       <div className='xl:hidden px-4 py-3 flex items-center justify-between'>
         {/* LEFT SIDE LOGO */}
-        <Link href={`/${currentLocale}`}>
+        <Link href="/">
           <Image
             src='/logo.png'
             alt='logo'
@@ -115,26 +105,12 @@ export default function Navbar() {
 
         {/* ICONS + MENU BUTTON */}
         <div className='flex items-center gap-4'>
-          <Link href={createLocalizedHref('/cart')}>
+          <Link href='/cart'>
             <FiShoppingCart className='text-[22px] text-black cursor-pointer' />
           </Link>
 
           {/* Language Switcher for Mobile */}
-          <div className="flex items-center gap-1">
-            <button 
-              onClick={() => changeLanguage("en")}
-              className={`text-xs px-1 ${currentLocale === "en" ? "font-bold text-blue-600" : ""}`}
-            >
-              EN
-            </button>
-            <span className="text-gray-300">/</span>
-            <button 
-              onClick={() => changeLanguage("es")}
-              className={`text-xs px-1 ${currentLocale === "es" ? "font-bold text-blue-600" : ""}`}
-            >
-              ES
-            </button>
-          </div>
+          <LanguageSwitcher />
 
           {/* Hamburger */}
           {open ? (
@@ -177,16 +153,16 @@ export default function Navbar() {
 
           {/* ICONS + BUTTON */}
           <div className='flex mt-4 items-center justify-between'>
-            <Link href={createLocalizedHref('/cart')} onClick={() => setOpen(false)}>
+            <Link href='/cart' onClick={() => setOpen(false)}>
               <FiShoppingCart className='text-[22px] text-black cursor-pointer' />
             </Link>
 
             {user?.role === "buyer" ? (
-              <Link href={createLocalizedHref("/profile")} onClick={() => setOpen(false)}>
+              <Link href="/profile" onClick={() => setOpen(false)}>
                 <FaUser className="text-2xl" />
               </Link>
             ) : (
-              <Link href={createLocalizedHref('/dashboard')} onClick={() => setOpen(false)}>
+              <Link href='/dashboard' onClick={() => setOpen(false)}>
                 <button className='px-5 py-[10px] text-white font-medium rounded-md bg-gradient-to-r from-[#9838E1] to-[#F68E44] cursor-pointer'>
                   {t("getStarted")}
                 </button>

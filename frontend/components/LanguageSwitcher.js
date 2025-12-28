@@ -1,28 +1,45 @@
 "use client";
 
 import { useTranslation } from "react-i18next";
-import { usePathname, useRouter } from "next/navigation";
+
+// localStorage key
+const LANGUAGE_KEY = "app-language";
+
+// Helper functions
+const getStoredLanguage = () => {
+  if (typeof window !== "undefined") {
+    const lang = localStorage.getItem(LANGUAGE_KEY);
+    return lang && ["en", "es"].includes(lang) ? lang : "es"; // Default Spanish
+  }
+  return "es";
+};
+
+const saveLanguageToStorage = (lang) => {
+  if (typeof window !== "undefined") {
+    localStorage.setItem(LANGUAGE_KEY, lang);
+  }
+};
 
 export default function LanguageSwitcher() {
   const { i18n } = useTranslation();
-  const pathname = usePathname();
-  const router = useRouter();
+  
+  // Get current language from i18n
+  const currentLang = i18n.language || getStoredLanguage();
 
   const changeLanguage = (lng) => {
-    const currentPath = pathname;
-    const pathSegments = currentPath.split("/").filter(Boolean);
+    // Don't change if already the same
+    if (currentLang === lng) return;
     
-    // Check if first segment is a language code
-    if (["en", "es"].includes(pathSegments[0])) {
-      pathSegments[0] = lng;
-    } else {
-      // If no language prefix, add it at the beginning
-      pathSegments.unshift(lng);
-    }
+    console.log("Changing language to:", lng);
     
-    const newPath = "/" + pathSegments.join("/");
+    // Save to localStorage
+    saveLanguageToStorage(lng);
+    
+    // Change i18n language
     i18n.changeLanguage(lng);
-    // router.push(newPath);
+    
+    // Optional: Reload page for some use cases
+    // window.location.reload();
   };
 
   return (
@@ -30,7 +47,7 @@ export default function LanguageSwitcher() {
       <button
         onClick={() => changeLanguage("en")}
         className={`text-sm px-2 py-1 rounded ${
-          i18n.language === "en"
+          currentLang === "en"
             ? "bg-blue-100 text-blue-600 font-medium"
             : "text-gray-600 hover:text-blue-600"
         }`}
@@ -41,7 +58,7 @@ export default function LanguageSwitcher() {
       <button
         onClick={() => changeLanguage("es")}
         className={`text-sm px-2 py-1 rounded ${
-          i18n.language === "es"
+          currentLang === "es"
             ? "bg-blue-100 text-blue-600 font-medium"
             : "text-gray-600 hover:text-blue-600"
         }`}

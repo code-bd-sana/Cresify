@@ -1,5 +1,5 @@
 "use client";
-import {  useGetSellerOrdersQuery, useUpdateOrderStatusMutation } from "@/feature/seller/SellerApi";
+import { useGetSellerOrdersQuery, useUpdateOrderStatusMutation } from "@/feature/seller/SellerApi";
 import { useSession } from "next-auth/react";
 import {
   FiSearch,
@@ -10,10 +10,15 @@ import {
   FiTruck,
   FiPackage,
   FiClock,
+  FiShoppingBag,
+  FiDollarSign,
+  FiAlertCircle,
+  FiCreditCard,
 } from "react-icons/fi";
 import { useState, useEffect } from "react";
 import Pagination from "@/components/Pagination";
 import toast from "react-hot-toast";
+import { useOrderStatsQuery } from "@/feature/customer/OrderApi";
 
 export default function OrdersPage() {
   const { data: user } = useSession();
@@ -47,11 +52,17 @@ export default function OrdersPage() {
     limit,
   });
 
-  console.log(data, "allah please");
-
-  // const [updateOrderStatus, { isLoading: isUpdating }] = useUpdateOrderStatusMutation();
-
-  const [updateOrderStatus, {isLoading:updateLoading}] = useUpdateOrderStatusMutation()
+  const [updateOrderStatus, { isLoading: updateLoading }] = useUpdateOrderStatusMutation();
+  const { data: orderStatsData, isLoading: statsLoading } = useOrderStatsQuery(userId);
+  
+  // Extract order stats
+  const stats = orderStatsData?.data || {
+    totalOrder: 0,
+    totalSales: 0,
+    pendingOrders: 0,
+    paidOrders: 0,
+    failedOrders: 0
+  };
 
   // Extract data
   const orders = data?.data || [];
@@ -91,21 +102,18 @@ export default function OrdersPage() {
     }
 
     try {
-      console.log(selectedOrder, newStatus, "In sha allah");
       const data = {
-        id:selectedOrder?._id,
+        id: selectedOrder?._id,
         status: newStatus
-      }
-
+      };
 
       await updateOrderStatus(data);
-      toast.success("Status update Successfully")
-
-
+      toast.success("Status updated successfully");
       refetch();
       handleCloseModal();
     } catch (error) {
       console.error("Failed to update status:", error);
+      toast.error("Failed to update status");
     }
   };
 
@@ -148,7 +156,7 @@ export default function OrdersPage() {
         );
 
   // Loading state
-  if (isLoading) {
+  if (isLoading || statsLoading) {
     return (
       <div className="min-h-screen px-2 pt-6 flex items-center justify-center">
         <div className="text-center">
@@ -173,134 +181,209 @@ export default function OrdersPage() {
   }
 
   return (
-    <div className="min-h-screen px-2 pt-6">
+    <div className="min-h-screen w-full px-2 pt-6">
       {/* Page Header */}
-      <h1 className="text-3xl font-semibold text-[#111827]">
-        Order Management
-      </h1>
-      <p className="text-sm text-[#A78BFA] mt-1">
-        Track and manage all your customer orders
-      </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-[26px] md:text-[28px] font-semibold text-gray-900">
+            Order Management
+          </h1>
+          <p className="text-sm text-[#9C6BFF] mt-1">
+            Track and manage all your customer orders
+          </p>
+        </div>
+      </div>
 
-      {/* Search + Filter */}
-      <div className="mt-8 bg-white p-4 rounded-xl border border-[#ECECEC] shadow-sm flex flex-col md:flex-row gap-4 items-center">
-        <div className="relative w-full">
-          <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xl" />
-          <input
-            type="text"
-            placeholder="Search by order ID or customer name..."
-            className="w-full bg-[#FCFCFF] border border-[#E5E7EB] rounded-lg pl-10 pr-4 py-3 text-sm outline-none focus:ring-2 focus:ring-[#A855F7]/40"
-            value={searchTerm}
-            onChange={handleSearchChange}
-          />
+      {/* Stats Cards - User Management Style */}
+      <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        {/* Total Orders Card */}
+        <div className="bg-white rounded-2xl shadow-sm border border-[#F0ECFF] px-6 py-5 flex items-center justify-between">
+          <div>
+            <p className="text-[15px] font-medium text-[#2E2E2E]">Total Orders</p>
+            <p className="mt-1 text-[28px] font-semibold text-[#F88D25] leading-none">
+              {stats.totalOrder ?? 0}
+            </p>
+          </div>
+          <div className="w-12 h-12 rounded-xl bg-[#F2E9FF] flex items-center justify-center">
+            <FiShoppingBag className="text-[26px] text-[#8736C5]" />
+          </div>
         </div>
 
-        <div className="relative w-full md:w-40">
-          <select
-            className="appearance-none w-full px-4 py-3 bg-[#FCFCFF] border border-[#E5E7EB] text-sm rounded-lg outline-none cursor-pointer"
-            value={statusFilter}
-            onChange={handleFilterChange}
-          >
-            <option value="All">All</option>
-            <option value="delivered">Delivered</option>
-            <option value="pending">Pending</option>
-            <option value="processing">Processing</option>
-            <option value="canceled">Canceled</option>
-            <option value="shipping">Shipping</option>
-          </select>
-          <FiChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-lg pointer-events-none" />
+        {/* Total Sales Card */}
+        <div className="bg-white rounded-2xl shadow-sm border border-[#F0ECFF] px-6 py-5 flex items-center justify-between">
+          <div>
+            <p className="text-[15px] font-medium text-[#2E2E2E]">Total Sales</p>
+            <p className="mt-1 text-[28px] font-semibold text-[#F88D25] leading-none">
+              {formatAmount(stats.totalSales)}
+            </p>
+          </div>
+          <div className="w-12 h-12 rounded-xl bg-[#F2E9FF] flex items-center justify-center">
+            <FiDollarSign className="text-[26px] text-[#8736C5]" />
+          </div>
+        </div>
+
+        {/* Pending Orders Card */}
+        <div className="bg-white rounded-2xl shadow-sm border border-[#F0ECFF] px-6 py-5 flex items-center justify-between">
+          <div>
+            <p className="text-[15px] font-medium text-[#2E2E2E]">Pending Orders</p>
+            <p className="mt-1 text-[28px] font-semibold text-[#F88D25] leading-none">
+              {stats.pendingOrders ?? 0}
+            </p>
+          </div>
+          <div className="w-12 h-12 rounded-xl bg-[#F2E9FF] flex items-center justify-center">
+            <FiAlertCircle className="text-[26px] text-[#8736C5]" />
+          </div>
+        </div>
+
+        {/* Paid Orders Card */}
+        <div className="bg-white rounded-2xl shadow-sm border border-[#F0ECFF] px-6 py-5 flex items-center justify-between">
+          <div>
+            <p className="text-[15px] font-medium text-[#2E2E2E]">Paid Orders</p>
+            <p className="mt-1 text-[28px] font-semibold text-[#F88D25] leading-none">
+              {stats.paidOrders ?? 0}
+            </p>
+          </div>
+          <div className="w-12 h-12 rounded-xl bg-[#F2E9FF] flex items-center justify-center">
+            <FiCreditCard className="text-[26px] text-[#8736C5]" />
+          </div>
+        </div>
+      </div>
+
+      {/* Search + Filter */}
+      <div className="mt-6 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+        {/* Filter Tabs */}
+        <div className="flex flex-wrap gap-3">
+          {["All", "Pending", "Processing", "Shipping", "Delivered", "Canceled"].map((tab) => (
+            <button
+              key={tab}
+              onClick={() => {
+                setStatusFilter(tab);
+                setPage(1);
+              }}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition ${
+                statusFilter === tab
+                  ? "text-white bg-linear-to-r from-[#8736C5] via-[#9C47C6] to-[#F88D25] shadow"
+                  : "text-gray-700 bg-white border border-[#E4E2F5]"
+              }`}
+            >
+              {tab}
+            </button>
+          ))}
+        </div>
+
+        {/* Search Bar */}
+        <div className="w-full lg:w-[320px]">
+          <div className="relative">
+            <FiSearch
+              size={18}
+              className="absolute left-3 top-2.5 text-[#F88D25]"
+            />
+            <input
+              type="text"
+              placeholder="Search by order ID or customer name"
+              className="w-full pl-9 pr-3 py-2.5 bg-white rounded-full border border-[#E4E2F5] text-sm focus:outline-none focus:ring-1 focus:ring-[#F88D25]"
+              value={searchTerm}
+              onChange={handleSearchChange}
+            />
+          </div>
         </div>
       </div>
 
       {/* Orders Table */}
-      <div className="mt-8 bg-white rounded-2xl border border-[#ECECEC] shadow-sm overflow-x-auto">
-        <div className="px-6 py-4">
-          <div className="text-sm text-gray-600 mb-4">
-            Showing {filteredOrders.length} of {pagination.total} orders
-          </div>
-          <table className="w-full text-left min-w-[900px]">
+      <div className="mt-6 mb-10 bg-white rounded-xl shadow-sm border border-[#F0ECFF] p-4 md:p-5">
+        <div className="text-[13px] text-gray-600 mb-4">
+          Showing {filteredOrders.length} of {pagination.total} orders
+        </div>
+        
+        <div className="overflow-x-scroll">
+          <table className="min-w-full text-left text-sm">
             <thead>
-              <tr className="bg-[#F9F7FF] text-[#A78BFA] text-xs uppercase">
-                <th className="py-4 px-6 font-semibold">Order ID</th>
-                <th className="py-4 px-6 font-semibold">Customer</th>
-                <th className="py-4 px-6 font-semibold">Items</th>
-                <th className="py-4 px-6 font-semibold">Amount</th>
-                <th className="py-4 px-6 font-semibold">Payment</th>
-                <th className="py-4 px-6 font-semibold">Status</th>
-                <th className="py-4 px-6 font-semibold">Date</th>
-                <th className="py-4 px-6 font-semibold text-center">Actions</th>
+              <tr className="text-[12px] text-[#A3A3B5] border-b border-gray-200 bg-[#F9F6FF]">
+                <th className="py-3 px-3">ORDER ID</th>
+                <th className="py-3 px-3">CUSTOMER</th>
+                <th className="py-3 px-3">ITEMS</th>
+                <th className="py-3 px-3">AMOUNT</th>
+                <th className="py-3 px-3">PAYMENT</th>
+                <th className="py-3 px-3">STATUS</th>
+                <th className="py-3 px-3">DATE</th>
+                <th className="py-3 px-3 text-right">ACTION</th>
               </tr>
             </thead>
 
-            <tbody className="text-sm text-[#111827]">
-              {filteredOrders.length === 0 ? (
+            <tbody>
+              {isLoading ? (
                 <tr>
-                  <td colSpan="8" className="py-8 text-center text-gray-500">
-                    {orders.length === 0
-                      ? "No orders found"
-                      : "No orders match your filter"}
+                  <td colSpan={8} className="py-6 text-center text-gray-500">
+                    Loading...
+                  </td>
+                </tr>
+              ) : filteredOrders.length === 0 ? (
+                <tr>
+                  <td colSpan={8} className="py-6 text-center text-gray-500">
+                    {orders.length === 0 ? "No orders found" : "No orders match your filter"}
                   </td>
                 </tr>
               ) : (
-                filteredOrders.map((order) => (
+                filteredOrders.map((order, idx) => (
                   <tr
                     key={order._id}
-                    className="border-t border-[#F0F0F5] hover:bg-[#FAF9FF] transition"
+                    className={`text-[13px] ${
+                      idx !== filteredOrders.length - 1 ? "border-b border-gray-200" : ""
+                    }`}
                   >
-                    <td className="py-4 px-6 font-medium">
-                      #
-                      {order.orderId?.slice(-6) ||
-                        order._id?.slice(-6).toUpperCase()}
+                    <td className="py-3 px-3 font-medium">
+                      #{order.orderId?.slice(-6) || order._id?.slice(-6).toUpperCase()}
                     </td>
-                    <td className="py-4 px-6">
-                      <div>
-                        <div className="font-medium">
-                          {order.customer?.name}
-                        </div>
-                        <div className="text-xs text-gray-500">
+                    
+                    <td className="py-3 px-3">
+                      <div className="flex flex-col">
+                        <span className="font-medium">{order.customer?.name}</span>
+                        <span className="text-xs text-gray-500">
                           {order.customer?.email}
-                        </div>
+                        </span>
                       </div>
                     </td>
-                    <td className="py-4 px-6">
+
+                    <td className="py-3 px-3">
                       {order.products?.reduce(
                         (sum, item) => sum + (item.quantity || 1),
                         0
-                      ) ||
-                        order.item ||
-                        1}
+                      ) || order.item || 1}
                     </td>
-                    <td className="py-4 px-6 font-medium text-[#FF8A34]">
+
+                    <td className="py-3 px-3 font-medium text-[#F88D25]">
                       {formatAmount(order.amount)}
                     </td>
-                    <td className="py-4 px-6">
+
+                    <td className="py-3 px-3">
                       <span
-                        className={`px-3 py-1 text-xs rounded-full font-medium border ${
+                        className={`px-3 py-1 rounded-full text-xs font-medium ${
                           order.paymentStatus === "paid"
-                            ? "bg-green-100 text-green-800 border-green-200"
-                            : "bg-yellow-100 text-yellow-800 border-yellow-200"
+                            ? "bg-green-100 text-green-800"
+                            : "bg-yellow-100 text-yellow-800"
                         }`}
                       >
                         {order.paymentStatus?.charAt(0).toUpperCase() +
                           order.paymentStatus?.slice(1)}
                       </span>
                     </td>
-                    <td className="py-4 px-6">
+
+                    <td className="py-3 px-3">
                       <div className="flex items-center gap-2">
                         {getStatusIcon(order.status)}
                         <span
-                          className={`px-3 py-1 text-xs rounded-full font-medium border ${
+                          className={`px-3 py-1 rounded-full text-xs font-medium ${
                             order.status === "delivered"
-                              ? "bg-[#E8FFE7] text-[#2E9B3D] border-[#C4F5C0]"
+                              ? "bg-[#E6F8EF] text-[#32A35A]"
                               : order.status === "processing"
-                              ? "bg-[#FFF7DB] text-[#B88A00] border-[#F6E3A1]"
+                              ? "bg-[#FFF8E1] text-[#D97706]"
                               : order.status === "canceled"
-                              ? "bg-[#FFECEC] text-[#E03131] border-[#FFC9C9]"
+                              ? "bg-[#FEE2E2] text-[#D32F2F]"
                               : order.status === "pending"
-                              ? "bg-[#F3EDFF] text-[#A855F7] border-[#E2D6FF]"
+                              ? "bg-[#F3EDFF] text-[#A855F7]"
                               : order.status === "shipping"
-                              ? "bg-[#E1F2FF] text-[#0076D6] border-[#B5E2FF]"
-                              : "bg-gray-100 text-gray-600 border-gray-200"
+                              ? "bg-[#E1F2FF] text-[#0076D6]"
+                              : "bg-gray-100 text-gray-600"
                           }`}
                         >
                           {order.status?.charAt(0).toUpperCase() +
@@ -308,15 +391,16 @@ export default function OrdersPage() {
                         </span>
                       </div>
                     </td>
-                    <td className="py-4 px-6">
+
+                    <td className="py-3 px-3">
                       {formatDate(order.createdAt || order.orderDate)}
                     </td>
-                    <td className="py-4 px-6 text-center">
+
+                    <td className="py-3 px-3 text-right">
                       <button
+                        className="text-xs border rounded-lg px-3 py-1 text-[#9C6BFF] border-[#E2D4FF] bg-[#F9F6FF]"
                         onClick={() => handleViewDetails(order)}
-                        className="flex items-center gap-2 text-xs px-4 py-2 rounded-lg border border-[#D9C4FF] text-[#A855F7] hover:bg-[#F5EEFF] transition mx-auto"
                       >
-                        <FiEye />
                         View
                       </button>
                     </td>
@@ -325,18 +409,18 @@ export default function OrdersPage() {
               )}
             </tbody>
           </table>
-        </div>
 
-        {/* Pagination */}
-        {pagination.total > 0 && (
-          <Pagination
-            page={pagination.page - 1}
-            setPage={(newPage) => setPage(newPage + 1)}
-            limit={pagination.limit}
-            total={pagination.total}
-            currentCount={filteredOrders.length}
-          />
-        )}
+          {/* Pagination */}
+          {pagination.total > 0 && (
+            <Pagination
+              page={pagination.page - 1}
+              setPage={(newPage) => setPage(newPage + 1)}
+              limit={pagination.limit}
+              total={pagination.total}
+              currentCount={filteredOrders.length}
+            />
+          )}
+        </div>
       </div>
 
       {/* Order Details Modal */}
@@ -520,18 +604,18 @@ export default function OrdersPage() {
                     <div className="flex items-center gap-3">
                       {getStatusIcon(selectedOrder.status)}
                       <span
-                        className={`px-3 py-1 rounded-full text-sm font-medium border ${
+                        className={`px-3 py-1 rounded-full text-sm font-medium ${
                           selectedOrder.status === "delivered"
-                            ? "bg-[#E8FFE7] text-[#2E9B3D] border-[#C4F5C0]"
+                            ? "bg-[#E6F8EF] text-[#32A35A]"
                             : selectedOrder.status === "processing"
-                            ? "bg-[#FFF7DB] text-[#B88A00] border-[#F6E3A1]"
+                            ? "bg-[#FFF8E1] text-[#D97706]"
                             : selectedOrder.status === "canceled"
-                            ? "bg-[#FFECEC] text-[#E03131] border-[#FFC9C9]"
+                            ? "bg-[#FEE2E2] text-[#D32F2F]"
                             : selectedOrder.status === "pending"
-                            ? "bg-[#F3EDFF] text-[#A855F7] border-[#E2D6FF]"
+                            ? "bg-[#F3EDFF] text-[#A855F7]"
                             : selectedOrder.status === "shipping"
-                            ? "bg-[#E1F2FF] text-[#0076D6] border-[#B5E2FF]"
-                            : "bg-gray-100 text-gray-600 border-gray-200"
+                            ? "bg-[#E1F2FF] text-[#0076D6]"
+                            : "bg-gray-100 text-gray-600"
                         }`}
                       >
                         {selectedOrder.status?.charAt(0).toUpperCase() +
@@ -548,8 +632,7 @@ export default function OrdersPage() {
                         <select
                           value={newStatus}
                           onChange={(e) => setNewStatus(e.target.value)}
-                          className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-        
+                          className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#F88D25] focus:border-transparent"
                         >
                           <option value="pending">Pending</option>
                           <option value="processing">Processing</option>
@@ -559,9 +642,10 @@ export default function OrdersPage() {
                         </select>
                         <button
                           onClick={handleStatusChange}
-                        className="px-4 py-2 bg-purple-600 text-white text-sm  font-medium rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                          disabled={updateLoading}
+                          className="px-4 py-2 bg-[#9C6BFF] text-white text-sm font-medium rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition"
                         >
-                Update
+                          {updateLoading ? "Updating..." : "Update"}
                         </button>
                       </div>
                     </div>
@@ -603,7 +687,8 @@ export default function OrdersPage() {
                   </div>
                 </div>
               </div>
-           <div className="bg-gray-50 p-4 rounded-lg">
+              
+              <div className="bg-gray-50 p-4 rounded-lg">
                 <h3 className="font-semibold text-gray-900 mb-3">Seller Information</h3>
                 <div className="space-y-2">
                   <div className="flex justify-between">

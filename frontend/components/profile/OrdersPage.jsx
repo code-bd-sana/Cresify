@@ -35,6 +35,7 @@ import { useMyOrderQuery } from "@/feature/customer/OrderApi";
 import { useSession } from "next-auth/react";
 import { useSaveReviewMutation } from "@/feature/review/ReviewApi";
 import { useCreateRefundMutation } from "@/feature/refund/RefundApi";
+import toast, { Toaster } from "react-hot-toast";
 
 export default function OrdersPage() {
   const tabs = [
@@ -374,6 +375,8 @@ export default function OrdersPage() {
       };
 
       const result = await saveReview(reviewData);
+
+      toast.success('Review submited successfully! Thank You')
       console.log(result, "aso he result aso aso");
 
       setIsReviewModalOpen(false);
@@ -1407,6 +1410,8 @@ const resetRefundForm = () => {
                             className="w-20 h-20 rounded-lg object-cover border"
                           />
                         </div>
+
+                        <Toaster/>
 
                         {/* Product Details */}
                         <div className="flex-1">

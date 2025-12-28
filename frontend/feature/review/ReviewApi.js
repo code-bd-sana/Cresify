@@ -23,12 +23,13 @@ endpoints:(builder)=>({
 
     getReviewBySellerId:builder.query({
         query:(id)=> `/review/seller/${id}`
-    })
+    }),
+  
 })
 
 });
 
-export const {useSaveReviewMutation, useGetProductReviewQuery, useGetReviewBySellerIdQuery, useGetServiceReviewQuery} = ReviewAPi;
+export const {useSaveReviewMutation, useGetProductReviewQuery, useGetReviewBySellerIdQuery, useGetServiceReviewQuery,} = ReviewAPi;
 
 
 
