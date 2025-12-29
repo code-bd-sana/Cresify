@@ -52,7 +52,11 @@ export default function SearchHero({ onSearch, initialSearch = "" }) {
           {/* Button */}
           <button
             onClick={handleSearchClick}
-            className="ml-3 px-6 py-2 text-white text-[15px] font-medium rounded-[10px] bg-gradient-to-r from-[#9838E1] to-[#F68E44] hover:opacity-90 transition-opacity hover:scale-[1.02] active:scale-[0.98]"
+            className="px-8 py-[12px] cursor-pointer rounded-[10px] text-white text-[15px] font-medium
+              bg-gradient-to-r from-[#9838E1] to-[#F68E44]
+              shadow-[0px_4px_14px_rgba(0,0,0,0.15)]
+              hover:from-[#8a2dc8] hover:to-[#e57f3a] transition-all
+              hover:shadow-[0px_6px_20px_rgba(152,56,225,0.3)]"
           >
             {t('search_hero.search_button')}
           </button>

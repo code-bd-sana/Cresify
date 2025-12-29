@@ -79,10 +79,11 @@ export default function AboutCresify() {
           <Link href="/about">
             <button
               className="
-                px-8 py-[12px] rounded-[10px] text-white text-[15px] font-medium
-                bg-gradient-to-r from-[#9838E1] to-[#F68E44]
-                shadow-[0px_4px_16px_rgba(0,0,0,0.15)]
-                hover:opacity-90 transition-opacity
+              px-8 py-[12px] cursor-pointer rounded-[10px] text-white text-[15px] font-medium
+              bg-gradient-to-r from-[#9838E1] to-[#F68E44]
+              shadow-[0px_4px_14px_rgba(0,0,0,0.15)]
+              hover:from-[#8a2dc8] hover:to-[#e57f3a] transition-all
+              hover:shadow-[0px_6px_20px_rgba(152,56,225,0.3)]
               "
             >
               {t('button')}

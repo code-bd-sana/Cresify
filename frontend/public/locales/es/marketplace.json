@@ -4,7 +4,9 @@
     "title_line2": "Emprendedores Locales",
     "subtitle": "Explora miles de productos innovadores creados por emprendedores apasionados.",
     "search_placeholder": "Buscar productos o tiendas...",
-    "search_button": "Buscar"
+    "search_button": "Buscar",
+    "addToCart": "Añadir al carrito",
+    "location": "Ubicaciones de Productos"
   },
   
   "filters": {
@@ -20,5 +22,73 @@
     "button": "Comienza a comprar ahora",
     "support_local": "Apoya a emprendedores locales. Cada compra hace la diferencia.",
     "community_impact": "Únete a miles de compradores que están transformando vidas a través de sus decisiones de compra."
+  },
+  
+  "active_filters": "Filtros Activos",
+  "active_filters_from_url": "Filtros de Ubicación Activos desde URL:",
+  "search": "Buscar",
+  "country": "País",
+  "region": "Región",
+  "city": "Ciudad",
+  "categories": "Categorías",
+  "locations": "Ubicaciones",
+  "price": "Precio",
+  "showing": "Mostrando",
+  "of": "de",
+  "products": "productos",
+  "in": "en",
+  "no_products_found": "No se encontraron productos",
+  "no_products_for": "No se encontraron productos para",
+  "no_products_available": "No hay productos disponibles",
+  "with_location_filters": "con los filtros de ubicación actuales.",
+  "clear_all_filters": "Limpiar Todos los Filtros",
+  "new": "Nuevo",
+  "low_stock": "Stock Bajo",
+  "top_rated": "Mejor Valorado",
+  "best_deal": "Mejor Oferta",
+  "by": "por",
+  "unknown_seller": "Vendedor Desconocido",
+  "n_a": "N/D",
+  "reviews": "reseñas",
+  "previous": "Anterior",
+  "next": "Siguiente",
+  "items_per_page": "Artículos por página",
+  
+  "select_country": "Seleccionar país",
+  "select_region": "Seleccionar región",
+  "select_city": "Seleccionar ciudad",
+  "loading_countries": "Cargando países...",
+  "loading_regions": "Cargando regiones...",
+  "loading_cities": "Cargando ciudades...",
+  "search_country": "Buscar país...",
+  "search_region": "Buscar región...",
+  "search_city": "Buscar ciudad...",
+  
+  "categories_list": {
+    "fashion": "Moda",
+    "food_and_drinks": "Comida y Bebidas",
+    "technology": "Tecnología",
+    "arts_and_crafts": "Artes y Manualidades",
+    "beauty": "Belleza",
+    "home_and_decoration": "Hogar y Decoración",
+    "sports": "Deportes",
+    "books": "Libros"
+  },
+  
+  "min_price": "Mín",
+  "max_price": "Máx",
+  "no_locations_found": "No se encontraron ubicaciones",
+  "loading": "Cargando...",
+  "close": "Cerrar",
+  "clear_search": "Limpiar búsqueda",
+  "no_countries": "No hay países disponibles",
+  "no_regions": "No hay regiones disponibles",
+  "no_cities": "No hay ciudades disponibles",
+  "no_results": "No se encontraron {{item}} para '{{search}}'",
+  
+  "dropdown": {
+    "showing": "Mostrando",
+    "of": "de",
+    "items": "elementos"
   }
 }

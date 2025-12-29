@@ -4,7 +4,9 @@
     "title_line2": "Local Entrepreneurs",
     "subtitle": "Explore thousands of innovative products created by passionate entrepreneurs.",
     "search_placeholder": "Search for products or stores...",
-    "search_button": "Search"
+    "search_button": "Search",
+    "addToCart": "Add To Cart",
+    "location": "Product Locations"
   },
   
   "filters": {
@@ -17,10 +19,76 @@
   },
   
   "sidebar": {
-
     "button": "Shopping start now",
-    
     "support_local": "Support local entrepreneurs. Every purchase makes a difference.",
     "community_impact": "Join thousands of shoppers who are transforming lives through their purchasing decisions."
+  },
+  
+  "active_filters": "Active Filters",
+  "active_filters_from_url": "Active Location Filters from URL:",
+  "search": "Search",
+  "country": "Country",
+  "region": "Region",
+  "city": "City",
+  "categories": "Categories",
+  "locations": "Locations",
+  "price": "Price",
+  "showing": "Showing",
+  "of": "of",
+  "products": "products",
+  "in": "in",
+  "no_products_found": "No products found",
+  "no_products_for": "No products found for",
+  "no_products_available": "No products available",
+  "with_location_filters": "with the current location filters.",
+  "clear_all_filters": "Clear All Filters",
+  "new": "New",
+  "low_stock": "Low Stock",
+  "top_rated": "Top Rated",
+  "best_deal": "Best Deal",
+  "by": "by",
+  "unknown_seller": "Unknown Seller",
+  "n_a": "N/A",
+  "reviews": "reviews",
+  "previous": "Previous",
+  "next": "Next",
+  "items_per_page": "Items per page",
+  
+  "select_country": "Select country",
+  "select_region": "Select region",
+  "select_city": "Select city",
+  "loading_countries": "Loading countries...",
+  "loading_regions": "Loading regions...",
+  "loading_cities": "Loading cities...",
+  "search_country": "Search country...",
+  "search_region": "Search region...",
+  "search_city": "Search city...",
+  
+  "categories_list": {
+    "fashion": "Fashion",
+    "food_and_drinks": "Food and Drinks",
+    "technology": "Technology",
+    "arts_and_crafts": "Arts and Crafts",
+    "beauty": "Beauty",
+    "home_and_decoration": "Home and Decoration",
+    "sports": "Sports",
+    "books": "Books"
+  },
+  
+  "min_price": "Min",
+  "max_price": "Max",
+  "no_locations_found": "No locations found",
+  "loading": "Loading...",
+  "close": "Close",
+  "clear_search": "Clear search",
+  "no_countries": "No countries available",
+  "no_regions": "No regions available",
+  "no_cities": "No cities available",
+  "no_results": "No {{item}} found for '{{search}}'",
+  
+  "dropdown": {
+    "showing": "Showing",
+    "of": "of",
+    "items": "items"
   }
 }
