@@ -1,0 +1,137 @@
+{
+  "meta": {
+    "title": "Preguntas Frecuentes",
+    "description": "Encuentre respuestas rápidas a preguntas comunes sobre nuestros servicios, precios, características y más.",
+    "search_placeholder": "Buscar respuestas..."
+  },
+  "categories": {
+    "general": {
+      "title": "Preguntas Generales",
+      "icon": "HelpCircle",
+      "questions": [
+        {
+          "question": "¿Qué servicios ofrecen?",
+          "answer": "Ofrecemos soluciones integrales de comercio electrónico que incluyen desarrollo de sitios web, gestión de inventario, integración de pagos, automatización de marketing y sistemas de atención al cliente adaptados a las necesidades de su negocio."
+        },
+        {
+          "question": "¿Cómo empiezo?",
+          "answer": "¡Comenzar es sencillo! Regístrese para obtener una cuenta gratuita, elija un plan que se adapte a sus necesidades y nuestro equipo lo guiará a través del proceso de configuración. También puede programar una demostración para ver nuestra plataforma en acción."
+        },
+        {
+          "question": "¿Hay una prueba gratuita?",
+          "answer": "¡Sí! Ofrecemos una prueba gratuita de 14 días con acceso completo a todas las funciones. No se requiere tarjeta de crédito para comenzar. Después de la prueba, puede elegir entre nuestros planes de precios flexibles."
+        }
+      ]
+    },
+    "billing": {
+      "title": "Facturación y Pagos",
+      "icon": "CreditCard",
+      "questions": [
+        {
+          "question": "¿Qué métodos de pago aceptan?",
+          "answer": "Aceptamos todas las principales tarjetas de crédito (Visa, MasterCard, American Express), PayPal, transferencias bancarias y, en algunas regiones, billeteras digitales como Apple Pay y Google Pay."
+        },
+        {
+          "question": "¿Puedo cambiar mi plan en cualquier momento?",
+          "answer": "¡Absolutamente! Puede actualizar o degradar su plan en cualquier momento. Los cambios surten efecto inmediatamente y prorratearemos la facturación por el resto de su ciclo de facturación."
+        },
+        {
+          "question": "¿Ofrecen reembolsos?",
+          "answer": "Ofrecemos una garantía de devolución de dinero de 30 días en todos los planes anuales. Los planes mensuales se pueden cancelar en cualquier momento sin obligación. Comuníquese con nuestro equipo de soporte para solicitudes de reembolso."
+        }
+      ]
+    },
+    "security": {
+      "title": "Seguridad y Privacidad",
+      "icon": "Shield",
+      "questions": [
+        {
+          "question": "¿Qué tan seguros están mis datos?",
+          "answer": "La seguridad de sus datos es nuestra máxima prioridad. Utilizamos cifrado SSL de 256 bits, auditorías de seguridad regulares, cumplimiento GDPR y almacenamos datos en centros de datos seguros certificados por SOC 2 con copias de seguridad diarias."
+        },
+        {
+          "question": "¿Cumplen con las regulaciones de protección de datos?",
+          "answer": "Sí, cumplimos completamente con GDPR, CCPA y otras principales regulaciones de protección de datos. Contamos con oficiales de protección de datos dedicados y proporcionamos herramientas para ayudarlo a cumplir con las regulaciones."
+        },
+        {
+          "question": "¿Quién es el propietario de los datos que subo?",
+          "answer": "Usted conserva el 100% de la propiedad de todos los datos que carga en nuestra plataforma. Nunca vendemos ni compartimos sus datos con terceros. Nuestra política de privacidad detalla cómo manejamos su información."
+        }
+      ]
+    },
+    "shipping": {
+      "title": "Envío y Entrega",
+      "icon": "Truck",
+      "questions": [
+        {
+          "question": "¿Manejan el envío?",
+          "answer": "Nos integramos con los principales transportistas (FedEx, UPS, DHL, USPS) y proporcionamos tarifas de envío en tiempo real, impresión de etiquetas y seguimiento. También puede conectarse con proveedores logísticos de terceros."
+        },
+        {
+          "question": "¿Cómo puedo rastrear mi pedido?",
+          "answer": "Los clientes reciben correos electrónicos automáticos de seguimiento con actualizaciones en vivo. También puede ver el estado del pedido y la información de seguimiento directamente desde su panel de control o a través de nuestra aplicación móvil."
+        },
+        {
+          "question": "¿Cuál es su tiempo de entrega?",
+          "answer": "Los tiempos de entrega varían según la ubicación y el método de envío. El envío estándar generalmente toma de 3 a 7 días hábiles, mientras que las opciones exprés están disponibles para entrega de 1 a 2 días en la mayoría de las regiones."
+        }
+      ]
+    },
+    "support": {
+      "title": "Soporte",
+      "icon": "Headphones",
+      "questions": [
+        {
+          "question": "¿Cómo puedo contactar al soporte?",
+          "answer": "Ofrecemos soporte 24/7 a través de chat en vivo, correo electrónico (soporte@cresify.com) y teléfono (+56 9 1234 5678). El soporte prioritario está disponible para clientes empresariales."
+        },
+        {
+          "question": "¿Tienen documentación?",
+          "answer": "¡Sí! Tenemos documentación completa, tutoriales en video y guías paso a paso disponibles en nuestro centro de ayuda. También puede unirse a nuestro foro comunitario para conectarse con otros usuarios."
+        },
+        {
+          "question": "¿Hay recursos de capacitación?",
+          "answer": "Ofrecemos seminarios web gratuitos semanales, sesiones de incorporación individuales y una base de conocimientos extensa. Los clientes empresariales reciben sesiones de capacitación dedicadas con nuestros expertos."
+        }
+      ]
+    },
+    "technical": {
+      "title": "Técnico",
+      "icon": "Package",
+      "questions": [
+        {
+          "question": "¿Qué integraciones admiten?",
+          "answer": "Nos integramos con más de 100 herramientas populares, incluyendo Shopify, WooCommerce, QuickBooks, Mailchimp, Zapier, Salesforce y muchas más. También están disponibles integraciones API personalizadas."
+        },
+        {
+          "question": "¿Puedo usar mi propio dominio?",
+          "answer": "¡Sí! Puede conectar su dominio personalizado de forma gratuita. Proporcionamos guías fáciles de configuración DNS y certificados SSL para todos los dominios conectados a nuestra plataforma."
+        },
+        {
+          "question": "¿Hay una API disponible?",
+          "answer": "Ofrecemos una API REST robusta con documentación completa. Todos los planes pagos incluyen acceso API, con límites de tasa según su nivel de suscripción."
+        }
+      ]
+    }
+  },
+  "cta": {
+    "title": "¿Todavía tiene preguntas?",
+    "description": "¿No encuentra lo que está buscando? Nuestro equipo de soporte está aquí para ayudarlo.",
+    "contact_support": "Contactar Soporte",
+    "schedule_call": "Programar una Llamada"
+  },
+  "quick_links": {
+    "documentation": {
+      "title": "Documentación",
+      "description": "Lea nuestras guías detalladas y tutoriales"
+    },
+    "video_tutorials": {
+      "title": "Tutoriales en Video",
+      "description": "Vea guías paso a paso en video"
+    },
+    "community_forum": {
+      "title": "Foro Comunitario",
+      "description": "Conéctese con otros usuarios"
+    }
+  }
+}

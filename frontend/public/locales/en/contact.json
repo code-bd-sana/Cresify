@@ -1,0 +1,18 @@
+{
+  "getInTouch": "Get in Touch",
+  "haveQuestions": "Have questions? We'd love to hear from you. Send us a message and we'll respond as soon as possible.",
+  "sendMessage": "Send us a Message",
+  "fullName": "Full Name",
+  "fullNamePlaceholder": "Your name",
+  "emailAddress": "Email Address",
+  "emailPlaceholder": "youremail@gmail.com",
+  "subject": "Subject",
+  "selectSubject": "Select a Subject",
+  "writeMessage": "Write your message...",
+  "characters": "characters",
+  "sendButton": "Send Message",
+  "contactInformation": "Contact Information",
+  "email": "Email",
+  "phone": "Phone",
+  "followUs": "Follow us"
+}

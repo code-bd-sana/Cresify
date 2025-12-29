@@ -24,8 +24,10 @@ import {
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
+import { useTranslation } from "react-i18next";
 
- function ServiceDetailsPage() {
+function ServiceDetailsPage() {
+  const { t } = useTranslation('serviceDetails');
   const searchParams = useSearchParams();
   const id = searchParams.get("id");
 
@@ -55,21 +57,21 @@ import { Suspense, useState } from "react";
   // Get working days display
   const getWorkingDaysDisplay = () => {
     if (!provider?.workingDays || provider.workingDays.length === 0) {
-      return "Not specified";
+      return t('stats.not_specified');
     }
     return provider.workingDays.join(", ");
   };
 
   // Get experience display
   const getExperienceDisplay = () => {
-    if (!provider?.yearsOfExperience) return "Not specified";
+    if (!provider?.yearsOfExperience) return t('stats.not_specified');
     return provider.yearsOfExperience;
   };
 
   // Get service radius display
   const getServiceRadiusDisplay = () => {
-    if (!provider?.serviceRedius) return "Not specified";
-    return `${provider.serviceRedius} km`;
+    if (!provider?.serviceRedius) return t('stats.not_specified');
+    return `${provider.serviceRedius} ${t('labels.km')}`;
   };
 
   // Get location display
@@ -80,7 +82,7 @@ import { Suspense, useState } from "react";
     if (provider?.country) parts.push(provider.country);
     
     return parts.length > 0 ? parts.join(", ") : 
-           provider?.serviceArea || provider?.address || "Location not specified";
+           provider?.serviceArea || provider?.address || t('location.location_not_specified');
   };
 
   if (isLoading) {
@@ -119,14 +121,14 @@ import { Suspense, useState } from "react";
             </svg>
           </div>
           <h2 className='text-2xl font-semibold text-gray-800 mb-2'>
-            Service Provider Not Found
+            {t('error.title')}
           </h2>
           <p className='text-gray-600 mb-6'>
-            The service provider you're looking for doesn't exist or has been removed.
+            {t('error.description')}
           </p>
           <Link href="/">
             <button className="px-6 py-3 bg-gradient-to-r from-[#9838E1] to-[#F68E44] text-white rounded-lg hover:opacity-90">
-              Back to Home
+              {t('error.back_home')}
             </button>
           </Link>
         </div>
@@ -140,11 +142,13 @@ import { Suspense, useState } from "react";
         {/* Breadcrumb */}
         <div className="mb-6">
           <nav className="flex text-sm text-gray-600">
-            <Link href="/" className="hover:text-purple-600">Home</Link>
+            <Link href="/" className="hover:text-purple-600">{t('breadcrumb.home')}</Link>
             <span className="mx-2">/</span>
-            <Link href="/service-providers" className="hover:text-purple-600">Service Providers</Link>
+            <Link href="/service-providers" className="hover:text-purple-600">{t('breadcrumb.service_providers')}</Link>
             <span className="mx-2">/</span>
-            <span className="text-gray-900 font-medium">{provider.name || provider.shopName}</span>
+            <span className="text-gray-900 font-medium">
+              {t('breadcrumb.provider', { providerName: provider.name || provider.shopName })}
+            </span>
           </nav>
         </div>
 
@@ -173,7 +177,7 @@ import { Suspense, useState } from "react";
             {/* Service Images Grid (if available) */}
             {provider.servicesImage && provider.servicesImage.length > 0 && (
               <div className="mt-6">
-                <h3 className="text-lg font-semibold text-gray-800 mb-3">Service Gallery</h3>
+                <h3 className="text-lg font-semibold text-gray-800 mb-3">{t('gallery.title')}</h3>
                 <div className="grid grid-cols-4 gap-3">
                   {provider.servicesImage.slice(0, 4).map((img, index) => (
                     <div
@@ -200,14 +204,14 @@ import { Suspense, useState } from "react";
 
             {/* Provider Stats */}
             {/* <div className="mt-8 bg-white rounded-xl p-5 shadow-sm">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">Provider Stats</h3>
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">{t('loading.provider_stats')}</h3>
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
                     <Calendar className="w-5 h-5 text-purple-600" />
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600">Working Days</p>
+                    <p className="text-sm text-gray-600">{t('stats.working_days')}</p>
                     <p className="font-medium">{getWorkingDaysDisplay()}</p>
                   </div>
                 </div>
@@ -217,7 +221,7 @@ import { Suspense, useState } from "react";
                     <Clock className="w-5 h-5 text-green-600" />
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600">Working Hours</p>
+                    <p className="text-sm text-gray-600">{t('stats.working_hours')}</p>
                     <p className="font-medium">
                       {provider.workingHours?.start || "09:00"} - {provider.workingHours?.end || "18:00"}
                     </p>
@@ -229,7 +233,7 @@ import { Suspense, useState } from "react";
                     <Map className="w-5 h-5 text-blue-600" />
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600">Service Radius</p>
+                    <p className="text-sm text-gray-600">{t('stats.service_radius')}</p>
                     <p className="font-medium">{getServiceRadiusDisplay()}</p>
                   </div>
                 </div>
@@ -239,7 +243,7 @@ import { Suspense, useState } from "react";
                     <Briefcase className="w-5 h-5 text-orange-600" />
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600">Experience</p>
+                    <p className="text-sm text-gray-600">{t('stats.experience')}</p>
                     <p className="font-medium">{getExperienceDisplay()}</p>
                   </div>
                 </div>
@@ -266,7 +270,7 @@ import { Suspense, useState } from "react";
                   ? "bg-yellow-100 text-yellow-800"
                   : "bg-red-100 text-red-800"
               }`}>
-                {provider.status?.charAt(0).toUpperCase() + provider.status?.slice(1) || "Active"}
+                {t(`status.${provider.status}`) || t('status.active')}
               </span>
             </div>
 
@@ -274,10 +278,10 @@ import { Suspense, useState } from "react";
             <div className="mb-6">
               <div className="flex items-center gap-2 mb-2">
                 <div className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm">
-                  {provider.serviceName || provider.category || "Service Provider"}
+                  {provider.serviceName || provider.category || t('provider_info.service_provider')}
                 </div>
                 <div className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm">
-                  {provider.serviceCategory || "Professional Service"}
+                  {provider.serviceCategory || t('provider_info.professional_service')}
                 </div>
               </div>
               
@@ -294,7 +298,7 @@ import { Suspense, useState } from "react";
                 </div>
                 <p className='text-sm text-gray-700 ml-1'>
                   <span className="font-semibold">{averageRating}</span> 
-                  <span className="text-gray-500"> ({reviewCount} reviews)</span>
+                  <span className="text-gray-500"> ({reviewCount} {t('provider_info.reviews')})</span>
                 </p>
               </div>
             </div>
@@ -302,16 +306,20 @@ import { Suspense, useState } from "react";
             {/* Contact Information */}
             <div className="bg-gray-50 rounded-xl p-4 mb-6">
               <h3 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
-                <Users className="w-4 h-4" /> Contact Information
+                <Users className="w-4 h-4" /> {t('contact_info.title')}
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div className="flex items-center gap-2">
                   <Phone className="w-4 h-4 text-gray-500" />
-                  <span className="text-sm text-gray-700">{provider.phoneNumber || "Not provided"}</span>
+                  <span className="text-sm text-gray-700">
+                    {provider.phoneNumber || t('contact_info.not_provided')}
+                  </span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Mail className="w-4 h-4 text-gray-500" />
-                  <span className="text-sm text-gray-700">{provider.email || "Not provided"}</span>
+                  <span className="text-sm text-gray-700">
+                    {provider.email || t('contact_info.not_provided')}
+                  </span>
                 </div>
               </div>
             </div>
@@ -319,7 +327,7 @@ import { Suspense, useState } from "react";
             {/* Location Details */}
             <div className="mb-6">
               <h3 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
-                <MapPin className="w-4 h-4" /> Location
+                <MapPin className="w-4 h-4" /> {t('location.title')}
               </h3>
               <div className="bg-white border border-gray-200 rounded-lg p-4">
                 <div className="flex items-center gap-2 mb-2">
@@ -333,7 +341,7 @@ import { Suspense, useState } from "react";
                     <div className="flex items-center gap-2">
                       <Building className="w-4 h-4 text-gray-500" />
                       <div>
-                        <p className="text-xs text-gray-500">City</p>
+                        <p className="text-xs text-gray-500">{t('location.city')}</p>
                         <p className="text-sm font-medium">{provider.city}</p>
                       </div>
                     </div>
@@ -343,7 +351,7 @@ import { Suspense, useState } from "react";
                     <div className="flex items-center gap-2">
                       <Map className="w-4 h-4 text-gray-500" />
                       <div>
-                        <p className="text-xs text-gray-500">Region</p>
+                        <p className="text-xs text-gray-500">{t('location.region')}</p>
                         <p className="text-sm font-medium">{provider.region}</p>
                       </div>
                     </div>
@@ -353,7 +361,7 @@ import { Suspense, useState } from "react";
                     <div className="flex items-center gap-2">
                       <Earth className="w-4 h-4 text-gray-500" />
                       <div>
-                        <p className="text-xs text-gray-500">Country</p>
+                        <p className="text-xs text-gray-500">{t('location.country')}</p>
                         <p className="text-sm font-medium">{provider.country}</p>
                       </div>
                     </div>
@@ -363,7 +371,7 @@ import { Suspense, useState } from "react";
                     <div className="flex items-center gap-2">
                       <Target className="w-4 h-4 text-gray-500" />
                       <div>
-                        <p className="text-xs text-gray-500">Service Area</p>
+                        <p className="text-xs text-gray-500">{t('location.service_area')}</p>
                         <p className="text-sm font-medium">{provider.serviceArea}</p>
                       </div>
                     </div>
@@ -372,7 +380,7 @@ import { Suspense, useState } from "react";
                 
                 {provider.address && (
                   <div className="mt-3 pt-3 border-t border-gray-100">
-                    <p className="text-xs text-gray-500 mb-1">Full Address</p>
+                    <p className="text-xs text-gray-500 mb-1">{t('location.full_address')}</p>
                     <p className="text-sm text-gray-700">{provider.address}</p>
                   </div>
                 )}
@@ -381,14 +389,14 @@ import { Suspense, useState } from "react";
 
             {/* Service Description */}
             <div className='mb-8'>
-              <h3 className='text-lg font-semibold text-gray-800 mb-3'>Service Description</h3>
+              <h3 className='text-lg font-semibold text-gray-800 mb-3'>{t('service_description.title')}</h3>
               <div className="bg-white rounded-lg p-4 border border-gray-200">
                 <p className='text-gray-700 leading-relaxed'>
                   {provider.serviceDescription || 
                    provider.shopDescription || 
                    provider.category ? 
                    `Professional ${provider.category || "service"} provider offering quality services.` : 
-                   "Professional service provider with expertise in various domains."}
+                   t('service_description.default_description')}
                 </p>
                 
                 {/* Service Features */}
@@ -396,14 +404,18 @@ import { Suspense, useState } from "react";
                   {provider.serviceRedius && provider.serviceRedius > 0 && (
                     <div className="flex items-center gap-2">
                       <CheckCircle className="w-4 h-4 text-green-500" />
-                      <span className="text-sm">Service radius: {provider.serviceRedius}km</span>
+                      <span className="text-sm">
+                        {t('service_description.service_radius')}: {provider.serviceRedius}{t('labels.km')}
+                      </span>
                     </div>
                   )}
                   
                   {provider.slotDuration && (
                     <div className="flex items-center gap-2">
                       <Clock className="w-4 h-4 text-blue-500" />
-                      <span className="text-sm">Slot: {provider.slotDuration} min</span>
+                      <span className="text-sm">
+                        {t('service_description.slot_duration')}: {provider.slotDuration} {t('labels.minutes')}
+                      </span>
                     </div>
                   )}
                   
@@ -412,7 +424,7 @@ import { Suspense, useState } from "react";
                       <Globe className="w-4 h-4 text-purple-500" />
                       <a href={provider.website} target="_blank" rel="noopener noreferrer" 
                          className="text-sm text-blue-600 hover:underline">
-                        Website
+                        {t('service_description.website')}
                       </a>
                     </div>
                   )}
@@ -420,7 +432,7 @@ import { Suspense, useState } from "react";
                   {provider.nationalId && (
                     <div className="flex items-center gap-2">
                       <Shield className="w-4 h-4 text-orange-500" />
-                      <span className="text-sm">Verified ID</span>
+                      <span className="text-sm">{t('service_description.verified_id')}</span>
                     </div>
                   )}
                 </div>
@@ -431,18 +443,18 @@ import { Suspense, useState } from "react";
             <div className="mb-8">
               <div className="flex items-center justify-between bg-gradient-to-r from-purple-50 to-orange-50 rounded-xl p-5">
                 <div>
-                  <p className="text-sm text-gray-600 mb-1">Hourly Rate</p>
+                  <p className="text-sm text-gray-600 mb-1">{t('provider_info.hourly_rate')}</p>
                   <p className='text-3xl font-bold text-gray-900'>
-                    ${provider.hourlyRate || 0}<span className="text-lg text-gray-600">/hour</span>
+                    ${provider.hourlyRate || 0}<span className="text-lg text-gray-600">/{t('labels.hour')}</span>
                   </p>
                   <p className="text-sm text-gray-500 mt-1">
-                    Transparent pricing • No hidden fees
+                    {t('service_description.transparent_pricing')} • {t('service_description.no_hidden_fees')}
                   </p>
                 </div>
                 <div className="text-right">
                   <div className="inline-flex items-center px-3 py-1 rounded-full bg-green-100 text-green-800 text-sm font-medium">
                     <CheckCircle className="w-4 h-4 mr-1" />
-                    Available Now
+                    {t('service_description.available_now')}
                   </div>
                 </div>
               </div>
@@ -462,45 +474,22 @@ import { Suspense, useState } from "react";
                   transition-all duration-300
                 '>
                   <Calendar className="w-5 h-5" />
-                  Book 
+                  {t('buttons.book_now')}
                 </button>
               </Link>
 
               {/* MESSAGE BUTTON */}
-              <button className='
-                w-[52px] h-[52px] rounded-[12px]
-                flex items-center justify-center
-                bg-white border-2 border-gray-300
-                hover:border-[#9838E1] hover:bg-purple-50
-                transition-all duration-300
-                shadow-sm
-              '>
-                <MessageSquare size={20} className='text-gray-600 hover:text-[#9838E1]' />
-              </button>
+            
               
               {/* CALL BUTTON */}
-              {provider.phoneNumber && (
-                <a 
-                  href={`tel:${provider.phoneNumber}`}
-                  className='
-                    w-[52px] h-[52px] rounded-[12px]
-                    flex items-center justify-center
-                    bg-white border-2 border-gray-300
-                    hover:border-green-500 hover:bg-green-50
-                    transition-all duration-300
-                    shadow-sm
-                  '
-                >
-                  <Phone size={20} className='text-gray-600 hover:text-green-600' />
-                </a>
-              )}
+             
             </div>
 
             {/* Additional Info */}
             <div className="mt-8 pt-6 border-t border-gray-200">
               <p className="text-sm text-gray-500 text-center">
-                Registered on {new Date(provider.createdAt).toLocaleDateString()} • 
-                Last updated {new Date(provider.updatedAt).toLocaleDateString()}
+                {t('provider_info.registered_on')} {new Date(provider.createdAt).toLocaleDateString()} • 
+                {t('provider_info.last_updated')} {new Date(provider.updatedAt).toLocaleDateString()}
               </p>
             </div>
           </div>
@@ -508,42 +497,42 @@ import { Suspense, useState } from "react";
 
         {/* Availability Section */}
         {/* <div className="mt-12 bg-white rounded-xl p-6 shadow-sm">
-          <h3 className="text-xl font-semibold text-gray-800 mb-4">Availability</h3>
+          <h3 className="text-xl font-semibold text-gray-800 mb-4">{t('availability.title')}</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <h4 className="font-medium text-gray-700 mb-3">Working Schedule</h4>
+              <h4 className="font-medium text-gray-700 mb-3">{t('availability.working_schedule')}</h4>
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Days:</span>
+                  <span className="text-gray-600">{t('availability.days')}:</span>
                   <span className="font-medium">{getWorkingDaysDisplay()}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Hours:</span>
+                  <span className="text-gray-600">{t('availability.hours')}:</span>
                   <span className="font-medium">
                     {provider.workingHours?.start || "09:00"} - {provider.workingHours?.end || "18:00"}
                   </span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Time Slot:</span>
-                  <span className="font-medium">{provider.slotDuration || 30} minutes</span>
+                  <span className="text-gray-600">{t('availability.time_slot')}:</span>
+                  <span className="font-medium">{provider.slotDuration || 30} {t('labels.minutes')}</span>
                 </div>
               </div>
             </div>
             
             <div>
-              <h4 className="font-medium text-gray-700 mb-3">Service Details</h4>
+              <h4 className="font-medium text-gray-700 mb-3">{t('availability.service_details')}</h4>
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Experience:</span>
+                  <span className="text-gray-600">{t('stats.experience')}:</span>
                   <span className="font-medium">{getExperienceDisplay()}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Service Radius:</span>
+                  <span className="text-gray-600">{t('stats.service_radius')}:</span>
                   <span className="font-medium">{getServiceRadiusDisplay()}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Category:</span>
-                  <span className="font-medium">{provider.serviceCategory || provider.category || "General"}</span>
+                  <span className="text-gray-600">{t('availability.category')}:</span>
+                  <span className="font-medium">{provider.serviceCategory || provider.category || t('availability.general')}</span>
                 </div>
               </div>
             </div>
@@ -554,16 +543,16 @@ import { Suspense, useState } from "react";
   );
 }
 
-import React from 'react';
-
 const ServiceDetails = () => {
   return (
-    <div>
-      <Suspense fallback={<>Loading...</>}>
-
-        <ServiceDetailsPage/>
-      </Suspense>
-    </div>
+    <Suspense fallback={<div className="w-full min-h-screen flex items-center justify-center">
+      <div className="text-center">
+        <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
+        <p className="mt-4 text-gray-500">Loading service details...</p>
+      </div>
+    </div>}>
+      <ServiceDetailsPage/>
+    </Suspense>
   );
 };
 

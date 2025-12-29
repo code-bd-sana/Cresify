@@ -144,7 +144,7 @@ export default function FeaturedServices() {
   const [loading, setLoading] = useState(true);
   const {t} = useTranslation('service');
 
-  // Process data when fetched  
+  // Process data when fetched  🍌
 
 
   useEffect(() => {
@@ -328,9 +328,11 @@ export default function FeaturedServices() {
             <Link href="/services">
               <button
                 className="
-                px-8 py-[12px] rounded-[10px] text-white text-[15px] font-medium
-                bg-gradient-to-r from-[#9838E1] to-[#F68E44]
-                shadow-[0px_4px_14px_rgba(0,0,0,0.15)]
+             px-8 py-[12px]  cursor-pointer cur rounded-[10px] text-white text-[15px] font-medium
+              bg-gradient-to-r from-[#9838E1] to-[#F68E44]
+              shadow-[0px_4px_14px_rgba(0,0,0,0.15)]
+              hover:from-[#8a2dc8] hover:to-[#e57f3a] transition-all
+              hover:shadow-[0px_6px_20px_rgba(152,56,225,0.3)]
               "
               >
                 View All Categories
@@ -472,12 +474,11 @@ export default function FeaturedServices() {
           <Link href="/services">
             <button
               className="
-              px-8 py-[12px] rounded-[10px] text-white text-[15px] font-medium
+            px-8 py-[12px] cursor-pointer rounded-[10px] text-white text-[15px] font-medium
               bg-gradient-to-r from-[#9838E1] to-[#F68E44]
               shadow-[0px_4px_14px_rgba(0,0,0,0.15)]
-              hover:shadow-[0px_6px_20px_rgba(152,56,225,0.3)]
-              transition-all duration-300
-              flex items-center gap-2
+              hover:from-[#8a2dc8] hover:to-[#e57f3a] transition-all
+              hover:shadow-[0px_6px_20px_rgba(152,56,225,0.3)] flex items-center gap-2
             "
             >
         {t('view_all_categories')}

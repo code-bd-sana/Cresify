@@ -42,6 +42,13 @@ const loadTranslations = () => {
       sidebar: require("@/public/locales/en/sidebar.json"),
       dashboard: require("@/public/locales/en/dashboard.json"),
       booking: require("@/public/locales/en/booking.json"),
+      contact: require("@/public/locales/en/contact.json"),
+      pdetails: require("@/public/locales/en/pdetails.json"),
+      cart: require("@/public/locales/en/cart.json"),
+      faq: require("@/public/locales/en/faq.json"),
+      terms: require("@/public/locales/en/terms.json"),
+      privacy: require("@/public/locales/en/privacy.json"),
+      serviceDetails: require("@/public/locales/en/serviceDetails.json"),
     },
     es: {
       navbar: require("@/public/locales/es/navbar.json"),
@@ -60,7 +67,14 @@ const loadTranslations = () => {
       sidebar: require("@/public/locales/es/sidebar.json"),
       dashboard: require("@/public/locales/es/dashboard.json"),
       booking: require("@/public/locales/es/booking.json"),
-    }
+      contact: require("@/public/locales/es/contact.json"),
+      pdetails: require("@/public/locales/es/pdetails.json"),
+      cart: require("@/public/locales/es/cart.json"),
+      faq: require("@/public/locales/es/faq.json"),
+      terms: require("@/public/locales/es/terms.json"),
+      privacy: require("@/public/locales/es/privacy.json"),
+      serviceDetails: require("@/public/locales/es/serviceDetails.json"),
+    },
   };
 };
 
@@ -71,9 +85,9 @@ export default function LanguageProvider({ children }) {
     // Load stored language
     const storedLang = getStoredLanguage();
     console.log("Initializing with stored language:", storedLang);
-    
+
     const translations = loadTranslations();
-    
+
     i18n
       .use(initReactI18next)
       .init({
@@ -93,20 +107,20 @@ export default function LanguageProvider({ children }) {
         console.log("i18n initialized with language:", storedLang);
         setInitialized(true);
       })
-      .catch(err => console.error("i18n init error:", err));
+      .catch((err) => console.error("i18n init error:", err));
   }, []);
 
   // Listen for language changes and save to localStorage
   useEffect(() => {
     if (!initialized) return;
-    
+
     const handleLanguageChanged = (lng) => {
       console.log("Language changed to:", lng);
       saveLanguageToStorage(lng);
     };
-    
+
     i18n.on("languageChanged", handleLanguageChanged);
-    
+
     return () => {
       i18n.off("languageChanged", handleLanguageChanged);
     };
@@ -116,9 +130,5 @@ export default function LanguageProvider({ children }) {
     return <>{children}</>;
   }
 
-  return (
-    <I18nextProvider i18n={i18n}>
-      {children}
-    </I18nextProvider>
-  );
+  return <I18nextProvider i18n={i18n}>{children}</I18nextProvider>;
 }

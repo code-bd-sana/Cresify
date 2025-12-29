@@ -1,15 +1,13 @@
 "use client";
 
-import { useGetProductReviewQuery, useGetServiceReviewQuery } from "@/feature/review/ReviewApi";
+import { useGetProductReviewQuery } from "@/feature/review/ReviewApi";
 import { Star, User } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 export default function CustomerReviews({ id }) {
-
-  console.log(id, 'kire id somosa to ekhaen');
   const { data: review, isLoading, isError } = useGetProductReviewQuery(id);
-  console.log(review, 'review is hererererererer');
+  const { t } = useTranslation('pdetails');
   
-  // Get user data from reviews
   const reviews = review?.data || [];
 
   // Format date
@@ -39,7 +37,6 @@ export default function CustomerReviews({ id }) {
     if (!user) return "Anonymous User";
     if (user.name) return user.name;
     if (user.email) {
-      // Extract name from email (before @)
       return user.email.split('@')[0];
     }
     return "Anonymous User";
@@ -59,7 +56,6 @@ export default function CustomerReviews({ id }) {
       'bg-yellow-100 text-yellow-600',
     ];
     
-    // Simple hash function to get consistent color for same user
     let hash = 0;
     for (let i = 0; i < userId.length; i++) {
       hash = userId.charCodeAt(i) + ((hash << 5) - hash);
@@ -71,15 +67,9 @@ export default function CustomerReviews({ id }) {
   // Calculate average rating
   const calculateAverageRating = () => {
     if (reviews.length === 0) return 0;
-    
-    // Assuming all reviews have rating field
-    // If your reviews don't have rating, you might need to adjust
     const total = reviews.reduce((sum, review) => {
-      // If rating is in review object, use it
-      // Otherwise default to 5 or adjust based on your data structure
       return sum + (review.rating || 5);
     }, 0);
-    
     return (total / reviews.length).toFixed(1);
   };
 
@@ -88,7 +78,7 @@ export default function CustomerReviews({ id }) {
       <section className="w-full bg-[#F7F7FA] py-10 px-6">
         <div className="max-w-[1300px] mx-auto">
           <h2 className="text-[20px] font-semibold text-[#1B1B1B] mb-5">
-            Customer Reviews
+            {t('customerReviews')}
           </h2>
           <div className="text-center py-8">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto"></div>
@@ -104,7 +94,7 @@ export default function CustomerReviews({ id }) {
       <section className="w-full bg-[#F7F7FA] py-10 px-6">
         <div className="max-w-[1300px] mx-auto">
           <h2 className="text-[20px] font-semibold text-[#1B1B1B] mb-5">
-            Customer Reviews
+            {t('customerReviews')}
           </h2>
           <div className="text-center py-8 text-red-600">
             <p>Error loading reviews. Please try again.</p>
@@ -122,7 +112,7 @@ export default function CustomerReviews({ id }) {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
           <div>
             <h2 className="text-[20px] font-semibold text-[#1B1B1B] mb-2">
-              Customer Reviews
+              {t('customerReviews')}
             </h2>
             <div className="flex items-center gap-2">
               <div className="flex items-center gap-1">
@@ -135,21 +125,21 @@ export default function CustomerReviews({ id }) {
                 ))}
               </div>
               <span className="text-[14px] font-medium text-[#1B1B1B]">
-                {calculateAverageRating()} out of 5
+                {calculateAverageRating()} {t('stars')}
               </span>
               <span className="text-[14px] text-gray-500">
-                ({reviews.length} {reviews.length === 1 ? 'review' : 'reviews'})
+                ({reviews.length} {reviews.length === 1 ? t('reviewsCount') : t('reviewsCount')})
               </span>
             </div>
           </div>
           
-          {/* SORTING OPTIONS (optional) */}
+          {/* SORTING OPTIONS */}
           <div className="mt-4 md:mt-0">
             <select className="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500">
-              <option value="newest">Newest First</option>
-              <option value="oldest">Oldest First</option>
-              <option value="highest">Highest Rating</option>
-              <option value="lowest">Lowest Rating</option>
+              <option value="newest">{t('sortOptions.newest')}</option>
+              <option value="oldest">{t('sortOptions.oldest')}</option>
+              <option value="highest">{t('sortOptions.highest')}</option>
+              <option value="lowest">{t('sortOptions.lowest')}</option>
             </select>
           </div>
         </div>
@@ -158,9 +148,9 @@ export default function CustomerReviews({ id }) {
         {reviews.length === 0 ? (
           <div className="text-center py-12 bg-white rounded-[14px] border border-[#ECE6F7] shadow-[0px_3px_15px_rgba(0,0,0,0.05)]">
             <User size={48} className="mx-auto text-gray-400 mb-4" />
-            <h3 className="text-lg font-medium text-gray-700 mb-2">No Reviews Yet</h3>
+            <h3 className="text-lg font-medium text-gray-700 mb-2">{t('noReviews')}</h3>
             <p className="text-gray-500 max-w-md mx-auto">
-              Be the first to share your thoughts about this product!
+              {t('beFirstToReview')}
             </p>
           </div>
         ) : (
@@ -182,7 +172,6 @@ export default function CustomerReviews({ id }) {
 
                   {/* LEFT USER INFO */}
                   <div className="flex items-center gap-3">
-                    {/* User Avatar */}
                     {r.user?.avatar ? (
                       <img
                         src={r.user.avatar}
@@ -202,14 +191,13 @@ export default function CustomerReviews({ id }) {
                         {getUserDisplayName(r.user)}
                       </p>
                       <p className="text-[13px] text-gray-500 leading-[15px]">
-                        {r.user?.email || 'Verified Buyer'}
+                        {r.user?.email || t('verifiedPurchase')}
                       </p>
                     </div>
                   </div>
 
                   {/* RIGHT RATING & DATE */}
                   <div className="flex flex-col items-end">
-                    {/* Star Rating */}
                     <div className="flex items-center gap-[2px]">
                       {[...Array(5)].map((_, i) => (
                         <Star
@@ -219,11 +207,10 @@ export default function CustomerReviews({ id }) {
                         />
                       ))}
                       <span className="ml-2 text-sm font-medium text-gray-700">
-                        {r.rating || 5}.0
+                        {r.rating || 5}.0 {t('stars')}
                       </span>
                     </div>
 
-                    {/* Date */}
                     <p className="text-[12px] text-gray-500 mt-[1px]">
                       {formatDate(r.createdAt)}
                     </p>
@@ -234,50 +221,18 @@ export default function CustomerReviews({ id }) {
                 <p className="text-[14px] text-[#4B4B4B] mt-4 leading-[21px] whitespace-pre-line">
                   {r.review || "No review text provided."}
                 </p>
-
-                {/* ADDITIONAL INFO (optional) */}
-       
-
-                {/* REPLY SECTION (optional - if seller replies exist) */}
-               
               </div>
             ))}
           </div>
         )}
 
-        {/* PAGINATION (optional) */}
-        {reviews.length > 10 && (
-          <div className="mt-8 flex justify-center">
-            <nav className="flex items-center gap-2">
-              <button className="px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50">
-                Previous
-              </button>
-              {[1, 2, 3].map((page) => (
-                <button
-                  key={page}
-                  className={`w-10 h-10 rounded-lg text-sm font-medium ${
-                    page === 1
-                      ? "bg-purple-600 text-white"
-                      : "border border-gray-300 text-gray-700 hover:bg-gray-50"
-                  }`}
-                >
-                  {page}
-                </button>
-              ))}
-              <button className="px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50">
-                Next
-              </button>
-            </nav>
-          </div>
-        )}
-
-        {/* REVIEW SUMMARY STATS (optional) */}
+        {/* REVIEW SUMMARY STATS */}
         {reviews.length > 0 && (
           <div className="mt-10 bg-white rounded-[14px] border border-[#ECE6F7] shadow-[0px_3px_15px_rgba(0,0,0,0.05)] p-6">
-            <h3 className="text-lg font-semibold text-[#1B1B1B] mb-4">Review Summary</h3>
+            <h3 className="text-lg font-semibold text-[#1B1B1B] mb-4">{t('reviewSummary')}</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div>
-                <p className="text-sm text-gray-600 mb-2">Average Rating</p>
+                <p className="text-sm text-gray-600 mb-2">{t('averageRating')}</p>
                 <div className="flex items-center gap-2">
                   <span className="text-2xl font-bold text-[#1B1B1B]">{calculateAverageRating()}</span>
                   <div className="flex">
@@ -293,14 +248,9 @@ export default function CustomerReviews({ id }) {
               </div>
               
               <div>
-                <p className="text-sm text-gray-600 mb-2">Total Reviews</p>
+                <p className="text-sm text-gray-600 mb-2">{t('totalReviews')}</p>
                 <p className="text-2xl font-bold text-[#1B1B1B]">{reviews.length}</p>
               </div>
-              
-              {/* <div>
-                <p className="text-sm text-gray-600 mb-2">Verified Buyers</p>
-                <p className="text-2xl font-bold text-[#38A169]">100%</p>
-              </div> */}
             </div>
           </div>
         )}

@@ -26,164 +26,164 @@ import { MdOutlineHomeRepairService } from "react-icons/md";
 export default function Sidebar({ open, onClose }) {
   const pathname = usePathname();
   const { data } = useSession();
-  const { t } = useTranslation('sidebar');
-  
+  const { t } = useTranslation("sidebar");
+
   const role = data?.user?.role;
 
   const adminItem = [
-    { 
-      label: t('dashboard'), 
-      icon: FiGrid, 
-      path: "/dashboard/admin-dashboard" 
+    {
+      label: t("dashboard"),
+      icon: FiGrid,
+      path: "/dashboard/admin-dashboard",
     },
     {
-      label: t('user_management'),
+      label: t("user_management"),
       icon: FiUser,
       path: "/dashboard/admin-dashboard/users",
     },
     {
-      label: t('products'),
+      label: t("products"),
       icon: SiTemporal,
       path: "/dashboard/admin-dashboard/products",
     },
     {
-      label: t('orders'),
-      icon: FiShoppingCart, 
-      path: "/dashboard/orders" 
+      label: t("orders"),
+      icon: FiShoppingCart,
+      path: "/dashboard/orders",
     },
     {
-      label: t('bookings'),
-      icon: CiBookmark, 
-      path: "/dashboard/bookings" 
+      label: t("bookings"),
+      icon: CiBookmark,
+      path: "/dashboard/bookings",
     },
     {
-      label: t('services'),
-      icon: MdOutlineHomeRepairService, 
-      path: "/dashboard/services" 
-    },
-    { 
-      label: t('payments'), 
-      icon: FiCreditCard, 
-      path: "/dashboard/payments" 
-    },
-    { 
-      label: t('content'), 
-      icon: PiArticleFill, 
-      path: "/dashboard/content" 
+      label: t("services"),
+      icon: MdOutlineHomeRepairService,
+      path: "/dashboard/services",
     },
     {
-      label: t('product_refunds'),
+      label: t("payments"),
+      icon: FiCreditCard,
+      path: "/dashboard/payments",
+    },
+    {
+      label: t("content"),
+      icon: PiArticleFill,
+      path: "/dashboard/content",
+    },
+    {
+      label: t("product_refunds"),
       icon: TbReceiptRefund,
       path: "/dashboard/adminRefund",
     },
     {
-      label: t('service_refunds'),
+      label: t("service_refunds"),
       icon: TbReceiptRefund,
       path: "/dashboard/serviceRefund",
     },
-    { 
-      label: t('settings'), 
-      icon: FiSettings, 
-      path: "/dashboard/settings" 
+    {
+      label: t("settings"),
+      icon: FiSettings,
+      path: "/dashboard/settings",
     },
   ];
 
   const sellerItem = [
-    { 
-      label: t('dashboard'), 
-      icon: FiGrid, 
-      path: "/dashboard" 
+    {
+      label: t("dashboard"),
+      icon: FiGrid,
+      path: "/dashboard",
     },
-    { 
-      label: t('products'), 
-      icon: FiBox, 
-      path: "/dashboard/products" 
+    {
+      label: t("products"),
+      icon: FiBox,
+      path: "/dashboard/products",
     },
-    { 
-      label: t('orders'), 
-      icon: FiShoppingCart, 
-      path: "/dashboard/orders" 
+    {
+      label: t("orders"),
+      icon: FiShoppingCart,
+      path: "/dashboard/orders",
     },
-    { 
-      label: t('store_profile'), 
-      icon: FiUser, 
-      path: "/dashboard/store-profile" 
+    {
+      label: t("store_profile"),
+      icon: FiUser,
+      path: "/dashboard/store-profile",
     },
-    { 
-      label: t('payments'), 
-      icon: FiCreditCard, 
-      path: "/dashboard/payments" 
+    {
+      label: t("payments"),
+      icon: FiCreditCard,
+      path: "/dashboard/payments",
     },
-    { 
-      label: t('refund'), 
-      icon: TbReceiptRefund, 
-      path: "/dashboard/refund" 
+    {
+      label: t("refund"),
+      icon: TbReceiptRefund,
+      path: "/dashboard/refund",
     },
-    { 
-      label: t('wallet_details'), 
-      icon: FiBox, 
-      path: "/dashboard/wallet-details" 
+    {
+      label: t("wallet_details"),
+      icon: FiBox,
+      path: "/dashboard/wallet-details",
     },
-    { 
-      label: t('reviews'), 
-      icon: FiStar, 
-      path: "/dashboard/reviews" 
+    {
+      label: t("reviews"),
+      icon: FiStar,
+      path: "/dashboard/reviews",
     },
-    { 
-      label: t('messages'), 
-      icon: FiMessageSquare, 
-      path: "/dashboard/messages" 
+    {
+      label: t("messages"),
+      icon: FiMessageSquare,
+      path: "/dashboard/messages",
     },
-    { 
-      label: t('settings'), 
-      icon: FiSettings, 
-      path: "/dashboard/settings" 
+    {
+      label: t("settings"),
+      icon: FiSettings,
+      path: "/dashboard/settings",
     },
   ];
-  
+
   const providerItem = [
-    { 
-      label: t('dashboard'), 
-      icon: FiGrid, 
-      path: "/dashboard/service-provider-dashboard" 
-    },
-    { 
-      label: t('bookings'), 
-      icon: FiShoppingCart, 
-      path: "/dashboard/booking" 
+    {
+      label: t("dashboard"),
+      icon: FiGrid,
+      path: "/dashboard/service-provider-dashboard",
     },
     {
-      label: t('calendar'),
+      label: t("bookings"),
+      icon: FiShoppingCart,
+      path: "/dashboard/booking",
+    },
+    {
+      label: t("calendar"),
       icon: SlCalender,
-      path: "/dashboard/service-provider-dashboard/calendar",
-    },
-    { 
-      label: t('wallet_details'), 
-      icon: FiBox, 
-      path: "/dashboard/wallet-details" 
+      path: "/dashboard/service-provider-dashboard/calender",
     },
     {
-      label: t('payments'),
+      label: t("wallet_details"),
+      icon: FiBox,
+      path: "/dashboard/wallet-details",
+    },
+    {
+      label: t("payments"),
       icon: FiCreditCard,
       path: "/dashboard/providerPayments",
     },
-    { 
-      label: t('messages'), 
-      icon: FiMessageSquare, 
-      path: "/dashboard/messages" 
-    },
-    { 
-      label: t('reviews'), 
-      icon: FiStar, 
-      path: "/dashboard/reviews" 
-    },
-    { 
-      label: t('settings'), 
-      icon: FiSettings, 
-      path: "/dashboard/settings" 
+    {
+      label: t("messages"),
+      icon: FiMessageSquare,
+      path: "/dashboard/messages",
     },
     {
-      label: t('refund'),
+      label: t("reviews"),
+      icon: FiStar,
+      path: "/dashboard/reviews",
+    },
+    {
+      label: t("settings"),
+      icon: FiSettings,
+      path: "/dashboard/settings",
+    },
+    {
+      label: t("refund"),
       icon: TbReceiptRefund,
       path: "/dashboard/providerRefund",
     },
@@ -266,7 +266,7 @@ export default function Sidebar({ open, onClose }) {
             }}
             className='w-full flex items-center gap-3 px-4 py-3 rounded-xl text-[15px] text-[#FF6A3D] hover:bg-[#FFF3EC] transition'>
             <FiLogOut className='text-[18px]' />
-            {t('logout')}
+            {t("logout")}
           </button>
         </div>
       </aside>

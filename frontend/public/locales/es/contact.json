@@ -1,0 +1,18 @@
+{
+  "getInTouch": "Ponte en Contacto",
+  "haveQuestions": "¿Tienes preguntas? Nos encantaría saber de ti. Envíanos un mensaje y responderemos lo antes posible.",
+  "sendMessage": "Envíanos un Mensaje",
+  "fullName": "Nombre Completo",
+  "fullNamePlaceholder": "Tu nombre",
+  "emailAddress": "Correo Electrónico",
+  "emailPlaceholder": "tuemail@gmail.com",
+  "subject": "Asunto",
+  "selectSubject": "Selecciona un Asunto",
+  "writeMessage": "Escribe tu mensaje...",
+  "characters": "caracteres",
+  "sendButton": "Enviar Mensaje",
+  "contactInformation": "Información de Contacto",
+  "email": "Correo",
+  "phone": "Teléfono",
+  "followUs": "Síguenos"
+}

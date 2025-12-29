@@ -18,7 +18,7 @@ export default function AboutCresify() {
           text-[15px] leading-[22px] 
           text-[#A46CFF] font-medium max-w-[600px] mx-auto
         ">
-          {t('subtitle')}
+          {t('description1')}
         </p>
 
       </div>

@@ -3,37 +3,22 @@
 import { useSingleProductQuery } from "@/feature/ProductApi";
 import Image from "next/image";
 import { useSession } from "next-auth/react";
-import {
-  useAddToCartMutation,
-  useDecreaseCartMutation,
-  useIncreaseCartMutation,
-} from "@/feature/customer/CartApi";
+import { useAddToCartMutation } from "@/feature/customer/CartApi";
 import toast, { Toaster } from "react-hot-toast";
 import {
   useAddToWishListMutation,
   useCheckWishlistQuery,
   useRemoveFromWishListMutation,
 } from "@/feature/customer/WishlistApi";
-import { Heart, MapPin, MessageCircle, Star, Store } from "lucide-react";
+import { Heart, MapPin, Star } from "lucide-react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 export default function ProductDetails({ id }) {
-  const images = [
-    "/product/bag.jpg",
-    "/product/bag.jpg",
-    "/product/bag.jpg",
-    "/product/bag.jpg",
-  ];
-
   const { data, isLoading } = useSingleProductQuery(id);
-  const [selectedImg] = useState(images[0]);
   const [qty, setQty] = useState(1);
-
-  // Auth
   const { data: user } = useSession();
-  const [increaseCart] = useIncreaseCartMutation();
-  const [decreaseCart] = useDecreaseCartMutation();
-
+  const { t } = useTranslation('pdetails');
   const userId = user?.user?.id;
 
   // Wishlist queries
@@ -67,11 +52,7 @@ export default function ProductDetails({ id }) {
         return;
       }
 
-      toast.success(`Added ${qty} item(s) to your cart`);
-
-      if (isWishlisted) {
-        setIsWishlisted(false);
-      }
+      toast.success(`${t('addToCart')} successfully`);
     } catch (error) {
       toast.error(error?.data?.message || "Something went wrong");
     }
@@ -86,7 +67,6 @@ export default function ProductDetails({ id }) {
       }
 
       if (isWishlisted) {
-        // Remove
         const res = await removeFromWishList(wishlistId);
         if (res?.error) {
           toast.error(res?.error?.data?.message || "Failed to remove");
@@ -94,14 +74,12 @@ export default function ProductDetails({ id }) {
           toast.success("Removed from wishlist");
         }
       } else {
-        // Add
         const body = {
           product: id,
           user: userId,
         };
 
         const saved = await addToWishlist(body);
-
         if (saved?.error) {
           toast.error(saved?.error?.data?.message);
         } else {
@@ -113,13 +91,12 @@ export default function ProductDetails({ id }) {
     }
   };
 
-  // LOADING STATE
   if (isLoading) {
     return (
       <section className="w-full bg-[#F7F7FA] py-10 px-6">
         <div className="max-w-[1300px] mx-auto">
           <h2 className="text-[20px] font-semibold text-[#1B1B1B] mb-6">
-            Product Details
+            {t('productDetails')}
           </h2>
           <div className="flex justify-center items-center h-64">
             <p className="text-gray-500">Loading product details...</p>
@@ -130,13 +107,12 @@ export default function ProductDetails({ id }) {
   }
 
   const p = data?.data;
-
   if (!p) {
     return (
       <section className="w-full bg-[#F7F7FA] py-10 px-6">
         <div className="max-w-[1300px] mx-auto">
           <h2 className="text-[20px] font-semibold text-[#1B1B1B] mb-6">
-            Product Details
+            {t('productDetails')}
           </h2>
           <div className="flex justify-center items-center h-64">
             <p className="text-gray-500">Product not found</p>
@@ -156,11 +132,11 @@ export default function ProductDetails({ id }) {
       <Toaster />
       <div className="max-w-[1300px] mx-auto">
         <h2 className="text-[20px] font-semibold text-[#1B1B1B] mb-6">
-          Product Details
+          {t('productDetails')}
         </h2>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-          {/* LEFT */}
+          {/* LEFT - IMAGE */}
           <div>
             <div className="w-full bg-white rounded-[14px] overflow-hidden shadow-sm">
               <Image
@@ -173,7 +149,7 @@ export default function ProductDetails({ id }) {
             </div>
           </div>
 
-          {/* RIGHT */}
+          {/* RIGHT - DETAILS */}
           <div className="pr-4 pt-2">
             <h3 className="text-[26px] font-semibold text-[#1B1B1B] mb-1">
               {p.name}
@@ -181,7 +157,7 @@ export default function ProductDetails({ id }) {
 
             <div className="mb-2">
               <span className="inline-block px-3 py-1 bg-[#F2E9FF] text-[#A46CFF] text-xs font-medium rounded-full">
-                {p.category.charAt(0).toUpperCase() + p.category.slice(1)}
+                {t('category')}: {p.category.charAt(0).toUpperCase() + p.category.slice(1)}
               </span>
             </div>
 
@@ -209,7 +185,7 @@ export default function ProductDetails({ id }) {
                   />
                 ))}
                 <span className="ml-1 text-[#6B6B6B]">
-                  {p?.rating?.toFixed(1)} ({p.rating > 0 ? "203" : "0"} review)
+                  {p?.rating?.toFixed(1)} ({p.rating > 0 ? "203" : "0"} {t('reviewsCount')})
                 </span>
               </div>
             </div>
@@ -229,7 +205,7 @@ export default function ProductDetails({ id }) {
 
             {/* DESCRIPTION */}
             <h4 className="text-[15px] font-semibold text-[#1B1B1B] mb-2">
-              Description
+              {t('description')}
             </h4>
 
             <p className="text-[14px] text-[#6B6B6B] mb-7 max-w-[500px]">
@@ -251,8 +227,8 @@ export default function ProductDetails({ id }) {
                 {addToCartLoading
                   ? "Adding..."
                   : p.stock === 0
-                  ? "Out of Stock"
-                  : "Add to cart"}
+                  ? t('outOfStock')
+                  : t('addToCart')}
               </button>
 
               {/* Wishlist */}
@@ -260,6 +236,7 @@ export default function ProductDetails({ id }) {
                 onClick={wishlistHandler}
                 className="w-[44px] h-[44px] rounded-[10px] border border-[#D9D3E8] flex items-center justify-center hover:bg-[#F9F6FF] transition-colors cursor-pointer"
                 disabled={wishlistLoading}
+                title={t('wishlist')}
               >
                 <Heart
                   size={19}
@@ -270,22 +247,6 @@ export default function ProductDetails({ id }) {
                   } ${wishlistLoading ? "opacity-50" : ""}`}
                 />
               </button>
-
-              {/* Message Seller */}
-              {/* <button className="w-[44px] h-[44px] rounded-[10px] border border-[#D9D3E9] flex items-center justify-center hover:bg-[#F9F6FF] transition-colors">
-                <MessageCircle
-                  size={19}
-                  className="text-[#A46CFF] cursor-pointer"
-                />
-              </button> */}
-            </div>
-
-            {/* STORE */}
-            <div className="flex items-center gap-2 text-[14px] text-[#A46CFF] cursor-pointer hover:text-[#8736C5] transition-colors">
-              <Store size={17} />
-              <span className="font-medium">
-                Visit {p.seller?.shopName || "Store"}
-              </span>
             </div>
           </div>
         </div>
