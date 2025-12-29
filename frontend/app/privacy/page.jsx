@@ -1,40 +1,53 @@
 "use client";
 
 import { useState } from "react";
-import { 
-  Shield, 
-  Lock, 
-  Eye, 
-  Users, 
-  Globe, 
+import {
+  Shield,
+  Lock,
+  Eye,
+  Users,
+  Globe,
   Bell,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 export default function PrivacyPage() {
-  const { t } = useTranslation('privacy');
+  const { t } = useTranslation("privacy");
   const [openSections, setOpenSections] = useState({});
 
   const toggleSection = (id) => {
-    setOpenSections(prev => ({
+    setOpenSections((prev) => ({
       ...prev,
-      [id]: !prev[id]
+      [id]: !prev[id],
     }));
   };
 
   const formatDate = () => {
-    return new Date().toLocaleDateString('en-US', { 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
+    return new Date().toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
     });
   };
 
-  const privacyData = t('sections', { returnObjects: true });
-  const retentionData = t('data_retention.table.rows', { returnObjects: true });
-  const tableHeaders = t('data_retention.table.headers', { returnObjects: true });
+  // SAFER: Ensure all translation data are arrays
+  const privacyData = Array.isArray(t("sections", { returnObjects: true }))
+    ? t("sections", { returnObjects: true })
+    : [];
+
+  const retentionData = Array.isArray(
+    t("data_retention.table.rows", { returnObjects: true })
+  )
+    ? t("data_retention.table.rows", { returnObjects: true })
+    : [];
+
+  const tableHeaders = Array.isArray(
+    t("data_retention.table.headers", { returnObjects: true })
+  )
+    ? t("data_retention.table.headers", { returnObjects: true })
+    : [];
 
   const iconComponents = {
     Eye,
@@ -42,45 +55,60 @@ export default function PrivacyPage() {
     Globe,
     Lock,
     Bell,
-    Shield
+    Shield,
   };
 
+  const introductionContent = Array.isArray(
+    t("introduction.content", { returnObjects: true })
+  )
+    ? t("introduction.content", { returnObjects: true })
+    : [];
+
+  const updatePoints = Array.isArray(
+    t("updates.points", { returnObjects: true })
+  )
+    ? t("updates.points", { returnObjects: true })
+    : [];
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#F5F7FF] to-white">
+    <div className='min-h-screen bg-gradient-to-b from-[#F5F7FF] to-white'>
       {/* Hero Section */}
-      <section className="bg-gradient-to-r from-[#9838E1] to-[#F68E44] text-white py-16 px-6">
-        <div className="max-w-6xl mx-auto text-center">
-          <div className="flex justify-center mb-6">
-            <div className="w-20 h-20 rounded-full bg-white/20 flex items-center justify-center">
+      <section className='bg-gradient-to-r from-[#9838E1] to-[#F68E44] text-white py-16 px-6'>
+        <div className='max-w-6xl mx-auto text-center'>
+          <div className='flex justify-center mb-6'>
+            <div className='w-20 h-20 rounded-full bg-white/20 flex items-center justify-center'>
               <Shield size={40} />
             </div>
           </div>
-          <h1 className="text-4xl md:text-5xl font-bold mb-6">
-            {t('hero.title')}
+          <h1 className='text-4xl md:text-5xl font-bold mb-6'>
+            {t("hero.title", "Privacy Policy")}
           </h1>
-          <p className="text-xl opacity-90 max-w-3xl mx-auto">
-            {t('hero.description')}
+          <p className='text-xl opacity-90 max-w-3xl mx-auto'>
+            {t(
+              "hero.description",
+              "Protecting your privacy is our top priority"
+            )}
           </p>
-          <p className="mt-4 text-lg opacity-80">
-            {t('hero.date', { date: formatDate() })}
+          <p className='mt-4 text-lg opacity-80'>
+            {t("hero.date", { date: formatDate() })}
           </p>
         </div>
       </section>
 
       {/* Main Content */}
-      <div className="max-w-6xl mx-auto px-6 py-12">
+      <div className='max-w-6xl mx-auto px-6 py-12'>
         {/* Introduction */}
-        <div className="bg-white rounded-2xl shadow-lg p-8 mb-10 border border-gray-100">
-          <div className="flex items-start gap-6">
-            <div className="bg-gradient-to-r from-[#9838E1]/10 to-[#F68E44]/10 p-4 rounded-xl">
-              <Lock className="text-[#9838E1]" size={32} />
+        <div className='bg-white rounded-2xl shadow-lg p-8 mb-10 border border-gray-100'>
+          <div className='flex items-start gap-6'>
+            <div className='bg-gradient-to-r from-[#9838E1]/10 to-[#F68E44]/10 p-4 rounded-xl'>
+              <Lock className='text-[#9838E1]' size={32} />
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-gray-800 mb-4">
-                {t('introduction.title')}
+              <h2 className='text-2xl font-bold text-gray-800 mb-4'>
+                {t("introduction.title", "Our Commitment to Your Privacy")}
               </h2>
-              {t('introduction.content', { returnObjects: true }).map((paragraph, index) => (
-                <p key={index} className="text-gray-600 mb-4 last:mb-0">
+              {introductionContent.map((paragraph, index) => (
+                <p key={index} className='text-gray-600 mb-4 last:mb-0'>
                   {paragraph}
                 </p>
               ))}
@@ -89,54 +117,69 @@ export default function PrivacyPage() {
         </div>
 
         {/* Privacy Sections */}
-        <div className="space-y-6">
-          {Array.isArray(privacyData) && privacyData.map((section) => {
-            const IconComponent = iconComponents[section.icon];
-            
+        <div className='space-y-6'>
+          {privacyData.map((section, index) => {
+            const IconComponent = section.icon
+              ? iconComponents[section.icon]
+              : Shield;
+
             return (
-              <div 
-                key={section.id}
-                className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100 hover:shadow-lg transition-all duration-300"
-              >
+              <div
+                key={section.id || `section-${index}`}
+                className='bg-white rounded-xl shadow-md overflow-hidden border border-gray-100 hover:shadow-lg transition-all duration-300'>
                 <button
-                  onClick={() => toggleSection(section.id)}
-                  className="w-full px-8 py-6 flex justify-between items-center text-left hover:bg-gray-50 transition-colors"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-lg bg-gradient-to-r from-[#9838E1]/10 to-[#F68E44]/10 flex items-center justify-center">
-                      {IconComponent && <IconComponent className="text-[#9838E1]" size={20} />}
+                  onClick={() =>
+                    toggleSection(section.id || `section-${index}`)
+                  }
+                  className='w-full px-8 py-6 flex justify-between items-center text-left hover:bg-gray-50 transition-colors'>
+                  <div className='flex items-center gap-4'>
+                    <div className='w-12 h-12 rounded-lg bg-gradient-to-r from-[#9838E1]/10 to-[#F68E44]/10 flex items-center justify-center'>
+                      {IconComponent && (
+                        <IconComponent className='text-[#9838E1]' size={20} />
+                      )}
                     </div>
                     <div>
-                      <h3 className="text-xl font-semibold text-gray-800">
-                        {section.title}
+                      <h3 className='text-xl font-semibold text-gray-800'>
+                        {section.title || "Privacy Section"}
                       </h3>
-                      <p className="text-sm text-gray-500 mt-1">
-                        {openSections[section.id] ? t('ui.collapse') : t('ui.expand')}
+                      <p className='text-sm text-gray-500 mt-1'>
+                        {openSections[section.id || `section-${index}`]
+                          ? t("ui.collapse", "Click to collapse details")
+                          : t("ui.expand", "Click to expand details")}
                       </p>
                     </div>
                   </div>
-                  {openSections[section.id] ? (
-                    <ChevronUp className="text-[#9838E1]" size={24} />
+                  {openSections[section.id || `section-${index}`] ? (
+                    <ChevronUp className='text-[#9838E1]' size={24} />
                   ) : (
-                    <ChevronDown className="text-gray-400" size={24} />
+                    <ChevronDown className='text-gray-400' size={24} />
                   )}
                 </button>
-                
-                {openSections[section.id] && (
-                  <div className="px-8 pb-8 pt-4 border-t border-gray-100">
-                    <div className="grid md:grid-cols-3 gap-6">
-                      {Array.isArray(section.content) && section.content.map((item, index) => (
-                        <div key={index} className="bg-gray-50 p-5 rounded-lg">
-                          <h4 className="font-semibold text-gray-700 mb-3">
-                            {item.title}
+
+                {openSections[section.id || `section-${index}`] && (
+                  <div className='px-8 pb-8 pt-4 border-t border-gray-100'>
+                    <div className='grid md:grid-cols-3 gap-6'>
+                      {(Array.isArray(section.content)
+                        ? section.content
+                        : []
+                      ).map((item, itemIndex) => (
+                        <div
+                          key={itemIndex}
+                          className='bg-gray-50 p-5 rounded-lg'>
+                          <h4 className='font-semibold text-gray-700 mb-3'>
+                            {item.title || "Item"}
                           </h4>
-                          <ul className="space-y-2">
-                            {Array.isArray(item.items) && item.items.map((point, idx) => (
-                              <li key={idx} className="flex gap-2 text-sm text-gray-600">
-                                <span className="text-[#9838E1]">•</span>
-                                {point}
-                              </li>
-                            ))}
+                          <ul className='space-y-2'>
+                            {(Array.isArray(item.items) ? item.items : []).map(
+                              (point, pointIndex) => (
+                                <li
+                                  key={pointIndex}
+                                  className='flex gap-2 text-sm text-gray-600'>
+                                  <span className='text-[#9838E1]'>•</span>
+                                  {point}
+                                </li>
+                              )
+                            )}
                           </ul>
                         </div>
                       ))}
@@ -149,79 +192,99 @@ export default function PrivacyPage() {
         </div>
 
         {/* Data Retention Table */}
-        <div className="mt-12 bg-white rounded-2xl shadow-lg p-8 border border-gray-100">
-          <h3 className="text-2xl font-bold text-gray-800 mb-6 text-center">
-            {t('data_retention.title')}
-          </h3>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="bg-gradient-to-r from-[#9838E1]/10 to-[#F68E44]/10">
-                  {Array.isArray(tableHeaders) && tableHeaders.map((header, index) => (
-                    <th 
-                      key={index}
-                      className={`text-left p-4 font-semibold text-gray-700 ${
-                        index === 0 ? 'rounded-l-lg' : 
-                        index === tableHeaders.length - 1 ? 'rounded-r-lg' : ''
-                      }`}
-                    >
-                      {header}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {Array.isArray(retentionData) && retentionData.map((item, index) => (
-                  <tr key={index} className="border-b border-gray-100 hover:bg-gray-50">
-                    <td className="p-4 font-medium text-gray-700">
-                      {item.category}
-                    </td>
-                    <td className="p-4">
-                      <span className="inline-block px-3 py-1 bg-[#9838E1]/10 text-[#9838E1] rounded-full text-sm font-medium">
-                        {item.duration}
-                      </span>
-                    </td>
-                    <td className="p-4 text-sm text-gray-600">
-                      {item.notes}
-                    </td>
+        {retentionData.length > 0 && (
+          <div className='mt-12 bg-white rounded-2xl shadow-lg p-8 border border-gray-100'>
+            <h3 className='text-2xl font-bold text-gray-800 mb-6 text-center'>
+              {t("data_retention.title", "Data Retention Periods")}
+            </h3>
+            <div className='overflow-x-auto'>
+              <table className='w-full'>
+                <thead>
+                  <tr className='bg-gradient-to-r from-[#9838E1]/10 to-[#F68E44]/10'>
+                    {tableHeaders.map((header, index) => (
+                      <th
+                        key={index}
+                        className={`text-left p-4 font-semibold text-gray-700 ${
+                          index === 0
+                            ? "rounded-l-lg"
+                            : index === tableHeaders.length - 1
+                            ? "rounded-r-lg"
+                            : ""
+                        }`}>
+                        {header}
+                      </th>
+                    ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {retentionData.map((item, index) => (
+                    <tr
+                      key={index}
+                      className='border-b border-gray-100 hover:bg-gray-50'>
+                      <td className='p-4 font-medium text-gray-700'>
+                        {item.category || "Category"}
+                      </td>
+                      <td className='p-4'>
+                        <span className='inline-block px-3 py-1 bg-[#9838E1]/10 text-[#9838E1] rounded-full text-sm font-medium'>
+                          {item.duration || "Duration"}
+                        </span>
+                      </td>
+                      <td className='p-4 text-sm text-gray-600'>
+                        {item.notes || "Notes"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Contact & Updates */}
-        <div className="mt-8 grid md:grid-cols-2 gap-8">
-          <div className="bg-gradient-to-r from-[#9838E1]/5 to-[#F68E44]/5 rounded-2xl p-8">
-            <h4 className="text-xl font-bold text-gray-800 mb-4">
-              {t('contact.title')}
+        <div className='mt-8 grid md:grid-cols-2 gap-8'>
+          <div className='bg-gradient-to-r from-[#9838E1]/5 to-[#F68E44]/5 rounded-2xl p-8'>
+            <h4 className='text-xl font-bold text-gray-800 mb-4'>
+              {t("contact.title", "Contact Our Privacy Team")}
             </h4>
-            <div className="space-y-3">
-              <p className="text-gray-600">
-                {t('contact.description')}
+            <div className='space-y-3'>
+              <p className='text-gray-600'>
+                {t(
+                  "contact.description",
+                  "For privacy-related inquiries or to exercise your rights:"
+                )}
               </p>
-              <div className="bg-white p-4 rounded-lg">
-                <p className="font-medium text-gray-700">{t('contact.dpo')}</p>
-                <p className="text-sm text-gray-600">Email: {t('contact.email')}</p>
-                <p className="text-sm text-gray-600">Phone: {t('contact.phone')}</p>
-                <p className="text-sm text-gray-600">Address: {t('contact.address')}</p>
+              <div className='bg-white p-4 rounded-lg'>
+                <p className='font-medium text-gray-700'>
+                  {t("contact.dpo", "Data Protection Officer")}
+                </p>
+                <p className='text-sm text-gray-600'>
+                  Email: {t("contact.email", "privacy@cresify.com")}
+                </p>
+                <p className='text-sm text-gray-600'>
+                  Phone: {t("contact.phone", "+1 (555) 987-6543")}
+                </p>
+                <p className='text-sm text-gray-600'>
+                  Address: {t("contact.address", "[Your Company Address]")}
+                </p>
               </div>
             </div>
           </div>
-          
-          <div className="bg-gradient-to-r from-[#9838E1]/5 to-[#F68E44]/5 rounded-2xl p-8">
-            <h4 className="text-xl font-bold text-gray-800 mb-4">
-              {t('updates.title')}
+
+          <div className='bg-gradient-to-r from-[#9838E1]/5 to-[#F68E44]/5 rounded-2xl p-8'>
+            <h4 className='text-xl font-bold text-gray-800 mb-4'>
+              {t("updates.title", "Policy Updates")}
             </h4>
-            <p className="text-gray-600 mb-4">
-              {t('updates.description')}
+            <p className='text-gray-600 mb-4'>
+              {t(
+                "updates.description",
+                "We may update this policy periodically. Significant changes will be communicated:"
+              )}
             </p>
-            <ul className="space-y-2">
-              {t('updates.points', { returnObjects: true }).map((point, index) => (
-                <li key={index} className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-[#9838E1]"></div>
-                  <span className="text-sm text-gray-600">{point}</span>
+            <ul className='space-y-2'>
+              {updatePoints.map((point, index) => (
+                <li key={index} className='flex items-center gap-2'>
+                  <div className='w-2 h-2 rounded-full bg-[#9838E1]'></div>
+                  <span className='text-sm text-gray-600'>{point}</span>
                 </li>
               ))}
             </ul>
@@ -229,12 +292,15 @@ export default function PrivacyPage() {
         </div>
 
         {/* Footer */}
-        <div className="mt-12 pt-8 border-t border-gray-200 text-center">
-          <p className="text-gray-500 text-sm">
-            {t('footer.copyright', { year: new Date().getFullYear() })}
+        <div className='mt-12 pt-8 border-t border-gray-200 text-center'>
+          <p className='text-gray-500 text-sm'>
+            {t("footer.copyright", { year: new Date().getFullYear() })}
           </p>
-          <p className="text-gray-400 text-xs mt-2">
-            {t('footer.note')}
+          <p className='text-gray-400 text-xs mt-2'>
+            {t(
+              "footer.note",
+              "This policy complies with GDPR, CCPA, and other global privacy regulations."
+            )}
           </p>
         </div>
       </div>
