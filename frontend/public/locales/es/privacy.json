@@ -1,0 +1,288 @@
+{
+  "meta": {
+    "title": "Política de Privacidad",
+    "tagline": "Proteger su privacidad es nuestra máxima prioridad",
+    "effective_date": "Fecha de entrada en vigencia: {{date}}"
+  },
+  "hero": {
+    "title": "Política de Privacidad",
+    "description": "Proteger su privacidad es nuestra máxima prioridad",
+    "date": "Fecha de entrada en vigencia: {{date}}"
+  },
+  "introduction": {
+    "title": "Nuestro Compromiso con Su Privacidad",
+    "content": [
+      "Esta Política de Privacidad explica cómo recopilamos, usamos, divulgamos y protegemos su información cuando utiliza nuestra plataforma de comercio electrónico multi-vendedor. Estamos comprometidos a proteger sus datos personales y a ser transparentes sobre nuestras prácticas.",
+      "Como plataforma que conecta múltiples vendedores independientes con clientes, manejamos datos con los más altos estándares de seguridad y confidencialidad. Cada vendedor también mantiene sus propias prácticas de datos de acuerdo con nuestros estándares."
+    ]
+  },
+  "sections": [
+    {
+      "id": "collection",
+      "title": "Información que Recopilamos",
+      "icon": "Eye",
+      "content": [
+        {
+          "title": "Información Personal",
+          "items": [
+            "Nombre, correo electrónico, número de teléfono",
+            "Direcciones de facturación y envío",
+            "Información de pago (encriptada)",
+            "Identificaciones gubernamentales para verificación de vendedores"
+          ]
+        },
+        {
+          "title": "Datos de Uso",
+          "items": [
+            "Dirección IP e información del dispositivo",
+            "Tipo y versión del navegador",
+            "Páginas visitadas y tiempo dedicado",
+            "Consultas de búsqueda y preferencias"
+          ]
+        },
+        {
+          "title": "Datos de Transacción",
+          "items": [
+            "Historial de compras",
+            "Interacciones con vendedores",
+            "Reseñas y calificaciones",
+            "Registros de comunicación"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "use",
+      "title": "Cómo Usamos Su Información",
+      "icon": "Users",
+      "content": [
+        {
+          "title": "Prestación de Servicios",
+          "items": [
+            "Procesar transacciones y entregas",
+            "Facilitar la comunicación comprador-vendedor",
+            "Proporcionar soporte al cliente",
+            "Verificar cuentas de usuario"
+          ]
+        },
+        {
+          "title": "Mejora y Personalización",
+          "items": [
+            "Mejorar las funciones de la plataforma",
+            "Personalizar recomendaciones",
+            "Desarrollar nuevos servicios",
+            "Optimizar la experiencia del usuario"
+          ]
+        },
+        {
+          "title": "Comunicación",
+          "items": [
+            "Enviar actualizaciones de pedidos",
+            "Comunicaciones de marketing (opcionales)",
+            "Alertas de seguridad",
+            "Cambios en políticas"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sharing",
+      "title": "Compartición de Información",
+      "icon": "Globe",
+      "content": [
+        {
+          "title": "Con Vendedores",
+          "items": [
+            "Necesario para el cumplimiento de pedidos",
+            "Solo información de envío",
+            "Detalles de contacto para comunicación",
+            "Limitado a requisitos de transacción"
+          ]
+        },
+        {
+          "title": "Proveedores de Servicios",
+          "items": [
+            "Procesadores de pago",
+            "Socios de entrega",
+            "Servicios de análisis",
+            "Proveedores de alojamiento en la nube"
+          ]
+        },
+        {
+          "title": "Requisitos Legales",
+          "items": [
+            "Cuando lo requiera la ley",
+            "Para proteger derechos y seguridad",
+            "Durante transferencias comerciales",
+            "Con el consentimiento del usuario"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "security",
+      "title": "Seguridad de Datos",
+      "icon": "Lock",
+      "content": [
+        {
+          "title": "Medidas de Protección",
+          "items": [
+            "Cifrado SSL/TLS",
+            "Auditorías de seguridad regulares",
+            "Controles de acceso",
+            "Centros de datos seguros"
+          ]
+        },
+        {
+          "title": "Seguridad de Pagos",
+          "items": [
+            "Cumplimiento de PCI DSS",
+            "Tokenización",
+            "Detección de fraude",
+            "Monitoreo regular"
+          ]
+        },
+        {
+          "title": "Responsabilidades del Usuario",
+          "items": [
+            "Credenciales de cuenta seguras",
+            "Cerrar sesión en dispositivos compartidos",
+            "Informar actividad sospechosa",
+            "Mantener software actualizado"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cookies",
+      "title": "Cookies y Rastreo",
+      "icon": "Bell",
+      "content": [
+        {
+          "title": "Cookies Esenciales",
+          "items": [
+            "Gestión de sesiones",
+            "Funcionalidad del carrito de compras",
+            "Autenticación",
+            "Características de seguridad"
+          ]
+        },
+        {
+          "title": "Cookies de Análisis",
+          "items": [
+            "Estadísticas de uso",
+            "Métricas de rendimiento",
+            "Pruebas de características",
+            "Seguimiento de errores"
+          ]
+        },
+        {
+          "title": "Cookies de Publicidad",
+          "items": [
+            "Anuncios personalizados",
+            "Campañas de retargeting",
+            "Seguimiento de conversiones",
+            "Información de audiencia"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "rights",
+      "title": "Sus Derechos",
+      "icon": "Shield",
+      "content": [
+        {
+          "title": "Acceso y Control",
+          "items": [
+            "Ver datos personales",
+            "Solicitar correcciones",
+            "Descargar sus datos",
+            "Eliminar su cuenta"
+          ]
+        },
+        {
+          "title": "Preferencias",
+          "items": [
+            "Excluirse del marketing",
+            "Preferencias de cookies",
+            "Configuraciones de comunicación",
+            "Compartición de ubicación"
+          ]
+        },
+        {
+          "title": "Quejas",
+          "items": [
+            "Autoridad de protección de datos",
+            "Quejas internas",
+            "Resolución de disputas",
+            "Recurso legal"
+          ]
+        }
+      ]
+    }
+  ],
+  "data_retention": {
+    "title": "Períodos de Retención de Datos",
+    "table": {
+      "headers": ["Categoría de Datos", "Período de Retención", "Notas"],
+      "rows": [
+        {
+          "category": "Información de la Cuenta",
+          "duration": "Hasta la eliminación de la cuenta",
+          "notes": "Eliminado automáticamente después del período de retención"
+        },
+        {
+          "category": "Registros de Transacciones",
+          "duration": "7 años (requisito legal)",
+          "notes": "Requerido para cumplimiento fiscal y legal"
+        },
+        {
+          "category": "Registros de Comunicación",
+          "duration": "3 años",
+          "notes": "Eliminado automáticamente después del período de retención"
+        },
+        {
+          "category": "Datos de Marketing",
+          "duration": "Hasta la exclusión voluntaria",
+          "notes": "Eliminado automáticamente después del período de retención"
+        },
+        {
+          "category": "Datos de Análisis",
+          "duration": "2 años",
+          "notes": "Eliminado automáticamente después del período de retención"
+        },
+        {
+          "category": "Datos de Respaldo",
+          "duration": "30 días",
+          "notes": "Eliminado automáticamente después del período de retención"
+        }
+      ]
+    }
+  },
+  "contact": {
+    "title": "Contacte a Nuestro Equipo de Privacidad",
+    "description": "Para consultas relacionadas con la privacidad o para ejercer sus derechos:",
+    "dpo": "Oficial de Protección de Datos",
+    "email": "privacidad@cresify.com",
+    "phone": "+56 9 9876 5432",
+    "address": "[Su Dirección de Empresa]"
+  },
+  "updates": {
+    "title": "Actualizaciones de la Política",
+    "description": "Podemos actualizar esta política periódicamente. Los cambios significativos serán comunicados:",
+    "points": [
+      "Notificación por correo electrónico a usuarios registrados",
+      "Notificación en la plataforma al iniciar sesión",
+      "Fecha efectiva actualizada mostrada"
+    ]
+  },
+  "footer": {
+    "copyright": "© {{year}} Cresify. Todos los derechos reservados.",
+    "note": "Esta política cumple con GDPR, CCPA y otras regulaciones globales de privacidad."
+  },
+  "ui": {
+    "expand": "Haga clic para expandir detalles",
+    "collapse": "Haga clic para contraer detalles"
+  }
+}

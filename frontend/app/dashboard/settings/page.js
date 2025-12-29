@@ -4,6 +4,7 @@ import { useChangePasswordMutation, useMyProfileQuery, useUpdateProfileMutation 
 import { useSession } from "next-auth/react";
 import { useState, useEffect } from "react";
 import toast, { Toaster } from "react-hot-toast";
+import RegisterAdmin from "./RegisterAdmin";
 
 export default function AccountSettings() {
   const { data: session } = useSession();
@@ -707,6 +708,8 @@ export default function AccountSettings() {
               )}
             </div>
           </div>
+
+          <RegisterAdmin/>
 
           {/* Password Requirements */}
           <div className="mb-4 p-4 bg-yellow-50 rounded-lg border border-yellow-100">

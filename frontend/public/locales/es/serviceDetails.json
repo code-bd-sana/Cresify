@@ -1,0 +1,86 @@
+{
+  "breadcrumb": {
+    "home": "Inicio",
+    "service_providers": "Proveedores de Servicios",
+    "provider": "{{providerName}}"
+  },
+  "error": {
+    "title": "Proveedor de Servicio No Encontrado",
+    "description": "El proveedor de servicio que buscas no existe o ha sido eliminado.",
+    "back_home": "Volver al Inicio"
+  },
+  "loading": {
+    "loading": "Cargando...",
+    "provider_stats": "Estadísticas del Proveedor"
+  },
+  "gallery": {
+    "title": "Galería de Servicios"
+  },
+  "contact_info": {
+    "title": "Información de Contacto",
+    "phone": "Teléfono",
+    "email": "Correo Electrónico",
+    "not_provided": "No proporcionado"
+  },
+  "location": {
+    "title": "Ubicación",
+    "city": "Ciudad",
+    "region": "Región",
+    "country": "País",
+    "service_area": "Área de Servicio",
+    "full_address": "Dirección Completa",
+    "location_not_specified": "Ubicación no especificada"
+  },
+  "service_description": {
+    "title": "Descripción del Servicio",
+    "default_description": "Proveedor de servicios profesional con experiencia en varios dominios.",
+    "service_radius": "Radio de servicio",
+    "slot_duration": "Espacio",
+    "website": "Sitio web",
+    "verified_id": "ID Verificado",
+    "transparent_pricing": "Precios transparentes",
+    "no_hidden_fees": "Sin tarifas ocultas",
+    "available_now": "Disponible Ahora"
+  },
+  "stats": {
+    "working_days": "Días Laborables",
+    "working_hours": "Horario de Trabajo",
+    "service_radius": "Radio de Servicio",
+    "experience": "Experiencia",
+    "not_specified": "No especificado"
+  },
+  "provider_info": {
+    "service_provider": "Proveedor de Servicios",
+    "professional_service": "Servicio Profesional",
+    "reviews": "reseñas",
+    "hourly_rate": "Tarifa por Hora",
+    "registered_on": "Registrado el",
+    "last_updated": "Última actualización"
+  },
+  "buttons": {
+    "book_now": "Reservar Ahora",
+    "message": "Mensaje",
+    "call": "Llamar",
+    "back_to_login": "Volver al Inicio de Sesión"
+  },
+  "status": {
+    "active": "Activo",
+    "pending": "Pendiente",
+    "suspend": "Suspendido"
+  },
+  "availability": {
+    "title": "Disponibilidad",
+    "working_schedule": "Horario de Trabajo",
+    "days": "Días",
+    "hours": "Horas",
+    "time_slot": "Espacio de Tiempo",
+    "service_details": "Detalles del Servicio",
+    "category": "Categoría",
+    "general": "General"
+  },
+  "labels": {
+    "km": "km",
+    "hour": "hora",
+    "minutes": "minutos"
+  }
+}

@@ -11,18 +11,44 @@ export default function Footer() {
   const { t } = useTranslation('footer');
   const pathname = usePathname();
   
-  // Extract current locale from pathname
-  const pathSegments = pathname.split("/").filter(Boolean);
-  const currentLocale = ["en", "es"].includes(pathSegments[0]) ? pathSegments[0] : "en";
-  
-  // Create localized href
-  const createLocalizedHref = (path) => {
-    return `/${currentLocale}${path.startsWith("/") ? path : `/${path}`}`;
-  };
-
   // Get navigation items array
   const navItems = t('navigation.items', { returnObjects: true });
   const resourceItems = t('resources.items', { returnObjects: true });
+
+  // Create direct href without locale prefix
+// Create direct href without locale prefix
+const createDirectHref = (itemName) => {
+  // ম্যাপিং: Spanish/English নাম → লিংক
+  const pageMap = {
+    // Navigation items
+    'faq': '/faq',
+    'preguntas frecuentes': '/faq',
+    'terms': '/terms',
+    'términos': '/terms',
+    'privacy': '/privacy',
+    'privacidad': '/privacy',
+    
+    // Resources items
+    'blog': '/blog',
+    'contact': '/contact',
+    'contacto': '/contact',
+    
+    // Others you may add
+    'home': '/',
+    'about': '/about',
+    'services': '/services',
+    'pricing': '/pricing',
+    'help-center': '/help-center',
+    'documentation': '/documentation',
+    'tutorials': '/tutorials',
+  };
+  
+  // Lowercase and trim for matching
+  const key = itemName.toLowerCase().trim();
+  
+  // Return mapped path or fallback to slug
+  return pageMap[key] || `/${key.replace(/\s+/g, '-')}`;
+};
 
   return (
     <footer
@@ -38,7 +64,7 @@ export default function Footer() {
         {/* COLUMN 1 — Logo + Text + Social */}
         <div>
           <div className="-ml-2 mb-4">
-            <Link href={createLocalizedHref("/")}>
+            <Link href="/">
               <Image
                 src="/logo.png"
                 width={118}
@@ -104,7 +130,7 @@ export default function Footer() {
             {Array.isArray(navItems) && navItems.map((item, index) => (
               <li key={index}>
                 <Link 
-                  href={createLocalizedHref(`/${item.toLowerCase().replace(/\s+/g, '-')}`)}
+                  href={createDirectHref(item)}
                   className="
                     text-[14px] text-[#444] 
                     hover:text-[#7A4ACF] 
@@ -129,7 +155,7 @@ export default function Footer() {
             {Array.isArray(resourceItems) && resourceItems.map((item, index) => (
               <li key={index}>
                 <Link 
-                  href={createLocalizedHref(`/${item.toLowerCase().replace(/\s+/g, '-')}`)}
+                  href={createDirectHref(item)}
                   className="
                     text-[14px] text-[#444] 
                     hover:text-[#7A4ACF] 
@@ -190,11 +216,6 @@ export default function Footer() {
       <div className="max-w-[1350px] mx-auto px-4 md:px-10">
         <p className="text-center text-[13px] text-[#7A4ACF] mt-6">
           {t('copyright')}
-        </p>
-        
-        {/* Language note */}
-        <p className="text-center text-[11px] text-gray-400 mt-2">
-          Available in: English | Español
         </p>
       </div>
     </footer>

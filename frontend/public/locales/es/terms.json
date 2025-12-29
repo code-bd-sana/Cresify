@@ -1,0 +1,131 @@
+{
+  "meta": {
+    "title": "Términos y Condiciones",
+    "last_updated": "Última Actualización",
+    "disclaimer": "Por favor, lea estos términos detenidamente antes de usar nuestra plataforma"
+  },
+  "hero": {
+    "title": "Términos y Condiciones",
+    "description": "Última Actualización: {{date}}",
+    "subtitle": "Por favor, lea estos términos detenidamente antes de usar nuestra plataforma"
+  },
+  "important_notice": {
+    "title": "Aviso Importante",
+    "content": [
+      "Estos Términos y Condiciones rigen su uso de nuestra plataforma de comercio electrónico multi-vendedor. Al acceder o utilizar nuestro sitio web, aplicación móvil o servicios, usted acepta cumplir y estar sujeto a estos términos.",
+      "Nuestra plataforma facilita transacciones entre compradores y múltiples vendedores independientes. Cada vendedor es responsable de sus productos, servicios, precios y servicio al cliente."
+    ]
+  },
+  "sections": [
+    {
+      "id": "general",
+      "title": "Términos y Condiciones Generales",
+      "content": [
+        "Bienvenido a nuestra plataforma de comercio electrónico multi-vendedor. Al acceder o utilizar nuestros servicios, usted acepta estar sujeto a estos Términos y Condiciones.",
+        "Nuestra plataforma conecta compradores con múltiples vendedores que ofrecen productos y servicios en diversas categorías.",
+        "Debe tener al menos 18 años para usar nuestros servicios o tener consentimiento de los padres si tiene entre 13 y 17 años.",
+        "Nos reservamos el derecho de modificar estos términos en cualquier momento. El uso continuado después de los cambios constituye aceptación."
+      ]
+    },
+    {
+      "id": "accounts",
+      "title": "Cuentas de Usuario y Registro",
+      "content": [
+        "Los usuarios deben proporcionar información precisa, actual y completa durante el registro.",
+        "Usted es responsable de mantener la confidencialidad de las credenciales de su cuenta.",
+        "Nos reservamos el derecho de suspender o terminar cuentas que violen nuestras políticas o participen en actividades fraudulentas.",
+        "Los vendedores deben completar procesos de verificación adicionales para vender productos/servicios en nuestra plataforma."
+      ]
+    },
+    {
+      "id": "transactions",
+      "title": "Transacciones y Pagos",
+      "content": [
+        "Todas las transacciones se procesan a través de nuestra pasarela de pago segura con cifrado.",
+        "Los precios los establecen los vendedores individuales y pueden incluir impuestos aplicables y gastos de envío.",
+        "Actuamos como intermediario entre compradores y vendedores y no somos parte del contrato de venta real.",
+        "Las disputas de pago deben plantearse dentro de los 7 días posteriores a la finalización de la transacción."
+      ]
+    },
+    {
+      "id": "vendor",
+      "title": "Términos para Vendedores",
+      "content": [
+        "Los vendedores son responsables de la calidad del producto, descripciones precisas y entrega oportuna.",
+        "Las tasas de comisión varían según la categoría del producto y se comunicarán claramente.",
+        "Los vendedores deben mantener estándares mínimos de servicio y responder a las consultas de los clientes dentro de las 24 horas.",
+        "Los artículos prohibidos incluyen productos ilegales, mercancías falsificadas y artículos restringidos según las leyes locales."
+      ]
+    },
+    {
+      "id": "returns",
+      "title": "Devoluciones y Reembolsos",
+      "content": [
+        "Las políticas de devolución las establecen los vendedores individuales, pero deben cumplir con nuestros estándares mínimos.",
+        "Los productos dañados o defectuosos pueden devolverse dentro de los 14 días posteriores a la entrega.",
+        "Los productos y servicios digitales pueden tener políticas de reembolso diferentes según lo especificado por el vendedor.",
+        "Los reembolsos se procesan dentro de los 7-10 días hábiles posteriores a la aprobación de la devolución."
+      ]
+    },
+    {
+      "id": "intellectual",
+      "title": "Propiedad Intelectual",
+      "content": [
+        "Todo el contenido de la plataforma, incluidos logotipos, diseños y software, está protegido por derechos de autor.",
+        "Los vendedores conservan los derechos sobre sus imágenes y descripciones de productos, pero nos otorgan licencia para mostrarlos.",
+        "El contenido generado por el usuario no debe infringir los derechos de propiedad intelectual de terceros.",
+        "El uso no autorizado del contenido de la plataforma puede resultar en acciones legales."
+      ]
+    },
+    {
+      "id": "liability",
+      "title": "Limitación de Responsabilidad",
+      "content": [
+        "No somos responsables de las acciones de los vendedores, problemas de calidad del producto o retrasos en la entrega.",
+        "La responsabilidad máxima se limita al monto pagado por la transacción específica en cuestión.",
+        "No garantizamos un servicio ininterrumpido y no somos responsables por interrupciones temporales de la plataforma.",
+        "Los usuarios aceptan indemnizarnos contra reclamos derivados de su uso de la plataforma."
+      ]
+    },
+    {
+      "id": "termination",
+      "title": "Terminación y Suspensión",
+      "content": [
+        "Podemos terminar o suspender cuentas por violaciones de estos términos sin previo aviso.",
+        "Los usuarios terminados deben cesar todo uso de la plataforma inmediatamente.",
+        "Las transacciones pendientes se procesarán de acuerdo con nuestra política de resolución de disputas.",
+        "Los usuarios pueden solicitar la eliminación de la cuenta, sujeto a la retención de registros de transacciones según lo requiera la ley."
+      ]
+    },
+    {
+      "id": "disputes",
+      "title": "Resolución de Disputas",
+      "content": [
+        "Las disputas entre compradores y vendedores deben resolverse primero a través de nuestro sistema de mediación interno.",
+        "Las disputas no resueltas pueden escalarse a nuestro equipo de atención al cliente.",
+        "Estos términos se rigen por las leyes de la jurisdicción donde está registrada nuestra empresa.",
+        "Acuerdo de arbitraje como método principal para resolver disputas legales."
+      ]
+    }
+  ],
+  "acceptance": {
+    "title": "Aceptación de los Términos",
+    "continuation_title": "Al Continuar Usando Nuestra Plataforma:",
+    "acknowledgements": [
+      "Reconoce haber leído estos términos",
+      "Acepta estar legalmente sujeto a ellos",
+      "Consiente nuestras prácticas de privacidad"
+    ],
+    "help_title": "¿Necesita Ayuda?",
+    "help_content": "Si tiene preguntas sobre estos términos, comuníquese con nuestro equipo legal:",
+    "contact": {
+      "email": "legal@cresify.com",
+      "phone": "+56 9 1234 5678",
+      "business_hours": "Horario Comercial: Lun-Vie, 9AM-6PM EST"
+    }
+  },
+  "footer": {
+    "copyright": "© {{year}} Cresify. Todos los derechos reservados.",
+    "note": "Estos términos están disponibles en múltiples idiomas a solicitud."
+  }
+}

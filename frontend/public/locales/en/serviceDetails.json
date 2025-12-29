@@ -1,0 +1,86 @@
+{
+  "breadcrumb": {
+    "home": "Home",
+    "service_providers": "Service Providers",
+    "provider": "{{providerName}}"
+  },
+  "error": {
+    "title": "Service Provider Not Found",
+    "description": "The service provider you're looking for doesn't exist or has been removed.",
+    "back_home": "Back to Home"
+  },
+  "loading": {
+    "loading": "Loading...",
+    "provider_stats": "Provider Stats"
+  },
+  "gallery": {
+    "title": "Service Gallery"
+  },
+  "contact_info": {
+    "title": "Contact Information",
+    "phone": "Phone",
+    "email": "Email",
+    "not_provided": "Not provided"
+  },
+  "location": {
+    "title": "Location",
+    "city": "City",
+    "region": "Region",
+    "country": "Country",
+    "service_area": "Service Area",
+    "full_address": "Full Address",
+    "location_not_specified": "Location not specified"
+  },
+  "service_description": {
+    "title": "Service Description",
+    "default_description": "Professional service provider with expertise in various domains.",
+    "service_radius": "Service radius",
+    "slot_duration": "Slot",
+    "website": "Website",
+    "verified_id": "Verified ID",
+    "transparent_pricing": "Transparent pricing",
+    "no_hidden_fees": "No hidden fees",
+    "available_now": "Available Now"
+  },
+  "stats": {
+    "working_days": "Working Days",
+    "working_hours": "Working Hours",
+    "service_radius": "Service Radius",
+    "experience": "Experience",
+    "not_specified": "Not specified"
+  },
+  "provider_info": {
+    "service_provider": "Service Provider",
+    "professional_service": "Professional Service",
+    "reviews": "reviews",
+    "hourly_rate": "Hourly Rate",
+    "registered_on": "Registered on",
+    "last_updated": "Last updated"
+  },
+  "buttons": {
+    "book_now": "Book Now",
+    "message": "Message",
+    "call": "Call",
+    "back_to_login": "Back to Login"
+  },
+  "status": {
+    "active": "Active",
+    "pending": "Pending",
+    "suspend": "Suspended"
+  },
+  "availability": {
+    "title": "Availability",
+    "working_schedule": "Working Schedule",
+    "days": "Days",
+    "hours": "Hours",
+    "time_slot": "Time Slot",
+    "service_details": "Service Details",
+    "category": "Category",
+    "general": "General"
+  },
+  "labels": {
+    "km": "km",
+    "hour": "hour",
+    "minutes": "minutes"
+  }
+}

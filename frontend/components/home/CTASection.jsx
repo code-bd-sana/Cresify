@@ -36,6 +36,7 @@ export default function CTASection() {
               text-[15px] font-bold
               shadow-[0px_4px_10px_rgba(0,0,0,0.20)]
               transition hover:opacity-90
+              cursor-pointer
             "
             >
               {t('buttons.contact_us')}
@@ -53,6 +54,7 @@ export default function CTASection() {
               text-[15px] font-bold
               backdrop-blur-[2px]
               transition hover:bg-white/10
+              cursor-pointer
             "
             >
               {t('buttons.browse_marketplace')}

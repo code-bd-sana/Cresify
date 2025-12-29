@@ -22,6 +22,7 @@ function BookingDateTimeContentPage() {
 
   const searchParams = useSearchParams();
   const providerId = searchParams.get("id");
+    const { t } = useTranslation('booking');
 
   // ---------------- STATE ----------------
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -602,7 +603,7 @@ function BookingDateTimeContentPage() {
                 backgroundImage: "linear-gradient(90deg,#9838E1,#F68E44)",
               }}
             >
-              Book This Time Slot
+           {t('book')}
             </button>
           </div>
         </div>
@@ -866,6 +867,7 @@ function BookingDateTimeContentPage() {
 }
 
 import React from 'react';
+import { useTranslation } from "react-i18next";
 
 const BookingDateTimePage = () => {
   return (
