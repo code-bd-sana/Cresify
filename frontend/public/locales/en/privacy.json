@@ -1,0 +1,288 @@
+{
+  "meta": {
+    "title": "Privacy Policy",
+    "tagline": "Protecting your privacy is our top priority",
+    "effective_date": "Effective Date: {{date}}"
+  },
+  "hero": {
+    "title": "Privacy Policy",
+    "description": "Protecting your privacy is our top priority",
+    "date": "Effective Date: {{date}}"
+  },
+  "introduction": {
+    "title": "Our Commitment to Your Privacy",
+    "content": [
+      "This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our multi-vendor e-commerce platform. We are committed to protecting your personal data and being transparent about our practices.",
+      "As a platform connecting multiple independent vendors with customers, we handle data with the highest standards of security and confidentiality. Each vendor also maintains their own data practices in compliance with our standards."
+    ]
+  },
+  "sections": [
+    {
+      "id": "collection",
+      "title": "Information We Collect",
+      "icon": "Eye",
+      "content": [
+        {
+          "title": "Personal Information",
+          "items": [
+            "Name, email, phone number",
+            "Billing and shipping addresses",
+            "Payment information (encrypted)",
+            "Government IDs for vendor verification"
+          ]
+        },
+        {
+          "title": "Usage Data",
+          "items": [
+            "IP address and device information",
+            "Browser type and version",
+            "Pages visited and time spent",
+            "Search queries and preferences"
+          ]
+        },
+        {
+          "title": "Transaction Data",
+          "items": [
+            "Purchase history",
+            "Vendor interactions",
+            "Reviews and ratings",
+            "Communication logs"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "use",
+      "title": "How We Use Your Information",
+      "icon": "Users",
+      "content": [
+        {
+          "title": "Service Provision",
+          "items": [
+            "Process transactions and deliveries",
+            "Facilitate buyer-seller communication",
+            "Provide customer support",
+            "Verify user accounts"
+          ]
+        },
+        {
+          "title": "Improvement & Personalization",
+          "items": [
+            "Enhance platform features",
+            "Personalize recommendations",
+            "Develop new services",
+            "Optimize user experience"
+          ]
+        },
+        {
+          "title": "Communication",
+          "items": [
+            "Send order updates",
+            "Marketing communications (opt-in)",
+            "Security alerts",
+            "Policy changes"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sharing",
+      "title": "Information Sharing",
+      "icon": "Globe",
+      "content": [
+        {
+          "title": "With Vendors",
+          "items": [
+            "Necessary for order fulfillment",
+            "Shipping information only",
+            "Contact details for communication",
+            "Limited to transaction requirements"
+          ]
+        },
+        {
+          "title": "Service Providers",
+          "items": [
+            "Payment processors",
+            "Delivery partners",
+            "Analytics services",
+            "Cloud hosting providers"
+          ]
+        },
+        {
+          "title": "Legal Requirements",
+          "items": [
+            "When required by law",
+            "To protect rights and safety",
+            "During business transfers",
+            "With user consent"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "security",
+      "title": "Data Security",
+      "icon": "Lock",
+      "content": [
+        {
+          "title": "Protection Measures",
+          "items": [
+            "SSL/TLS encryption",
+            "Regular security audits",
+            "Access controls",
+            "Secure data centers"
+          ]
+        },
+        {
+          "title": "Payment Security",
+          "items": [
+            "PCI DSS compliance",
+            "Tokenization",
+            "Fraud detection",
+            "Regular monitoring"
+          ]
+        },
+        {
+          "title": "User Responsibilities",
+          "items": [
+            "Secure account credentials",
+            "Log out from shared devices",
+            "Report suspicious activity",
+            "Keep software updated"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cookies",
+      "title": "Cookies & Tracking",
+      "icon": "Bell",
+      "content": [
+        {
+          "title": "Essential Cookies",
+          "items": [
+            "Session management",
+            "Shopping cart functionality",
+            "Authentication",
+            "Security features"
+          ]
+        },
+        {
+          "title": "Analytics Cookies",
+          "items": [
+            "Usage statistics",
+            "Performance metrics",
+            "Feature testing",
+            "Error tracking"
+          ]
+        },
+        {
+          "title": "Advertising Cookies",
+          "items": [
+            "Personalized ads",
+            "Retargeting campaigns",
+            "Conversion tracking",
+            "Audience insights"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "rights",
+      "title": "Your Rights",
+      "icon": "Shield",
+      "content": [
+        {
+          "title": "Access & Control",
+          "items": [
+            "View personal data",
+            "Request corrections",
+            "Download your data",
+            "Delete your account"
+          ]
+        },
+        {
+          "title": "Preferences",
+          "items": [
+            "Opt-out of marketing",
+            "Cookie preferences",
+            "Communication settings",
+            "Location sharing"
+          ]
+        },
+        {
+          "title": "Complaints",
+          "items": [
+            "Data protection authority",
+            "Internal complaints",
+            "Dispute resolution",
+            "Legal recourse"
+          ]
+        }
+      ]
+    }
+  ],
+  "data_retention": {
+    "title": "Data Retention Periods",
+    "table": {
+      "headers": ["Data Category", "Retention Period", "Notes"],
+      "rows": [
+        {
+          "category": "Account Information",
+          "duration": "Until account deletion",
+          "notes": "Automatically deleted after retention period"
+        },
+        {
+          "category": "Transaction Records",
+          "duration": "7 years (legal requirement)",
+          "notes": "Required for tax and legal compliance"
+        },
+        {
+          "category": "Communication Logs",
+          "duration": "3 years",
+          "notes": "Automatically deleted after retention period"
+        },
+        {
+          "category": "Marketing Data",
+          "duration": "Until opt-out",
+          "notes": "Automatically deleted after retention period"
+        },
+        {
+          "category": "Analytics Data",
+          "duration": "2 years",
+          "notes": "Automatically deleted after retention period"
+        },
+        {
+          "category": "Backup Data",
+          "duration": "30 days",
+          "notes": "Automatically deleted after retention period"
+        }
+      ]
+    }
+  },
+  "contact": {
+    "title": "Contact Our Privacy Team",
+    "description": "For privacy-related inquiries or to exercise your rights:",
+    "dpo": "Data Protection Officer",
+    "email": "privacy@cresify.com",
+    "phone": "+1 (555) 987-6543",
+    "address": "[Your Company Address]"
+  },
+  "updates": {
+    "title": "Policy Updates",
+    "description": "We may update this policy periodically. Significant changes will be communicated:",
+    "points": [
+      "Email notification to registered users",
+      "Platform notification on login",
+      "Updated effective date displayed"
+    ]
+  },
+  "footer": {
+    "copyright": "© {{year}} Cresify. All rights reserved.",
+    "note": "This policy complies with GDPR, CCPA, and other global privacy regulations."
+  },
+  "ui": {
+    "expand": "Click to expand details",
+    "collapse": "Click to collapse details"
+  }
+}

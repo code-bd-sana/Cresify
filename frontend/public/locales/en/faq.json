@@ -1,0 +1,137 @@
+{
+  "meta": {
+    "title": "Frequently Asked Questions",
+    "description": "Find quick answers to common questions about our services, pricing, features, and more.",
+    "search_placeholder": "Search for answers..."
+  },
+  "categories": {
+    "general": {
+      "title": "General Questions",
+      "icon": "HelpCircle",
+      "questions": [
+        {
+          "question": "What services do you offer?",
+          "answer": "We provide comprehensive e-commerce solutions including website development, inventory management, payment integration, marketing automation, and customer support systems tailored to your business needs."
+        },
+        {
+          "question": "How do I get started?",
+          "answer": "Getting started is simple! Sign up for a free account, choose a plan that fits your needs, and our team will guide you through the setup process. You can also schedule a demo to see our platform in action."
+        },
+        {
+          "question": "Is there a free trial?",
+          "answer": "Yes! We offer a 14-day free trial with full access to all features. No credit card required to start. After the trial, you can choose from our flexible pricing plans."
+        }
+      ]
+    },
+    "billing": {
+      "title": "Billing & Payments",
+      "icon": "CreditCard",
+      "questions": [
+        {
+          "question": "What payment methods do you accept?",
+          "answer": "We accept all major credit cards (Visa, MasterCard, American Express), PayPal, bank transfers, and in some regions, digital wallets like Apple Pay and Google Pay."
+        },
+        {
+          "question": "Can I change my plan anytime?",
+          "answer": "Absolutely! You can upgrade or downgrade your plan at any time. Changes take effect immediately, and we'll prorate the billing for the remainder of your billing cycle."
+        },
+        {
+          "question": "Do you offer refunds?",
+          "answer": "We offer a 30-day money-back guarantee on all annual plans. Monthly plans can be cancelled anytime with no obligation. Contact our support team for refund requests."
+        }
+      ]
+    },
+    "security": {
+      "title": "Security & Privacy",
+      "icon": "Shield",
+      "questions": [
+        {
+          "question": "How secure is my data?",
+          "answer": "Your data security is our top priority. We use 256-bit SSL encryption, regular security audits, GDPR compliance, and store data in secure, SOC 2 certified data centers with daily backups."
+        },
+        {
+          "question": "Do you comply with data protection regulations?",
+          "answer": "Yes, we are fully compliant with GDPR, CCPA, and other major data protection regulations. We have dedicated data protection officers and provide tools to help you comply with regulations."
+        },
+        {
+          "question": "Who owns the data I upload?",
+          "answer": "You retain 100% ownership of all data you upload to our platform. We never sell or share your data with third parties. Our privacy policy details how we handle your information."
+        }
+      ]
+    },
+    "shipping": {
+      "title": "Shipping & Delivery",
+      "icon": "Truck",
+      "questions": [
+        {
+          "question": "Do you handle shipping?",
+          "answer": "We integrate with major shipping carriers (FedEx, UPS, DHL, USPS) and provide real-time shipping rates, label printing, and tracking. You can also connect with third-party logistics providers."
+        },
+        {
+          "question": "How do I track my order?",
+          "answer": "Customers receive automated tracking emails with live updates. You can also view order status and tracking information directly from your dashboard or through our mobile app."
+        },
+        {
+          "question": "What's your delivery time?",
+          "answer": "Delivery times vary based on location and shipping method. Standard shipping typically takes 3-7 business days, while express options are available for 1-2 day delivery in most regions."
+        }
+      ]
+    },
+    "support": {
+      "title": "Support",
+      "icon": "Headphones",
+      "questions": [
+        {
+          "question": "How can I contact support?",
+          "answer": "We offer 24/7 support via live chat, email (support@cresify.com), and phone (+1-800-123-4567). Priority support is available for enterprise customers."
+        },
+        {
+          "question": "Do you have documentation?",
+          "answer": "Yes! We have comprehensive documentation, video tutorials, and step-by-step guides available in our help center. You can also join our community forum to connect with other users."
+        },
+        {
+          "question": "Are there training resources?",
+          "answer": "We offer free weekly webinars, one-on-one onboarding sessions, and an extensive knowledge base. Enterprise customers receive dedicated training sessions with our experts."
+        }
+      ]
+    },
+    "technical": {
+      "title": "Technical",
+      "icon": "Package",
+      "questions": [
+        {
+          "question": "What integrations do you support?",
+          "answer": "We integrate with 100+ popular tools including Shopify, WooCommerce, QuickBooks, Mailchimp, Zapier, Salesforce, and many more. Custom API integrations are also available."
+        },
+        {
+          "question": "Can I use my own domain?",
+          "answer": "Yes! You can connect your custom domain for free. We provide easy DNS configuration guides and SSL certificates for all domains connected to our platform."
+        },
+        {
+          "question": "Is there an API available?",
+          "answer": "We offer a robust REST API with comprehensive documentation. All paid plans include API access, with rate limits based on your subscription tier."
+        }
+      ]
+    }
+  },
+  "cta": {
+    "title": "Still Have Questions?",
+    "description": "Can't find what you're looking for? Our support team is here to help you.",
+    "contact_support": "Contact Support",
+    "schedule_call": "Schedule a Call"
+  },
+  "quick_links": {
+    "documentation": {
+      "title": "Documentation",
+      "description": "Read our detailed guides and tutorials"
+    },
+    "video_tutorials": {
+      "title": "Video Tutorials",
+      "description": "Watch step-by-step video guides"
+    },
+    "community_forum": {
+      "title": "Community Forum",
+      "description": "Connect with other users"
+    }
+  }
+}

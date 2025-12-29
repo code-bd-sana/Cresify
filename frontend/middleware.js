@@ -62,7 +62,8 @@ export const config = {
     '/profile',
 '/product-details/:path*',
 '/cart',
-'/dashboard/refund'
+'/dashboard/refund',
+'/book-now'
 
   ],
 };

@@ -2,6 +2,6 @@
 export const base_url = "https://cresify.onrender.com/api";
 //  export const base_url = 'https://cresify.onrender.com/api';
 
-export const root_url = "https://cresify.onrender.com"
+export const root_url = "https://cresify.onrender.com";
 
 // akldjsf

@@ -1,0 +1,131 @@
+{
+  "meta": {
+    "title": "Terms & Conditions",
+    "last_updated": "Last Updated",
+    "disclaimer": "Please read these terms carefully before using our platform"
+  },
+  "hero": {
+    "title": "Terms & Conditions",
+    "description": "Last Updated: {{date}}",
+    "subtitle": "Please read these terms carefully before using our platform"
+  },
+  "important_notice": {
+    "title": "Important Notice",
+    "content": [
+      "These Terms & Conditions govern your use of our multi-vendor e-commerce platform. By accessing or using our website, mobile application, or services, you agree to comply with and be bound by these terms.",
+      "Our platform facilitates transactions between buyers and multiple independent vendors. Each vendor is responsible for their products, services, pricing, and customer service."
+    ]
+  },
+  "sections": [
+    {
+      "id": "general",
+      "title": "General Terms & Conditions",
+      "content": [
+        "Welcome to our multi-vendor e-commerce platform. By accessing or using our services, you agree to be bound by these Terms & Conditions.",
+        "Our platform connects buyers with multiple vendors offering products and services across various categories.",
+        "You must be at least 18 years old to use our services or have parental consent if between 13-17 years.",
+        "We reserve the right to modify these terms at any time. Continued use after changes constitutes acceptance."
+      ]
+    },
+    {
+      "id": "accounts",
+      "title": "User Accounts & Registration",
+      "content": [
+        "Users must provide accurate, current, and complete information during registration.",
+        "You are responsible for maintaining the confidentiality of your account credentials.",
+        "We reserve the right to suspend or terminate accounts that violate our policies or engage in fraudulent activities.",
+        "Vendors must complete additional verification processes to sell products/services on our platform."
+      ]
+    },
+    {
+      "id": "transactions",
+      "title": "Transactions & Payments",
+      "content": [
+        "All transactions are processed through our secure payment gateway with encryption.",
+        "Prices are set by individual vendors and may include applicable taxes and shipping fees.",
+        "We act as an intermediary between buyers and sellers and are not party to the actual sale contract.",
+        "Payment disputes must be raised within 7 days of transaction completion."
+      ]
+    },
+    {
+      "id": "vendor",
+      "title": "Vendor Terms",
+      "content": [
+        "Vendors are responsible for product quality, accurate descriptions, and timely delivery.",
+        "Commission rates vary by product category and will be clearly communicated.",
+        "Vendors must maintain minimum service standards and respond to customer inquiries within 24 hours.",
+        "Prohibited items include illegal products, counterfeit goods, and restricted items as per local laws."
+      ]
+    },
+    {
+      "id": "returns",
+      "title": "Returns & Refunds",
+      "content": [
+        "Return policies are set by individual vendors but must comply with our minimum standards.",
+        "Damaged or defective products may be returned within 14 days of delivery.",
+        "Digital products and services may have different refund policies as specified by the vendor.",
+        "Refunds are processed within 7-10 business days after return approval."
+      ]
+    },
+    {
+      "id": "intellectual",
+      "title": "Intellectual Property",
+      "content": [
+        "All platform content, including logos, designs, and software, is protected by copyright.",
+        "Vendors retain rights to their product images and descriptions but grant us license to display them.",
+        "User-generated content must not infringe on third-party intellectual property rights.",
+        "Unauthorized use of platform content may result in legal action."
+      ]
+    },
+    {
+      "id": "liability",
+      "title": "Limitation of Liability",
+      "content": [
+        "We are not liable for vendor actions, product quality issues, or delivery delays.",
+        "Maximum liability is limited to the amount paid for the specific transaction in question.",
+        "We do not guarantee uninterrupted service and are not liable for temporary platform outages.",
+        "Users agree to indemnify us against claims arising from their use of the platform."
+      ]
+    },
+    {
+      "id": "termination",
+      "title": "Termination & Suspension",
+      "content": [
+        "We may terminate or suspend accounts for violations of these terms without prior notice.",
+        "Terminated users must cease all use of the platform immediately.",
+        "Outstanding transactions will be processed according to our dispute resolution policy.",
+        "Users may request account deletion, subject to retention of transaction records as required by law."
+      ]
+    },
+    {
+      "id": "disputes",
+      "title": "Dispute Resolution",
+      "content": [
+        "Disputes between buyers and sellers should first be resolved through our internal mediation system.",
+        "Unresolved disputes may be escalated to our customer support team.",
+        "These terms are governed by the laws of the jurisdiction where our company is registered.",
+        "Agreement to arbitration as the primary method of resolving legal disputes."
+      ]
+    }
+  ],
+  "acceptance": {
+    "title": "Acceptance of Terms",
+    "continuation_title": "By Continuing to Use Our Platform:",
+    "acknowledgements": [
+      "You acknowledge reading these terms",
+      "You agree to be legally bound by them",
+      "You consent to our privacy practices"
+    ],
+    "help_title": "Need Help?",
+    "help_content": "If you have questions about these terms, please contact our legal team:",
+    "contact": {
+      "email": "legal@cresify.com",
+      "phone": "+1 (555) 123-4567",
+      "business_hours": "Business Hours: Mon-Fri, 9AM-6PM EST"
+    }
+  },
+  "footer": {
+    "copyright": "© {{year}} Cresify. All rights reserved.",
+    "note": "These terms are available in multiple languages upon request."
+  }
+}

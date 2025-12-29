@@ -23,7 +23,7 @@ import { useTranslation } from "react-i18next";
 function AllServiceProvidersPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { t } = useTranslation("serviceHeading");
+  const { t } = useTranslation("service");
 
   // Get query parameters from URL
   const countryParam = searchParams.get("country") || "";
@@ -259,7 +259,7 @@ function AllServiceProvidersPage() {
 
     return locationParts.length > 0
       ? locationParts.join(", ")
-      : provider.serviceArea || provider.address || "Location not specified";
+      : provider.serviceArea || provider.address || t('location_not_specified');
   };
 
   // Get location icon
@@ -348,7 +348,7 @@ function AllServiceProvidersPage() {
             {t("all_providers")}
           </h2>
           <p className="text-red-500">
-            Error loading service providers. Please try again later.
+            {t('error_loading')}
           </p>
         </div>
       </section>
@@ -375,13 +375,13 @@ function AllServiceProvidersPage() {
                   <Globe className="w-5 h-5 text-blue-600" />
                   <div>
                     <h4 className="text-sm font-medium text-blue-800 mb-1">
-                      Filtering by URL parameters:
+                      {t('filtering_by_url')}:
                     </h4>
                     <div className="flex flex-wrap gap-2">
                       {countryParam && (
                         <span className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">
                           <Globe className="w-3 h-3" />
-                          Country: {countryParam}
+                          {t('country')}: {countryParam}
                           <button
                             onClick={() => clearLocationFilter("country")}
                             className="ml-1 text-blue-600 hover:text-blue-800"
@@ -393,7 +393,7 @@ function AllServiceProvidersPage() {
                       {regionParam && (
                         <span className="inline-flex items-center gap-1 px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-xs">
                           <MapPin className="w-3 h-3" />
-                          Region: {regionParam}
+                          {t('region')}: {regionParam}
                           <button
                             onClick={() => clearLocationFilter("region")}
                             className="ml-1 text-purple-600 hover:text-purple-800"
@@ -405,7 +405,7 @@ function AllServiceProvidersPage() {
                       {cityParam && (
                         <span className="inline-flex items-center gap-1 px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs">
                           <Building className="w-3 h-3" />
-                          City: {cityParam}
+                          {t('city')}: {cityParam}
                           <button
                             onClick={() => clearLocationFilter("city")}
                             className="ml-1 text-green-600 hover:text-green-800"
@@ -422,12 +422,11 @@ function AllServiceProvidersPage() {
                   className="flex items-center gap-1 px-3 py-1.5 text-sm text-gray-600 hover:text-gray-800 hover:bg-white rounded-lg transition-colors"
                 >
                   <X className="w-4 h-4" />
-                  Clear URL filters
+                  {t('clear_url_filters')}
                 </button>
               </div>
               <p className="text-xs text-gray-500 mt-2">
-                These filters are applied from the URL. Clear them to see all
-                providers.
+                {t('these_filters_applied')}. {t('clear_filters_show_all')}.
               </p>
             </div>
           )}
@@ -435,11 +434,11 @@ function AllServiceProvidersPage() {
           {/* Stats */}
           <div className="flex items-center justify-between mb-6">
             <div className="text-sm text-gray-600">
-              Showing {startIndex} - {endIndex} of {totalProviders} providers
-              {hasURLParams && " (filtered by URL)"}
+              {t('showing')} {startIndex} - {endIndex} {t('of')} {totalProviders} {t('providers')}
+              {hasURLParams && ` (${t('filtered_by_url')})`}
             </div>
             <div className="text-sm text-gray-600">
-              Page {page} of {totalPages}
+              {t('page')} {page} {t('of_pages')} {totalPages}
             </div>
           </div>
 
@@ -451,13 +450,13 @@ function AllServiceProvidersPage() {
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                 <input
                   type="text"
-                  placeholder="Search by name, service, country, region, city..."
+                  placeholder={t('search_placeholder')}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                 />
                 <p className="text-xs text-gray-500 mt-1 pl-1">
-                  Search by name, service, country, region, or city
+                  {t('search_hint')}
                 </p>
               </div>
 
@@ -469,7 +468,7 @@ function AllServiceProvidersPage() {
                   onChange={(e) => setServiceFilter(e.target.value)}
                   className="border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                 >
-                  <option value="all">All Services</option>
+                  <option value="all">{t('all_services')}</option>
                   {serviceCategories.slice(1).map((category) => (
                     <option key={category} value={category}>
                       {category.charAt(0).toUpperCase() + category.slice(1)}
@@ -487,9 +486,9 @@ function AllServiceProvidersPage() {
                   className="border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                   disabled={hasURLParams}
                 >
-                  <option value="all">All Locations</option>
+                  <option value="all">{t('all_locations')}</option>
                   {hasURLParams && (
-                    <option value="custom">Custom URL Filter</option>
+                    <option value="custom">{t('custom_url_filter')}</option>
                   )}
                   {!hasURLParams &&
                     uniqueLocations.map((location) => (
@@ -503,14 +502,14 @@ function AllServiceProvidersPage() {
                 </select>
                 {hasURLParams && (
                   <span className="text-xs text-gray-500 ml-2">
-                    (Using URL filters)
+                    ({t('using_url_filters')})
                   </span>
                 )}
               </div>
 
               {/* Items Per Page */}
               <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-600">Show:</span>
+                <span className="text-sm text-gray-600">{t('show')}:</span>
                 <select
                   value={limit}
                   onChange={(e) => handleLimitChange(Number(e.target.value))}
@@ -528,11 +527,11 @@ function AllServiceProvidersPage() {
             {(serviceFilter !== "all" || hasURLParams || searchQuery) && (
               <div className="mt-4 pt-4 border-t border-gray-200">
                 <div className="flex items-center flex-wrap gap-2">
-                  <span className="text-sm text-gray-600">Active filters:</span>
+                  <span className="text-sm text-gray-600">{t('active_filters')}:</span>
 
                   {serviceFilter !== "all" && (
                     <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-                      Service: {serviceFilter}
+                      {t('service')}: {serviceFilter}
                       <button
                         onClick={() => setServiceFilter("all")}
                         className="ml-1 text-purple-600 hover:text-purple-800"
@@ -545,7 +544,7 @@ function AllServiceProvidersPage() {
                   {countryParam && (
                     <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                       <Globe className="w-3 h-3 mr-1" />
-                      Country: {countryParam}
+                      {t('country')}: {countryParam}
                       <button
                         onClick={() => clearLocationFilter("country")}
                         className="ml-1 text-blue-600 hover:text-blue-800"
@@ -558,7 +557,7 @@ function AllServiceProvidersPage() {
                   {regionParam && (
                     <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
                       <MapPin className="w-3 h-3 mr-1" />
-                      Region: {regionParam}
+                      {t('region')}: {regionParam}
                       <button
                         onClick={() => clearLocationFilter("region")}
                         className="ml-1 text-purple-600 hover:text-purple-800"
@@ -571,7 +570,7 @@ function AllServiceProvidersPage() {
                   {cityParam && (
                     <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
                       <Building className="w-3 h-3 mr-1" />
-                      City: {cityParam}
+                      {t('city')}: {cityParam}
                       <button
                         onClick={() => clearLocationFilter("city")}
                         className="ml-1 text-green-600 hover:text-green-800"
@@ -583,7 +582,7 @@ function AllServiceProvidersPage() {
 
                   {searchQuery && (
                     <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                      Search: {searchQuery}
+                      {t('search')}: {searchQuery}
                       <button
                         onClick={() => setSearchQuery("")}
                         className="ml-1 text-green-600 hover:text-green-800"
@@ -602,7 +601,7 @@ function AllServiceProvidersPage() {
                       }}
                       className="text-sm text-gray-600 hover:text-gray-800 underline"
                     >
-                      Clear all filters
+                      {t('clear_all_filters')}
                     </button>
                   )}
                 </div>
@@ -616,10 +615,10 @@ function AllServiceProvidersPage() {
               <div className="flex items-center gap-2 mb-2">
                 <Globe className="w-4 h-4 text-blue-600" />
                 <h4 className="text-sm font-medium text-blue-800">
-                  Available Locations
+                  {t('available_locations')}
                 </h4>
                 <span className="text-xs text-gray-500 ml-auto">
-                  Click to filter by location
+                  {t('click_to_filter')}
                 </span>
               </div>
               <div className="flex flex-wrap gap-2">
@@ -649,7 +648,7 @@ function AllServiceProvidersPage() {
                 ))}
                 {uniqueLocations.length > 12 && (
                   <span className="text-xs text-gray-500 self-center">
-                    +{uniqueLocations.length - 12} more locations
+                    +{uniqueLocations.length - 12} {t('more_locations')}
                   </span>
                 )}
               </div>
@@ -662,11 +661,11 @@ function AllServiceProvidersPage() {
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                 <p className="text-sm text-green-800">
-                  Showing providers from{" "}
+                  {t('showing_providers_from')}{" "}
                   {cityParam && <strong>{cityParam}</strong>}
                   {cityParam && regionParam && ", "}
                   {regionParam && <strong>{regionParam}</strong>}
-                  {(cityParam || regionParam) && countryParam && " in "}
+                  {(cityParam || regionParam) && countryParam && ` ${t('in')} `}
                   {countryParam && <strong>{countryParam}</strong>}
                 </p>
               </div>
@@ -695,17 +694,15 @@ function AllServiceProvidersPage() {
               </div>
               <h3 className="text-xl font-semibold text-gray-900 mb-2">
                 {hasURLParams
-                  ? "No providers found in this location"
-                  : "No providers found"}
+                  ? t('no_providers_in_location')
+                  : t('no_providers_found')}
               </h3>
               <p className="text-gray-600 mb-4">
                 {hasURLParams
-                  ? `No service providers found in ${
-                      cityParam || regionParam || countryParam
-                    }. Try a different location.`
+                  ? `${t('no_providers_found')} ${cityParam || regionParam || countryParam}. ${t('try_different_location')}.`
                   : searchQuery || serviceFilter !== "all"
-                  ? "Try adjusting your filters or search criteria"
-                  : "No service providers available yet"}
+                  ? t('try_adjusting_filters')
+                  : t('no_providers_available')}
               </p>
               <div className="flex gap-3 justify-center">
                 {(searchQuery || serviceFilter !== "all" || hasURLParams) && (
@@ -717,7 +714,7 @@ function AllServiceProvidersPage() {
                     }}
                     className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
                   >
-                    Clear all filters
+                    {t('clear_all_filters')}
                   </button>
                 )}
                 {hasURLParams && (
@@ -725,7 +722,7 @@ function AllServiceProvidersPage() {
                     onClick={() => router.push("/services")}
                     className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
                   >
-                    View all providers
+                    {t('view_all_providers')}
                   </button>
                 )}
               </div>
@@ -754,7 +751,7 @@ function AllServiceProvidersPage() {
                         </div>
                       )}
                       <span className="absolute top-3 right-3 px-3 py-[3px] bg-[#A46CFF] text-white text-[12px] rounded-full shadow-[0_2px_8px_rgba(0,0,0,0.20)]">
-                        {p.serviceCategory || "Service"}
+                        {p.serviceCategory || t('category')}
                       </span>
                       {p.yearsOfExperience && (
                         <span className="absolute top-3 left-3 px-3 py-[3px] bg-green-500 text-white text-[12px] rounded-full shadow-[0_2px_8px_rgba(0,0,0,0.20)]">
@@ -774,8 +771,7 @@ function AllServiceProvidersPage() {
 
                       {/* Service Description */}
                       <p className="text-[13px] text-gray-600 mb-3 line-clamp-2">
-                        {p.serviceDescription ||
-                          "Professional service provider"}
+                        {p.serviceDescription || t('professional_service')}
                       </p>
 
                       {/* Location Details */}
@@ -815,15 +811,15 @@ function AllServiceProvidersPage() {
                       {/* Service Info */}
                       <div className="mb-4 space-y-1">
                         <div className="flex items-center justify-between text-sm">
-                          <span className="text-gray-600">Radius:</span>
+                          <span className="text-gray-600">{t('radius')}:</span>
                           <span className="font-medium">
-                            {p.serviceRedius || "N/A"} km
+                            {p.serviceRedius || "N/A"} {t('km')}
                           </span>
                         </div>
                         <div className="flex items-center justify-between text-sm">
-                          <span className="text-gray-600">Experience:</span>
+                          <span className="text-gray-600">{t('experience')}:</span>
                           <span className="font-medium">
-                            {p.yearsOfExperience || "Not specified"}
+                            {p.yearsOfExperience || t('not_specified')}
                           </span>
                         </div>
                       </div>
@@ -838,7 +834,7 @@ function AllServiceProvidersPage() {
                             }`}
                           />
                         ))}
-                        <span className="ml-1">4.5 (0 reviews)</span>
+                        <span className="ml-1">4.5 (0 {t('reviews')})</span>
                       </div>
                     </div>
 
@@ -847,10 +843,10 @@ function AllServiceProvidersPage() {
                       <div className="flex items-center justify-between mb-4">
                         <div>
                           <p className="text-[12px] text-[#6B6B6B]">
-                            Starting at
+                            {t('starting_at')}
                           </p>
                           <p className="text-[20px] font-semibold text-[#F78D25]">
-                            ${p.hourlyRate || 50}/hr
+                            ${p.hourlyRate || 50}/{t('hour')}
                           </p>
                         </div>
                         <div
@@ -861,14 +857,14 @@ function AllServiceProvidersPage() {
                           }`}
                         >
                           {p.workingDays && p.workingDays.length > 0
-                            ? "Available"
-                            : "Check availability"}
+                            ? t('available')
+                            : t('check_availability')}
                         </div>
                       </div>
 
                       {/* Button */}
                       <button className="w-full py-3 text-[15px] font-medium text-white rounded-xl bg-gradient-to-r from-[#9838E1] to-[#F68E44] shadow-[0_4px_14px_rgba(0,0,0,0.15)] hover:opacity-90 transition-opacity">
-                        View Details
+                        {t('view_details')}
                       </button>
                     </div>
                   </div>
@@ -884,10 +880,10 @@ function AllServiceProvidersPage() {
             <div className="bg-white rounded-xl p-4 shadow-sm">
               <div className="flex flex-col md:flex-row items-center justify-between gap-4">
                 <div className="text-sm text-gray-600">
-                  Showing {startIndex} to {endIndex} of {totalProviders} entries
+                  {t('showing')} {startIndex} {t('to')} {endIndex} {t('of')} {totalProviders} {t('entries')}
                   {hasURLParams &&
-                    ` in ${countryParam || regionParam || cityParam}`}
-                  {searchQuery && ` matching "${searchQuery}"`}
+                    ` ${t('in')} ${countryParam || regionParam || cityParam}`}
+                  {searchQuery && ` ${t('matching')} "${searchQuery}"`}
                 </div>
 
                 <div className="flex items-center gap-2">
@@ -989,7 +985,7 @@ function AllServiceProvidersPage() {
 
                 {/* Go to Page */}
                 <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-600">Go to page:</span>
+                  <span className="text-sm text-gray-600">{t('go_to_page')}:</span>
                   <input
                     type="number"
                     min="1"
@@ -1009,14 +1005,14 @@ function AllServiceProvidersPage() {
 
             {/* Page Info */}
             <div className="mt-4 text-center text-sm text-gray-500">
-              Page {page} of {totalPages} • {limit} providers per page
+              {t('page')} {page} {t('of_pages')} {totalPages} • {limit} {t('providers_per_page')}
               {hasURLParams && (
                 <span className="ml-2 text-blue-600 font-medium">
-                  • Filtered by URL parameters
+                  • {t('filtered_by_url')}
                 </span>
               )}
               {(serviceFilter !== "all" || searchQuery) && !hasURLParams && (
-                <span className="ml-2 text-purple-600">• Filtered results</span>
+                <span className="ml-2 text-purple-600">• {t('filtered_results')}</span>
               )}
             </div>
 
@@ -1032,7 +1028,7 @@ function AllServiceProvidersPage() {
                   className="inline-flex items-center gap-2 px-4 py-2 text-sm bg-white text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400"
                 >
                   <X className="w-4 h-4" />
-                  Clear all filters and show all providers
+                  {t('clear_filters_show_all')}
                 </button>
               </div>
             )}
@@ -1043,19 +1039,4 @@ function AllServiceProvidersPage() {
   );
 }
 
-
-import React from 'react';
-
-const AllServiceProviders = () => {
-  return (
-    <div>
-
-      <Suspense fallback={<>Loading...</>}>
-        <AllServiceProvidersPage/>
-      </Suspense>
-      
-    </div>
-  );
-};
-
-export default AllServiceProviders;
+export default AllServiceProvidersPage;
