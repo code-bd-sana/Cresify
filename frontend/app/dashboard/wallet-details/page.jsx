@@ -11,6 +11,7 @@ import {
 } from "@/feature/seller/WalletApi";
 import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   FaArrowDown,
   FaArrowUp,
@@ -74,6 +75,8 @@ function SummaryCard({ title, value, icon, color, subtitle, onClick }) {
   STRIPE ACCOUNT CARD COMPONENT
 ====================================================== */
 function StripeAccountCard({ account, onEdit, onUnlink, onRefresh }) {
+  const { t } = useTranslation("seller");
+
   if (!account) {
     return (
       <div className='bg-gradient-to-br from-gray-50 to-gray-100 border-2 border-dashed border-gray-300 rounded-xl p-6 text-center'>
@@ -82,7 +85,7 @@ function StripeAccountCard({ account, onEdit, onUnlink, onRefresh }) {
             <SiStripe className='text-3xl text-gray-400' />
           </div>
           <h3 className='text-lg font-semibold text-gray-700 mb-2'>
-            No Stripe Express Account Connected
+            {t("wallet.stripeAccount.title")}
           </h3>
           <p className='text-gray-600 mb-4'>
             Connect your Stripe Express account to receive payments
@@ -109,7 +112,7 @@ function StripeAccountCard({ account, onEdit, onUnlink, onRefresh }) {
           </div>
           <div>
             <h3 className='font-bold text-lg text-gray-900'>
-              Stripe Express Account
+              {t("wallet.stripeAccount.title")}
             </h3>
             <div className='flex items-center gap-2 mt-1'>
               <span
@@ -121,16 +124,16 @@ function StripeAccountCard({ account, onEdit, onUnlink, onRefresh }) {
                     : "bg-red-100 text-red-800"
                 }`}>
                 {account?.status === "verified"
-                  ? "✓ Verified"
+                  ? "✓ " + t("wallet.stripeAccount.verified")
                   : account?.status === "pending"
-                  ? "⏳ Pending"
-                  : "✗ Unverified"}
+                  ? "⏳ " + t("wallet.stripeAccount.pending")
+                  : "✗ " + t("wallet.stripeAccount.unverified")}
               </span>
               <span className='px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium'>
-                Express Type
+                {t("wallet.stripeAccount.expressType")}
               </span>
               <span className='text-xs text-gray-500'>
-                ID:{" "}
+                {t("wallet.stripeAccount.accountId")}:{" "}
                 {account?.accountId
                   ? `${account.accountId.substring(0, 8)}...`
                   : "-"}
@@ -148,17 +151,23 @@ function StripeAccountCard({ account, onEdit, onUnlink, onRefresh }) {
 
       <div className='grid grid-cols-2 gap-4 mb-6'>
         <div className='bg-white p-3 rounded-lg border'>
-          <p className='text-xs text-gray-500 mb-1'>Account Type</p>
+          <p className='text-xs text-gray-500 mb-1'>
+            {t("wallet.stripeAccount.accountType")}
+          </p>
           <p className='font-semibold capitalize'>Express</p>
         </div>
         <div className='bg-white p-3 rounded-lg border'>
-          <p className='text-xs text-gray-500 mb-1'>Currency</p>
+          <p className='text-xs text-gray-500 mb-1'>
+            {t("wallet.stripeAccount.currency")}
+          </p>
           <p className='font-semibold uppercase'>
             {account?.currency ?? "USD"}
           </p>
         </div>
         <div className='bg-white p-3 rounded-lg border'>
-          <p className='text-xs text-gray-500 mb-1'>Payouts Enabled</p>
+          <p className='text-xs text-gray-500 mb-1'>
+            {t("wallet.stripeAccount.payoutsEnabled")}
+          </p>
           <p
             className={`font-semibold ${
               account?.payoutsEnabled ? "text-green-600" : "text-red-600"
@@ -167,7 +176,9 @@ function StripeAccountCard({ account, onEdit, onUnlink, onRefresh }) {
           </p>
         </div>
         <div className='bg-white p-3 rounded-lg border'>
-          <p className='text-xs text-gray-500 mb-1'>Requirements</p>
+          <p className='text-xs text-gray-500 mb-1'>
+            {t("wallet.stripeAccount.requirements")}
+          </p>
           <p
             className={`font-semibold ${
               (account?.requirementsDue?.length || 0) === 0
@@ -176,7 +187,9 @@ function StripeAccountCard({ account, onEdit, onUnlink, onRefresh }) {
             }`}>
             {(account?.requirementsDue?.length || 0) === 0
               ? "Complete"
-              : `${account.requirementsDue.length} pending`}
+              : `${account.requirementsDue.length} ${t(
+                  "wallet.stripeAccount.pending"
+                )}`}
           </p>
         </div>
       </div>
@@ -184,25 +197,33 @@ function StripeAccountCard({ account, onEdit, onUnlink, onRefresh }) {
       <div className='bg-white p-4 rounded-lg border mb-4'>
         <h4 className='font-semibold text-gray-800 mb-2 flex items-center gap-2'>
           <FaUser className='text-purple-500' />
-          Express Account Details
+          {t("wallet.expressDetails.title")}
         </h4>
         <div className='space-y-2 text-sm'>
           <div className='flex justify-between'>
-            <span className='text-gray-600'>Email:</span>
+            <span className='text-gray-600'>
+              {t("wallet.expressDetails.email")}
+            </span>
             <span className='font-medium'>{account?.email ?? "-"}</span>
           </div>
           <div className='flex justify-between'>
-            <span className='text-gray-600'>Country:</span>
+            <span className='text-gray-600'>
+              {t("wallet.expressDetails.country")}
+            </span>
             <span className='font-medium'>{account?.country ?? "-"}</span>
           </div>
           <div className='flex justify-between'>
-            <span className='text-gray-600'>Default Currency:</span>
+            <span className='text-gray-600'>
+              {t("wallet.expressDetails.defaultCurrency")}
+            </span>
             <span className='font-medium uppercase'>
               {account?.defaultCurrency ?? account?.currency ?? "USD"}
             </span>
           </div>
           <div className='flex justify-between'>
-            <span className='text-gray-600'>Charges Enabled:</span>
+            <span className='text-gray-600'>
+              {t("wallet.expressDetails.chargesEnabled")}
+            </span>
             <span
               className={`font-medium ${
                 account?.chargesEnabled ? "text-green-600" : "text-red-600"
@@ -217,7 +238,7 @@ function StripeAccountCard({ account, onEdit, onUnlink, onRefresh }) {
         <div className='bg-amber-50 border border-amber-200 rounded-lg p-4 mb-4'>
           <h4 className='font-semibold text-amber-800 mb-2 flex items-center gap-2'>
             <FaInfoCircle />
-            Action Required
+            {t("wallet.expressDetails.actionRequired")}
           </h4>
           <ul className='text-sm text-amber-700 space-y-1'>
             {(account?.requirementsDue || []).map((req, idx) => (
@@ -231,12 +252,12 @@ function StripeAccountCard({ account, onEdit, onUnlink, onRefresh }) {
         <button
           onClick={() => onEdit(false)}
           className='flex-1 px-4 py-2 bg-white border border-purple-300 text-purple-700 rounded-lg hover:bg-purple-50 transition-colors flex items-center justify-center gap-2'>
-          <FaEdit /> Edit Details
+          <FaEdit /> {t("wallet.actions.editDetails")}
         </button>
         <button
           onClick={onUnlink}
           className='flex-1 px-4 py-2 bg-red-50 border border-red-200 text-red-700 rounded-lg hover:bg-red-100 transition-colors flex items-center justify-center gap-2'>
-          <FaUnlink /> Unlink Account
+          <FaUnlink /> {t("wallet.actions.unlinkAccount")}
         </button>
       </div>
     </div>
@@ -253,6 +274,7 @@ function StripeAccountForm({
   onSave,
   mode = "connect",
 }) {
+  const { t } = useTranslation("seller");
   const [connectStripe] = useConnectStripeMutation();
   const [formData, setFormData] = useState({
     email: "",
@@ -276,7 +298,6 @@ function StripeAccountForm({
   const [step, setStep] = useState(1);
 
   const { data } = useSession();
-
   const user = data?.user;
 
   useEffect(() => {
@@ -834,6 +855,7 @@ function StripeAccountForm({
   WITHDRAWAL REQUEST MODAL
 ====================================================== */
 function WithdrawalModal({ isOpen, onClose, wallet, onSubmit, stripeAccount }) {
+  const { t } = useTranslation("seller");
   const [amount, setAmount] = useState("");
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
@@ -852,7 +874,7 @@ function WithdrawalModal({ isOpen, onClose, wallet, onSubmit, stripeAccount }) {
     }
 
     if (parseFloat(amount) < 10) {
-      newErrors.amount = "Minimum withdrawal is $10";
+      newErrors.amount = `Minimum withdrawal is ${wallet.currency}10`;
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -1036,6 +1058,8 @@ function WithdrawalModal({ isOpen, onClose, wallet, onSubmit, stripeAccount }) {
   MAIN COMPONENT
 ====================================================== */
 export default function WalletDetailsPage() {
+  const { t } = useTranslation("seller");
+
   // normalize Stripe account object from backend/Stripe to a UI-friendly shape
   const normalizeStripe = (acct) => {
     if (!acct) return null;
@@ -1059,6 +1083,7 @@ export default function WalletDetailsPage() {
       raw: acct,
     };
   };
+
   const [loading, setLoading] = useState(true);
   const [wallet, setWallet] = useState(null);
   const [transactions, setTransactions] = useState([]);
@@ -1068,10 +1093,7 @@ export default function WalletDetailsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [stripeFormMode, setStripeFormMode] = useState("connect");
 
-  // Get user id from localStorage (app should store it on login)
-
   const { data } = useSession();
-
   const user = data?.user;
 
   const { data: walletData, isLoading: walletLoading } = useGetWalletQuery(
@@ -1199,7 +1221,7 @@ export default function WalletDetailsPage() {
     try {
       setLoading(true);
       const body = {
-        sellerId: userId,
+        sellerId: user?.id,
         amount: withdrawalData.amount,
         method: withdrawalData.method || "stripe_connect",
       };
@@ -1255,11 +1277,9 @@ export default function WalletDetailsPage() {
             <FaWallet className='text-3xl text-blue-600' />
             <div>
               <h1 className='text-2xl font-bold text-gray-900'>
-                Wallet Details
+                {t("wallet.title")}
               </h1>
-              <p className='text-gray-600'>
-                Manage your earnings and Stripe Express account
-              </p>
+              <p className='text-gray-600'>{t("wallet.subtitle")}</p>
             </div>
           </div>
 
@@ -1272,43 +1292,45 @@ export default function WalletDetailsPage() {
                 : "bg-gradient-to-r from-green-600 to-emerald-600 text-white hover:from-green-700 hover:to-emerald-700"
             }`}>
             <GiTakeMyMoney className='text-xl' />
-            Request Stripe Payout
+            {t("wallet.actions.requestPayout")}
           </button>
         </div>
 
         {/* ===== SUMMARY CARDS ===== */}
         <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8'>
           <SummaryCard
-            title='Available Balance'
+            title={t("wallet.balance.available")}
             value={`${wallet.currency}${wallet.balance.toFixed(2)}`}
             icon={<GiTakeMyMoney />}
             color='green'
-            subtitle='Ready for withdrawal'
+            subtitle={t("wallet.balance.readyForWithdrawal")}
             onClick={() => stripeAccount && setShowWithdrawalModal(true)}
           />
           <SummaryCard
-            title='Total Earned'
+            title={t("wallet.balance.totalEarned")}
             value={`${wallet.currency}${wallet.totalEarned.toFixed(2)}`}
             icon={<FaMoneyBillAlt />}
             color='blue'
-            subtitle='All-time earnings'
+            subtitle={t("wallet.balance.allTime")}
           />
           <SummaryCard
-            title='Pending Payouts'
+            title={t("wallet.balance.pendingPayouts")}
             value={`${wallet.currency}${wallet.pending.toFixed(2)}`}
             icon={<FaClock />}
             color='amber'
-            subtitle='Clearing in 2-3 days'
+            subtitle={t("wallet.balance.clearingTime")}
           />
           <SummaryCard
-            title='Next Payout'
+            title={t("wallet.balance.nextPayout")}
             value={new Date(wallet.nextPayoutDate).toLocaleDateString("en-US", {
               month: "short",
               day: "numeric",
             })}
             icon={<FaCalendarAlt />}
             color='purple'
-            subtitle={`${wallet.payoutFrequency} schedule`}
+            subtitle={`${wallet.payoutFrequency} ${t(
+              "wallet.balance.monthlySchedule"
+            )}`}
           />
         </div>
 
@@ -1332,11 +1354,13 @@ export default function WalletDetailsPage() {
             <div className='bg-white rounded-xl border p-5'>
               <h3 className='font-semibold text-gray-900 mb-4 flex items-center gap-2'>
                 <SiStripe className='text-purple-500' />
-                Stripe Express Info
+                {t("wallet.expressInfo.title")}
               </h3>
               <div className='space-y-3'>
                 <div className='flex justify-between'>
-                  <span className='text-gray-600'>Payouts Enabled</span>
+                  <span className='text-gray-600'>
+                    {t("wallet.expressInfo.payoutsEnabled")}
+                  </span>
                   <span
                     className={`font-semibold ${
                       stripeAccount?.payoutsEnabled
@@ -1347,15 +1371,21 @@ export default function WalletDetailsPage() {
                   </span>
                 </div>
                 <div className='flex justify-between'>
-                  <span className='text-gray-600'>Account Type</span>
+                  <span className='text-gray-600'>
+                    {t("wallet.expressInfo.accountType")}
+                  </span>
                   <span className='font-semibold'>Express</span>
                 </div>
                 <div className='flex justify-between'>
-                  <span className='text-gray-600'>Withdrawal Fee</span>
+                  <span className='text-gray-600'>
+                    {t("wallet.expressInfo.withdrawalFee")}
+                  </span>
                   <span className='font-semibold'>1.5%</span>
                 </div>
                 <div className='flex justify-between'>
-                  <span className='text-gray-600'>Processing Time</span>
+                  <span className='text-gray-600'>
+                    {t("wallet.expressInfo.processingTime")}
+                  </span>
                   <span className='font-semibold'>2-3 days</span>
                 </div>
               </div>
@@ -1364,24 +1394,32 @@ export default function WalletDetailsPage() {
             <div className='bg-gradient-to-br from-purple-50 to-indigo-50 border border-purple-200 rounded-xl p-5'>
               <h3 className='font-semibold text-gray-900 mb-3 flex items-center gap-2'>
                 <SiStripe className='text-purple-600' />
-                Stripe Express Benefits
+                {t("wallet.benefits.title")}
               </h3>
               <ul className='space-y-2 text-sm'>
                 <li className='flex items-center gap-2'>
                   <FaCheckCircle className='text-green-500' />
-                  <span className='text-gray-700'>Direct bank transfers</span>
+                  <span className='text-gray-700'>
+                    {t("wallet.benefits.bankTransfers")}
+                  </span>
                 </li>
                 <li className='flex items-center gap-2'>
                   <FaCheckCircle className='text-green-500' />
-                  <span className='text-gray-700'>Low 1.5% fee</span>
+                  <span className='text-gray-700'>
+                    {t("wallet.benefits.lowFee")}
+                  </span>
                 </li>
                 <li className='flex items-center gap-2'>
                   <FaCheckCircle className='text-green-500' />
-                  <span className='text-gray-700'>Secure & PCI compliant</span>
+                  <span className='text-gray-700'>
+                    {t("wallet.benefits.secure")}
+                  </span>
                 </li>
                 <li className='flex items-center gap-2'>
                   <FaCheckCircle className='text-green-500' />
-                  <span className='text-gray-700'>24/7 support</span>
+                  <span className='text-gray-700'>
+                    {t("wallet.benefits.support")}
+                  </span>
                 </li>
               </ul>
             </div>
@@ -1394,10 +1432,10 @@ export default function WalletDetailsPage() {
             <div>
               <h2 className='text-lg font-semibold text-gray-800 flex items-center gap-2'>
                 <FaHistory />
-                Wallet Transactions
+                {t("wallet.transactions.title")}
               </h2>
               <p className='text-sm text-gray-600 mt-1'>
-                All your earnings and Stripe withdrawals
+                {t("wallet.transactions.subtitle")}
               </p>
             </div>
 
@@ -1405,7 +1443,7 @@ export default function WalletDetailsPage() {
               <FaSearch className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400' />
               <input
                 type='text'
-                placeholder='Search transactions...'
+                placeholder={t("wallet.transactions.searchPlaceholder")}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className='pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
@@ -1429,22 +1467,22 @@ export default function WalletDetailsPage() {
                 <thead className='bg-gray-50'>
                   <tr>
                     <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
-                      Transaction
+                      {t("wallet.transactions.table.transaction")}
                     </th>
                     <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
-                      Type
+                      {t("wallet.transactions.table.type")}
                     </th>
                     <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
-                      Amount
+                      {t("wallet.transactions.table.amount")}
                     </th>
                     <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
-                      Method
+                      {t("wallet.transactions.table.method")}
                     </th>
                     <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
-                      Status
+                      {t("wallet.transactions.table.status")}
                     </th>
                     <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
-                      Date
+                      {t("wallet.transactions.table.date")}
                     </th>
                   </tr>
                 </thead>

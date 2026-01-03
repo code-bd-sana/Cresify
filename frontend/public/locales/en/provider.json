@@ -1,0 +1,325 @@
+{
+  "dashboard": {
+    "title": "Dashboard Overview",
+    "subtitle": "Welcome back! Here's what's happening with your services today",
+    "service": "Service",
+    "general": "General",
+    "noServiceName": "No service name",
+    "customer": "Customer",
+    "noBookingsFound": "No bookings found",
+    "bookingsWillAppear": "Bookings will appear here",
+    "months": [
+      "JAN",
+      "FEB",
+      "MAR",
+      "APR",
+      "MAY",
+      "JUN",
+      "JUL",
+      "AUG",
+      "SEP",
+      "OCT",
+      "NOV",
+      "DEC"
+    ],
+    "stats": {
+      "totalEarnings": "Total Earnings",
+      "bookings": "{{count}} bookings",
+      "totalBookings": "Total Bookings",
+      "avgBooking": "Avg: ${{amount}}",
+      "completeServices": "Complete Services",
+      "totalCustomers": "Total Customers",
+      "repeatCustomers": "{{count}} repeat",
+      "pendingPayout": "Pending Payout",
+      "processing": "{{count}} processing",
+      "avgBookingValue": "Avg Booking Value",
+      "perService": "Per completed service",
+      "monthlyGrowth": "Monthly Growth",
+      "comparedToLastMonth": "Compared to last month",
+      "services": "Services",
+      "averageRating": "Average Rating",
+      "basedOnReviews": "Based on customer reviews"
+    },
+    "charts": {
+      "earningsOverview": "Monthly Earnings Overview",
+      "earnings": "Earnings",
+      "month": "Month",
+      "total": "Total",
+      "bookingDistribution": "Booking Distribution",
+      "cancelBooking": "Cancel Booking",
+      "completeServices": "Complete Services"
+    },
+    "filters": {
+      "allTime": "All Time",
+      "thisYear": "This Year",
+      "thisMonth": "This Month",
+      "all": "All",
+      "today": "Today",
+      "thisWeek": "This Week"
+    },
+    "bookings": {
+      "todaysBookings": "Today's Bookings ({{count}})",
+      "recentBookings": "Recent Bookings"
+    },
+    "servicePerformance": {
+      "title": "Service Performance",
+      "categories": "{{count}} categories",
+      "bookings": "bookings",
+      "totalEarnings": "Total earnings"
+    },
+    "paymentSummary": {
+      "title": "Payment Status Summary",
+      "completed": "Completed",
+      "paidSuccessfully": "Paid successfully",
+      "processing": "Processing",
+      "inProcess": "Payments in process",
+      "pending": "Pending",
+      "awaitingConfirmation": "Awaiting confirmation",
+      "totalExpected": "Total expected payout",
+      "viewDetails": "View Payment Details"
+    }
+  },
+  "booking": {
+    "title": "Bookings",
+    "subtitle": "Manage and track all your bookings",
+    "searchPlaceholder": "Search bookings...",
+    "noBookings": {
+      "title": "No bookings found",
+      "empty": "You have no bookings yet",
+      "filter": "Try adjusting your filters or search"
+    },
+    "stats": {
+      "totalBookings": "Total Bookings",
+      "pending": "Pending",
+      "accepted": "Accepted",
+      "revenue": "Revenue"
+    },
+    "filters": {
+      "allStatus": "All Status",
+      "pending": "Pending",
+      "accept": "Accepted",
+      "reject": "Rejected",
+      "completed": "Completed",
+      "cancelled": "Cancelled",
+      "show": "Show"
+    },
+    "table": {
+      "bookingId": "Booking ID",
+      "provider": "Provider",
+      "customer": "Customer",
+      "dateTime": "Date & Time",
+      "payment": "Payment",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "status": {
+      "pending": "Pending",
+      "accept": "Accepted",
+      "reject": "Rejected",
+      "completed": "Completed",
+      "cancelled": "Cancelled",
+      "unknown": "Unknown"
+    },
+    "paymentStatus": {
+      "processing": "Processing",
+      "completed": "Completed",
+      "unknown": "Unknown"
+    },
+    "actions": {
+      "viewDetails": "View Details",
+      "updateStatus": "Update Status",
+      "setToPending": "Set to Pending",
+      "setToAccepted": "Set to Accepted",
+      "setToRejected": "Set to Rejected",
+      "setToCompleted": "Set to Completed",
+      "setToCancelled": "Set to Cancelled"
+    },
+    "pagination": {
+      "showing": "Showing {{start}} to {{end}} of {{total}} bookings"
+    },
+    "summary": {
+      "statusDistribution": "Booking Status Distribution",
+      "paymentStatus": "Payment Status",
+      "recentActivity": "Recent Activity"
+    },
+    "alerts": {
+      "statusUpdated": "Status updated for booking {{id}} to {{status}}"
+    },
+    "errors": {
+      "loadingError": "Error loading bookings. Please try again."
+    }
+  },
+  "common": {
+    "loading": "Loading...",
+    "notAvailable": "N/A",
+    "refresh": "Refresh",
+    "retry": "Retry"
+  },
+  "availability": {
+    "title": "Availability Management",
+    "subtitle": "Manage your available dates and time slots",
+    "calendar": {
+      "title": "Select Date"
+    },
+    "timeSlots": {
+      "title": "Time Slots for {{date}}",
+      "noDateSelected": "No date selected",
+      "noDateSelectedHint": "First mark a date as available to add time slots",
+      "addNewSlot": "Add New Time Slot",
+      "startTime": "Start Time",
+      "endTime": "End Time",
+      "noSlots": "No time slots yet",
+      "noSlotsHint": "Add time slots using the form above",
+      "count": "{{count}} time slot(s) for this date"
+    },
+    "allDates": {
+      "title": "All Available Dates",
+      "noDates": "No available dates yet",
+      "noDatesHint": "Select dates from the calendar and mark them as available"
+    },
+    "status": {
+      "available": "Available",
+      "booked": "Booked"
+    },
+    "duration": "Duration",
+    "to": "to",
+    "more": "more",
+    "created": "Created",
+    "loading": {
+      "dates": "Loading available dates...",
+      "timeSlots": "Loading time slots..."
+    },
+    "buttons": {
+      "markAsAvailable": "Mark as Available",
+      "alreadyAvailable": "Already Available",
+      "adding": "Adding...",
+      "addSlot": "Add Slot",
+      "deleteSlot": "Delete time slot",
+      "deleteDate": "Delete date and all time slots",
+      "select": "Select",
+      "startAdding": "Start Adding Dates"
+    },
+    "confirm": {
+      "deleteDate": "Are you sure you want to delete this date and all its time slots?",
+      "deleteTimeSlot": "Are you sure you want to delete this time slot?"
+    },
+    "success": {
+      "dateAdded": "Date marked as available successfully",
+      "timeSlotAdded": "Time slot created successfully",
+      "dateDeleted": "Date deleted successfully",
+      "timeSlotDeleted": "Time slot deleted successfully"
+    },
+    "errors": {
+      "loginRequired": "Please login first",
+      "dateAlreadyExists": "This date is already marked as available",
+      "cannotMarkPast": "Cannot mark past dates as available",
+      "dateAddFailed": "Failed to mark date as available",
+      "selectDateFirst": "Please select an available date first",
+      "enterStartEndTime": "Please enter start and end time",
+      "timeSlotAddFailed": "Failed to create time slot",
+      "dateDeleteFailed": "Failed to delete date",
+      "timeSlotDeleteFailed": "Failed to delete time slot"
+    }
+  },
+  "paymentHistory": {
+    "title": "Payment History",
+    "subtitle": "Track your earnings, commissions, and tax breakdown",
+    "loading": "Loading payment history...",
+    "refreshData": "Refresh Data",
+    "errorLoading": "Error Loading Data",
+    "retry": "Retry Loading",
+    "stats": {
+      "totalEarnings": "Total Earnings",
+      "platformCommission": "Platform Commission",
+      "taxOnCommission": "Tax on Commission",
+      "netPayout": "Net Payout",
+      "bookings": "bookings",
+      "commissionRate": "10% of total earnings",
+      "taxRate": "19% of commission",
+      "averagePerBooking": "avg/booking"
+    },
+    "calculation": {
+      "title": "How Your Earnings Are Calculated",
+      "hourlyRate": "Hourly Rate × Duration",
+      "hourlyRateDesc": "Your rate multiplied by service hours",
+      "platformFee": "-10% Platform Fee",
+      "platformFeeDesc": "Service platform commission",
+      "taxOnFee": "-19% Tax on Fee",
+      "taxOnFeeDesc": "Tax applied to platform commission",
+      "netEarnings": "= Your Net Earnings",
+      "netEarningsDesc": "Amount deposited to your account",
+      "example": "Example Calculation:",
+      "exampleDesc": "$50/hour × 2 hours = $100 → -$10 platform fee → -$1.90 tax → $88.10 net payout"
+    },
+    "controls": {
+      "searchPlaceholder": "Search by booking ID, customer name...",
+      "filterAll": "All Time",
+      "filterToday": "Today",
+      "filterWeek": "This Week",
+      "filterMonth": "This Month",
+      "filterYear": "This Year",
+      "show": "Show:",
+      "exportCSV": "Export CSV"
+    },
+    "table": {
+      "bookingDetails": "Booking Details",
+      "serviceDuration": "Service & Duration",
+      "earningsBreakdown": "Earnings Breakdown",
+      "paymentStatus": "Payment Status",
+      "id": "ID",
+      "customer": "Customer",
+      "service": "Service",
+      "category": "Category:",
+      "hourlyRate": "Hourly Rate:",
+      "duration": "Duration:",
+      "totalEarned": "Total Earned:",
+      "commission": "Commission (10%):",
+      "tax": "Tax on Commission (19%):",
+      "netPayout": "Net Payout:",
+      "paid": "Paid",
+      "processing": "Processing",
+      "method": "Method:"
+    },
+    "noRecords": {
+      "title": "No Payment Records Yet",
+      "description": "You don't have any completed bookings with payments yet. Once you complete services, your payment history will appear here.",
+      "checkBookings": "Check for New Bookings",
+      "goToDashboard": "Go to Dashboard",
+      "noResults": "No Matching Results",
+      "noResultsDesc": "No payment records match your search criteria. Try adjusting your filters."
+    },
+    "summary": {
+      "title": "Payment Summary",
+      "totalCompleted": "Total Completed Bookings",
+      "averagePerBooking": "Average Per Booking",
+      "totalFees": "Total Fees",
+      "nextPayout": "Next Payout",
+      "commissionTax": "Commission + Tax",
+      "estimatedFrom": "Estimated from {{count}} pending",
+      "earningsDistribution": "Earnings Distribution",
+      "yourNetEarnings": "Your Net Earnings",
+      "platformCommission": "Platform Commission"
+    },
+    "export": {
+      "headers": [
+        "Booking ID",
+        "Customer",
+        "Service",
+        "Date",
+        "Time",
+        "Hourly Rate",
+        "Duration",
+        "Total Earned",
+        "Commission (10%)",
+        "Tax on Commission (19%)",
+        "Net Payout",
+        "Payment Status"
+      ],
+      "total": "Total",
+      "completedPending": "{{completed}} completed, {{pending}} pending"
+    },
+    "pagination": {
+      "showing": "Showing {{start}} to {{end}} of {{total}} records"
+    }
+  }
+}

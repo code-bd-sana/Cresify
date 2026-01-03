@@ -1,10 +1,13 @@
 "use client";
 
 import { useGetAdminOverviewQuery } from "@/feature/admin/AdminOverviewApi";
+import { useTranslation } from "react-i18next";
 import { FiBarChart2 } from "react-icons/fi";
 import { LuBriefcase, LuPackage, LuShoppingBag, LuUsers } from "react-icons/lu";
 
-export default function DashboardStats({data}) {
+export default function DashboardStats({ data }) {
+  const { t } = useTranslation("admin");
+
   /** Fetch overview stats */
   const { data: overview } = useGetAdminOverviewQuery();
   const overviewData = overview?.data;
@@ -13,49 +16,49 @@ export default function DashboardStats({data}) {
   const stats = [
     {
       id: 1,
-      label: "Total Buyers",
+      label: t("dashboard.stats.totalBuyers"),
       value: overviewData?.totalBuyers ?? 0,
       icon: LuUsers,
     },
     {
       id: 2,
-      label: "Total Sellers",
+      label: t("dashboard.stats.totalSellers"),
       value: overviewData?.totalSellers ?? 0,
       icon: LuBriefcase,
     },
     {
       id: 3,
-      label: "Total Service Providers",
+      label: t("dashboard.stats.totalServiceProviders"),
       value: overviewData?.totalServiceProviders ?? 0,
       icon: LuUsers,
     },
     {
       id: 4,
-      label: "Total Products",
+      label: t("dashboard.stats.totalProducts"),
       value: overviewData?.totalProduct ?? 0,
       icon: LuPackage,
     },
     {
       id: 5,
-      label: "Total Services",
+      label: t("dashboard.stats.totalServices"),
       value: overviewData?.totalServices ?? 0,
       icon: LuBriefcase,
     },
     {
       id: 6,
-      label: "Total Booking Services",
+      label: t("dashboard.stats.totalBookedServices"),
       value: overviewData?.totalBookedServices ?? 0,
       icon: FiBarChart2,
     },
     {
       id: 7,
-      label: "Total Orders",
+      label: t("dashboard.stats.totalOrders"),
       value: overviewData?.totalOrders ?? 0,
       icon: LuShoppingBag,
     },
     // {
     //   id: 8,
-    //   label: "Platform Revenue",
+    //   label: t("dashboard.stats.platformRevenue"),
     //   value: `$${overviewData?.totalPlatformRevenue ?? 0}`,
     //   icon: FiBarChart2,
     // },
