@@ -7,7 +7,7 @@
   "stars": "Stars",
   "ratings": {
     "5star": "5 Star",
-    "4star": "4 Star", 
+    "4star": "4 Star",
     "3star": "3 Star",
     "2star": "2 Star",
     "1star": "1 Star"
@@ -26,7 +26,7 @@
     "newest": "Newest",
     "oldest": "Oldest",
     "highest": "Highest Rating",
-    "lowest": "Lowest Rating", 
+    "lowest": "Lowest Rating",
     "mostHelpful": "Most Helpful"
   },
   "filterByRating": "Filter by Rating",
@@ -68,5 +68,17 @@
   "freeShipping": "Free Shipping",
   "shippingInfo": "Shipping Information",
   "returnPolicy": "Return Policy",
-  "visitStore": "Visit Store"
+  "visitStore": "Visit Store",
+  "viewStore": "View Store",
+  "viewSeller": "View Seller",
+  "availability": "Availability",
+  "itemsLeft": "items left",
+  "adding": "Adding...",
+  "removeFromWishlist": "Remove from Wishlist",
+  "addToWishlist": "Add to Wishlist",
+  "sellerInfo": "Seller Information",
+  "sellerName": "Seller Name",
+  "email": "Email",
+  "phone": "Phone",
+  "joined": "Joined"
 }

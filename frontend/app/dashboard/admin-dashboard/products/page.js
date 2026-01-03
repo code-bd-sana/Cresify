@@ -20,8 +20,10 @@ import {
   FiXCircle,
 } from "react-icons/fi";
 import Swal from "sweetalert2";
+import { useTranslation } from "react-i18next";
 
 export default function ProductManagementPage() {
+  const { t } = useTranslation("admin");
   const [page, setPage] = useState(0);
   const [search, setSearch] = useState("");
   const [selectedProductId, setSelectedProductId] = useState(null);
@@ -54,25 +56,25 @@ export default function ProductManagementPage() {
   const stats = [
     {
       id: 1,
-      label: "Total Products",
+      label: t("productManagement.stats.totalProducts"),
       value: statsData?.totalProducts || 0,
       icon: FiUsers,
     },
     {
       id: 2,
-      label: "Active",
+      label: t("productManagement.stats.active"),
       value: statsData?.activeProducts || 0,
       icon: FiCheckCircle,
     },
     {
       id: 3,
-      label: "Pending Approve",
+      label: t("productManagement.stats.pendingApprove"),
       value: statsData?.pendingProducts || 0,
       icon: FiClock,
     },
     {
       id: 4,
-      label: "Rejected",
+      label: t("productManagement.stats.rejected"),
       value: statsData?.rejectedProducts || 0,
       icon: FiXCircle,
     },
@@ -83,26 +85,42 @@ export default function ProductManagementPage() {
     rejected: "bg-[#FEE2E2] text-[#D32F2F]",
   };
 
-  const handleStatusChange = async (productId, newStatus) => {
+  // Get status display text
+  const getStatusDisplay = (status) => {
+    const statusMap = {
+      active: t("productManagement.status.active"),
+      rejected: t("productManagement.status.rejected"),
+      pending: t("productManagement.filters.pending"),
+    };
+    return statusMap[status] || status;
+  };
 
-    if(newStatus === ''){
+  const handleStatusChange = async (productId, newStatus) => {
+    if (newStatus === "") {
       return;
     }
+
+    const statusDisplay = getStatusDisplay(newStatus);
+
     try {
       const result = await Swal.fire({
-        title: "Are you sure?",
-        text: `You are about to mark this product as "${newStatus}".`,
+        title: t("productManagement.alerts.confirmTitle"),
+        text: t("productManagement.alerts.confirmText", {
+          status: statusDisplay,
+        }),
         icon: "warning",
         showCancelButton: true,
-        confirmButtonText: "Yes, update it!",
-        cancelButtonText: "Cancel",
+        confirmButtonText: t("productManagement.alerts.confirmButton"),
+        cancelButtonText: t("productManagement.alerts.cancelButton"),
       });
 
       if (result.isConfirmed) {
         await changeStatus({ id: productId, status: newStatus }).unwrap();
         Swal.fire({
-          title: "Updated!",
-          text: `Product status updated to "${newStatus}".`,
+          title: t("productManagement.alerts.updatedTitle"),
+          text: t("productManagement.alerts.updatedText", {
+            status: statusDisplay,
+          }),
           icon: "success",
           timer: 2000,
           showConfirmButton: false,
@@ -110,8 +128,8 @@ export default function ProductManagementPage() {
       }
     } catch (error) {
       Swal.fire({
-        title: "Error",
-        text: "Failed to update product status.",
+        title: t("productManagement.alerts.errorTitle"),
+        text: t("productManagement.alerts.errorText"),
         icon: "error",
       });
     }
@@ -127,10 +145,10 @@ export default function ProductManagementPage() {
       {/* Header */}
       <div>
         <h1 className='text-[26px] font-semibold text-gray-900'>
-          Product Management
+          {t("productManagement.title")}
         </h1>
         <p className='text-sm text-[#9C6BFF] mt-1'>
-          Manage all marketplace products
+          {t("productManagement.subtitle")}
         </p>
       </div>
 
@@ -162,7 +180,7 @@ export default function ProductManagementPage() {
           <FiSearch className='absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xl' />
           <input
             type='text'
-            placeholder='Search by product name or seller name...'
+            placeholder={t("productManagement.search.placeholder")}
             value={search}
             onChange={handleSearchChange}
             className='w-full bg-[#FCFCFF] border border-[#E5E7EB] rounded-lg pl-10 pr-4 py-3 text-sm outline-none focus:ring-2 focus:ring-[#A855F7]/40'
@@ -172,12 +190,12 @@ export default function ProductManagementPage() {
         {/* Dummy filter */}
         <div className='relative w-full md:w-80'>
           <select className='appearance-none w-full px-4 py-3 bg-[#FCFCFF] border border-[#E5E7EB] text-sm rounded-lg'>
-            <option>All Product</option>
-            <option>Delivered</option>
-            <option>Pending</option>
-            <option>Processing</option>
-            <option>Canceled</option>
-            <option>Shipping</option>
+            <option>{t("productManagement.filters.allProduct")}</option>
+            <option>{t("productManagement.filters.delivered")}</option>
+            <option>{t("productManagement.filters.pending")}</option>
+            <option>{t("productManagement.filters.processing")}</option>
+            <option>{t("productManagement.filters.canceled")}</option>
+            <option>{t("productManagement.filters.shipping")}</option>
           </select>
           <FiChevronDown className='absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-lg pointer-events-none' />
         </div>
@@ -188,23 +206,37 @@ export default function ProductManagementPage() {
         <div className='p-5 overflow-x-auto'>
           {isLoading ? (
             <div className='text-center py-10 text-gray-500'>
-              Loading products...
+              {t("productManagement.table.loading")}
             </div>
           ) : products.length === 0 ? (
             <div className='text-center py-10 text-gray-500'>
-              No products found
+              {t("productManagement.table.noProducts")}
             </div>
           ) : (
             <table className='w-full text-sm'>
               <thead>
                 <tr className='text-[#9838E1] text-[12px] bg-[#F8F4FD] border-b border-gray-200'>
-                  <th className='py-3 px-3 text-left'>PRODUCT</th>
-                  <th className='py-3 px-3 text-left'>SELLER</th>
-                  <th className='py-3 px-3 text-left'>CATEGORY</th>
-                  <th className='py-3 px-3 text-left'>PRICE</th>
-                  <th className='py-3 px-3 text-left'>STOCK</th>
-                  <th className='py-3 px-3 text-left'>STATUS</th>
-                  <th className='py-3 px-3 text-left'>ACTIONS</th>
+                  <th className='py-3 px-3 text-left'>
+                    {t("productManagement.table.headers.product")}
+                  </th>
+                  <th className='py-3 px-3 text-left'>
+                    {t("productManagement.table.headers.seller")}
+                  </th>
+                  <th className='py-3 px-3 text-left'>
+                    {t("productManagement.table.headers.category")}
+                  </th>
+                  <th className='py-3 px-3 text-left'>
+                    {t("productManagement.table.headers.price")}
+                  </th>
+                  <th className='py-3 px-3 text-left'>
+                    {t("productManagement.table.headers.stock")}
+                  </th>
+                  <th className='py-3 px-3 text-left'>
+                    {t("productManagement.table.headers.status")}
+                  </th>
+                  <th className='py-3 px-3 text-left'>
+                    {t("productManagement.table.headers.actions")}
+                  </th>
                 </tr>
               </thead>
 
@@ -230,7 +262,7 @@ export default function ProductManagementPage() {
                           />
                         ) : (
                           <div className='w-[50px] h-[50px] bg-gray-200 rounded-lg flex items-center justify-center text-gray-400 text-xs'>
-                            No Image
+                            {t("productManagement.table.noImage")}
                           </div>
                         )}
                         <span className='max-w-[200px] truncate'>
@@ -239,9 +271,13 @@ export default function ProductManagementPage() {
                       </div>
                     </td>
 
-                    <td className='py-3 px-3'>{item.seller?.name || "N/A"}</td>
+                    <td className='py-3 px-3'>
+                      {item.seller?.name || t("productManagement.table.na")}
+                    </td>
 
-                    <td className='py-3 px-3'>{item.category || "N/A"}</td>
+                    <td className='py-3 px-3'>
+                      {item.category || t("productManagement.table.na")}
+                    </td>
 
                     <td className='py-3 px-3 text-[#F88D25] font-medium'>
                       ${item.price?.toFixed(2)}
@@ -256,12 +292,18 @@ export default function ProductManagementPage() {
                           handleStatusChange(item._id, e.target.value)
                         }
                         className={`px-3 py-1.5 rounded-full text-xs border cursor-pointer ${
-                          statusColors[item.status]
+                          statusColors[item.status] ||
+                          "bg-gray-100 text-gray-800"
                         }`}>
-                                        <option value=''>Select a option</option>
-
-                        <option value='rejected'>Rejected</option>
-                                                <option value='active'>Active</option>
+                        <option value=''>
+                          {t("productManagement.table.selectOption")}
+                        </option>
+                        <option value='rejected'>
+                          {t("productManagement.status.rejected")}
+                        </option>
+                        <option value='active'>
+                          {t("productManagement.status.active")}
+                        </option>
                       </select>
                     </td>
 
@@ -272,7 +314,7 @@ export default function ProductManagementPage() {
                           setSelectedProductId(item._id);
                           setShowProductModal(true);
                         }}>
-                        View
+                        {t("productManagement.table.view")}
                       </button>
                     </td>
                   </tr>
@@ -306,11 +348,13 @@ export default function ProductManagementPage() {
 
         <Dialog.Panel className='bg-white p-6 rounded-xl shadow-lg max-w-md w-full relative'>
           <Dialog.Title className='text-lg font-semibold'>
-            Product Details
+            {t("productManagement.modal.title")}
           </Dialog.Title>
 
           {isProductLoading ? (
-            <div className='py-6 text-center text-gray-500'>Loading...</div>
+            <div className='py-6 text-center text-gray-500'>
+              {t("productManagement.modal.loading")}
+            </div>
           ) : productDetails?.data ? (
             <div className='mt-4 space-y-3'>
               {/* Image */}
@@ -325,43 +369,64 @@ export default function ProductManagementPage() {
               </div>
 
               <div>
-                <span className='font-medium'>Name: </span>
+                <span className='font-medium'>
+                  {t("productManagement.modal.fields.name")}{" "}
+                </span>
                 {productDetails.data.name}
               </div>
 
               <div>
-                <span className='font-medium'>Seller: </span>
-                {productDetails.data.seller?.name || "N/A"}
+                <span className='font-medium'>
+                  {t("productManagement.modal.fields.seller")}{" "}
+                </span>
+                {productDetails.data.seller?.name ||
+                  t("productManagement.table.na")}
               </div>
 
               <div>
-                <span className='font-medium'>Category: </span>
+                <span className='font-medium'>
+                  {t("productManagement.modal.fields.category")}{" "}
+                </span>
                 {productDetails.data.category}
               </div>
 
               <div>
-                <span className='font-medium'>Price: </span>$
-                {productDetails.data.price}
+                <span className='font-medium'>
+                  {t("productManagement.modal.fields.price")}{" "}
+                </span>
+                ${productDetails.data.price}
               </div>
 
               <div>
-                <span className='font-medium'>Stock: </span>
+                <span className='font-medium'>
+                  {t("productManagement.modal.fields.stock")}{" "}
+                </span>
                 {productDetails.data.stock}
               </div>
 
               <div>
-                <span className='font-medium'>Status: </span>
-                {productDetails.data.status}
+                <span className='font-medium'>
+                  {t("productManagement.modal.fields.status")}{" "}
+                </span>
+                <span
+                  className={`ml-2 px-2 py-0.5 rounded-full text-xs font-medium ${
+                    statusColors[productDetails.data.status] ||
+                    "bg-gray-100 text-gray-800"
+                  }`}>
+                  {getStatusDisplay(productDetails.data.status)}
+                </span>
               </div>
 
               <div>
-                <span className='font-medium'>Created: </span>
+                <span className='font-medium'>
+                  {t("productManagement.modal.fields.created")}{" "}
+                </span>
                 {new Date(productDetails.data.createdAt).toLocaleString()}
               </div>
             </div>
           ) : (
             <div className='py-6 text-center text-gray-500'>
-              No product details found.
+              {t("productManagement.modal.noDetails")}
             </div>
           )}
 
@@ -372,7 +437,7 @@ export default function ProductManagementPage() {
                 setShowProductModal(false);
                 setSelectedProductId(null);
               }}>
-              Close
+              {t("productManagement.modal.close")}
             </button>
           </div>
         </Dialog.Panel>

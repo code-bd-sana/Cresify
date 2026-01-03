@@ -1,5 +1,101 @@
 {
   "section_title": "Últimas de Nuestro Blog",
   "section_subtitle": "Mantente actualizado con consejos, guías e historias de nuestra comunidad",
-  "view_all_posts": "Ver Todas las Publicaciones"
+  "view_all_posts": "Ver Todas las Publicaciones",
+  "banner": {
+    "featuredBadge": "Guía Destacada",
+    "readButton": "Leer Artículo Completo",
+    "loading": "Cargando blog destacado...",
+    "default": {
+      "title": "La Guía Definitiva para Encontrar Servicios Locales de Calidad",
+      "description": "Descubre consejos expertos y estrategias para conectarte con los mejores proveedores de servicios en tu área. Aprende a evaluar reseñas, comparar precios y tomar decisiones informadas.",
+      "author": "Admin",
+      "browseButton": "Explorar Artículos"
+    }
+  },
+  "latestArticles": {
+    "title": "Artículos Más Recientes",
+    "categoryAll": "Todas las Categorías",
+    "readMore": "Leer Más",
+    "viewAll": "Ver Todos los Artículos",
+    "noArticles": "No se encontraron artículos.",
+    "loading": "Cargando artículos...",
+    "error": "Error al cargar artículos. Por favor, inténtalo de nuevo más tarde.",
+    "emptyState": {
+      "title": "No hay artículos disponibles",
+      "description": "¡Vuelve pronto para nuevos artículos!"
+    },
+    "categories": {
+      "Planning": "Planificación",
+      "Community": "Comunidad",
+      "AI & ML": "IA y ML",
+      "DevOps": "DevOps",
+      "UI/UX": "UI/UX",
+      "Database": "Base de Datos",
+      "Testing": "Pruebas",
+      "Security": "Seguridad",
+      "Tips & Guides": "Consejos y Guías",
+      "Shopping": "Compras",
+      "Home & Living": "Hogar y Vida",
+      "Sustainability": "Sostenibilidad",
+      "Technology": "Tecnología",
+      "Safety & Security": "Seguridad y Protección"
+    }
+  },
+  "details": {
+    "backButton": "Volver a Artículos",
+    "notFound": {
+      "title": "Artículo No Encontrado",
+      "description": "El artículo que buscas no existe o ha sido eliminado.",
+      "browseButton": "Explorar Todos los Artículos"
+    },
+    "meta": {
+      "published": "Publicado el",
+      "author": "Autor",
+      "category": "Categoría",
+      "tags": "Etiquetas"
+    },
+    "content": {
+      "analysis": "Análisis en Profundidad",
+      "share": "¿Encontraste útil este artículo? ¡Compártelo con otros!",
+      "browseMore": "Explorar Más Artículos",
+      "shareWith": "Compartir con"
+    },
+    "loading": "Cargando detalles del artículo...",
+    "error": "Error al cargar el artículo. Por favor, inténtalo de nuevo."
+  },
+  "common": {
+    "dateFormats": {
+      "full": "{{month}} {{day}}, {{year}}",
+      "short": "{{month}} {{day}}"
+    },
+    "months": {
+      "january": "enero",
+      "february": "febrero",
+      "march": "marzo",
+      "april": "abril",
+      "may": "mayo",
+      "june": "junio",
+      "july": "julio",
+      "august": "agosto",
+      "september": "septiembre",
+      "october": "octubre",
+      "november": "noviembre",
+      "december": "diciembre"
+    },
+    "buttons": {
+      "read": "Leer",
+      "share": "Compartir",
+      "save": "Guardar",
+      "like": "Me Gusta",
+      "comment": "Comentar",
+      "subscribe": "Suscribirse",
+      "follow": "Seguir"
+    },
+    "placeholders": {
+      "imageAlt": "Imagen del artículo",
+      "noContent": "No hay contenido disponible.",
+      "noImage": "Imagen no disponible"
+    }
+  }
 }

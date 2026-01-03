@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import i18n from "i18next";
-import { initReactI18next, I18nextProvider } from "react-i18next";
+import { useEffect, useState } from "react";
+import { I18nextProvider, initReactI18next } from "react-i18next";
 
 // localStorage key
 const LANGUAGE_KEY = "app-language";
@@ -49,6 +49,10 @@ const loadTranslations = () => {
       terms: require("@/public/locales/en/terms.json"),
       privacy: require("@/public/locales/en/privacy.json"),
       serviceDetails: require("@/public/locales/en/serviceDetails.json"),
+      seller: require("@/public/locales/en/seller.json"),
+      provider: require("@/public/locales/en/provider.json"),
+      admin: require("@/public/locales/en/admin.json"),
+      store: require("@/public/locales/en/store.json"),
     },
     es: {
       navbar: require("@/public/locales/es/navbar.json"),
@@ -74,6 +78,10 @@ const loadTranslations = () => {
       terms: require("@/public/locales/es/terms.json"),
       privacy: require("@/public/locales/es/privacy.json"),
       serviceDetails: require("@/public/locales/es/serviceDetails.json"),
+      seller: require("@/public/locales/es/seller.json"),
+      provider: require("@/public/locales/es/provider.json"),
+      admin: require("@/public/locales/es/admin.json"),
+      store: require("@/public/locales/es/store.json"),
     },
   };
 };

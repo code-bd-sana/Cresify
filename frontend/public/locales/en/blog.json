@@ -1,5 +1,101 @@
 {
   "section_title": "Latest from Our Blog",
   "section_subtitle": "Stay updated with tips, guides, and stories from our community",
-  "view_all_posts": "View All Posts"
+  "view_all_posts": "View All Posts",
+  "banner": {
+    "featuredBadge": "Featured Guide",
+    "readButton": "Read Full Article",
+    "loading": "Loading featured blog...",
+    "default": {
+      "title": "The Ultimate Guide to Finding Quality Local Services",
+      "description": "Discover expert tips and strategies for connecting with the best service providers in your area. Learn how to evaluate reviews, compare prices, and make informed decisions.",
+      "author": "Admin",
+      "browseButton": "Browse Articles"
+    }
+  },
+  "latestArticles": {
+    "title": "Latest Articles",
+    "categoryAll": "All Categories",
+    "readMore": "Read More",
+    "viewAll": "View All Articles",
+    "noArticles": "No articles found.",
+    "loading": "Loading articles...",
+    "error": "Failed to load articles. Please try again later.",
+    "emptyState": {
+      "title": "No articles available",
+      "description": "Check back soon for new articles!"
+    },
+    "categories": {
+      "Planning": "Planning",
+      "Community": "Community",
+      "AI & ML": "AI & ML",
+      "DevOps": "DevOps",
+      "UI/UX": "UI/UX",
+      "Database": "Database",
+      "Testing": "Testing",
+      "Security": "Security",
+      "Tips & Guides": "Tips & Guides",
+      "Shopping": "Shopping",
+      "Home & Living": "Home & Living",
+      "Sustainability": "Sustainability",
+      "Technology": "Technology",
+      "Safety & Security": "Safety & Security"
+    }
+  },
+  "details": {
+    "backButton": "Back to Articles",
+    "notFound": {
+      "title": "Article Not Found",
+      "description": "The article you're looking for doesn't exist or has been removed.",
+      "browseButton": "Browse All Articles"
+    },
+    "meta": {
+      "published": "Published on",
+      "author": "Author",
+      "category": "Category",
+      "tags": "Tags"
+    },
+    "content": {
+      "analysis": "In-Depth Analysis",
+      "share": "Found this article helpful? Share it with others!",
+      "browseMore": "Browse More Articles",
+      "shareWith": "Share with"
+    },
+    "loading": "Loading article details...",
+    "error": "Failed to load article. Please try again."
+  },
+  "common": {
+    "dateFormats": {
+      "full": "{{month}} {{day}}, {{year}}",
+      "short": "{{month}} {{day}}"
+    },
+    "months": {
+      "january": "January",
+      "february": "February",
+      "march": "March",
+      "april": "April",
+      "may": "May",
+      "june": "June",
+      "july": "July",
+      "august": "August",
+      "september": "September",
+      "october": "October",
+      "november": "November",
+      "december": "December"
+    },
+    "buttons": {
+      "read": "Read",
+      "share": "Share",
+      "save": "Save",
+      "like": "Like",
+      "comment": "Comment",
+      "subscribe": "Subscribe",
+      "follow": "Follow"
+    },
+    "placeholders": {
+      "imageAlt": "Article image",
+      "noContent": "No content available.",
+      "noImage": "Image not available"
+    }
+  }
 }

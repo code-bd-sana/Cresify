@@ -2,45 +2,58 @@
 
 import { useGetBlogsQuery } from "@/feature/admin/AdminBlogApi";
 import Image from "next/image";
-import { FaArrowRight } from "react-icons/fa";
 import Link from "next/link";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
+import { FaArrowRight } from "react-icons/fa";
 
 const categoryColors = {
-  "Planning": "#7C3AED",
-  "Community": "#EC4899",
+  Planning: "#7C3AED",
+  Community: "#EC4899",
   "AI & ML": "#3B82F6",
-  "DevOps": "#F97316",
+  DevOps: "#F97316",
   "UI/UX": "#22C55E",
-  "Database": "#6366F1",
-  "Testing": "#0EA5E9",
-  "Security": "#3B82F6",
+  Database: "#6366F1",
+  Testing: "#0EA5E9",
+  Security: "#3B82F6",
   "Tips & Guides": "#7C3AED",
-  "Shopping": "#3B82F6",
+  Shopping: "#3B82F6",
   "Home & Living": "#F97316",
-  "Sustainability": "#22C55E",
-  "Technology": "#6366F1",
-  "Safety & Security": "#0EA5E9"
+  Sustainability: "#22C55E",
+  Technology: "#6366F1",
+  "Safety & Security": "#0EA5E9",
 };
 
 export default function LatestArticles() {
+  const { t, i18n } = useTranslation();
   const { data: blogData, isLoading, isError } = useGetBlogsQuery();
   const blogs = blogData?.data || [];
-  
+
   // Track failed images
   const [failedImages, setFailedImages] = useState({});
 
-  // Format date function
+  // Fixed format date function
   const formatDate = (dateString) => {
     try {
       const date = new Date(dateString);
-      return date.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
+
+      // Always get month in English for consistent translation keys
+      const englishMonth = date.toLocaleDateString("en-US", { month: "long" });
+      const monthKey = englishMonth.toLowerCase();
+
+      const day = date.getDate();
+      const year = date.getFullYear();
+
+      return t("blog:common.dateFormats.full", {
+        month: t(`blog:common.months.${monthKey}`, {
+          defaultValue: englishMonth, // Fallback to English if translation not found
+        }),
+        day,
+        year,
       });
     } catch (error) {
-      return "Recent";
+      console.error("Error formatting date:", error);
+      return t("blog:latestArticles.categoryAll");
     }
   };
 
@@ -51,9 +64,9 @@ export default function LatestArticles() {
 
   // Handle image error
   const handleImageError = (blogId) => {
-    setFailedImages(prev => ({
+    setFailedImages((prev) => ({
       ...prev,
-      [blogId]: true
+      [blogId]: true,
     }));
   };
 
@@ -62,40 +75,56 @@ export default function LatestArticles() {
     if (failedImages[blog._id]) {
       return "/blog/blog1.jpg"; // Fallback image
     }
-    
-    if (!blog.img || blog.img.includes('cdn.example.com') || blog.img.includes('placehold.co')) {
+
+    if (
+      !blog.img ||
+      blog.img.includes("cdn.example.com") ||
+      blog.img.includes("placehold.co")
+    ) {
       return "/blog/blog1.jpg";
     }
-    
+
     // Check if image URL is valid
-    if (blog.img && (blog.img.startsWith('http') || blog.img.startsWith('https'))) {
+    if (
+      blog.img &&
+      (blog.img.startsWith("http") || blog.img.startsWith("https"))
+    ) {
       return blog.img;
     }
-    
+
     return "/blog/blog1.jpg";
+  };
+
+  // Get category name with translation
+  const getCategoryName = (category) => {
+    const translatedCategory = t(`blog:latestArticles.categories.${category}`, {
+      defaultValue: category,
+    });
+    return (
+      translatedCategory || category || t("blog:latestArticles.categoryAll")
+    );
   };
 
   if (isLoading) {
     return (
-      <div className="bg-[#F5F5F7] pt-1 pb-10">
-        <div className="max-w-7xl mx-auto mt-16">
-          <h2 className="text-center text-3xl font-bold mb-8 text-gray-800">
-            Latest Articles
+      <div className='bg-[#F5F5F7] pt-1 pb-10'>
+        <div className='max-w-7xl mx-auto mt-16'>
+          <h2 className='text-center text-3xl font-bold mb-8 text-gray-800'>
+            {t("blog:latestArticles.title")}
           </h2>
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div className='grid gap-6 sm:grid-cols-2 lg:grid-cols-3'>
             {[1, 2, 3, 4, 5, 6].map((i) => (
               <div
                 key={i}
-                className="bg-white rounded-[20px] overflow-hidden p-4 border border-[#EAEAEA] animate-pulse"
-              >
-                <div className="w-full h-60 bg-gray-200 rounded-xl mb-4"></div>
-                <div className="py-4 space-y-3">
-                  <div className="h-4 w-24 bg-gray-200 rounded"></div>
-                  <div className="h-6 bg-gray-200 rounded"></div>
-                  <div className="h-12 bg-gray-200 rounded"></div>
-                  <div className="flex justify-between">
-                    <div className="h-4 w-32 bg-gray-200 rounded"></div>
-                    <div className="h-4 w-20 bg-gray-200 rounded"></div>
+                className='bg-white rounded-[20px] overflow-hidden p-4 border border-[#EAEAEA] animate-pulse'>
+                <div className='w-full h-60 bg-gray-200 rounded-xl mb-4'></div>
+                <div className='py-4 space-y-3'>
+                  <div className='h-4 w-24 bg-gray-200 rounded'></div>
+                  <div className='h-6 bg-gray-200 rounded'></div>
+                  <div className='h-12 bg-gray-200 rounded'></div>
+                  <div className='flex justify-between'>
+                    <div className='h-4 w-32 bg-gray-200 rounded'></div>
+                    <div className='h-4 w-20 bg-gray-200 rounded'></div>
                   </div>
                 </div>
               </div>
@@ -108,13 +137,13 @@ export default function LatestArticles() {
 
   if (isError) {
     return (
-      <div className="bg-[#F5F5F7] pt-1 pb-10">
-        <div className="max-w-7xl mx-auto mt-16">
-          <h2 className="text-center text-3xl font-bold mb-8 text-gray-800">
-            Latest Articles
+      <div className='bg-[#F5F5F7] pt-1 pb-10'>
+        <div className='max-w-7xl mx-auto mt-16'>
+          <h2 className='text-center text-3xl font-bold mb-8 text-gray-800'>
+            {t("blog:latestArticles.title")}
           </h2>
-          <div className="text-center py-12">
-            <p className="text-red-500">Failed to load articles. Please try again later.</p>
+          <div className='text-center py-12'>
+            <p className='text-red-500'>{t("blog:latestArticles.error")}</p>
           </div>
         </div>
       </div>
@@ -123,13 +152,15 @@ export default function LatestArticles() {
 
   if (!blogs || blogs.length === 0) {
     return (
-      <div className="bg-[#F5F5F7] pt-1 pb-10">
-        <div className="max-w-7xl mx-auto mt-16">
-          <h2 className="text-center text-3xl font-bold mb-8 text-gray-800">
-            Latest Articles
+      <div className='bg-[#F5F5F7] pt-1 pb-10'>
+        <div className='max-w-7xl mx-auto mt-16'>
+          <h2 className='text-center text-3xl font-bold mb-8 text-gray-800'>
+            {t("blog:latestArticles.title")}
           </h2>
-          <div className="text-center py-12">
-            <p className="text-gray-500">No articles found.</p>
+          <div className='text-center py-12'>
+            <p className='text-gray-500'>
+              {t("blog:latestArticles.noArticles")}
+            </p>
           </div>
         </div>
       </div>
@@ -137,77 +168,79 @@ export default function LatestArticles() {
   }
 
   // Sort by latest date (createdAt)
-  const sortedBlogs = [...blogs].sort((a, b) => 
-    new Date(b.createdAt) - new Date(a.createdAt)
+  const sortedBlogs = [...blogs].sort(
+    (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
   );
 
   // Take only first 9 blogs
   const displayBlogs = sortedBlogs.slice(0, 9);
 
   return (
-    <div className="bg-[#F5F5F7] pt-1 pb-10">
-      <div className="max-w-7xl mx-auto mt-16">
-        <h2 className="text-center text-3xl font-bold mb-8 text-gray-800">
-          Latest Articles
+    <div className='bg-[#F5F5F7] pt-1 pb-10'>
+      <div className='max-w-7xl mx-auto mt-16'>
+        <h2 className='text-center text-3xl font-bold mb-8 text-gray-800'>
+          {t("blog:latestArticles.title")}
         </h2>
 
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div className='grid gap-6 sm:grid-cols-2 lg:grid-cols-3'>
           {displayBlogs.map((blog) => {
             const imageSrc = getImageSrc(blog);
-            
+
             return (
               <div
                 key={blog._id}
-                className="bg-white rounded-[20px] overflow-hidden p-4 border border-[#EAEAEA] "
-              >
+                className='bg-white rounded-[20px] overflow-hidden p-4 border border-[#EAEAEA] '>
                 {/* Image */}
-                <div className="relative w-full h-60">
+                <div className='relative w-full h-60'>
                   {!failedImages[blog._id] ? (
                     <Image
                       src={imageSrc}
-                      alt={blog.title}
+                      alt={blog.title || t("blog:common.placeholders.imageAlt")}
                       fill
-                      className="object-cover rounded-xl"
-                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                      className='object-cover rounded-xl'
+                      sizes='(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw'
                       onError={() => handleImageError(blog._id)}
-                      unoptimized={imageSrc.includes('cdn.example.com') || imageSrc.includes('placehold.co')}
+                      unoptimized={
+                        imageSrc.includes("cdn.example.com") ||
+                        imageSrc.includes("placehold.co")
+                      }
                     />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-100 to-orange-50 rounded-xl">
-                      <div className="text-center">
-                        <span className="text-3xl">📝</span>
-                        <p className="text-sm text-gray-600 mt-2">{blog.category}</p>
+                    <div className='w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-100 to-orange-50 rounded-xl'>
+                      <div className='text-center'>
+                        <span className='text-3xl'>📝</span>
+                        <p className='text-sm text-gray-600 mt-2'>
+                          {getCategoryName(blog.category)}
+                        </p>
                       </div>
                     </div>
                   )}
                 </div>
 
                 {/* Content */}
-                <div className="py-4">
+                <div className='py-4'>
                   <p
-                    className="text-[14px] font-medium mb-1"
-                    style={{ color: getCategoryColor(blog.category) }}
-                  >
-                    {blog.category}
+                    className='text-[14px] font-medium mb-1'
+                    style={{ color: getCategoryColor(blog.category) }}>
+                    {getCategoryName(blog.category)}
                   </p>
 
-                  <h3 className="text-base font-bold text-gray-900 leading-snug line-clamp-2">
+                  <h3 className='text-base font-bold text-gray-900 leading-snug line-clamp-2'>
                     {blog.title}
                   </h3>
 
-                  <p className="mt-2 text-[14px] leading-relaxed line-clamp-3 text-gray-600">
+                  <p className='mt-2 text-[14px] leading-relaxed line-clamp-3 text-gray-600'>
                     {blog.description}
                   </p>
 
-                  <div className="mt-3 flex items-center justify-between text-[14px]">
-                    <p className="text-gray-500">
+                  <div className='mt-3 flex items-center justify-between text-[14px]'>
+                    <p className='text-gray-500'>
                       {formatDate(blog.createdAt)}
                     </p>
-                    <Link 
+                    <Link
                       href={`/blog/${blog._id}`}
-                      className="font-medium text-[#F88D25] hover:underline flex items-center gap-1"
-                    >
-                      Read More <FaArrowRight />
+                      className='font-medium text-[#F88D25] hover:underline flex items-center gap-1'>
+                      {t("blog:latestArticles.readMore")} <FaArrowRight />
                     </Link>
                   </div>
                 </div>
@@ -218,12 +251,11 @@ export default function LatestArticles() {
 
         {/* View All Button */}
         {blogs.length > 9 && (
-          <div className="text-center mt-10">
-            <Link 
-              href="/blog"
-              className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-[#9838E1] to-[#F68E44] text-white font-semibold rounded-lg hover:opacity-90 transition-opacity"
-            >
-              View All Articles
+          <div className='text-center mt-10'>
+            <Link
+              href='/blog'
+              className='inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-[#9838E1] to-[#F68E44] text-white font-semibold rounded-lg hover:opacity-90 transition-opacity'>
+              {t("blog:latestArticles.viewAll")}
               <FaArrowRight />
             </Link>
           </div>

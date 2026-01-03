@@ -1,0 +1,325 @@
+{
+  "dashboard": {
+    "title": "Resumen del Tablero",
+    "subtitle": "¡Bienvenido de nuevo! Esto es lo que está sucediendo con tus servicios hoy",
+    "service": "Servicio",
+    "general": "General",
+    "noServiceName": "Sin nombre de servicio",
+    "customer": "Cliente",
+    "noBookingsFound": "No se encontraron reservas",
+    "bookingsWillAppear": "Las reservas aparecerán aquí",
+    "months": [
+      "ENE",
+      "FEB",
+      "MAR",
+      "ABR",
+      "MAY",
+      "JUN",
+      "JUL",
+      "AGO",
+      "SEP",
+      "OCT",
+      "NOV",
+      "DIC"
+    ],
+    "stats": {
+      "totalEarnings": "Ganancias Totales",
+      "bookings": "{{count}} reservas",
+      "totalBookings": "Reservas Totales",
+      "avgBooking": "Prom: ${{amount}}",
+      "completeServices": "Servicios Completados",
+      "totalCustomers": "Clientes Totales",
+      "repeatCustomers": "{{count}} repetidos",
+      "pendingPayout": "Pago Pendiente",
+      "processing": "{{count}} procesando",
+      "avgBookingValue": "Valor Promedio de Reserva",
+      "perService": "Por servicio completado",
+      "monthlyGrowth": "Crecimiento Mensual",
+      "comparedToLastMonth": "Comparado con el mes pasado",
+      "services": "Servicios",
+      "averageRating": "Calificación Promedio",
+      "basedOnReviews": "Basado en reseñas de clientes"
+    },
+    "charts": {
+      "earningsOverview": "Resumen de Ganancias Mensuales",
+      "earnings": "Ganancias",
+      "month": "Mes",
+      "total": "Total",
+      "bookingDistribution": "Distribución de Reservas",
+      "cancelBooking": "Reserva Cancelada",
+      "completeServices": "Servicios Completados"
+    },
+    "filters": {
+      "allTime": "Todo el Tiempo",
+      "thisYear": "Este Año",
+      "thisMonth": "Este Mes",
+      "all": "Todos",
+      "today": "Hoy",
+      "thisWeek": "Esta Semana"
+    },
+    "bookings": {
+      "todaysBookings": "Reservas de Hoy ({{count}})",
+      "recentBookings": "Reservas Recientes"
+    },
+    "servicePerformance": {
+      "title": "Rendimiento del Servicio",
+      "categories": "{{count}} categorías",
+      "bookings": "reservas",
+      "totalEarnings": "Ganancias totales"
+    },
+    "paymentSummary": {
+      "title": "Resumen de Estado de Pagos",
+      "completed": "Completado",
+      "paidSuccessfully": "Pagado exitosamente",
+      "processing": "Procesando",
+      "inProcess": "Pagos en proceso",
+      "pending": "Pendiente",
+      "awaitingConfirmation": "Esperando confirmación",
+      "totalExpected": "Pago total esperado",
+      "viewDetails": "Ver Detalles de Pago"
+    }
+  },
+  "booking": {
+    "title": "Reservas",
+    "subtitle": "Administra y rastrea todas tus reservas",
+    "searchPlaceholder": "Buscar reservas...",
+    "noBookings": {
+      "title": "No se encontraron reservas",
+      "empty": "Aún no tienes reservas",
+      "filter": "Intenta ajustar tus filtros o búsqueda"
+    },
+    "stats": {
+      "totalBookings": "Reservas Totales",
+      "pending": "Pendientes",
+      "accepted": "Aceptadas",
+      "revenue": "Ingresos"
+    },
+    "filters": {
+      "allStatus": "Todos los Estados",
+      "pending": "Pendiente",
+      "accept": "Aceptado",
+      "reject": "Rechazado",
+      "completed": "Completado",
+      "cancelled": "Cancelado",
+      "show": "Mostrar"
+    },
+    "table": {
+      "bookingId": "ID de Reserva",
+      "provider": "Proveedor",
+      "customer": "Cliente",
+      "dateTime": "Fecha y Hora",
+      "payment": "Pago",
+      "status": "Estado",
+      "actions": "Acciones"
+    },
+    "status": {
+      "pending": "Pendiente",
+      "accept": "Aceptado",
+      "reject": "Rechazado",
+      "completed": "Completado",
+      "cancelled": "Cancelado",
+      "unknown": "Desconocido"
+    },
+    "paymentStatus": {
+      "processing": "Procesando",
+      "completed": "Completado",
+      "unknown": "Desconocido"
+    },
+    "actions": {
+      "viewDetails": "Ver Detalles",
+      "updateStatus": "Actualizar Estado",
+      "setToPending": "Establecer como Pendiente",
+      "setToAccepted": "Establecer como Aceptado",
+      "setToRejected": "Establecer como Rechazado",
+      "setToCompleted": "Establecer como Completado",
+      "setToCancelled": "Establecer como Cancelado"
+    },
+    "pagination": {
+      "showing": "Mostrando {{start}} a {{end}} de {{total}} reservas"
+    },
+    "summary": {
+      "statusDistribution": "Distribución de Estado de Reservas",
+      "paymentStatus": "Estado de Pago",
+      "recentActivity": "Actividad Reciente"
+    },
+    "alerts": {
+      "statusUpdated": "Estado actualizado para la reserva {{id}} a {{status}}"
+    },
+    "errors": {
+      "loadingError": "Error al cargar reservas. Por favor, inténtalo de nuevo."
+    }
+  },
+  "common": {
+    "loading": "Cargando...",
+    "notAvailable": "N/D",
+    "refresh": "Actualizar",
+    "retry": "Reintentar"
+  },
+  "availability": {
+    "title": "Gestión de Disponibilidad",
+    "subtitle": "Administra tus fechas y horarios disponibles",
+    "calendar": {
+      "title": "Seleccionar Fecha"
+    },
+    "timeSlots": {
+      "title": "Horarios para {{date}}",
+      "noDateSelected": "No hay fecha seleccionada",
+      "noDateSelectedHint": "Primero marca una fecha como disponible para agregar horarios",
+      "addNewSlot": "Agregar Nuevo Horario",
+      "startTime": "Hora de Inicio",
+      "endTime": "Hora de Fin",
+      "noSlots": "Aún no hay horarios",
+      "noSlotsHint": "Agrega horarios usando el formulario anterior",
+      "count": "{{count}} horario(s) para esta fecha"
+    },
+    "allDates": {
+      "title": "Todas las Fechas Disponibles",
+      "noDates": "Aún no hay fechas disponibles",
+      "noDatesHint": "Selecciona fechas del calendario y márcalas como disponibles"
+    },
+    "status": {
+      "available": "Disponible",
+      "booked": "Reservado"
+    },
+    "duration": "Duración",
+    "to": "a",
+    "more": "más",
+    "created": "Creado",
+    "loading": {
+      "dates": "Cargando fechas disponibles...",
+      "timeSlots": "Cargando horarios..."
+    },
+    "buttons": {
+      "markAsAvailable": "Marcar como Disponible",
+      "alreadyAvailable": "Ya Disponible",
+      "adding": "Agregando...",
+      "addSlot": "Agregar Horario",
+      "deleteSlot": "Eliminar horario",
+      "deleteDate": "Eliminar fecha y todos los horarios",
+      "select": "Seleccionar",
+      "startAdding": "Comenzar a Agregar Fechas"
+    },
+    "confirm": {
+      "deleteDate": "¿Estás seguro de que quieres eliminar esta fecha y todos sus horarios?",
+      "deleteTimeSlot": "¿Estás seguro de que quieres eliminar este horario?"
+    },
+    "success": {
+      "dateAdded": "Fecha marcada como disponible exitosamente",
+      "timeSlotAdded": "Horario creado exitosamente",
+      "dateDeleted": "Fecha eliminada exitosamente",
+      "timeSlotDeleted": "Horario eliminado exitosamente"
+    },
+    "errors": {
+      "loginRequired": "Por favor inicia sesión primero",
+      "dateAlreadyExists": "Esta fecha ya está marcada como disponible",
+      "cannotMarkPast": "No se pueden marcar fechas pasadas como disponibles",
+      "dateAddFailed": "Error al marcar la fecha como disponible",
+      "selectDateFirst": "Por favor selecciona una fecha disponible primero",
+      "enterStartEndTime": "Por favor ingresa la hora de inicio y fin",
+      "timeSlotAddFailed": "Error al crear el horario",
+      "dateDeleteFailed": "Error al eliminar la fecha",
+      "timeSlotDeleteFailed": "Error al eliminar el horario"
+    }
+  },
+  "paymentHistory": {
+    "title": "Historial de Pagos",
+    "subtitle": "Rastrea tus ganancias, comisiones y desglose de impuestos",
+    "loading": "Cargando historial de pagos...",
+    "refreshData": "Actualizar Datos",
+    "errorLoading": "Error al Cargar Datos",
+    "retry": "Reintentar Carga",
+    "stats": {
+      "totalEarnings": "Ganancias Totales",
+      "platformCommission": "Comisión de Plataforma",
+      "taxOnCommission": "Impuesto sobre Comisión",
+      "netPayout": "Pago Neto",
+      "bookings": "reservas",
+      "commissionRate": "10% de las ganancias totales",
+      "taxRate": "19% de la comisión",
+      "averagePerBooking": "promedio/reserva"
+    },
+    "calculation": {
+      "title": "Cómo se Calculan tus Ganancias",
+      "hourlyRate": "Tarifa por Hora × Duración",
+      "hourlyRateDesc": "Tu tarifa multiplicada por las horas de servicio",
+      "platformFee": "-10% Tarifa de Plataforma",
+      "platformFeeDesc": "Comisión de la plataforma de servicios",
+      "taxOnFee": "-19% Impuesto sobre Tarifa",
+      "taxOnFeeDesc": "Impuesto aplicado a la comisión de la plataforma",
+      "netEarnings": "= Tus Ganancias Netas",
+      "netEarningsDesc": "Monto depositado en tu cuenta",
+      "example": "Ejemplo de Cálculo:",
+      "exampleDesc": "$50/hora × 2 horas = $100 → -$10 tarifa plataforma → -$1.90 impuesto → $88.10 pago neto"
+    },
+    "controls": {
+      "searchPlaceholder": "Buscar por ID de reserva, nombre del cliente...",
+      "filterAll": "Todo el Tiempo",
+      "filterToday": "Hoy",
+      "filterWeek": "Esta Semana",
+      "filterMonth": "Este Mes",
+      "filterYear": "Este Año",
+      "show": "Mostrar:",
+      "exportCSV": "Exportar CSV"
+    },
+    "table": {
+      "bookingDetails": "Detalles de la Reserva",
+      "serviceDuration": "Servicio y Duración",
+      "earningsBreakdown": "Desglose de Ganancias",
+      "paymentStatus": "Estado del Pago",
+      "id": "ID",
+      "customer": "Cliente",
+      "service": "Servicio",
+      "category": "Categoría:",
+      "hourlyRate": "Tarifa por Hora:",
+      "duration": "Duración:",
+      "totalEarned": "Total Ganado:",
+      "commission": "Comisión (10%):",
+      "tax": "Impuesto sobre Comisión (19%):",
+      "netPayout": "Pago Neto:",
+      "paid": "Pagado",
+      "processing": "Procesando",
+      "method": "Método:"
+    },
+    "noRecords": {
+      "title": "Aún No Hay Registros de Pago",
+      "description": "Aún no tienes reservas completadas con pagos. Una vez que completes servicios, tu historial de pagos aparecerá aquí.",
+      "checkBookings": "Verificar Nuevas Reservas",
+      "goToDashboard": "Ir al Tablero",
+      "noResults": "Sin Resultados Coincidentes",
+      "noResultsDesc": "No hay registros de pago que coincidan con tus criterios de búsqueda. Intenta ajustar tus filtros."
+    },
+    "summary": {
+      "title": "Resumen de Pagos",
+      "totalCompleted": "Reservas Completadas Totales",
+      "averagePerBooking": "Promedio por Reserva",
+      "totalFees": "Tarifas Totales",
+      "nextPayout": "Próximo Pago",
+      "commissionTax": "Comisión + Impuesto",
+      "estimatedFrom": "Estimado de {{count}} pendientes",
+      "earningsDistribution": "Distribución de Ganancias",
+      "yourNetEarnings": "Tus Ganancias Netas",
+      "platformCommission": "Comisión de Plataforma"
+    },
+    "export": {
+      "headers": [
+        "ID de Reserva",
+        "Cliente",
+        "Servicio",
+        "Fecha",
+        "Hora",
+        "Tarifa por Hora",
+        "Duración",
+        "Total Ganado",
+        "Comisión (10%)",
+        "Impuesto sobre Comisión (19%)",
+        "Pago Neto",
+        "Estado del Pago"
+      ],
+      "total": "Total",
+      "completedPending": "{{completed}} completados, {{pending}} pendientes"
+    },
+    "pagination": {
+      "showing": "Mostrando {{start}} a {{end}} de {{total}} registros"
+    }
+  }
+}

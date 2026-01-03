@@ -185,7 +185,8 @@ export default function Sidebar({ open, onClose }) {
     {
       label: t("refund"),
       icon: TbReceiptRefund,
-      path: "/dashboard/providerRefund",
+      // path: "/dashboard/providerRefund",
+      path: "/dashboard/refund",
     },
   ];
 

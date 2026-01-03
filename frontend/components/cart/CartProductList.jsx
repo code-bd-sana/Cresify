@@ -85,7 +85,7 @@ export default function CombinedCartCheckoutPage() {
   const id = data?.user?.id;
   const [createOrder, { isLoading: orderLoading, isError, error }] =
     useCreateOrderMutation();
-  const { t } = useTranslation('cart');
+  const { t } = useTranslation("cart");
 
   const { data: cartData, isLoading } = useMyCartQuery(id);
   const [increaseCart] = useIncreaseCartMutation();
@@ -162,7 +162,7 @@ export default function CombinedCartCheckoutPage() {
   const handleDecrease = async (cartItem) => {
     try {
       if (cartItem.quantity === 1) {
-        toast.error(t('decreaseBelowOne'));
+        toast.error(t("decreaseBelowOne"));
       } else {
         await decreaseCart(cartItem.cartId);
       }
@@ -198,7 +198,7 @@ export default function CombinedCartCheckoutPage() {
 
   const handleProceedToCheckout = () => {
     if (selectedProducts.length === 0) {
-      toast.error(t('selectAtLeastOne'));
+      toast.error(t("selectAtLeastOne"));
       return;
     }
     setShowCheckout(true);
@@ -219,7 +219,7 @@ export default function CombinedCartCheckoutPage() {
       !checkoutData.city ||
       !checkoutData.country
     ) {
-      toast.error(t('fillRequiredFields'));
+      toast.error(t("fillRequiredFields"));
       return;
     }
 
@@ -230,7 +230,7 @@ export default function CombinedCartCheckoutPage() {
       !checkoutData.cvv ||
       !checkoutData.cardHolderName
     ) {
-      toast.error(t('fillCardDetails'));
+      toast.error(t("fillCardDetails"));
       return;
     }
 
@@ -249,7 +249,7 @@ export default function CombinedCartCheckoutPage() {
       });
 
       if (selectedCartItems.length === 0) {
-        toast.error(t('noItemsSelected'));
+        toast.error(t("noItemsSelected"));
         return;
       }
 
@@ -323,7 +323,7 @@ export default function CombinedCartCheckoutPage() {
       }
     } catch (error) {
       console.log("Order creation error:", error);
-      toast.error(error?.data?.message || t('somethingWentWrong'));
+      toast.error(error?.data?.message || t("somethingWentWrong"));
     }
   };
 
@@ -361,21 +361,21 @@ export default function CombinedCartCheckoutPage() {
   const steps = [
     {
       id: 1,
-      name: t('cart'),
+      name: t("cart"),
       icon: ShoppingCart,
       active: !showCheckout && !orderSuccess,
       completed: showCheckout || orderSuccess,
     },
     {
       id: 2,
-      name: t('checkout'),
+      name: t("checkout"),
       icon: CreditCard,
       active: showCheckout && !orderSuccess,
       completed: orderSuccess,
     },
     {
       id: 3,
-      name: t('confirmation'),
+      name: t("confirmation"),
       icon: CheckCircle,
       active: orderSuccess,
       completed: false,
@@ -404,15 +404,13 @@ export default function CombinedCartCheckoutPage() {
           <ShoppingCart className='w-12 h-12 text-gray-400' />
         </div>
         <h3 className='text-2xl font-semibold text-gray-800 mb-3'>
-          {t('cartEmpty')}
+          {t("cartEmpty")}
         </h3>
-        <p className='text-gray-600 mb-8 max-w-md'>
-          {t('cartEmptyMessage')}
-        </p>
+        <p className='text-gray-600 mb-8 max-w-md'>{t("cartEmptyMessage")}</p>
         <button
           onClick={() => router.push("/marketplace")}
           className='px-8 py-3 rounded-lg bg-gradient-to-r from-[#9838E1] to-[#F68E44] text-white font-medium hover:opacity-90 transition-all'>
-          {t('browseProducts')}
+          {t("browseProducts")}
         </button>
       </section>
     );
@@ -497,13 +495,13 @@ export default function CombinedCartCheckoutPage() {
           <div className='max-w-[1300px] mx-auto'>
             <div className='flex items-center justify-between mb-6'>
               <h1 className='text-2xl font-bold text-gray-800'>
-                {t('yourCart')}
+                {t("yourCart")}
               </h1>
               <button
                 onClick={handleProceedToCheckout}
                 disabled={selectedProducts.length === 0}
                 className='px-6 py-2 rounded-lg bg-gradient-to-r from-[#9838E1] to-[#F68E44] text-white font-medium disabled:opacity-40 hover:opacity-90 transition-all cursor-pointer'>
-                {t('proceedToCheckout')} ({selectedProducts.length})
+                {t("proceedToCheckout")} ({selectedProducts.length})
               </button>
             </div>
 
@@ -521,7 +519,9 @@ export default function CombinedCartCheckoutPage() {
                       }
                       className='w-4 h-4 accent-[#9838E1] cursor-pointer'
                     />
-                    <span>{t('selectAll')} ({totalItemsCount} {t('items')})</span>
+                    <span>
+                      {t("selectAll")} ({totalItemsCount} {t("items")})
+                    </span>
                   </div>
                 </div>
 
@@ -549,7 +549,7 @@ export default function CombinedCartCheckoutPage() {
                               </span>
                             </div>
                             <p className='text-xs text-gray-500 mt-1'>
-                              {t('soldBy')}: {sellerGroup.seller.name}
+                              {t("soldBy")}: {sellerGroup.seller.name}
                             </p>
                           </div>
                         </div>
@@ -585,7 +585,9 @@ export default function CombinedCartCheckoutPage() {
                               </h3>
 
                               <p className='text-sm text-gray-600 mt-1'>
-                                <span className='font-medium'>{t('category')}:</span>{" "}
+                                <span className='font-medium'>
+                                  {t("category")}:
+                                </span>{" "}
                                 {item.product.category}
                               </p>
 
@@ -601,7 +603,8 @@ export default function CombinedCartCheckoutPage() {
                                   stroke='#FFC107'
                                 />
                                 <span className='text-gray-700 text-sm'>
-                                  {item?.product?.rating?.toFixed(1)} (0 {t('reviews')})
+                                  {item?.product?.rating?.toFixed(1)} (0{" "}
+                                  {t("reviews")})
                                 </span>
                               </div>
 
@@ -628,7 +631,7 @@ export default function CombinedCartCheckoutPage() {
                                 </div>
 
                                 <span className='text-sm text-gray-700'>
-                                  {t('subtotal')}:{" "}
+                                  {t("subtotal")}:{" "}
                                   <b className='text-[#F78D25]'>
                                     $
                                     {(
@@ -660,7 +663,9 @@ export default function CombinedCartCheckoutPage() {
 
               {/* RIGHT SIDE - SUMMARY */}
               <div className='bg-white rounded-xl shadow p-6 h-max sticky top-20'>
-                <h3 className='text-lg font-semibold mb-6'>{t('orderSummary')}</h3>
+                <h3 className='text-lg font-semibold mb-6'>
+                  {t("orderSummary")}
+                </h3>
 
                 {/* Selected Products Preview */}
                 <div className='space-y-5 mb-6 max-h-60 overflow-y-auto'>
@@ -683,11 +688,12 @@ export default function CombinedCartCheckoutPage() {
                           </p>
                           <p className='text-gray-500 text-xs'>
                             <span className='font-medium'>
-                              {item.product.seller?.shopName || t('unknownShop')}
+                              {item.product.seller?.shopName ||
+                                t("unknownShop")}
                             </span>
                           </p>
                           <p className='text-gray-500 text-xs'>
-                            {t('quantity')}:{" "}
+                            {t("quantity")}:{" "}
                             <span className='font-medium'>
                               x{item.quantity}
                             </span>
@@ -712,18 +718,18 @@ export default function CombinedCartCheckoutPage() {
 
                 <div className='space-y-3 text-sm text-gray-700'>
                   <div className='flex justify-between'>
-                    <span>{t('subtotal')}</span>
+                    <span>{t("subtotal")}</span>
                     <span>${subtotal.toFixed(2)}</span>
                   </div>
                   <div className='flex justify-between'>
-                    <span>{t('shipping')}</span>
+                    <span>{t("shipping")}</span>
                     <span>
-                      {shipping === 0 ? t('free') : `$${shipping.toFixed(2)}`}
+                      {shipping === 0 ? t("free") : `$${shipping.toFixed(2)}`}
                     </span>
                   </div>
                   <hr className='my-2 border-gray-300' />
                   <div className='flex justify-between text-lg font-semibold text-[#F78D25]'>
-                    <span>{t('total')}</span>
+                    <span>{t("total")}</span>
                     <span>${finalTotal.toFixed(2)}</span>
                   </div>
                 </div>
@@ -732,7 +738,7 @@ export default function CombinedCartCheckoutPage() {
                   onClick={handleProceedToCheckout}
                   disabled={selectedProducts.length === 0}
                   className='w-full mt-6 py-3 rounded-lg bg-gradient-to-r from-[#9838E1] to-[#F68E44] text-white font-medium disabled:opacity-40 hover:opacity-90 transition-all cursor-pointer'>
-                  {t('proceedToCheckout')} ({selectedProducts.length})
+                  {t("proceedToCheckout")} ({selectedProducts.length})
                 </button>
               </div>
             </div>
@@ -743,11 +749,13 @@ export default function CombinedCartCheckoutPage() {
         {showCheckout && !orderSuccess && (
           <div className='max-w-[1200px] mx-auto'>
             <div className='flex items-center justify-between mb-6'>
-              <h1 className='text-2xl font-bold text-gray-800'>{t('checkout')}</h1>
+              <h1 className='text-2xl font-bold text-gray-800'>
+                {t("checkout")}
+              </h1>
               <button
                 onClick={() => setShowCheckout(false)}
                 className='px-4 py-2 rounded-lg border border-gray-300 text-gray-700 font-medium hover:bg-gray-50 transition-colors cursor-pointer'>
-                {t('backToCart')}
+                {t("backToCart")}
               </button>
             </div>
 
@@ -761,7 +769,7 @@ export default function CombinedCartCheckoutPage() {
                       <MapPin className='h-4 w-4 text-[#9B51E0]' />
                     </span>
                     <h3 className='text-[14px] font-semibold text-[#222]'>
-                      {t('shippingDetails')}
+                      {t("shippingDetails")}
                     </h3>
                   </div>
 
@@ -769,7 +777,7 @@ export default function CombinedCartCheckoutPage() {
                     {/* Full name */}
                     <div>
                       <label className='block text-[#666] mb-[4px]'>
-                        {t('fullName')}*
+                        {t("fullName")}*
                       </label>
                       <div className='flex items-center gap-2 rounded-[8px] border border-[#E3E1ED] px-3 py-[9px] bg-white'>
                         <User className='h-4 w-4 text-[#C2B7EB]' />
@@ -778,7 +786,7 @@ export default function CombinedCartCheckoutPage() {
                           value={checkoutData.fullName}
                           onChange={handleCheckoutInputChange}
                           className='w-full text-[12px] outline-none placeholder:text-[#B4B4C0]'
-                          placeholder={t('fullName')}
+                          placeholder={t("fullName")}
                         />
                       </div>
                     </div>
@@ -787,7 +795,7 @@ export default function CombinedCartCheckoutPage() {
                     <div className='grid gap-4 md:grid-cols-2'>
                       <div>
                         <label className='block text-[#666] mb-[4px]'>
-                          {t('email')}*
+                          {t("email")}*
                         </label>
                         <div className='flex items-center gap-2 rounded-[8px] border border-[#E3E1ED] px-3 py-[9px] bg-white'>
                           <Mail className='h-4 w-4 text-[#C2B7EB]' />
@@ -803,7 +811,7 @@ export default function CombinedCartCheckoutPage() {
                       </div>
                       <div>
                         <label className='block text-[#666] mb-[4px]'>
-                          {t('telephone')}*
+                          {t("telephone")}*
                         </label>
                         <div className='flex items-center gap-2 rounded-[8px] border border-[#E3E1ED] px-3 py-[9px] bg-white'>
                           <Phone className='h-4 w-4 text-[#C2B7EB]' />
@@ -821,7 +829,7 @@ export default function CombinedCartCheckoutPage() {
                     {/* Address */}
                     <div>
                       <label className='block text-[#666] mb-[4px]'>
-                        {t('address')}*
+                        {t("address")}*
                       </label>
                       <div className='flex items-center gap-2 rounded-[8px] border border-[#E3E1ED] px-3 py-[9px] bg-white'>
                         <MapPin className='h-4 w-4 text-[#C2B7EB]' />
@@ -830,7 +838,7 @@ export default function CombinedCartCheckoutPage() {
                           value={checkoutData.address}
                           onChange={handleCheckoutInputChange}
                           className='w-full text-[12px] outline-none placeholder:text-[#B4B4C0]'
-                          placeholder={t('streetCityRegion')}
+                          placeholder={t("streetCityRegion")}
                         />
                       </div>
                     </div>
@@ -839,7 +847,7 @@ export default function CombinedCartCheckoutPage() {
                     <div className='grid gap-4 md:grid-cols-2'>
                       <div>
                         <label className='block text-[#666] mb-[4px]'>
-                          {t('country')}*
+                          {t("country")}*
                         </label>
                         <div className='flex items-center gap-2 rounded-[8px] border border-[#E3E1ED] px-3 py-[9px] bg-white'>
                           <MapPin className='h-4 w-4 text-[#C2B7EB]' />
@@ -848,13 +856,13 @@ export default function CombinedCartCheckoutPage() {
                             value={checkoutData.country}
                             onChange={handleCheckoutInputChange}
                             className='w-full text-[12px] outline-none placeholder:text-[#B4B4C0]'
-                            placeholder={t('enterCountry')}
+                            placeholder={t("enterCountry")}
                           />
                         </div>
                       </div>
                       <div>
                         <label className='block text-[#666] mb-[4px]'>
-                          {t('city')}*
+                          {t("city")}*
                         </label>
                         <div className='flex items-center gap-2 rounded-[8px] border border-[#E3E1ED] px-3 py-[9px] bg-white'>
                           <MapPin className='h-4 w-4 text-[#C2B7EB]' />
@@ -863,7 +871,7 @@ export default function CombinedCartCheckoutPage() {
                             value={checkoutData.city}
                             onChange={handleCheckoutInputChange}
                             className='w-full text-[12px] outline-none placeholder:text-[#B4B4C0]'
-                            placeholder={t('enterCity')}
+                            placeholder={t("enterCity")}
                           />
                         </div>
                       </div>
@@ -873,26 +881,26 @@ export default function CombinedCartCheckoutPage() {
                     <div className='grid gap-4 md:grid-cols-2'>
                       <div>
                         <label className='block text-[#666] mb-[4px]'>
-                          {t('stateProvince')}
+                          {t("stateProvince")}
                         </label>
                         <input
                           name='state'
                           value={checkoutData.state}
                           onChange={handleCheckoutInputChange}
                           className='w-full rounded-[8px] border border-[#E3E1ED] px-3 py-[9px] text-[12px] outline-none placeholder:text-[#B4B4C0]'
-                          placeholder={t('stateOrProvince')}
+                          placeholder={t("stateOrProvince")}
                         />
                       </div>
                       <div>
                         <label className='block text-[#666] mb-[4px]'>
-                          {t('postalCode')}
+                          {t("postalCode")}
                         </label>
                         <input
                           name='postalCode'
                           value={checkoutData.postalCode}
                           onChange={handleCheckoutInputChange}
                           className='w-full rounded-[8px] border border-[#E3E1ED] px-3 py-[9px] text-[12px] outline-none placeholder:text-[#B4B4C0]'
-                          placeholder={t('postalCode')}
+                          placeholder={t("postalCode")}
                         />
                       </div>
                     </div>
@@ -906,7 +914,7 @@ export default function CombinedCartCheckoutPage() {
                       <CreditCard className='h-4 w-4 text-[#9B51E0]' />
                     </span>
                     <h3 className='text-[14px] font-semibold text-[#222]'>
-                      {t('paymentMethod')}
+                      {t("paymentMethod")}
                     </h3>
                   </div>
 
@@ -920,10 +928,10 @@ export default function CombinedCartCheckoutPage() {
                           </span>
                           <div>
                             <p className='text-[12px] font-semibold text-[#4A4A4A]'>
-                              {t('creditDebitCard')}
+                              {t("creditDebitCard")}
                             </p>
                             <p className='text-[11px] text-[#9B51E0]'>
-                              {t('visaMastercardAmex')}
+                              {t("visaMastercardAmex")}
                             </p>
                           </div>
                         </div>
@@ -934,103 +942,7 @@ export default function CombinedCartCheckoutPage() {
 
                   {/* Card fields - Always shown since only card payment */}
                   <div className='space-y-3 text-[12px]'>
-                    {/* Card number */}
-                    <div>
-                      <label className='block text-[#666] mb-[4px]'>
-                        {t('cardNumber')}*
-                      </label>
-                      <div className='flex items-center gap-2 rounded-[8px] border border-[#E3E1ED] px-3 py-[9px] bg-white'>
-                        <CreditCard className='h-4 w-4 text-[#C2B7EB]' />
-                        <input
-                          name='cardNumber'
-                          value={checkoutData.cardNumber}
-                          onChange={handleCheckoutInputChange}
-                          className='w-full text-[12px] outline-none placeholder:text-[#B4B4C0]'
-                          placeholder='2950 1533 8297 8890'
-                        />
-                      </div>
-                    </div>
-
-                    {/* Expiration + CVV */}
-                    <div className='grid gap-4 md:grid-cols-2'>
-                      <div>
-                        <label className='block text-[#666] mb-[4px]'>
-                          {t('expirationDate')}*
-                        </label>
-                        <input
-                          name='expiryDate'
-                          value={checkoutData.expiryDate}
-                          onChange={handleCheckoutInputChange}
-                          className='w-full rounded-[8px] border border-[#E3E1ED] px-3 py-[9px] text-[12px] outline-none placeholder:text-[#B4B4C0]'
-                          placeholder={t('mmYy')}
-                        />
-                      </div>
-                      <div>
-                        <label className='block text-[#666] mb-[4px]'>
-                          {t('cvv')}*
-                        </label>
-                        <input
-                          name='cvv'
-                          value={checkoutData.cvv}
-                          onChange={handleCheckoutInputChange}
-                          className='w-full rounded-[8px] border border-[#E3E1ED] px-3 py-[9px] text-[12px] outline-none placeholder:text-[#B4B4C0]'
-                          placeholder='•••'
-                        />
-                      </div>
-                    </div>
-
-                    {/* Name + City select */}
-                    <div className='grid gap-4 md:grid-cols-2'>
-                      <div>
-                        <label className='block text-[#666] mb-[4px]'>
-                          {t('nameOfHolder')}*
-                        </label>
-                        <input
-                          name='cardHolderName'
-                          value={checkoutData.cardHolderName}
-                          onChange={handleCheckoutInputChange}
-                          className='w-full rounded-[8px] border border-[#E3E1ED] px-3 py-[9px] text-[12px] outline-none placeholder:text-[#B4B4C0]'
-                          placeholder={t('nameOnCard')}
-                        />
-                      </div>
-                      <div>
-                        <label className='block text-[#666] mb-[4px]'>
-                          {t('billingCity')}*
-                        </label>
-                        <input
-                          name='billingCity'
-                          value={checkoutData.billingCity}
-                          onChange={handleCheckoutInputChange}
-                          className='w-full rounded-[8px] border border-[#E3E1ED] px-3 py-[9px] text-[12px] outline-none placeholder:text-[#B4B4C0]'
-                          placeholder={t('enterCity')}
-                        />
-                      </div>
-                    </div>
-
                     {/* Stripe note + checkbox */}
-                    <div className='mt-3 space-y-2'>
-                      <div className='flex items-start gap-2 text-[11px] text-[#7F7F90]'>
-                        <ShieldCheck className='mt-[1px] h-4 w-4 text-[#52B788]' />
-                        <p>
-                          {t('paymentProtected')}, <br />
-                          <span className='text-[#9B51E0]'>
-                            {t('encryption')}
-                          </span>
-                          .
-                        </p>
-                      </div>
-
-                      <label className='flex items-center gap-2 text-[11px] text-[#7F7F90]'>
-                        <input
-                          type='checkbox'
-                          name='sameAsShipping'
-                          checked={checkoutData.sameAsShipping}
-                          onChange={handleCheckoutInputChange}
-                          className='h-[12px] w-[12px]'
-                        />
-                        {t('sameBillingAddress')}
-                      </label>
-                    </div>
                   </div>
                 </div>
               </div>
@@ -1038,7 +950,7 @@ export default function CombinedCartCheckoutPage() {
               {/* RIGHT SIDE – ORDER SUMMARY */}
               <aside className='bg-white rounded-[16px] border border-[#ECE6F7] shadow-[0_4px_20px_rgba(0,0,0,0.06)] px-6 py-5 h-fit sticky top-20'>
                 <h3 className='text-[14px] font-semibold text-[#222] mb-4'>
-                  {t('orderSummary')}
+                  {t("orderSummary")}
                 </h3>
 
                 {/* Items */}
@@ -1060,10 +972,10 @@ export default function CombinedCartCheckoutPage() {
                             {item.product.name}
                           </p>
                           <p className='text-[11px] text-[#9B9B9B]'>
-                            {item.product.seller?.shopName || t('unknownShop')}
+                            {item.product.seller?.shopName || t("unknownShop")}
                           </p>
                           <p className='text-[11px] text-[#9B9B9B]'>
-                            {t('quantity')}: {item.quantity}
+                            {t("quantity")}: {item.quantity}
                           </p>
                         </div>
                       </div>
@@ -1083,20 +995,20 @@ export default function CombinedCartCheckoutPage() {
                 {/* Totals */}
                 <div className='space-y-1 text-[11px] text-[#777] mb-4'>
                   <div className='flex justify-between'>
-                    <span>{t('subtotal')}</span>
+                    <span>{t("subtotal")}</span>
                     <span className='text-[#333]'>${subtotal.toFixed(2)}</span>
                   </div>
                   <div className='flex justify-between'>
-                    <span>{t('shipment')}</span>
+                    <span>{t("shipment")}</span>
                     <span className='text-[#333]'>
                       {" "}
-                      {shipping === 0 ? t('free') : `$${shipping.toFixed(2)}`}
+                      {shipping === 0 ? t("free") : `$${shipping.toFixed(2)}`}
                     </span>
                   </div>
                 </div>
 
                 <div className='flex justify-between items-center text-[12px] font-semibold text-[#333] mb-4'>
-                  <span>{t('total')}</span>
+                  <span>{t("total")}</span>
                   <span className='text-[#F78D25]'>
                     ${finalTotal.toFixed(2)}
                   </span>
@@ -1108,14 +1020,14 @@ export default function CombinedCartCheckoutPage() {
                   disabled={orderLoading || selectedItems.length === 0}
                   className='flex w-full items-center justify-center gap-2 rounded-[10px] bg-gradient-to-r from-[#9838E1] to-[#F68E44] py-[10px] text-[13px] font-medium text-white shadow-[0_4px_16px_rgba(0,0,0,0.20)] mb-3 disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 transition-all'>
                   <Lock className='h-4 w-4' />
-                  {orderLoading ? t('processing') : t('confirmAndPay')}
+                  {orderLoading ? t("processing") : t("confirmAndPay")}
                 </button>
 
                 {/* Security line */}
                 <div className='flex items-center justify-center gap-2 mb-3'>
                   <CheckCircle2 className='h-4 w-4 text-[#52B788]' />
                   <p className='text-[11px] text-[#777]'>
-                    {t('securePayment')}
+                    {t("securePayment")}
                   </p>
                 </div>
 
@@ -1123,17 +1035,17 @@ export default function CombinedCartCheckoutPage() {
                 <div className='flex border-t border-[#F1ECF8] justify-center w-full'>
                   <div className='pt-3'>
                     <p className='text-[11px] text-[#999] mb-2'>
-                      {t('acceptedPaymentMethods')}
+                      {t("acceptedPaymentMethods")}
                     </p>
                     <div className='flex gap-2'>
                       <span className='inline-flex items-center justify-center rounded-[4px] bg-[#1A1F71] px-2 py-[2px] text-[10px] font-semibold text-white'>
-                        {t('visa')}
+                        {t("visa")}
                       </span>
                       <span className='inline-flex items-center justify-center rounded-[4px] bg-[#EB001B] px-2 py-[2px] text-[10px] font-semibold text-white'>
-                        {t('mc')}
+                        {t("mc")}
                       </span>
                       <span className='inline-flex items-center justify-center rounded-[4px] bg-[#F79E1B] px-2 py-[2px] text-[10px] font-semibold text-white'>
-                        {t('amex')}
+                        {t("amex")}
                       </span>
                     </div>
                   </div>
@@ -1154,38 +1066,38 @@ export default function CombinedCartCheckoutPage() {
 
               {/* Success Message */}
               <h1 className='text-3xl font-bold text-[#1B1B1B] mb-4'>
-                {t('orderConfirmed')}
+                {t("orderConfirmed")}
               </h1>
               <p className='text-gray-600 text-lg mb-2'>
-                {t('thankYouPurchase')}
+                {t("thankYouPurchase")}
               </p>
-              <p className='text-gray-500 mb-8'>
-                {t('orderSuccessMessage')}
-              </p>
+              <p className='text-gray-500 mb-8'>{t("orderSuccessMessage")}</p>
 
               {/* Order Summary */}
               <div className='bg-[#F9F7FF] rounded-[14px] p-6 mb-8 max-w-[500px] mx-auto'>
                 <h3 className='text-lg font-semibold text-[#1B1B1B] mb-4'>
-                  {t('orderSummary')}
+                  {t("orderSummary")}
                 </h3>
                 <div className='space-y-3 text-left'>
                   <div className='flex justify-between'>
-                    <span className='text-gray-600'>{t('itemsCount')}:</span>
+                    <span className='text-gray-600'>{t("itemsCount")}:</span>
                     <span className='font-medium'>{selectedItems.length}</span>
                   </div>
                   <div className='flex justify-between'>
-                    <span className='text-gray-600'>{t('subtotal')}:</span>
+                    <span className='text-gray-600'>{t("subtotal")}:</span>
                     <span className='font-medium'>${subtotal.toFixed(2)}</span>
                   </div>
                   <div className='flex justify-between'>
-                    <span className='text-gray-600'>{t('shipping')}:</span>
+                    <span className='text-gray-600'>{t("shipping")}:</span>
                     <span className='font-medium'>
-                      {shipping === 0 ? t('free') : `$${shipping.toFixed(2)}`}
+                      {shipping === 0 ? t("free") : `$${shipping.toFixed(2)}`}
                     </span>
                   </div>
                   <div className='border-t border-gray-300 pt-3 mt-2'>
                     <div className='flex justify-between'>
-                      <span className='text-lg font-semibold'>{t('total')}:</span>
+                      <span className='text-lg font-semibold'>
+                        {t("total")}:
+                      </span>
                       <span className='text-lg font-bold text-[#F78D25]'>
                         ${finalTotal.toFixed(2)}
                       </span>
@@ -1197,14 +1109,12 @@ export default function CombinedCartCheckoutPage() {
               {/* Payment Method */}
               <div className='mb-8'>
                 <p className='text-gray-600 mb-2'>
-                  {t('paymentMethod')}:{" "}
+                  {t("paymentMethod")}:{" "}
                   <span className='font-semibold capitalize'>
-                    {t('creditDebitCard')}
+                    {t("creditDebitCard")}
                   </span>
                 </p>
-                <p className='text-gray-500 text-sm'>
-                  {t('paymentProcessed')}
-                </p>
+                <p className='text-gray-500 text-sm'>{t("paymentProcessed")}</p>
               </div>
 
               {/* Action Buttons */}
@@ -1212,23 +1122,23 @@ export default function CombinedCartCheckoutPage() {
                 <button
                   onClick={handleContinueShopping}
                   className='px-8 py-3 rounded-lg border-2 border-[#9838E1] text-[#9838E1] font-medium hover:bg-[#9838E1] hover:text-white transition-colors cursor-pointer'>
-                  {t('continueShopping')}
+                  {t("continueShopping")}
                 </button>
                 <button
                   onClick={handleViewOrders}
                   className='px-8 py-3 rounded-lg bg-gradient-to-r from-[#9838E1] to-[#F68E44] text-white font-medium hover:opacity-90 transition cursor-pointer'>
-                  {t('viewMyOrders')}
+                  {t("viewMyOrders")}
                 </button>
               </div>
 
               {/* Additional Info */}
               <div className='mt-10 pt-6 border-t border-gray-200'>
                 <p className='text-gray-500 text-sm'>
-                  {t('confirmationEmail')}{" "}
+                  {t("confirmationEmail")}{" "}
                   <span className='font-medium'>{checkoutData.email}</span>
                 </p>
                 <p className='text-gray-400 text-xs mt-2'>
-                  {t('orderId')}: #ORD-{Date.now().toString().slice(-8)}
+                  {t("orderId")}: #ORD-{Date.now().toString().slice(-8)}
                 </p>
               </div>
             </div>

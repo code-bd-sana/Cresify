@@ -1,0 +1,496 @@
+{
+  "totalSales": "Ventas Totales",
+  "totalOrders": "Pedidos Totales",
+  "products": "Productos",
+  "avgRating": "Calificación Promedio",
+  "salesAnalytics": "Análisis de Ventas",
+  "months": {
+    "jan": "ENE",
+    "feb": "FEB",
+    "mar": "MAR",
+    "apr": "ABR",
+    "may": "MAY",
+    "jun": "JUN",
+    "jul": "JUL",
+    "aug": "AGO",
+    "sep": "SEP",
+    "oct": "OCT",
+    "nov": "NOV",
+    "dec": "DIC"
+  },
+  "recentOrderss": "Pedidos Recientes",
+  "recentTransactions": "Transacciones Recientes",
+  "viewAll": "Ver Todo",
+  "table": {
+    "orderId": "ID de Pedido",
+    "amount": "Monto",
+    "sellerPayout": "Pago al Vendedor",
+    "status": "Estado",
+    "date": "Fecha"
+  },
+  "productsPage": {
+    "title": "Productos",
+    "subtitle": "Administra tu inventario de productos de manera eficiente",
+    "addNewProduct": "Agregar Nuevo Producto",
+    "searchPlaceholder": "Buscar por nombre del producto, categoría o ID...",
+    "searchButton": "Buscar",
+    "table": {
+      "product": "Producto",
+      "category": "Categoría",
+      "price": "Precio",
+      "stock": "Stock",
+      "status": "Estado",
+      "actions": "Acciones"
+    },
+    "status": {
+      "active": "Activo",
+      "rejected": "Rechazado"
+    },
+    "pagination": {
+      "showing": "Mostrando",
+      "to": "a",
+      "of": "de",
+      "results": "resultados",
+      "items": "elementos",
+      "products": "productos",
+      "previous": "Anterior",
+      "next": "Siguiente",
+      "first": "Primero",
+      "last": "Último",
+      "page": "Página",
+      "goToPage": "Ir a página",
+      "rowsPerPage": "Filas por página",
+      "ofTotal": "de",
+      "totalItems": "elementos totales",
+      "noResults": "No se encontraron resultados"
+    }
+  },
+  "orderManagement": {
+    "title": "Gestión de Pedidos",
+    "subtitle": "Realiza el seguimiento y administra todos los pedidos de tus clientes",
+    "stats": {
+      "totalOrders": "Pedidos Totales",
+      "totalSales": "Ventas Totales",
+      "pendingOrders": "Pedidos Pendientes",
+      "paidOrders": "Pedidos Pagados"
+    },
+    "tabs": {
+      "all": "Todos",
+      "pending": "Pendiente",
+      "processing": "Procesando",
+      "shipping": "Envío",
+      "delivered": "Entregado",
+      "canceled": "Cancelado"
+    },
+    "searchPlaceholder": "Buscar por ID del pedido o nombre del cliente",
+    "summary": {
+      "showing": "Mostrando",
+      "of": "de",
+      "orders": "pedidos"
+    },
+    "table": {
+      "orderId": "ID DEL PEDIDO",
+      "customer": "CLIENTE",
+      "items": "ARTÍCULOS",
+      "amount": "MONTO",
+      "payment": "PAGO",
+      "status": "ESTADO",
+      "date": "FECHA",
+      "action": "ACCIÓN"
+    },
+    "paymentStatus": {
+      "pending": "Pendiente",
+      "paid": "Pagado"
+    },
+    "orderStatus": {
+      "pending": "Pendiente",
+      "shipping": "Envío",
+      "processing": "Procesando",
+      "delivered": "Entregado",
+      "canceled": "Cancelado"
+    },
+    "actions": {
+      "view": "Ver"
+    },
+    "pagination": {
+      "showing": "Mostrando",
+      "to": "a",
+      "of": "de",
+      "products": "productos",
+      "previous": "Anterior",
+      "next": "Siguiente"
+    }
+  },
+  "storeProfile": {
+    "title": "Perfil de la Tienda",
+    "subtitle": "Administra la información y configuración de tu tienda",
+    "logoSection": {
+      "title": "Logo de la Tienda",
+      "currentLogo": "Logo Actual de la Tienda",
+      "placeholder": "Logo actual",
+      "fileHint": "PNG, JPG hasta 5MB",
+      "replaceHint": "El logo actual será reemplazado si subes uno nuevo"
+    },
+    "shopInfo": {
+      "title": "Información de la Tienda",
+      "shopName": "Nombre de la Tienda",
+      "storeDescription": "Descripción de la Tienda",
+      "email": "Correo Electrónico",
+      "phone": "Número de Teléfono",
+      "address": "Dirección de la Tienda",
+      "category": "Categoría",
+      "website": "Sitio Web"
+    },
+    "actions": {
+      "saveChanges": "Guardar Cambios"
+    }
+  },
+  "payments": {
+    "title": "Pagos",
+    "subtitle": "Realiza el seguimiento de tus ganancias y el historial de transacciones",
+    "summary": {
+      "totalEarning": "Ganancias Totales",
+      "availableBalance": "Balance Disponible",
+      "paid": "Pagado",
+      "pending": "Pendiente",
+      "canceled": "Cancelado",
+      "total": "Total",
+      "commission": "Comisión"
+    },
+    "stats": {
+      "thisMonth": "Este Mes",
+      "lastMonth": "Mes Anterior",
+      "avgMonthly": "Promedio Mensual"
+    },
+    "commission": {
+      "platformFee": "Tarifa de plataforma",
+      "tax": "Impuesto"
+    },
+    "searchPlaceholder": "Buscar por ID del pedido o ID de la transacción...",
+    "searchButton": "Buscar",
+    "tableControls": {
+      "show": "Mostrar",
+      "perPage": "por página"
+    },
+    "pagination": {
+      "totalTransactions": "Total de Transacciones",
+      "showing": "Mostrando",
+      "totalPages": "Total de Páginas"
+    }
+  },
+  "recentOrders": {
+    "title": "Transacciones Recientes",
+    "viewAll": "Ver Todo",
+    "table": {
+      "orderId": "ID del Pedido",
+      "amount": "Monto",
+      "sellerPayout": "Pago del Vendedor",
+      "status": "Estado",
+      "date": "Fecha"
+    },
+    "status": {
+      "paid": "Pagado",
+      "pending": "Pendiente",
+      "canceled": "Cancelado"
+    },
+    "loading": "Cargando transacciones...",
+    "empty": "No se encontraron transacciones"
+  },
+  "wallet": {
+    "title": "Detalles de la Billetera",
+    "subtitle": "Administra tus ganancias y tu cuenta Stripe Express",
+    "actions": {
+      "requestPayout": "Solicitar Pago de Stripe",
+      "editDetails": "Editar Detalles",
+      "unlinkAccount": "Desvincular Cuenta"
+    },
+    "balance": {
+      "available": "Balance Disponible",
+      "readyForWithdrawal": "Listo para retirar",
+      "totalEarned": "Total Ganado",
+      "allTime": "Ganancias históricas",
+      "pendingPayouts": "Pagos Pendientes",
+      "clearingTime": "Se libera en 2-3 días",
+      "nextPayout": "Próximo Pago",
+      "monthlySchedule": "programación mensual"
+    },
+    "stripeAccount": {
+      "title": "Cuenta Stripe Express",
+      "verified": "Verificada",
+      "unverified": "No verificada",
+      "expressType": "Tipo Express",
+      "accountId": "ID",
+      "accountType": "Tipo de Cuenta",
+      "currency": "Moneda",
+      "payoutsEnabled": "Pagos Habilitados",
+      "requirements": "Requisitos",
+      "pending": "pendientes"
+    },
+    "expressDetails": {
+      "title": "Detalles de la Cuenta Express",
+      "email": "Correo Electrónico",
+      "country": "País",
+      "defaultCurrency": "Moneda Predeterminada",
+      "chargesEnabled": "Cargos Habilitados",
+      "actionRequired": "Acción Requerida"
+    },
+    "expressInfo": {
+      "title": "Información de Stripe Express",
+      "payoutsEnabled": "Pagos Habilitados",
+      "accountType": "Tipo de Cuenta",
+      "withdrawalFee": "Tarifa de Retiro",
+      "processingTime": "Tiempo de Procesamiento"
+    },
+    "benefits": {
+      "title": "Beneficios de Stripe Express",
+      "bankTransfers": "Transferencias bancarias directas",
+      "lowFee": "Baja comisión del 1.5%",
+      "secure": "Seguro y compatible con PCI",
+      "support": "Soporte 24/7"
+    },
+    "transactions": {
+      "title": "Transacciones de la Billetera",
+      "subtitle": "Todas tus ganancias y retiros de Stripe",
+      "searchPlaceholder": "Buscar transacciones...",
+      "table": {
+        "transaction": "Transacción",
+        "type": "Tipo",
+        "amount": "Monto",
+        "method": "Método",
+        "status": "Estado",
+        "date": "Fecha"
+      }
+    }
+  },
+  "refunds": {
+    "title": "Solicitudes de Reembolso",
+    "filters": {
+      "itemsPerPage": "Elementos por página"
+    },
+    "summary": {
+      "pending": "Pendiente",
+      "approved": "Aprobado",
+      "rejected": "Rechazado"
+    }
+  },
+  "reviews": {
+    "title": "Reseñas y Calificaciones",
+    "subtitle": "Administra los comentarios y reseñas de los clientes",
+    "noReviews": "No se encontraron reseñas",
+    "anonymousUser": "Usuario Anónimo",
+    "unknownProduct": "Producto Desconocido",
+    "yourReply": "Tu Respuesta",
+    "sampleReply": "¡Gracias por tus comentarios! Nos alegra que estés disfrutando del producto.",
+    "replyButton": "Responder",
+    "replyPlaceholder": "Escribe tu respuesta...",
+    "sendReply": "Enviar Respuesta"
+  },
+  "common": {
+    "loading": "Cargando...",
+    "cancel": "Cancelar"
+  },
+  "messages": {
+    "title": "Mensajes",
+    "emptyState": {
+      "title": "Selecciona una conversación",
+      "subtitle": "Elige un chat del panel izquierdo para comenzar a enviar mensajes"
+    }
+  },
+  "chat": {
+    "socketStatus": "Socket",
+    "error": "Error",
+    "searchPlaceholder": "Buscar cliente ...",
+    "loadingChats": "Cargando chats...",
+    "startConversation": "Iniciar conversación",
+    "noChats": "No hay chats disponibles",
+    "online": "🟢 En línea",
+    "offline": "⚫ Desconectado",
+    "loadingMessages": "Cargando mensajes...",
+    "noMessages": "Aún no hay mensajes",
+    "startConversationMessage": "¡Comienza la conversación!",
+    "sending": "Enviando...",
+    "typeMessagePlaceholder": "Escribe tu mensaje",
+    "socketNotConnected": "Socket no conectado",
+    "sendMessage": "Enviar mensaje",
+    "loadingConversation": "Cargando conversación..."
+  },
+  "settings": {
+    "accountSettings": {
+      "title": "Configuración de la Cuenta",
+      "subtitle": "Administra las preferencias y seguridad de tu cuenta"
+    },
+    "profile": {
+      "title": "Información Personal",
+      "success": "Información de perfil guardada exitosamente",
+      "error": "Error al guardar la información del perfil",
+      "errors": {
+        "nameRequired": "Por favor ingresa tu nombre completo",
+        "phoneRequired": "Por favor ingresa tu número de teléfono"
+      },
+      "form": {
+        "fullName": "Nombre Completo*",
+        "fullNamePlaceholder": "Ingresa tu nombre completo",
+        "email": "Correo Electrónico*",
+        "emailHint": "El correo electrónico no se puede cambiar",
+        "phone": "Número de Teléfono*",
+        "phonePlaceholder": "Ingresa tu número de teléfono",
+        "save": "Guardar Información Personal"
+      }
+    },
+    "service": {
+      "title": "Información del Servicio",
+      "success": "Información del servicio actualizada exitosamente",
+      "error": "Error al actualizar la información del servicio",
+      "errors": {
+        "serviceNameRequired": "Por favor ingresa el nombre del servicio",
+        "categoryRequired": "Por favor selecciona la categoría del servicio",
+        "areaRequired": "Por favor selecciona el área de servicio",
+        "descriptionRequired": "Por favor ingresa la descripción del servicio",
+        "experienceRequired": "Por favor selecciona los años de experiencia",
+        "radiusRequired": "Por favor selecciona el radio de servicio"
+      },
+      "form": {
+        "serviceName": "Nombre del Servicio*",
+        "serviceNamePlaceholder": "ej., Limpieza del Hogar, Servicio de Fontanería",
+        "serviceNameHint": "Nombre de tu servicio",
+        "category": "Categoría del Servicio*",
+        "selectCategory": "Selecciona una categoría",
+        "categoryHint": "Tipo de servicio que brindas",
+        "area": "Área de Servicio*",
+        "selectArea": "Selecciona tu área de servicio",
+        "areaHint": "Ciudad donde brindas el servicio",
+        "radius": "Radio de Servicio*",
+        "selectRadius": "Selecciona radio de servicio",
+        "radiusHint": "Distancia máxima que puedes viajar",
+        "experience": "Años de Experiencia*",
+        "selectExperience": "Selecciona nivel de experiencia",
+        "experienceHint": "Tu experiencia profesional",
+        "description": "Descripción del Servicio*",
+        "descriptionPlaceholder": "Describe tu servicio en detalle...",
+        "descriptionHint": "Descripción detallada de tu servicio",
+        "update": "Actualizar Información del Servicio"
+      }
+    },
+    "pricing": {
+      "title": "Información de Precios",
+      "currentInfo": "Información Actual del Servicio",
+      "service": "Servicio",
+      "category": "Categoría",
+      "area": "Área",
+      "experience": "Experiencia",
+      "hourlyRate": "Tarifa por Hora",
+      "success": "Tarifa por hora actualizada a ${rate}",
+      "error": "Error al actualizar la tarifa por hora",
+      "errors": {
+        "hourlyRateRequired": "Por favor ingresa la tarifa por hora",
+        "validHourlyRate": "Por favor ingresa una tarifa por hora válida (mayor que 0)",
+        "maxHourlyRate": "La tarifa por hora no puede exceder $1000"
+      },
+      "form": {
+        "hourlyRate": "Tarifa por Hora ($)*",
+        "hourlyRatePlaceholder": "Ingresa tu tarifa por hora",
+        "hourlyRateHint": "Ingresa cantidad en USD (Mín: $5, Máx: $1000)",
+        "yourRate": "Tu tarifa: ${rate} por hora",
+        "update": "Actualizar Tarifa por Hora"
+      },
+      "tips": {
+        "title": "Consejos de Precios",
+        "marketResearch": "Investiga las tarifas del mercado para servicios similares en tu área",
+        "experience": "Considera tu nivel de experiencia y conocimientos",
+        "travelCosts": "Toma en cuenta los costos de viaje y el radio de servicio",
+        "competitivePricing": "Los precios competitivos atraen más clientes"
+      }
+    },
+    "password": {
+      "title": "Cambiar Contraseña",
+      "success": "Contraseña cambiada exitosamente",
+      "errors": {
+        "currentRequired": "Por favor ingresa la contraseña actual",
+        "newRequired": "Por favor ingresa la nueva contraseña",
+        "confirmRequired": "Por favor confirma la nueva contraseña",
+        "passwordMismatch": "Las nuevas contraseñas no coinciden",
+        "minLength": "La nueva contraseña debe tener al menos 6 caracteres"
+      },
+      "form": {
+        "current": "Contraseña Actual*",
+        "currentPlaceholder": "Ingresa la contraseña actual",
+        "new": "Nueva Contraseña*",
+        "newPlaceholder": "Ingresa la nueva contraseña",
+        "hint": "Mínimo 6 caracteres",
+        "confirm": "Confirmar Nueva Contraseña*",
+        "confirmPlaceholder": "Confirmar nueva contraseña",
+        "match": "✓ Las contraseñas coinciden",
+        "mismatch": "✗ Las contraseñas no coinciden",
+        "update": "Actualizar Contraseña"
+      },
+      "requirements": {
+        "title": "Requisitos de Contraseña",
+        "minLength": "Al menos 6 caracteres de longitud",
+        "letters": "Incluye letras mayúsculas y minúsculas",
+        "numbers": "Incluye números para mejor seguridad",
+        "personalInfo": "Evita usar información personal"
+      }
+    }
+  },
+  "common": {
+    "loading": "Cargando...",
+    "notSet": "No establecido"
+  },
+  "common": {
+    "loading": "Loading...",
+    "notSet": "Not set"
+  },
+  "dashboard": {
+    "title": "Resumen del Tablero",
+    "subtitle": "¡Bienvenido de nuevo! Esto es lo que está sucediendo en tu tienda hoy",
+    "totalSales": "Ventas Totales",
+    "totalOrders": "Pedidos Totales",
+    "products": "Productos",
+    "avgRating": "Calificación Promedio",
+    "salesAnalytics": "Análisis de Ventas",
+    "recentOrders": "Pedidos Recientes"
+  },
+  "recentOrders": {
+    "title": "Transacciones Recientes",
+    "viewAll": "Ver Todo",
+    "table": {
+      "orderId": "ID del Pedido",
+      "amount": "Monto",
+      "sellerPayout": "Pago del Vendedor",
+      "status": "Estado",
+      "date": "Fecha"
+    },
+    "status": {
+      "paid": "Pagado",
+      "pending": "Pendiente",
+      "canceled": "Cancelado"
+    },
+    "loading": "Cargando transacciones...",
+    "empty": "No se encontraron transacciones"
+  },
+  "salesAnalytics": {
+    "title": "Análisis de Ventas",
+    "months": {
+      "JAN": "ENE",
+      "FEB": "FEB",
+      "MAR": "MAR",
+      "APR": "ABR",
+      "MAY": "MAY",
+      "JUN": "JUN",
+      "JUL": "JUL",
+      "AUG": "AGO",
+      "SEP": "SEP",
+      "OCT": "OCT",
+      "NOV": "NOV",
+      "DEC": "DIC"
+    },
+    "tooltip": {
+      "sales": "Ventas",
+      "amount": "Monto"
+    },
+    "chart": {
+      "xAxisLabel": "Meses",
+      "yAxisLabel": "Ventas ($)"
+    }
+  }
+}

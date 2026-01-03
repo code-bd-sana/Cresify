@@ -1,13 +1,15 @@
 "use client";
-import Image from "next/image";
-import { HiOutlineHomeModern } from "react-icons/hi2";
-import { FiUploadCloud } from "react-icons/fi";
 import { useMyProfileQuery, useUpdateProfileMutation } from "@/feature/UserApi";
 import { useSession } from "next-auth/react";
-import { useState, useEffect } from "react";
+import Image from "next/image";
+import { useEffect, useState } from "react";
 import toast, { Toaster } from "react-hot-toast";
+import { useTranslation } from "react-i18next";
+import { FiUploadCloud } from "react-icons/fi";
+import { HiOutlineHomeModern } from "react-icons/hi2";
 
 export default function StoreProfile() {
+  const { t } = useTranslation();
   const { data: session } = useSession();
   const id = session?.user?.id;
 
@@ -66,13 +68,18 @@ export default function StoreProfile() {
     if (file) {
       // Validate file size (5MB max)
       if (file.size > 5 * 1024 * 1024) {
-        alert("File size should be less than 5MB");
+        alert(t("common:fileSizeError", "File size should be less than 5MB"));
         return;
       }
 
       // Validate file type
       if (!file.type.match(/image\/(png|jpg|jpeg)/)) {
-        alert("Please upload only PNG, JPG, or JPEG images");
+        alert(
+          t(
+            "common:fileTypeError",
+            "Please upload only PNG, JPG, or JPEG images"
+          )
+        );
         return;
       }
 
@@ -101,7 +108,10 @@ export default function StoreProfile() {
       if (data.success) {
         return data.data.url;
       } else {
-        throw new Error(data.error?.message || "Image upload failed");
+        throw new Error(
+          data.error?.message ||
+            t("common:imageUploadFailed", "Image upload failed")
+        );
       }
     } catch (error) {
       console.error("Image upload error:", error);
@@ -114,27 +124,29 @@ export default function StoreProfile() {
 
     // Validate required fields
     if (!formData.shopName.trim()) {
-      alert("Please enter shop name");
+      alert(t("common:shopNameRequired", "Please enter shop name"));
       return;
     }
 
     if (!formData.shopDescription.trim()) {
-      alert("Please enter store description");
+      alert(
+        t("common:storeDescriptionRequired", "Please enter store description")
+      );
       return;
     }
 
     if (!formData.phoneNumber.trim()) {
-      alert("Please enter phone number");
+      alert(t("common:phoneNumberRequired", "Please enter phone number"));
       return;
     }
 
     if (!formData.address.trim()) {
-      alert("Please enter store addresss");
+      alert(t("common:addressRequired", "Please enter store address"));
       return;
     }
 
     if (!formData.category.trim()) {
-      alert("Please enter category");
+      alert(t("common:categoryRequired", "Please enter category"));
       return;
     }
 
@@ -163,10 +175,11 @@ export default function StoreProfile() {
         timestamp: new Date().toISOString(),
       };
 
+      await updateProfile(finalData).unwrap();
 
-      await updateProfile(finalData);
-
-      toast.success("Store Update Successfully");
+      toast.success(
+        t("common:storeUpdateSuccess", "Store updated successfully")
+      );
 
       // Step 5: Update existing logo state if new logo was uploaded
       if (formData.storeLogo) {
@@ -181,7 +194,9 @@ export default function StoreProfile() {
       }));
     } catch (error) {
       console.error("❌ Error updating store profile:", error);
-      alert(`❌ Error: ${error.message}`);
+      toast.error(
+        t("common:storeUpdateFailed", "Failed to update store profile")
+      );
     } finally {
       setIsUploading(false);
     }
@@ -197,122 +212,135 @@ export default function StoreProfile() {
 
   if (isLoading) {
     return (
-      <div className="w-full min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
-          <p className="mt-4 text-gray-500">Loading store profile...</p>
+      <div className='w-full min-h-screen flex items-center justify-center'>
+        <div className='text-center'>
+          <div className='inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500'></div>
+          <p className='mt-4 text-gray-500'>
+            {t("common:loadingStoreProfile", "Loading store profile...")}
+          </p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="w-full min-h-screen px-2 pt-6">
-      <Toaster/>
+    <div className='w-full min-h-screen px-2 pt-6'>
+      <Toaster />
       {/* PAGE TITLE */}
       <div>
-        <h1 className="text-[28px] font-semibold text-[#1D1D1F]">
-          Store Profile
+        <h1 className='text-[28px] font-semibold text-[#1D1D1F]'>
+          {t("seller:storeProfile.title", "Store Profile")}
         </h1>
-        <p className="text-[#8A72BE] text-sm mt-1">
-          Manage your store information and settings
+        <p className='text-[#8A72BE] text-sm mt-1'>
+          {t(
+            "seller:storeProfile.subtitle",
+            "Manage your store information and settings"
+          )}
         </p>
       </div>
 
       <form onSubmit={handleSaveChanges}>
         {/* STORE LOGO CARD */}
-        <div className="bg-white rounded-[14px] border border-[#EEEAF5] shadow-[0_4px_22px_rgba(0,0,0,0.06)] p-6 mt-8">
-          <h2 className="text-[20px] font-semibold text-[#1D1D1F] mb-5">
-            Store Logo
+        <div className='bg-white rounded-[14px] border border-[#EEEAF5] shadow-[0_4px_22px_rgba(0,0,0,0.06)] p-6 mt-8'>
+          <h2 className='text-[20px] font-semibold text-[#1D1D1F] mb-5'>
+            {t("seller:storeProfile.logoSection.title", "Store Logo")}
           </h2>
 
-          <div className="flex flex-col md:flex-row items-center gap-6">
+          <div className='flex flex-col md:flex-row items-center gap-6'>
             {/* Current Logo / Preview */}
-            <div className="flex flex-col items-center gap-3">
-              <div className="w-[90px] h-[90px] rounded-xl bg-[#F4EBFF] flex items-center justify-center border border-[#E8D9FF] overflow-hidden relative">
+            <div className='flex flex-col items-center gap-3'>
+              <div className='w-[90px] h-[90px] rounded-xl bg-[#F4EBFF] flex items-center justify-center border border-[#E8D9FF] overflow-hidden relative'>
                 {formData.storeLogoPreview ? (
                   // New logo preview
-                  <div className="relative w-full h-full">
+                  <div className='relative w-full h-full'>
                     <Image
                       src={formData.storeLogoPreview}
-                      alt="New Logo Preview"
+                      alt={t("common:newLogoPreview", "New Logo Preview")}
                       fill
-                      className="object-cover"
+                      className='object-cover'
                     />
-                    <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-transparent"></div>
+                    <div className='absolute inset-0 bg-gradient-to-br from-purple-500/10 to-transparent'></div>
                   </div>
                 ) : existingLogo ? (
                   // Existing logo from database
-                  <div className="relative w-full h-full">
+                  <div className='relative w-full h-full'>
                     <Image
                       src={existingLogo}
-                      alt="Current Store Logo"
+                      alt={t("common:currentStoreLogo", "Current Store Logo")}
                       fill
-                      className="object-cover"
+                      className='object-cover'
                     />
                   </div>
                 ) : (
                   // Default icon
-                  <HiOutlineHomeModern className="text-[40px] text-[#C39BFF]" />
+                  <HiOutlineHomeModern className='text-[40px] text-[#C39BFF]' />
                 )}
 
                 {/* Preview badge */}
                 {formData.storeLogoPreview && (
-                  <div className="absolute -top-2 -right-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full">
-                    New
+                  <div className='absolute -top-2 -right-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full'>
+                    {t("common:new", "New")}
                   </div>
                 )}
               </div>
 
               {/* Logo info */}
-              <div className="text-center">
+              <div className='text-center'>
                 {formData.storeLogoPreview ? (
                   <>
-                    <p className="text-xs text-green-600 font-medium">
-                      New logo selected
+                    <p className='text-xs text-green-600 font-medium'>
+                      {t("common:newLogoSelected", "New logo selected")}
                     </p>
-                    <p className="text-xs text-gray-500">
+                    <p className='text-xs text-gray-500'>
                       {formData.storeLogo?.name}
                     </p>
                     <button
-                      type="button"
+                      type='button'
                       onClick={removeLogo}
-                      className="text-xs text-red-600 hover:text-red-700 mt-1"
-                    >
-                      Remove
+                      className='text-xs text-red-600 hover:text-red-700 mt-1'>
+                      {t("common:remove", "Remove")}
                     </button>
                   </>
                 ) : existingLogo ? (
-                  <p className="text-xs text-gray-500">Current logo</p>
+                  <p className='text-xs text-gray-500'>{t("")}</p>
                 ) : (
-                  <p className="text-xs text-gray-500">No logo set</p>
+                  <p className='text-xs text-gray-500'>{t("")}</p>
                 )}
               </div>
             </div>
 
             {/* Upload Button */}
-            <div className="flex-1">
+            <div className='flex-1'>
               <label
-                htmlFor="logo"
-                className="block w-full h-[90px] border-2 border-dashed border-[#E2D7F7] rounded-xl flex flex-col items-center justify-center cursor-pointer hover:bg-[#FBF9FF] transition"
-              >
-                <FiUploadCloud className="text-[32px] text-[#D29CF7]" />
-                <p className="text-sm text-[#A38CCB] mt-1">
-                  PNG, JPG up to 5MB
+                htmlFor='logo'
+                className='block w-full h-[90px] border-2 border-dashed border-[#E2D7F7] rounded-xl flex flex-col items-center justify-center cursor-pointer hover:bg-[#FBF9FF] transition'>
+                <FiUploadCloud className='text-[32px] text-[#D29CF7]' />
+                <p className='text-sm text-[#A38CCB] mt-1'>
+                  {t(
+                    "seller:storeProfile.logoSection.fileHint",
+                    "PNG, JPG up to 5MB"
+                  )}
                 </p>
                 <input
-                  id="logo"
-                  type="file"
-                  className="hidden"
-                  accept="image/png, image/jpg, image/jpeg"
+                  id='logo'
+                  type='file'
+                  className='hidden'
+                  accept='image/png, image/jpg, image/jpeg'
                   onChange={handleLogoChange}
                 />
               </label>
-              <div className="mt-2 text-xs text-gray-500 text-center">
+              <div className='mt-2 text-xs text-gray-500 text-center'>
                 {existingLogo ? (
-                  <p>Current logo will be replaced if you upload a new one</p>
+                  <p>
+                    {t(
+                      "seller:storeProfile.logoSection.replaceHint",
+                      "Current logo will be replaced if you upload a new one"
+                    )}
+                  </p>
                 ) : (
-                  <p>Upload a logo for your store</p>
+                  <p>
+                    {t("common:uploadLogoHint", "Upload a logo for your store")}
+                  </p>
                 )}
               </div>
             </div>
@@ -320,106 +348,121 @@ export default function StoreProfile() {
         </div>
 
         {/* STORE INFORMATION */}
-        <div className="bg-white rounded-[14px] border border-[#EEEAF5] shadow-[0_4px_22px_rgba(0,0,0,0.06)] p-6 mt-8">
-          <h2 className="text-[20px] font-semibold text-[#1D1D1F] mb-5">
-            Shop Information
+        <div className='bg-white rounded-[14px] border border-[#EEEAF5] shadow-[0_4px_22px_rgba(0,0,0,0.06)] p-6 mt-8'>
+          <h2 className='text-[20px] font-semibold text-[#1D1D1F] mb-5'>
+            {t("seller:storeProfile.shopInfo.title", "Shop Information")}
           </h2>
 
           {/* FORM GRID */}
-          <div className="flex flex-col gap-6">
+          <div className='flex flex-col gap-6'>
             {/* Store Name */}
             <div>
-              <label className="text-sm text-[#1D1D1F] font-medium">
-                Shop Name*
+              <label className='text-sm text-[#1D1D1F] font-medium'>
+                {t("seller:storeProfile.shopInfo.shopName", "Shop Name")}*
               </label>
               <input
-                type="text"
-                name="shopName"
+                type='text'
+                name='shopName'
                 value={formData.shopName}
                 onChange={handleInputChange}
-                placeholder="Tech Haven Store"
-                className="mt-2 w-full h-[48px] px-4 rounded-xl border border-[#E8E6F2] bg-white focus:ring-2 focus:ring-[#C39BFF] outline-none transition"
+                placeholder={t(
+                  "common:shopNamePlaceholder",
+                  "Tech Haven Store"
+                )}
+                className='mt-2 w-full h-[48px] px-4 rounded-xl border border-[#E8E6F2] bg-white focus:ring-2 focus:ring-[#C39BFF] outline-none transition'
                 required
               />
             </div>
 
             {/* Store Description */}
             <div>
-              <label className="text-sm text-[#1D1D1F] font-medium">
-                Store Description*
+              <label className='text-sm text-[#1D1D1F] font-medium'>
+                {t(
+                  "seller:storeProfile.shopInfo.storeDescription",
+                  "Store Description"
+                )}
+                *
               </label>
               <textarea
-                name="shopDescription"
+                name='shopDescription'
                 value={formData.shopDescription}
                 onChange={handleInputChange}
-                placeholder="Your one-stop shop for premium tech accessories and gadgets"
-                className="mt-2 w-full h-[90px] px-4 py-3 rounded-xl border border-[#E8E6F2] bg-white focus:ring-2 focus:ring-[#C39BFF] outline-none transition resize-none"
+                placeholder={t(
+                  "common:storeDescriptionPlaceholder",
+                  "Your one-stop shop for premium tech accessories and gadgets"
+                )}
+                className='mt-2 w-full h-[90px] px-4 py-3 rounded-xl border border-[#E8E6F2] bg-white focus:ring-2 focus:ring-[#C39BFF] outline-none transition resize-none'
                 required
               />
             </div>
 
             {/* EMAIL + PHONE */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
               <div>
-                <label className="text-sm text-[#1D1D1F] font-medium">
-                  Email addresss*
+                <label className='text-sm text-[#1D1D1F] font-medium'>
+                  {t("seller:storeProfile.shopInfo.email", "Email Address")}*
                 </label>
                 <input
-                  name="email"
+                  name='email'
                   value={formData.email}
                   onChange={handleInputChange}
-                  type="email"
-                  placeholder="contact@techhaven.com"
-                  className="mt-2 w-full h-[48px] px-4 rounded-xl border border-[#E8E6F2] bg-white focus:ring-2 focus:ring-[#C39BFF] outline-none transition"
+                  type='email'
+                  placeholder={t(
+                    "common:emailPlaceholder",
+                    "contact@techhaven.com"
+                  )}
+                  className='mt-2 w-full h-[48px] px-4 rounded-xl border border-[#E8E6F2] bg-white focus:ring-2 focus:ring-[#C39BFF] outline-none transition'
                   required
                 />
               </div>
 
               <div>
-                <label className="text-sm text-[#1D1D1F] font-medium">
-                  Phone Number*
+                <label className='text-sm text-[#1D1D1F] font-medium'>
+                  {t("seller:storeProfile.shopInfo.phone", "Phone Number")}*
                 </label>
                 <input
-                  type="text"
-                  name="phoneNumber"
+                  type='text'
+                  name='phoneNumber'
                   value={formData.phoneNumber}
                   onChange={handleInputChange}
-                  placeholder="(603) 555-0123"
-                  className="mt-2 w-full h-[48px] px-4 rounded-xl border border-[#E8E6F2] bg-white focus:ring-2 focus:ring-[#C39BFF] outline-none transition"
+                  placeholder={t("common:phonePlaceholder", "(603) 555-0123")}
+                  className='mt-2 w-full h-[48px] px-4 rounded-xl border border-[#E8E6F2] bg-white focus:ring-2 focus:ring-[#C39BFF] outline-none transition'
                   required
                 />
               </div>
             </div>
 
-            {/* addressS + CATEGORY */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* ADDRESS + CATEGORY */}
+            <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
               <div>
-                <label className="text-sm text-[#1D1D1F] font-medium">
-                  Store addresss*
+                <label className='text-sm text-[#1D1D1F] font-medium'>
+                  {t("seller:storeProfile.shopInfo.address", "Store Address")}*
                 </label>
                 <input
-                  type="text"
-                  name="address"
+                  type='text'
+                  name='address'
                   value={formData.address}
-                  defaultValue={profile}
                   onChange={handleInputChange}
-                  placeholder="1901 Thornridge Cir. Shiloh, Hawaii 81063"
-                  className="mt-2 w-full h-[48px] px-4 rounded-xl border border-[#E8E6F2] bg-white focus:ring-2 focus:ring-[#C39BFF] outline-none transition"
+                  placeholder={t(
+                    "common:addressPlaceholder",
+                    "1901 Thornridge Cir. Shiloh, Hawaii 81063"
+                  )}
+                  className='mt-2 w-full h-[48px] px-4 rounded-xl border border-[#E8E6F2] bg-white focus:ring-2 focus:ring-[#C39BFF] outline-none transition'
                   required
                 />
               </div>
 
               <div>
-                <label className="text-sm text-[#1D1D1F] font-medium">
-                  Category*
+                <label className='text-sm text-[#1D1D1F] font-medium'>
+                  {t("seller:storeProfile.shopInfo.category", "Category")}*
                 </label>
                 <input
-                  type="text"
-                  name="category"
+                  type='text'
+                  name='category'
                   value={formData.category}
                   onChange={handleInputChange}
-                  placeholder="Technology"
-                  className="mt-2 w-full h-[48px] px-4 rounded-xl border border-[#E8E6F2] bg-white focus:ring-2 focus:ring-[#C39BFF] outline-none transition"
+                  placeholder={t("common:categoryPlaceholder", "Technology")}
+                  className='mt-2 w-full h-[48px] px-4 rounded-xl border border-[#E8E6F2] bg-white focus:ring-2 focus:ring-[#C39BFF] outline-none transition'
                   required
                 />
               </div>
@@ -427,54 +470,55 @@ export default function StoreProfile() {
 
             {/* WEBSITE */}
             <div>
-              <label className="text-sm text-[#1D1D1F] font-medium">
-                Website
+              <label className='text-sm text-[#1D1D1F] font-medium'>
+                {t("seller:storeProfile.shopInfo.website", "Website")}
               </label>
               <input
-                type="text"
-                name="website"
+                type='text'
+                name='website'
                 value={formData.website}
                 onChange={handleInputChange}
-                placeholder="www.techhaven.com"
-                className="mt-2 w-full h-[48px] px-4 rounded-xl border border-[#E8E6F2] bg-white focus:ring-2 focus:ring-[#C39BFF] outline-none transition"
+                placeholder={t(
+                  "common:websitePlaceholder",
+                  "www.techhaven.com"
+                )}
+                className='mt-2 w-full h-[48px] px-4 rounded-xl border border-[#E8E6F2] bg-white focus:ring-2 focus:ring-[#C39BFF] outline-none transition'
               />
             </div>
           </div>
 
           {/* SAVE BUTTON */}
           <button
-            type="submit"
+            type='submit'
             disabled={isUploading}
             className={`w-full h-[50px] mt-6 rounded-xl text-white font-medium text-[15px] bg-gradient-to-r from-[#A155FB] to-[#F68E44] hover:opacity-95 transition flex items-center justify-center ${
               isUploading ? "opacity-70 cursor-not-allowed" : ""
-            }`}
-          >
+            }`}>
             {isUploading ? (
-              <span className="flex items-center gap-2">
+              <span className='flex items-center gap-2'>
                 <svg
-                  className="animate-spin h-5 w-5 text-white"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                >
+                  className='animate-spin h-5 w-5 text-white'
+                  xmlns='http://www.w3.org/2000/svg'
+                  fill='none'
+                  viewBox='0 0 24 24'>
                   <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                  ></circle>
+                    className='opacity-25'
+                    cx='12'
+                    cy='12'
+                    r='10'
+                    stroke='currentColor'
+                    strokeWidth='4'></circle>
                   <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                  ></path>
+                    className='opacity-75'
+                    fill='currentColor'
+                    d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z'></path>
                 </svg>
-                {formData.storeLogo ? "Uploading Logo..." : "Saving Changes..."}
+                {formData.storeLogo
+                  ? t("common:uploadingLogo", "Uploading Logo...")
+                  : t("common:savingChanges", "Saving Changes...")}
               </span>
             ) : (
-              "Save Changes"
+              t("seller:storeProfile.actions.saveChanges", "Save Changes")
             )}
           </button>
         </div>
