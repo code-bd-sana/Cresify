@@ -1,12 +1,18 @@
 "use client";
 
-import { useChangePasswordMutation, useMyProfileQuery, useUpdateProfileMutation } from "@/feature/UserApi";
+import {
+  useChangePasswordMutation,
+  useMyProfileQuery,
+  useUpdateProfileMutation,
+} from "@/feature/UserApi";
 import { useSession } from "next-auth/react";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import toast, { Toaster } from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import RegisterAdmin from "./RegisterAdmin";
 
 export default function AccountSettings() {
+  const { t } = useTranslation("seller");
   const { data: session } = useSession();
   const id = session?.user?.id;
   const role = session?.user?.role;
@@ -56,7 +62,7 @@ export default function AccountSettings() {
     "moving",
     "appliance repair",
     "handyman",
-    "other"
+    "other",
   ];
 
   // Service Areas Options (You can add more as needed)
@@ -70,7 +76,7 @@ export default function AccountSettings() {
     "Rangpur",
     "Mymensingh",
     "Comilla",
-    "Narayanganj"
+    "Narayanganj",
   ];
 
   // Service Radius Options (in kilometers)
@@ -93,7 +99,7 @@ export default function AccountSettings() {
     "5-10 years",
     "10+ years",
     "15+ years",
-    "20+ years"
+    "20+ years",
   ];
 
   // Load profile data into form when available
@@ -151,7 +157,7 @@ export default function AccountSettings() {
   const handleHourlyRateChange = (e) => {
     const { name, value } = e.target;
     // Allow only numbers and decimal point
-    if (value === '' || /^\d*\.?\d*$/.test(value)) {
+    if (value === "" || /^\d*\.?\d*$/.test(value)) {
       setHourlyRateData((prev) => ({
         ...prev,
         [name]: value,
@@ -159,33 +165,33 @@ export default function AccountSettings() {
     }
   };
 
-  const changePasswordHandler = async(e) => {
+  const changePasswordHandler = async (e) => {
     e.preventDefault();
 
     try {
       // Validation
       if (!passwordData.currentPassword.trim()) {
-        alert("Please enter current password");
+        toast.error(t("settings.password.errors.currentRequired"));
         return;
       }
 
       if (!passwordData.newPassword.trim()) {
-        alert("Please enter new password");
+        toast.error(t("settings.password.errors.newRequired"));
         return;
       }
 
       if (!passwordData.confirmNewPassword.trim()) {
-        alert("Please confirm new password");
+        toast.error(t("settings.password.errors.confirmRequired"));
         return;
       }
 
       if (passwordData.newPassword !== passwordData.confirmNewPassword) {
-        alert("New passwords do not match");
+        toast.error(t("settings.password.errors.passwordMismatch"));
         return;
       }
 
       if (passwordData.newPassword.length < 6) {
-        alert("New password must be at least 6 characters long");
+        toast.error(t("settings.password.errors.minLength"));
         return;
       }
 
@@ -201,7 +207,7 @@ export default function AccountSettings() {
 
       const response = await changePassword(passwordChangeData);
 
-      if(response.error){
+      if (response.error) {
         toast.error(response.error?.data?.message);
         return;
       }
@@ -214,24 +220,23 @@ export default function AccountSettings() {
       });
 
       // Show success message
-      toast.success("Password changed successfully");
-  
+      toast.success(t("settings.password.success"));
     } catch (error) {
       toast.error(error?.data?.message);
     }
   };
 
-  const saveProfileChangesHandler = async(e) => {
+  const saveProfileChangesHandler = async (e) => {
     e.preventDefault();
 
     // Validation
     if (!profileData.name.trim()) {
-      toast.error("Please enter your full name");
+      toast.error(t("settings.profile.errors.nameRequired"));
       return;
     }
 
     if (!profileData.phoneNumber.trim()) {
-      toast.error("Please enter your phone number");
+      toast.error(t("settings.profile.errors.phoneRequired"));
       return;
     }
 
@@ -245,43 +250,43 @@ export default function AccountSettings() {
 
     try {
       await updateProfile(profileUpdateData);
-      toast.success('Profile information saved successfully');
+      toast.success(t("settings.profile.success"));
     } catch (error) {
-      toast.error('Failed to save profile information');
+      toast.error(t("settings.profile.error"));
     }
   };
 
-  const saveServiceChangesHandler = async(e) => {
+  const saveServiceChangesHandler = async (e) => {
     e.preventDefault();
 
     // Validation
     if (!serviceData.serviceName.trim()) {
-      toast.error("Please enter service name");
+      toast.error(t("settings.service.errors.serviceNameRequired"));
       return;
     }
 
     if (!serviceData.serviceCategory.trim()) {
-      toast.error("Please select service category");
+      toast.error(t("settings.service.errors.categoryRequired"));
       return;
     }
 
     if (!serviceData.serviceArea.trim()) {
-      toast.error("Please select service area");
+      toast.error(t("settings.service.errors.areaRequired"));
       return;
     }
 
     if (!serviceData.serviceDescription.trim()) {
-      toast.error("Please enter service description");
+      toast.error(t("settings.service.errors.descriptionRequired"));
       return;
     }
 
     if (!serviceData.yearsOfExperience.trim()) {
-      toast.error("Please select years of experience");
+      toast.error(t("settings.service.errors.experienceRequired"));
       return;
     }
 
     if (!serviceData.serviceRadius) {
-      toast.error("Please select service radius");
+      toast.error(t("settings.service.errors.radiusRequired"));
       return;
     }
 
@@ -299,29 +304,29 @@ export default function AccountSettings() {
 
     try {
       await updateProfile(serviceUpdateData);
-      toast.success('Service information updated successfully');
+      toast.success(t("settings.service.success"));
     } catch (error) {
-      toast.error('Failed to update service information');
+      toast.error(t("settings.service.error"));
     }
   };
 
-  const updateHourlyRateHandler = async(e) => {
+  const updateHourlyRateHandler = async (e) => {
     e.preventDefault();
 
     // Validation
     if (!hourlyRateData.hourlyRate.trim()) {
-      toast.error("Please enter hourly rate");
+      toast.error(t("settings.pricing.errors.hourlyRateRequired"));
       return;
     }
 
     const hourlyRate = parseFloat(hourlyRateData.hourlyRate);
     if (isNaN(hourlyRate) || hourlyRate <= 0) {
-      toast.error("Please enter a valid hourly rate (greater than 0)");
+      toast.error(t("settings.pricing.errors.validHourlyRate"));
       return;
     }
 
     if (hourlyRate > 1000) {
-      toast.error("Hourly rate cannot exceed $1000");
+      toast.error(t("settings.pricing.errors.maxHourlyRate"));
       return;
     }
 
@@ -334,258 +339,312 @@ export default function AccountSettings() {
 
     try {
       await updateProfile(hourlyRateUpdateData);
-      toast.success(`Hourly rate updated to $${hourlyRate}`);
+      toast.success(t("settings.pricing.success", { rate: hourlyRate }));
     } catch (error) {
-      toast.error('Failed to update hourly rate');
+      toast.error(t("settings.pricing.error"));
     }
   };
 
   if (isLoading) {
     return (
-      <div className="w-full min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
-          <p className="mt-4 text-gray-500">Loading account settings...</p>
+      <div className='w-full min-h-screen flex items-center justify-center'>
+        <div className='text-center'>
+          <div className='inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500'></div>
+          <p className='mt-4 text-gray-500'>{t("common.loading")}</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="w-full min-h-screen px-2 pt-6">
-      <Toaster/>
-      
+    <div className='w-full min-h-screen px-2 pt-6'>
+      <Toaster />
+
       {/* PAGE TITLE */}
-      <h1 className="text-[28px] font-semibold text-gray-900">
-        Account Settings
+      <h1 className='text-[28px] font-semibold text-gray-900'>
+        {t("settings.accountSettings.title")}
       </h1>
-      <p className="text-[#9C6BFF] text-sm mt-1">
-        Manage your account preferences and security
+      <p className='text-[#9C6BFF] text-sm mt-1'>
+        {t("settings.accountSettings.subtitle")}
       </p>
 
       {/* PROFILE INFORMATION CARD */}
-      <div className="bg-white mt-8 rounded-xl shadow-sm border border-gray-100 p-8">
-        <h2 className="text-[20px] font-semibold text-gray-900 mb-6">
-          Personal Information
+      <div className='bg-white mt-8 rounded-xl shadow-sm border border-gray-100 p-8'>
+        <h2 className='text-[20px] font-semibold text-gray-900 mb-6'>
+          {t("settings.profile.title")}
         </h2>
 
         <form onSubmit={saveProfileChangesHandler}>
-          <div className="grid md:grid-cols-2 gap-6">
+          <div className='grid md:grid-cols-2 gap-6'>
             {/* Full Name */}
-            <div className="flex flex-col">
-              <label className="text-sm font-medium text-gray-700 mb-1">
-                Full Name*
+            <div className='flex flex-col'>
+              <label className='text-sm font-medium text-gray-700 mb-1'>
+                {t("settings.profile.form.fullName")}
               </label>
               <input
-                type="text"
-                name="name"
+                type='text'
+                name='name'
                 value={profileData.name}
                 onChange={handleProfileChange}
-                placeholder="Enter your full name"
-                className="px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-300 outline-none transition"
+                placeholder={t("settings.profile.form.fullNamePlaceholder")}
+                className='px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-300 outline-none transition'
               />
             </div>
 
             {/* Email */}
-            <div className="flex flex-col">
-              <label className="text-sm font-medium text-gray-700 mb-1">
-                Email Address*
+            <div className='flex flex-col'>
+              <label className='text-sm font-medium text-gray-700 mb-1'>
+                {t("settings.profile.form.email")}
               </label>
               <input
-                type="email"
-                name="email"
+                type='email'
+                name='email'
                 value={profileData.email}
                 onChange={handleProfileChange}
                 readOnly
-                className="px-4 py-3 rounded-lg border border-gray-300 bg-gray-50 focus:ring-2 focus:ring-purple-300 outline-none transition"
+                className='px-4 py-3 rounded-lg border border-gray-300 bg-gray-50 focus:ring-2 focus:ring-purple-300 outline-none transition'
               />
-              <p className="text-xs text-gray-500 mt-1">Email cannot be changed</p>
+              <p className='text-xs text-gray-500 mt-1'>
+                {t("settings.profile.form.emailHint")}
+              </p>
             </div>
 
             {/* Phone */}
-            <div className="flex flex-col">
-              <label className="text-sm font-medium text-gray-700 mb-1">
-                Phone Number*
+            <div className='flex flex-col'>
+              <label className='text-sm font-medium text-gray-700 mb-1'>
+                {t("settings.profile.form.phone")}
               </label>
               <input
-                type="text"
-                name="phoneNumber"
+                type='text'
+                name='phoneNumber'
                 value={profileData.phoneNumber}
                 onChange={handleProfileChange}
-                placeholder="Enter your phone number"
-                className="px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-300 outline-none transition"
+                placeholder={t("settings.profile.form.phonePlaceholder")}
+                className='px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-300 outline-none transition'
               />
             </div>
           </div>
 
           {/* Save Changes Button */}
           <button
-            type="submit"
-            className="mt-8 px-6 py-3 rounded-lg text-white font-medium bg-gradient-to-r from-[#9C6BFF] to-[#F78A3B] shadow-md hover:opacity-90 transition hover:scale-[1.02]"
-          >
-            Save Personal Information
+            type='submit'
+            className='mt-8 px-6 py-3 rounded-lg text-white font-medium bg-gradient-to-r from-[#9C6BFF] to-[#F78A3B] shadow-md hover:opacity-90 transition hover:scale-[1.02]'>
+            {t("settings.profile.form.save")}
           </button>
         </form>
       </div>
 
       {/* SERVICE INFORMATION CARD */}
-      <div className={`bg-white mt-10 rounded-xl shadow-sm border border-gray-100 p-8 ${role !== 'provider' ? 'hidden' : ''}`}>
-        <h2 className="text-[20px] font-semibold text-gray-900 mb-6">
-          Service Information
+      <div
+        className={`bg-white mt-10 rounded-xl shadow-sm border border-gray-100 p-8 ${
+          role !== "provider" ? "hidden" : ""
+        }`}>
+        <h2 className='text-[20px] font-semibold text-gray-900 mb-6'>
+          {t("settings.service.title")}
         </h2>
 
         <form onSubmit={saveServiceChangesHandler}>
-          <div className="grid md:grid-cols-2 gap-6">
+          <div className='grid md:grid-cols-2 gap-6'>
             {/* Service Name */}
-            <div className="flex flex-col">
-              <label className="text-sm font-medium text-gray-700 mb-1">
-                Service Name*
+            <div className='flex flex-col'>
+              <label className='text-sm font-medium text-gray-700 mb-1'>
+                {t("settings.service.form.serviceName")}
               </label>
               <input
-                type="text"
-                name="serviceName"
+                type='text'
+                name='serviceName'
                 value={serviceData.serviceName}
                 onChange={handleServiceChange}
-                placeholder="e.g., Home Cleaning, Plumbing Service"
-                className="px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-300 outline-none transition"
+                placeholder={t("settings.service.form.serviceNamePlaceholder")}
+                className='px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-300 outline-none transition'
               />
-              <p className="text-xs text-gray-500 mt-1">Name of your service</p>
+              <p className='text-xs text-gray-500 mt-1'>
+                {t("settings.service.form.serviceNameHint")}
+              </p>
             </div>
 
             {/* Service Category */}
-            <div className="flex flex-col">
-              <label className="text-sm font-medium text-gray-700 mb-1">
-                Service Category*
+            <div className='flex flex-col'>
+              <label className='text-sm font-medium text-gray-700 mb-1'>
+                {t("settings.service.form.category")}
               </label>
               <select
-                name="serviceCategory"
+                name='serviceCategory'
                 value={serviceData.serviceCategory}
                 onChange={handleServiceChange}
-                className="px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-300 outline-none transition bg-white"
-              >
-                <option value="">Select a category</option>
+                className='px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-300 outline-none transition bg-white'>
+                <option value=''>
+                  {t("settings.service.form.selectCategory")}
+                </option>
                 {serviceCategories.map((category) => (
                   <option key={category} value={category}>
                     {category.charAt(0).toUpperCase() + category.slice(1)}
                   </option>
                 ))}
               </select>
-              <p className="text-xs text-gray-500 mt-1">Type of service you provide</p>
+              <p className='text-xs text-gray-500 mt-1'>
+                {t("settings.service.form.categoryHint")}
+              </p>
             </div>
 
             {/* Service Area */}
-            <div className="flex flex-col">
-              <label className="text-sm font-medium text-gray-700 mb-1">
-                Service Area*
+            <div className='flex flex-col'>
+              <label className='text-sm font-medium text-gray-700 mb-1'>
+                {t("settings.service.form.area")}
               </label>
               <select
-                name="serviceArea"
+                name='serviceArea'
                 value={serviceData.serviceArea}
                 onChange={handleServiceChange}
-                className="px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-300 outline-none transition bg-white"
-              >
-                <option value="">Select your service area</option>
+                className='px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-300 outline-none transition bg-white'>
+                <option value=''>
+                  {t("settings.service.form.selectArea")}
+                </option>
                 {serviceAreas.map((area) => (
                   <option key={area} value={area}>
                     {area}
                   </option>
                 ))}
               </select>
-              <p className="text-xs text-gray-500 mt-1">City where you provide service</p>
+              <p className='text-xs text-gray-500 mt-1'>
+                {t("settings.service.form.areaHint")}
+              </p>
             </div>
 
             {/* Service Radius */}
-            <div className="flex flex-col">
-              <label className="text-sm font-medium text-gray-700 mb-1">
-                Service Radius*
+            <div className='flex flex-col'>
+              <label className='text-sm font-medium text-gray-700 mb-1'>
+                {t("settings.service.form.radius")}
               </label>
               <select
-                name="serviceRadius"
+                name='serviceRadius'
                 value={serviceData.serviceRadius}
                 onChange={handleServiceChange}
-                className="px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-300 outline-none transition bg-white"
-              >
-                <option value="">Select service radius</option>
+                className='px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-300 outline-none transition bg-white'>
+                <option value=''>
+                  {t("settings.service.form.selectRadius")}
+                </option>
                 {serviceRadiusOptions.map((option) => (
                   <option key={option.value} value={option.value}>
                     {option.label}
                   </option>
                 ))}
               </select>
-              <p className="text-xs text-gray-500 mt-1">Maximum distance you can travel</p>
+              <p className='text-xs text-gray-500 mt-1'>
+                {t("settings.service.form.radiusHint")}
+              </p>
             </div>
 
             {/* Years of Experience */}
-            <div className="flex flex-col">
-              <label className="text-sm font-medium text-gray-700 mb-1">
-                Years of Experience*
+            <div className='flex flex-col'>
+              <label className='text-sm font-medium text-gray-700 mb-1'>
+                {t("settings.service.form.experience")}
               </label>
               <select
-                name="yearsOfExperience"
+                name='yearsOfExperience'
                 value={serviceData.yearsOfExperience}
                 onChange={handleServiceChange}
-                className="px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-300 outline-none transition bg-white"
-              >
-                <option value="">Select experience level</option>
+                className='px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-300 outline-none transition bg-white'>
+                <option value=''>
+                  {t("settings.service.form.selectExperience")}
+                </option>
                 {yearsOfExperienceOptions.map((exp) => (
                   <option key={exp} value={exp}>
                     {exp}
                   </option>
                 ))}
               </select>
-              <p className="text-xs text-gray-500 mt-1">Your professional experience</p>
+              <p className='text-xs text-gray-500 mt-1'>
+                {t("settings.service.form.experienceHint")}
+              </p>
             </div>
 
             {/* Service Description */}
-            <div className="flex flex-col md:col-span-2">
-              <label className="text-sm font-medium text-gray-700 mb-1">
-                Service Description*
+            <div className='flex flex-col md:col-span-2'>
+              <label className='text-sm font-medium text-gray-700 mb-1'>
+                {t("settings.service.form.description")}
               </label>
               <textarea
-                name="serviceDescription"
+                name='serviceDescription'
                 value={serviceData.serviceDescription}
                 onChange={handleServiceChange}
-                placeholder="Describe your service in detail..."
+                placeholder={t("settings.service.form.descriptionPlaceholder")}
                 rows={4}
-                className="px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-300 outline-none transition resize-none"
+                className='px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-300 outline-none transition resize-none'
               />
-              <p className="text-xs text-gray-500 mt-1">Detailed description of your service</p>
+              <p className='text-xs text-gray-500 mt-1'>
+                {t("settings.service.form.descriptionHint")}
+              </p>
             </div>
           </div>
 
           {/* Save Service Changes Button */}
           <button
-            type="submit"
-            className="mt-8 px-6 py-3 rounded-lg text-white font-medium bg-gradient-to-r from-[#9C6BFF] to-[#F78A3B] shadow-md hover:opacity-90 transition hover:scale-[1.02]"
-          >
-            Update Service Information
+            type='submit'
+            className='mt-8 px-6 py-3 rounded-lg text-white font-medium bg-gradient-to-r from-[#9C6BFF] to-[#F78A3B] shadow-md hover:opacity-90 transition hover:scale-[1.02]'>
+            {t("settings.service.form.update")}
           </button>
         </form>
       </div>
 
       {/* HOURLY RATE CARD (For Providers) */}
-      <div className={` bg-white mt-10 rounded-xl shadow-sm border border-gray-100 p-8 ${role !== 'provider' ? 'hidden' : ''}`}>
-        <h2 className="text-[20px] font-semibold text-gray-900 mb-6">
-          Pricing Information
+      <div
+        className={` bg-white mt-10 rounded-xl shadow-sm border border-gray-100 p-8 ${
+          role !== "provider" ? "hidden" : ""
+        }`}>
+        <h2 className='text-[20px] font-semibold text-gray-900 mb-6'>
+          {t("settings.pricing.title")}
         </h2>
-        
-        <div className="mb-4 p-4 bg-blue-50 rounded-lg border border-blue-100">
-          <div className="flex items-start">
-            <div className="flex-shrink-0 mt-0.5">
-              <svg className="w-5 h-5 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+
+        <div className='mb-4 p-4 bg-blue-50 rounded-lg border border-blue-100'>
+          <div className='flex items-start'>
+            <div className='flex-shrink-0 mt-0.5'>
+              <svg
+                className='w-5 h-5 text-blue-500'
+                fill='currentColor'
+                viewBox='0 0 20 20'>
+                <path
+                  fillRule='evenodd'
+                  d='M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z'
+                  clipRule='evenodd'
+                />
               </svg>
             </div>
-            <div className="ml-3">
-              <h3 className="text-sm font-medium text-blue-800">
-                Current Service Information
+            <div className='ml-3'>
+              <h3 className='text-sm font-medium text-blue-800'>
+                {t("settings.pricing.currentInfo")}
               </h3>
-              <div className="mt-2 text-sm text-blue-700 grid grid-cols-1 md:grid-cols-2 gap-2">
-                <p><span className="font-semibold">Service:</span> {profile?.data?.serviceName || "Not set"}</p>
-                <p><span className="font-semibold">Category:</span> {profile?.data?.serviceCategory || "Not set"}</p>
-                <p><span className="font-semibold">Area:</span> {profile?.data?.serviceArea || "Not set"}</p>
-                <p><span className="font-semibold">Experience:</span> {profile?.data?.yearsOfExperience || "Not set"}</p>
-                <p><span className="font-semibold">Hourly Rate:</span> ${profile?.data?.hourlyRate || "Not set"}</p>
+              <div className='mt-2 text-sm text-blue-700 grid grid-cols-1 md:grid-cols-2 gap-2'>
+                <p>
+                  <span className='font-semibold'>
+                    {t("settings.pricing.service")}:
+                  </span>{" "}
+                  {profile?.data?.serviceName || t("common.notSet")}
+                </p>
+                <p>
+                  <span className='font-semibold'>
+                    {t("settings.pricing.category")}:
+                  </span>{" "}
+                  {profile?.data?.serviceCategory || t("common.notSet")}
+                </p>
+                <p>
+                  <span className='font-semibold'>
+                    {t("settings.pricing.area")}:
+                  </span>{" "}
+                  {profile?.data?.serviceArea || t("common.notSet")}
+                </p>
+                <p>
+                  <span className='font-semibold'>
+                    {t("settings.pricing.experience")}:
+                  </span>{" "}
+                  {profile?.data?.yearsOfExperience || t("common.notSet")}
+                </p>
+                <p>
+                  <span className='font-semibold'>
+                    {t("settings.pricing.hourlyRate")}:
+                  </span>{" "}
+                  ${profile?.data?.hourlyRate || t("common.notSet")}
+                </p>
               </div>
             </div>
           </div>
@@ -593,141 +652,150 @@ export default function AccountSettings() {
 
         <form onSubmit={updateHourlyRateHandler}>
           {/* Hourly Rate Input */}
-          <div className="flex flex-col mb-6">
-            <label className="text-sm font-medium text-gray-700 mb-1">
-              Hourly Rate ($)*
+          <div className='flex flex-col mb-6'>
+            <label className='text-sm font-medium text-gray-700 mb-1'>
+              {t("settings.pricing.form.hourlyRate")}
             </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <span className="text-gray-500">$</span>
+            <div className='relative'>
+              <div className='absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none'>
+                <span className='text-gray-500'>$</span>
               </div>
               <input
-                type="text"
-                name="hourlyRate"
+                type='text'
+                name='hourlyRate'
                 value={hourlyRateData.hourlyRate}
                 onChange={handleHourlyRateChange}
-                placeholder="Enter your hourly rate"
-                className="pl-8 pr-4 py-3 w-full rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-300 outline-none transition"
+                placeholder={t("settings.pricing.form.hourlyRatePlaceholder")}
+                className='pl-8 pr-4 py-3 w-full rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-300 outline-none transition'
               />
-              <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                <span className="text-gray-500">/ hour</span>
+              <div className='absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none'>
+                <span className='text-gray-500'>/ hour</span>
               </div>
             </div>
-            <div className="flex justify-between mt-1">
-              <p className="text-xs text-gray-500">Enter amount in USD (Min: $5, Max: $1000)</p>
+            <div className='flex justify-between mt-1'>
+              <p className='text-xs text-gray-500'>
+                {t("settings.pricing.form.hourlyRateHint")}
+              </p>
               {hourlyRateData.hourlyRate && (
-                <p className="text-xs font-medium text-purple-600">
-                  Your rate: ${hourlyRateData.hourlyRate} per hour
+                <p className='text-xs font-medium text-purple-600'>
+                  {t("settings.pricing.form.yourRate", {
+                    rate: hourlyRateData.hourlyRate,
+                  })}
                 </p>
               )}
             </div>
           </div>
 
           {/* Pricing Tips */}
-          <div className="mb-4 p-4 bg-green-50 rounded-lg border border-green-100">
-            <h4 className="text-sm font-medium text-green-800 mb-2">Pricing Tips</h4>
-            <ul className="text-xs text-green-700 space-y-1">
-              <li>• Research market rates for similar services in your area</li>
-              <li>• Consider your experience level and expertise</li>
-              <li>• Factor in travel costs and service radius</li>
-              <li>• Competitive pricing attracts more customers</li>
+          <div className='mb-4 p-4 bg-green-50 rounded-lg border border-green-100'>
+            <h4 className='text-sm font-medium text-green-800 mb-2'>
+              {t("settings.pricing.tips.title")}
+            </h4>
+            <ul className='text-xs text-green-700 space-y-1'>
+              <li>• {t("settings.pricing.tips.marketResearch")}</li>
+              <li>• {t("settings.pricing.tips.experience")}</li>
+              <li>• {t("settings.pricing.tips.travelCosts")}</li>
+              <li>• {t("settings.pricing.tips.competitivePricing")}</li>
             </ul>
           </div>
 
           {/* Update Hourly Rate Button */}
           <button
-            type="submit"
-            className="px-6 py-3 rounded-lg text-white font-medium bg-gradient-to-r from-[#9C6BFF] to-[#F78A3B] shadow-md hover:opacity-90 transition hover:scale-[1.02]"
-          >
-            Update Hourly Rate
+            type='submit'
+            className='px-6 py-3 rounded-lg text-white font-medium bg-gradient-to-r from-[#9C6BFF] to-[#F78A3B] shadow-md hover:opacity-90 transition hover:scale-[1.02]'>
+            {t("settings.pricing.form.update")}
           </button>
         </form>
       </div>
 
       {/* CHANGE PASSWORD CARD */}
-      <div className="bg-white mt-10 rounded-xl shadow-sm border border-gray-100 p-8">
-        <h2 className="text-[20px] font-semibold text-gray-900 mb-6">
-          Change Password
+      <div className='bg-white mt-10 rounded-xl shadow-sm border border-gray-100 p-8'>
+        <h2 className='text-[20px] font-semibold text-gray-900 mb-6'>
+          {t("settings.password.title")}
         </h2>
 
         <form onSubmit={changePasswordHandler}>
           {/* Current Password */}
-          <div className="flex flex-col mb-6">
-            <label className="text-sm font-medium text-gray-700 mb-1">
-              Current Password*
+          <div className='flex flex-col mb-6'>
+            <label className='text-sm font-medium text-gray-700 mb-1'>
+              {t("settings.password.form.current")}
             </label>
             <input
-              type="password"
-              name="currentPassword"
+              type='password'
+              name='currentPassword'
               value={passwordData.currentPassword}
               onChange={handlePasswordChange}
-              placeholder="Enter current password"
-              className="px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-300 outline-none transition"
+              placeholder={t("settings.password.form.currentPlaceholder")}
+              className='px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-300 outline-none transition'
             />
           </div>
 
           {/* New Password Row */}
-          <div className="grid md:grid-cols-2 gap-6">
-            <div className="flex flex-col">
-              <label className="text-sm font-medium text-gray-700 mb-1">
-                New Password*
+          <div className='grid md:grid-cols-2 gap-6'>
+            <div className='flex flex-col'>
+              <label className='text-sm font-medium text-gray-700 mb-1'>
+                {t("settings.password.form.new")}
               </label>
               <input
-                type="password"
-                name="newPassword"
+                type='password'
+                name='newPassword'
                 value={passwordData.newPassword}
                 onChange={handlePasswordChange}
-                placeholder="Enter new password"
-                className="px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-300 outline-none transition"
+                placeholder={t("settings.password.form.newPlaceholder")}
+                className='px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-300 outline-none transition'
               />
-              <p className="text-xs text-gray-500 mt-1">Minimum 6 characters</p>
+              <p className='text-xs text-gray-500 mt-1'>
+                {t("settings.password.form.hint")}
+              </p>
             </div>
 
-            <div className="flex flex-col">
-              <label className="text-sm font-medium text-gray-700 mb-1">
-                Confirm New Password*
+            <div className='flex flex-col'>
+              <label className='text-sm font-medium text-gray-700 mb-1'>
+                {t("settings.password.form.confirm")}
               </label>
               <input
-                type="password"
-                name="confirmNewPassword"
+                type='password'
+                name='confirmNewPassword'
                 value={passwordData.confirmNewPassword}
                 onChange={handlePasswordChange}
-                placeholder="Confirm new password"
-                className="px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-300 outline-none transition"
+                placeholder={t("settings.password.form.confirmPlaceholder")}
+                className='px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-300 outline-none transition'
               />
               {passwordData.newPassword && passwordData.confirmNewPassword && (
-                <p className={`text-xs mt-1 ${
-                  passwordData.newPassword === passwordData.confirmNewPassword 
-                    ? "text-green-600" 
-                    : "text-red-600"
-                }`}>
-                  {passwordData.newPassword === passwordData.confirmNewPassword 
-                    ? "✓ Passwords match" 
-                    : "✗ Passwords do not match"}
+                <p
+                  className={`text-xs mt-1 ${
+                    passwordData.newPassword === passwordData.confirmNewPassword
+                      ? "text-green-600"
+                      : "text-red-600"
+                  }`}>
+                  {passwordData.newPassword === passwordData.confirmNewPassword
+                    ? t("settings.password.form.match")
+                    : t("settings.password.form.mismatch")}
                 </p>
               )}
             </div>
           </div>
 
-          <RegisterAdmin/>
+          <RegisterAdmin />
 
           {/* Password Requirements */}
-          <div className="mb-4 p-4 bg-yellow-50 rounded-lg border border-yellow-100">
-            <h4 className="text-sm font-medium text-yellow-800 mb-2">Password Requirements</h4>
-            <ul className="text-xs text-yellow-700 space-y-1">
-              <li>• At least 6 characters long</li>
-              <li>• Include uppercase and lowercase letters</li>
-              <li>• Include numbers for better security</li>
-              <li>• Avoid using personal information</li>
+          <div className='mb-4 p-4 bg-yellow-50 rounded-lg border border-yellow-100'>
+            <h4 className='text-sm font-medium text-yellow-800 mb-2'>
+              {t("settings.password.requirements.title")}
+            </h4>
+            <ul className='text-xs text-yellow-700 space-y-1'>
+              <li>• {t("settings.password.requirements.minLength")}</li>
+              <li>• {t("settings.password.requirements.letters")}</li>
+              <li>• {t("settings.password.requirements.numbers")}</li>
+              <li>• {t("settings.password.requirements.personalInfo")}</li>
             </ul>
           </div>
 
           {/* Update Button */}
           <button
-            type="submit"
-            className="mt-4 px-6 py-3 rounded-lg text-white font-medium bg-gradient-to-r from-[#9C6BFF] to-[#F78A3B] shadow-md hover:opacity-90 transition hover:scale-[1.02]"
-          >
-            Update Password
+            type='submit'
+            className='mt-4 px-6 py-3 rounded-lg text-white font-medium bg-gradient-to-r from-[#9C6BFF] to-[#F78A3B] shadow-md hover:opacity-90 transition hover:scale-[1.02]'>
+            {t("settings.password.form.update")}
           </button>
         </form>
       </div>

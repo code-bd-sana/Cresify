@@ -1,0 +1,39 @@
+{
+  "store": {
+    "activeStoreProducts": "Active Store Products",
+    "searchActiveProducts": "Search active products by name, category, or description...",
+    "search": "Search",
+    "clearSearch": "Clear search",
+    "searchingFor": "Searching for:",
+    "activeProducts": "Active Products",
+    "showingProducts": "Showing {{count}} products",
+    "allActive": "All Active",
+    "showingOnlyActive": "Showing only <span class='font-bold'>active</span> products",
+    "allProductsActive": "All products are active and available for purchase",
+    "loadingActiveProducts": "Loading active products...",
+    "noProductsFound": "No active products found",
+    "noProductsAvailable": "No active products available",
+    "noProductsMatching": "We couldn't find any active products matching \"{{search}}\"",
+    "addActivateProducts": "There are no active products in your store yet. Add or activate some products to see them here.",
+    "viewAllActiveProducts": "View All Active Products",
+    "lowStock": "Low Stock",
+    "topRated": "Top Rated",
+    "inStock": "In Stock",
+    "active": "Active",
+    "locationNotSpecified": "Location not specified",
+    "unknownSeller": "Unknown Seller",
+    "reviews": "{{rating}} ({{reviews}} reviews)",
+    "shippingCost": "+${{cost}} shipping",
+    "stockCount": "{{count}} in stock",
+    "viewDetails": "View Details",
+    "pageOf": "Page {{current}} of {{total}}",
+    "totalProducts": "{{count}} Total products",
+    "show": "Show:",
+    "perPage": {
+      "9": "9 per page",
+      "18": "18 per page",
+      "27": "27 per page",
+      "36": "36 per page"
+    }
+  }
+}

@@ -1,0 +1,492 @@
+{
+  "totalSales": "Total Sales",
+  "totalOrders": "Total Orders",
+  "products": "Products",
+  "avgRating": "Avg Rating",
+  "salesAnalytics": "Sales Analytics",
+  "months": {
+    "jan": "JAN",
+    "feb": "FEB",
+    "mar": "MAR",
+    "apr": "APR",
+    "may": "MAY",
+    "jun": "JUN",
+    "jul": "JUL",
+    "aug": "AUG",
+    "sep": "SEP",
+    "oct": "OCT",
+    "nov": "NOV",
+    "dec": "DEC"
+  },
+  "recentOrderss": "Recent Orders",
+  "recentTransactions": "Recent Transactions",
+  "viewAll": "View All",
+  "table": {
+    "orderId": "Order ID",
+    "amount": "Amount",
+    "sellerPayout": "Seller Payout",
+    "status": "Status",
+    "date": "Date"
+  },
+  "dashboard": {
+    "title": "Dashboard Overview",
+    "subtitle": "Welcome back! Here’s what’s happening with your store today",
+    "totalSales": "Total Sales",
+    "totalOrders": "Total Orders",
+    "products": "Products",
+    "avgRating": "Avg Rating",
+    "salesAnalytics": "Sales Analytics",
+    "recentOrders": "Recent Orders"
+  },
+  "productsPage": {
+    "title": "Products",
+    "subtitle": "Manage your product inventory efficiently",
+    "addNewProduct": "Add New Product",
+    "searchPlaceholder": "Search by product name, category, or ID...",
+    "searchButton": "Search",
+    "table": {
+      "product": "Product",
+      "category": "Category",
+      "price": "Price",
+      "stock": "Stock",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "status": {
+      "active": "Active",
+      "rejected": "Rejected"
+    },
+    "pagination": {
+      "showing": "Showing",
+      "to": "to",
+      "of": "of",
+      "results": "results",
+      "items": "items",
+      "products": "products",
+      "previous": "Previous",
+      "next": "Next",
+      "first": "First",
+      "last": "Last",
+      "page": "Page",
+      "goToPage": "Go to page",
+      "rowsPerPage": "Rows per page",
+      "ofTotal": "of",
+      "totalItems": "total items",
+      "noResults": "No results found"
+    }
+  },
+  "orderManagement": {
+    "title": "Order Management",
+    "subtitle": "Track and manage all your customer orders",
+    "stats": {
+      "totalOrders": "Total Orders",
+      "totalSales": "Total Sales",
+      "pendingOrders": "Pending Orders",
+      "paidOrders": "Paid Orders"
+    },
+    "tabs": {
+      "all": "All",
+      "pending": "Pending",
+      "processing": "Processing",
+      "shipping": "Shipping",
+      "delivered": "Delivered",
+      "canceled": "Canceled"
+    },
+    "searchPlaceholder": "Search by order ID or customer name",
+    "summary": {
+      "showing": "Showing",
+      "of": "of",
+      "orders": "orders"
+    },
+    "table": {
+      "orderId": "ORDER ID",
+      "customer": "CUSTOMER",
+      "items": "ITEMS",
+      "amount": "AMOUNT",
+      "payment": "PAYMENT",
+      "status": "STATUS",
+      "date": "DATE",
+      "action": "ACTION"
+    },
+    "paymentStatus": {
+      "pending": "Pending",
+      "paid": "Paid"
+    },
+    "orderStatus": {
+      "pending": "Pending",
+      "shipping": "Shipping",
+      "processing": "Processing",
+      "delivered": "Delivered",
+      "canceled": "Canceled"
+    },
+    "actions": {
+      "view": "View"
+    },
+    "pagination": {
+      "showing": "Showing",
+      "to": "to",
+      "of": "of",
+      "products": "products",
+      "previous": "Previous",
+      "next": "Next"
+    }
+  },
+  "storeProfile": {
+    "title": "Store Profile",
+    "subtitle": "Manage your store information and settings",
+    "logoSection": {
+      "title": "Store Logo",
+      "currentLogo": "Current Store Logo",
+      "placeholder": "Current logo",
+      "fileHint": "PNG, JPG up to 5MB",
+      "replaceHint": "Current logo will be replaced if you upload a new one"
+    },
+    "shopInfo": {
+      "title": "Shop Information",
+      "shopName": "Shop Name",
+      "storeDescription": "Store Description",
+      "email": "Email Address",
+      "phone": "Phone Number",
+      "address": "Store Address",
+      "category": "Category",
+      "website": "Website"
+    },
+    "actions": {
+      "saveChanges": "Save Changes"
+    }
+  },
+  "payments": {
+    "title": "Payments",
+    "subtitle": "Track your earning and transaction history",
+    "summary": {
+      "totalEarning": "Total Earning",
+      "availableBalance": "Available Balance",
+      "paid": "Paid",
+      "pending": "Pending",
+      "canceled": "Canceled",
+      "total": "Total",
+      "commission": "Commission"
+    },
+    "stats": {
+      "thisMonth": "This Month",
+      "lastMonth": "Last Month",
+      "avgMonthly": "Avg Monthly"
+    },
+    "commission": {
+      "platformFee": "Platform fee",
+      "tax": "Tax"
+    },
+    "searchPlaceholder": "Search by Order ID or Transaction ID...",
+    "searchButton": "Search",
+    "tableControls": {
+      "show": "Show",
+      "perPage": "per page"
+    },
+    "pagination": {
+      "totalTransactions": "Total Transactions",
+      "showing": "Showing",
+      "totalPages": "Total Pages"
+    }
+  },
+  "recentOrders": {
+    "title": "Recent Transactions",
+    "viewAll": "View All",
+    "table": {
+      "orderId": "Order ID",
+      "amount": "Amount",
+      "sellerPayout": "Seller Payout",
+      "status": "Status",
+      "date": "Date"
+    },
+    "status": {
+      "paid": "Paid",
+      "pending": "Pending",
+      "canceled": "Canceled"
+    },
+    "loading": "Loading transactions...",
+    "empty": "No transactions found"
+  },
+  "wallet": {
+    "title": "Wallet Details",
+    "subtitle": "Manage your earnings and Stripe Express account",
+    "actions": {
+      "requestPayout": "Request Stripe Payout",
+      "editDetails": "Edit Details",
+      "unlinkAccount": "Unlink Account"
+    },
+    "balance": {
+      "available": "Available Balance",
+      "readyForWithdrawal": "Ready for withdrawal",
+      "totalEarned": "Total Earned",
+      "allTime": "All-time earnings",
+      "pendingPayouts": "Pending Payouts",
+      "clearingTime": "Clearing in 2-3 days",
+      "nextPayout": "Next Payout",
+      "monthlySchedule": "monthly schedule"
+    },
+    "stripeAccount": {
+      "title": "Stripe Express Account",
+      "verified": "Verified",
+      "unverified": "Unverified",
+      "expressType": "Express Type",
+      "accountId": "ID",
+      "accountType": "Account Type",
+      "currency": "Currency",
+      "payoutsEnabled": "Payouts Enabled",
+      "requirements": "Requirements",
+      "pending": "pending"
+    },
+    "expressDetails": {
+      "title": "Express Account Details",
+      "email": "Email",
+      "country": "Country",
+      "defaultCurrency": "Default Currency",
+      "chargesEnabled": "Charges Enabled",
+      "actionRequired": "Action Required"
+    },
+    "expressInfo": {
+      "title": "Stripe Express Info",
+      "payoutsEnabled": "Payouts Enabled",
+      "accountType": "Account Type",
+      "withdrawalFee": "Withdrawal Fee",
+      "processingTime": "Processing Time"
+    },
+    "benefits": {
+      "title": "Stripe Express Benefits",
+      "bankTransfers": "Direct bank transfers",
+      "lowFee": "Low 1.5% fee",
+      "secure": "Secure & PCI compliant",
+      "support": "24/7 support"
+    },
+    "transactions": {
+      "title": "Wallet Transactions",
+      "subtitle": "All your earnings and Stripe withdrawals",
+      "searchPlaceholder": "Search transactions...",
+      "table": {
+        "transaction": "Transaction",
+        "type": "Type",
+        "amount": "Amount",
+        "method": "Method",
+        "status": "Status",
+        "date": "Date"
+      }
+    }
+  },
+  "refunds": {
+    "title": "Refund Requests",
+    "filters": {
+      "itemsPerPage": "Items per page"
+    },
+    "summary": {
+      "pending": "Pending",
+      "approved": "Approved",
+      "rejected": "Rejected"
+    }
+  },
+  "reviews": {
+    "title": "Reviews & Ratings",
+    "subtitle": "Manage customer feedback and reviews",
+    "noReviews": "No reviews found",
+    "anonymousUser": "Anonymous User",
+    "unknownProduct": "Unknown Product",
+    "yourReply": "Your Reply",
+    "sampleReply": "Thank you for your feedback! We're glad you're enjoying the product.",
+    "replyButton": "Reply",
+    "replyPlaceholder": "Write your reply...",
+    "sendReply": "Send Reply"
+  },
+  "common": {
+    "loading": "Loading...",
+    "cancel": "Cancel"
+  },
+  "messages": {
+    "title": "Messages",
+    "emptyState": {
+      "title": "Select a conversation",
+      "subtitle": "Choose a chat from the left sidebar to start messaging"
+    }
+  },
+  "chat": {
+    "socketStatus": "Socket",
+    "error": "Error",
+    "searchPlaceholder": "Search customer ...",
+    "loadingChats": "Loading chats...",
+    "startConversation": "Start conversation",
+    "noChats": "No chats available",
+    "online": "🟢 Online",
+    "offline": "⚫ Offline",
+    "loadingMessages": "Loading messages...",
+    "noMessages": "No messages yet",
+    "startConversationMessage": "Start the conversation!",
+    "sending": "Sending...",
+    "typeMessagePlaceholder": "Type your message",
+    "socketNotConnected": "Socket not connected",
+    "sendMessage": "Send message",
+    "loadingConversation": "Loading conversation..."
+  },
+  "settings": {
+    "accountSettings": {
+      "title": "Account Settings",
+      "subtitle": "Manage your account preferences and security"
+    },
+    "profile": {
+      "title": "Personal Information",
+      "success": "Profile information saved successfully",
+      "error": "Failed to save profile information",
+      "errors": {
+        "nameRequired": "Please enter your full name",
+        "phoneRequired": "Please enter your phone number"
+      },
+      "form": {
+        "fullName": "Full Name*",
+        "fullNamePlaceholder": "Enter your full name",
+        "email": "Email Address*",
+        "emailHint": "Email cannot be changed",
+        "phone": "Phone Number*",
+        "phonePlaceholder": "Enter your phone number",
+        "save": "Save Personal Information"
+      }
+    },
+    "service": {
+      "title": "Service Information",
+      "success": "Service information updated successfully",
+      "error": "Failed to update service information",
+      "errors": {
+        "serviceNameRequired": "Please enter service name",
+        "categoryRequired": "Please select service category",
+        "areaRequired": "Please select service area",
+        "descriptionRequired": "Please enter service description",
+        "experienceRequired": "Please select years of experience",
+        "radiusRequired": "Please select service radius"
+      },
+      "form": {
+        "serviceName": "Service Name*",
+        "serviceNamePlaceholder": "e.g., Home Cleaning, Plumbing Service",
+        "serviceNameHint": "Name of your service",
+        "category": "Service Category*",
+        "selectCategory": "Select a category",
+        "categoryHint": "Type of service you provide",
+        "area": "Service Area*",
+        "selectArea": "Select your service area",
+        "areaHint": "City where you provide service",
+        "radius": "Service Radius*",
+        "selectRadius": "Select service radius",
+        "radiusHint": "Maximum distance you can travel",
+        "experience": "Years of Experience*",
+        "selectExperience": "Select experience level",
+        "experienceHint": "Your professional experience",
+        "description": "Service Description*",
+        "descriptionPlaceholder": "Describe your service in detail...",
+        "descriptionHint": "Detailed description of your service",
+        "update": "Update Service Information"
+      }
+    },
+    "pricing": {
+      "title": "Pricing Information",
+      "currentInfo": "Current Service Information",
+      "service": "Service",
+      "category": "Category",
+      "area": "Area",
+      "experience": "Experience",
+      "hourlyRate": "Hourly Rate",
+      "success": "Hourly rate updated to ${rate}",
+      "error": "Failed to update hourly rate",
+      "errors": {
+        "hourlyRateRequired": "Please enter hourly rate",
+        "validHourlyRate": "Please enter a valid hourly rate (greater than 0)",
+        "maxHourlyRate": "Hourly rate cannot exceed $1000"
+      },
+      "form": {
+        "hourlyRate": "Hourly Rate ($)*",
+        "hourlyRatePlaceholder": "Enter your hourly rate",
+        "hourlyRateHint": "Enter amount in USD (Min: $5, Max: $1000)",
+        "yourRate": "Your rate: ${rate} per hour",
+        "update": "Update Hourly Rate"
+      },
+      "tips": {
+        "title": "Pricing Tips",
+        "marketResearch": "Research market rates for similar services in your area",
+        "experience": "Consider your experience level and expertise",
+        "travelCosts": "Factor in travel costs and service radius",
+        "competitivePricing": "Competitive pricing attracts more customers"
+      }
+    },
+    "password": {
+      "title": "Change Password",
+      "success": "Password changed successfully",
+      "errors": {
+        "currentRequired": "Please enter current password",
+        "newRequired": "Please enter new password",
+        "confirmRequired": "Please confirm new password",
+        "passwordMismatch": "New passwords do not match",
+        "minLength": "New password must be at least 6 characters long"
+      },
+      "form": {
+        "current": "Current Password*",
+        "currentPlaceholder": "Enter current password",
+        "new": "New Password*",
+        "newPlaceholder": "Enter new password",
+        "hint": "Minimum 6 characters",
+        "confirm": "Confirm New Password*",
+        "confirmPlaceholder": "Confirm new password",
+        "match": "✓ Passwords match",
+        "mismatch": "✗ Passwords do not match",
+        "update": "Update Password"
+      },
+      "requirements": {
+        "title": "Password Requirements",
+        "minLength": "At least 6 characters long",
+        "letters": "Include uppercase and lowercase letters",
+        "numbers": "Include numbers for better security",
+        "personalInfo": "Avoid using personal information"
+      }
+    }
+  },
+  "common": {
+    "loading": "Loading...",
+    "notSet": "Not set"
+  },
+  "recentOrders": {
+    "title": "Recent Transactions",
+    "viewAll": "View All",
+    "table": {
+      "orderId": "Order ID",
+      "amount": "Amount",
+      "sellerPayout": "Seller Payout",
+      "status": "Status",
+      "date": "Date"
+    },
+    "status": {
+      "paid": "Paid",
+      "pending": "Pending",
+      "canceled": "Canceled"
+    },
+    "loading": "Loading transactions...",
+    "empty": "No transactions found"
+  },
+  "salesAnalytics": {
+    "title": "Sales Analytics",
+    "months": {
+      "JAN": "JAN",
+      "FEB": "FEB",
+      "MAR": "MAR",
+      "APR": "APR",
+      "MAY": "MAY",
+      "JUN": "JUN",
+      "JUL": "JUL",
+      "AUG": "AUG",
+      "SEP": "SEP",
+      "OCT": "OCT",
+      "NOV": "NOV",
+      "DEC": "DEC"
+    },
+    "tooltip": {
+      "sales": "Sales",
+      "amount": "Amount"
+    },
+    "chart": {
+      "xAxisLabel": "Months",
+      "yAxisLabel": "Sales ($)"
+    }
+  }
+}

@@ -2,13 +2,13 @@
   "productDetails": "Detalles del Producto",
   "customerReviews": "Reseñas de Clientes",
   "reviewSummary": "Resumen de Reseñas",
-  "averageRating": "Calificación Promedio", 
+  "averageRating": "Calificación Promedio",
   "totalReviews": "Reseñas Totales",
   "stars": "Estrellas",
   "ratings": {
     "5star": "5 Estrellas",
     "4star": "4 Estrellas",
-    "3star": "3 Estrellas", 
+    "3star": "3 Estrellas",
     "2star": "2 Estrellas",
     "1star": "1 Estrella"
   },
@@ -26,7 +26,7 @@
     "newest": "Más Reciente",
     "oldest": "Más Antiguo",
     "highest": "Calificación Más Alta",
-    "lowest": "Calificación Más Baja", 
+    "lowest": "Calificación Más Baja",
     "mostHelpful": "Más Útil"
   },
   "filterByRating": "Filtrar por Calificación",
@@ -68,5 +68,16 @@
   "freeShipping": "Envío Gratis",
   "shippingInfo": "Información de Envío",
   "returnPolicy": "Política de Devolución",
-  "visitStore": "Visitar Tienda"
+  "visitStore": "Visitar Tienda",
+  "viewStore": "Ver Tienda",
+  "viewSeller": "Ver Vendedor",
+  "availability": "Disponibilidad",
+  "adding": "Agregando...",
+  "removeFromWishlist": "Eliminar de la Lista de Deseos",
+  "addToWishlist": "Agregar a la Lista de Deseos",
+  "sellerInfo": "Información del Vendedor",
+  "sellerName": "Nombre del Vendedor",
+  "email": "Correo",
+  "phone": "Teléfono",
+  "joined": "Se unió"
 }

@@ -5,6 +5,7 @@ import {
 } from "@/feature/refund/RefundApi";
 import { useSession } from "next-auth/react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   FiChevronLeft,
   FiChevronRight,
@@ -18,6 +19,7 @@ import {
 import { MdClose } from "react-icons/md";
 
 const ServiceRefundPage = () => {
+  const { t } = useTranslation();
   const { data: session } = useSession();
   const sellerId = session?.user?.id;
 
@@ -61,48 +63,60 @@ const ServiceRefundPage = () => {
   };
 
   const getStatusBadge = (status) => {
+    const statusTranslations = {
+      approved: t("admin:serviceRefund.status.approved"),
+      rejected: t("admin:serviceRefund.status.rejected"),
+      requested: t("admin:serviceRefund.status.requested"),
+      processing: t("admin:serviceRefund.status.processing"),
+      refunded_full: t("admin:serviceRefund.status.refunded_full"),
+      partial_refunded: t("admin:serviceRefund.status.partial_refunded"),
+      under_review: t("admin:serviceRefund.status.under_review"),
+      unknown: t("admin:serviceRefund.status.unknown"),
+    };
+
     const config = {
       approved: {
         bg: "bg-[#E2FFE9]",
         text: "text-[#38A169]",
-        label: "Approved",
+        label: statusTranslations.approved,
       },
       rejected: {
         bg: "bg-[#FFE2E2]",
         text: "text-[#E53E3E]",
-        label: "Rejected",
+        label: statusTranslations.rejected,
       },
       requested: {
         bg: "bg-[#FFF1E2]",
         text: "text-[#F39C4A]",
-        label: "Pending",
+        label: statusTranslations.requested,
       },
       processing: {
         bg: "bg-[#E2F3FF]",
         text: "text-[#3182CE]",
-        label: "Processing",
+        label: statusTranslations.processing,
       },
       refunded_full: {
         bg: "bg-[#E2FFE9]",
         text: "text-[#38A169]",
-        label: "Refunded",
+        label: statusTranslations.refunded_full,
       },
       partial_refunded: {
         bg: "bg-[#FFF9E2]",
         text: "text-[#D69E2E]",
-        label: "Partially Refunded",
+        label: statusTranslations.partial_refunded,
       },
       under_review: {
         bg: "bg-[#E2F3FF]",
         text: "text-[#3182CE]",
-        label: "Under Review",
+        label: statusTranslations.under_review,
       },
     };
+
     return (
       config[status] || {
         bg: "bg-gray-100",
         text: "text-gray-600",
-        label: status || "Unknown",
+        label: statusTranslations.unknown,
       }
     );
   };
@@ -136,15 +150,68 @@ const ServiceRefundPage = () => {
     );
   };
 
+  const handleApproveRefund = async (refundId) => {
+    if (!confirm(t("admin:serviceRefund.alerts.approveConfirm"))) return;
+
+    try {
+      await adminServiceRefund({
+        refundId,
+        action: "approve",
+        adminId: session.user.id,
+      }).unwrap();
+      refetch();
+      alert(t("admin:serviceRefund.alerts.approveSuccess"));
+    } catch (e) {
+      console.error(e);
+      alert(t("admin:serviceRefund.alerts.approveFailed"));
+    }
+  };
+
+  const handleRejectRefund = async (refundId) => {
+    if (!confirm(t("admin:serviceRefund.alerts.rejectConfirm"))) return;
+
+    try {
+      await adminServiceRefund({
+        refundId,
+        action: "reject",
+        adminId: session.user.id,
+      }).unwrap();
+      refetch();
+      alert(t("admin:serviceRefund.alerts.rejectSuccess"));
+    } catch (e) {
+      console.error(e);
+      alert(t("admin:serviceRefund.alerts.rejectFailed"));
+    }
+  };
+
+  const handleProcessRefund = async (refundId) => {
+    if (!confirm(t("admin:serviceRefund.alerts.processConfirm"))) return;
+
+    try {
+      await adminServiceRefund({
+        refundId,
+        action: "process",
+        adminId: session.user.id,
+      }).unwrap();
+      refetch();
+      alert(t("admin:serviceRefund.alerts.processSuccess"));
+    } catch (e) {
+      console.error(e);
+      alert(t("admin:serviceRefund.alerts.processFailed"));
+    }
+  };
+
   if (isLoading) {
     return (
       <div className='bg-white rounded-xl p-6'>
         <h2 className='text-2xl font-bold text-gray-900 mb-6'>
-          Service Refund Requests
+          {t("admin:serviceRefund.title")}
         </h2>
         <div className='text-center py-16'>
           <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-[#9838E1] mx-auto'></div>
-          <p className='mt-4 text-gray-600'>Loading refund data...</p>
+          <p className='mt-4 text-gray-600'>
+            {t("admin:serviceRefund.loading")}
+          </p>
         </div>
       </div>
     );
@@ -153,7 +220,7 @@ const ServiceRefundPage = () => {
   return (
     <div className='bg-white rounded-xl p-6'>
       <h2 className='text-2xl font-bold text-gray-900 mb-6'>
-        Service Booking Refunds
+        {t("admin:serviceRefund.pageTitle")}
       </h2>
 
       {/* Refund Details Modal */}
@@ -162,11 +229,12 @@ const ServiceRefundPage = () => {
           <div className='bg-white rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto'>
             <div className='sticky top-0 bg-white border-b p-6 flex justify-between items-center'>
               <h3 className='text-xl font-bold text-gray-900'>
-                Refund Details
+                {t("admin:serviceRefund.modal.title")}
               </h3>
               <button
                 onClick={() => setSelectedRefund(null)}
-                className='text-gray-500 hover:text-gray-700'>
+                className='text-gray-500 hover:text-gray-700'
+                aria-label={t("admin:serviceRefund.buttons.close")}>
                 <MdClose size={24} />
               </button>
             </div>
@@ -175,17 +243,24 @@ const ServiceRefundPage = () => {
               <div className='grid grid-cols-1 md:grid-cols-2 gap-6 mb-8'>
                 <div className='bg-gray-50 p-4 rounded-lg'>
                   <h4 className='font-semibold text-gray-700 mb-3 flex items-center gap-2'>
-                    <FiShoppingBag /> Refund Information
+                    <FiShoppingBag />{" "}
+                    {t("admin:serviceRefund.modal.sections.refundInfo")}
                   </h4>
                   <div className='space-y-2'>
                     <div className='flex justify-between'>
-                      <span className='text-gray-600'>Refund ID:</span>
+                      <span className='text-gray-600'>
+                        {t(
+                          "admin:serviceRefund.modal.sections.fields.refundId"
+                        )}
+                      </span>
                       <span className='font-mono text-sm'>
                         {selectedRefund._id}
                       </span>
                     </div>
                     <div className='flex justify-between'>
-                      <span className='text-gray-600'>Amount:</span>
+                      <span className='text-gray-600'>
+                        {t("admin:serviceRefund.modal.sections.fields.amount")}
+                      </span>
                       <span className='font-bold text-orange-500'>
                         {formatAmount(
                           selectedRefund.amount,
@@ -194,7 +269,9 @@ const ServiceRefundPage = () => {
                       </span>
                     </div>
                     <div className='flex justify-between'>
-                      <span className='text-gray-600'>Status:</span>
+                      <span className='text-gray-600'>
+                        {t("admin:serviceRefund.modal.sections.fields.status")}
+                      </span>
                       <span
                         className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
                           getStatusBadge(selectedRefund.status).bg
@@ -203,7 +280,11 @@ const ServiceRefundPage = () => {
                       </span>
                     </div>
                     <div className='flex justify-between'>
-                      <span className='text-gray-600'>Requested:</span>
+                      <span className='text-gray-600'>
+                        {t(
+                          "admin:serviceRefund.modal.sections.fields.requested"
+                        )}
+                      </span>
                       <span className='text-gray-600'>
                         {formatDate(selectedRefund.createdAt)}
                       </span>
@@ -213,23 +294,36 @@ const ServiceRefundPage = () => {
 
                 <div className='bg-gray-50 p-4 rounded-lg'>
                   <h4 className='font-semibold text-gray-700 mb-3 flex items-center gap-2'>
-                    <FiUser /> Customer Information
+                    <FiUser />{" "}
+                    {t("admin:serviceRefund.modal.sections.customerInfo")}
                   </h4>
                   <div className='space-y-2'>
                     <div className='flex justify-between'>
-                      <span className='text-gray-600'>Name:</span>
+                      <span className='text-gray-600'>
+                        {t(
+                          "admin:serviceRefund.modal.sections.fields.customerName"
+                        )}
+                      </span>
                       <span className='font-medium'>
                         {selectedRefund.requestedBy?.name || "N/A"}
                       </span>
                     </div>
                     <div className='flex justify-between'>
-                      <span className='text-gray-600'>Email:</span>
+                      <span className='text-gray-600'>
+                        {t(
+                          "admin:serviceRefund.modal.sections.fields.customerEmail"
+                        )}
+                      </span>
                       <span className='text-blue-600'>
                         {selectedRefund.requestedBy?.email || "N/A"}
                       </span>
                     </div>
                     <div className='flex justify-between'>
-                      <span className='text-gray-600'>Phone:</span>
+                      <span className='text-gray-600'>
+                        {t(
+                          "admin:serviceRefund.modal.sections.fields.customerPhone"
+                        )}
+                      </span>
                       <span>
                         {selectedRefund.requestedBy?.phoneNumber || "N/A"}
                       </span>
@@ -240,7 +334,8 @@ const ServiceRefundPage = () => {
 
               <div className='mb-8'>
                 <h4 className='font-semibold text-gray-700 mb-3 flex items-center gap-2'>
-                  <FiFileText /> Refund Reason
+                  <FiFileText />{" "}
+                  {t("admin:serviceRefund.modal.sections.refundReason")}
                 </h4>
                 <div className='bg-gray-50 p-4 rounded-lg'>
                   <p className='text-gray-700'>
@@ -253,7 +348,9 @@ const ServiceRefundPage = () => {
                 selectedRefund.evidence.length > 0 && (
                   <div className='mb-8'>
                     <h4 className='font-semibold text-gray-700 mb-3 flex items-center gap-2'>
-                      <FiImage /> Evidence ({selectedRefund.evidence.length})
+                      <FiImage />{" "}
+                      {t("admin:serviceRefund.modal.sections.evidence")} (
+                      {selectedRefund.evidence.length})
                     </h4>
                     <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
                       {selectedRefund.evidence.map((evidence, index) => (
@@ -291,12 +388,13 @@ const ServiceRefundPage = () => {
       {/* Control Bar */}
       <div className='flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4'>
         <div className='text-gray-600'>
-          Total: <span className='font-bold'>{pagination.total}</span> refund
-          requests
+          {t("admin:serviceRefund.totalRefunds", { count: pagination.total })}
         </div>
         <div className='flex items-center gap-4'>
           <div className='flex items-center gap-2'>
-            <span className='text-sm text-gray-600'>Items per page:</span>
+            <span className='text-sm text-gray-600'>
+              {t("admin:serviceRefund.itemsPerPage")}
+            </span>
             <select
               value={limit}
               onChange={(e) => {
@@ -320,22 +418,22 @@ const ServiceRefundPage = () => {
           <thead className='bg-gray-50'>
             <tr>
               <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
-                Refund ID
+                {t("admin:serviceRefund.table.headers.refundId")}
               </th>
               <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
-                Customer
+                {t("admin:serviceRefund.table.headers.customer")}
               </th>
               <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
-                Amount
+                {t("admin:serviceRefund.table.headers.amount")}
               </th>
               <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
-                Status
+                {t("admin:serviceRefund.table.headers.status")}
               </th>
               <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
-                Date
+                {t("admin:serviceRefund.table.headers.date")}
               </th>
               <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
-                Actions
+                {t("admin:serviceRefund.table.headers.actions")}
               </th>
             </tr>
           </thead>
@@ -343,7 +441,7 @@ const ServiceRefundPage = () => {
             {refunds.length === 0 ? (
               <tr>
                 <td colSpan='6' className='px-6 py-8 text-center text-gray-500'>
-                  No refund requests found
+                  {t("admin:serviceRefund.noRefunds")}
                 </td>
               </tr>
             ) : (
@@ -385,74 +483,35 @@ const ServiceRefundPage = () => {
                         <button
                           onClick={() => setSelectedRefund(refund)}
                           className='inline-flex items-center gap-1 px-3 py-2 text-sm font-medium text-white bg-[#9810FA] rounded hover:opacity-90'>
-                          <FiEye /> View Details
+                          <FiEye />{" "}
+                          {t("admin:serviceRefund.buttons.viewDetails")}
                         </button>
                         {session?.user?.role === "admin" && (
                           <>
                             {refund.status === "requested" && (
                               <>
                                 <button
-                                  onClick={async () => {
-                                    if (
-                                      !confirm("Approve this refund request?")
-                                    )
-                                      return;
-                                    try {
-                                      await adminServiceRefund({
-                                        refundId: refund._id,
-                                        action: "approve",
-                                        adminId: session.user.id,
-                                      }).unwrap();
-                                      refetch();
-                                    } catch (e) {
-                                      console.error(e);
-                                      alert("Failed to approve refund");
-                                    }
-                                  }}
+                                  onClick={() =>
+                                    handleApproveRefund(refund._id)
+                                  }
                                   className='inline-flex items-center gap-1 px-3 py-2 text-sm font-medium text-white bg-green-600 rounded hover:bg-green-700'>
-                                  Approve
+                                  {t("admin:serviceRefund.buttons.approve")}
                                 </button>
                                 <button
-                                  onClick={async () => {
-                                    if (!confirm("Reject this refund request?"))
-                                      return;
-                                    try {
-                                      await adminServiceRefund({
-                                        refundId: refund._id,
-                                        action: "reject",
-                                        adminId: session.user.id,
-                                      }).unwrap();
-                                      refetch();
-                                    } catch (e) {
-                                      console.error(e);
-                                      alert("Failed to reject refund");
-                                    }
-                                  }}
+                                  onClick={() => handleRejectRefund(refund._id)}
                                   className='inline-flex items-center gap-1 px-3 py-2 text-sm font-medium text-white bg-red-600 rounded hover:bg-red-700'>
-                                  Reject
+                                  {t("admin:serviceRefund.buttons.reject")}
                                 </button>
                               </>
                             )}
-                            {/* Show Process button only for approved/processing statuses AND not already fully processed */}
                             {canProcess && (
                               <button
-                                onClick={async () => {
-                                  if (!confirm("Process this refund now?"))
-                                    return;
-                                  try {
-                                    await adminServiceRefund({
-                                      refundId: refund._id,
-                                      action: "process",
-                                      adminId: session.user.id,
-                                    }).unwrap();
-                                    refetch();
-                                  } catch (e) {
-                                    console.error(e);
-                                    alert("Failed to process refund");
-                                  }
-                                }}
-                                className='inline-flex items-center gap-1 px-3 py-2 text-sm font-medium text-white bg-blue-600 rounded hover:bg-blue-700'>
-                                {isProcessing ? "Processing..." : "Process"}
+                                onClick={() => handleProcessRefund(refund._id)}
+                                disabled={isProcessing}
+                                className='inline-flex items-center gap-1 px-3 py-2 text-sm font-medium text-white bg-blue-600 rounded hover:bg-blue-700 disabled:opacity-50'>
+                                {isProcessing
+                                  ? t("admin:serviceRefund.buttons.processing")
+                                  : t("admin:serviceRefund.buttons.process")}
                               </button>
                             )}
                           </>
@@ -471,7 +530,10 @@ const ServiceRefundPage = () => {
       {pagination.pages > 1 && (
         <div className='flex flex-col md:flex-row md:items-center justify-between mt-6 px-2 gap-4'>
           <div className='text-sm text-gray-600'>
-            Page {page} of {pagination.pages}
+            {t("admin:serviceRefund.pagination.page", {
+              current: page,
+              total: pagination.pages,
+            })}
           </div>
 
           <div className='flex items-center gap-2'>
@@ -482,9 +544,11 @@ const ServiceRefundPage = () => {
                 page === 1
                   ? "text-gray-400 cursor-not-allowed"
                   : "text-blue-600 hover:bg-blue-50"
-              }`}>
+              }`}
+              aria-label={t("admin:serviceRefund.pagination.previous")}>
               <FiChevronLeft size={20} />
             </button>
+
             {Array.from({ length: Math.min(5, pagination.pages) }, (_, i) => {
               let pageNum;
               if (pagination.pages <= 5) {
@@ -510,6 +574,7 @@ const ServiceRefundPage = () => {
                 </button>
               );
             })}
+
             <button
               onClick={() => handlePageChange(page + 1)}
               disabled={page === pagination.pages}
@@ -517,13 +582,16 @@ const ServiceRefundPage = () => {
                 page === pagination.pages
                   ? "text-gray-400 cursor-not-allowed"
                   : "text-blue-600 hover:bg-blue-50"
-              }`}>
+              }`}
+              aria-label={t("admin:serviceRefund.pagination.next")}>
               <FiChevronRight size={20} />
             </button>
           </div>
 
           <div className='flex items-center gap-2'>
-            <span className='text-sm text-gray-600'>Go to page:</span>
+            <span className='text-sm text-gray-600'>
+              {t("admin:serviceRefund.pagination.goToPage")}
+            </span>
             <input
               type='number'
               min='1'

@@ -10,10 +10,24 @@ import {
 import { Dialog } from "@headlessui/react";
 import Image from "next/image";
 import { useEffect, useState } from "react";
-import { FiSearch, FiShoppingBag, FiUserCheck, FiUsers, FiPieChart } from "react-icons/fi";
+import { useTranslation } from "react-i18next";
+import {
+  FiPieChart,
+  FiSearch,
+  FiShoppingBag,
+  FiUserCheck,
+  FiUsers,
+} from "react-icons/fi";
 import { TbUserStar } from "react-icons/tb";
+import {
+  Cell,
+  Legend,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+} from "recharts";
 import Swal from "sweetalert2";
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 
 const statusColors = {
   active: "bg-[#E6F8EF] text-[#32A35A]",
@@ -21,8 +35,15 @@ const statusColors = {
   pending: "bg-[#FFF8E1] text-[#D97706]",
 };
 
+const roleColors = {
+  buyer: "bg-[#FFF3E6] text-[#F78D25]",
+  seller: "bg-[#F2E9FF] text-[#8736C5]",
+  provider: "bg-[#E6F8EF] text-[#32A35A]",
+};
+
 export default function UserManagementPage() {
-  const [activeTab, setActiveTab] = useState("All Users");
+  const { t } = useTranslation("admin");
+  const [activeTab, setActiveTab] = useState(t("userManagement.tabs.allUsers"));
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
 
@@ -52,21 +73,41 @@ export default function UserManagementPage() {
   const stats = overview?.data;
 
   /** Prepare data for Pie Chart */
-  const pieChartData = stats ? [
-    { name: 'Buyers', value: stats.totalBuyers || 0, color: '#F78D25' },
-    { name: 'Sellers', value: stats.totalSellers || 0, color: '#9C6BFF' },
-    { name: 'Providers', value: stats.totalServiceProviders || 0, color: '#4ADE80' }
-  ].filter(item => item.value > 0) : [];
+  const pieChartData = stats
+    ? [
+        {
+          name: t("userManagement.roles.buyer"),
+          value: stats.totalBuyers || 0,
+          color: "#F78D25",
+        },
+        {
+          name: t("userManagement.roles.seller"),
+          value: stats.totalSellers || 0,
+          color: "#9C6BFF",
+        },
+        {
+          name: t("userManagement.roles.provider"),
+          value: stats.totalServiceProviders || 0,
+          color: "#4ADE80",
+        },
+      ].filter((item) => item.value > 0)
+    : [];
 
   /** Role filter */
-  const role =
-    activeTab === "All Users"
-      ? ""
-      : activeTab === "Buyer"
-      ? "buyer"
-      : activeTab === "Seller"
-      ? "seller"
-      : "provider";
+  const getRoleFilter = (tab) => {
+    switch (tab) {
+      case t("userManagement.tabs.buyer"):
+        return "buyer";
+      case t("userManagement.tabs.seller"):
+        return "seller";
+      case t("userManagement.tabs.serviceProvider"):
+        return "provider";
+      default:
+        return "";
+    }
+  };
+
+  const role = getRoleFilter(activeTab);
 
   /** Fetch users */
   const { data, isLoading, refetch } = useGetAllUsersQuery({
@@ -89,8 +130,8 @@ export default function UserManagementPage() {
       if (res.success) {
         Swal.fire({
           icon: "success",
-          title: "Success",
-          text: res.message || "User status updated successfully",
+          title: t("userManagement.alerts.success"),
+          text: res.message || t("userManagement.alerts.statusUpdated"),
           timer: 1500,
           showConfirmButton: false,
         });
@@ -99,10 +140,20 @@ export default function UserManagementPage() {
     } catch (err) {
       Swal.fire({
         icon: "error",
-        title: "Error",
-        text: err?.data?.message || "Failed to update status",
+        title: t("userManagement.alerts.error"),
+        text: err?.data?.message || t("userManagement.alerts.updateFailed"),
       });
     }
+  };
+
+  // Get role display text
+  const getRoleDisplay = (role) => {
+    const roleMap = {
+      buyer: t("userManagement.roles.buyer"),
+      seller: t("userManagement.roles.seller"),
+      provider: t("userManagement.roles.provider"),
+    };
+    return roleMap[role] || role;
   };
 
   return (
@@ -111,32 +162,36 @@ export default function UserManagementPage() {
       <div className='flex items-center justify-between'>
         <div>
           <h1 className='text-[26px] md:text-[28px] font-semibold text-gray-900'>
-            User Management
+            {t("userManagement.title")}
           </h1>
           <p className='text-sm text-[#9C6BFF] mt-1'>
-            Manage all platform users
+            {t("userManagement.subtitle")}
           </p>
         </div>
       </div>
 
       {/* STAT CARDS WITH PIE CHART */}
-      <div className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className='mt-6 grid grid-cols-1 lg:grid-cols-3 gap-4'>
         {/* Left: Stats Cards */}
-        <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className='lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4'>
           {[
-            { label: "Total Users", value: stats?.totalUsers, icon: FiUsers },
             {
-              label: "Total Sellers",
+              label: t("userManagement.stats.totalUsers"),
+              value: stats?.totalUsers,
+              icon: FiUsers,
+            },
+            {
+              label: t("userManagement.stats.totalSellers"),
               value: stats?.totalSellers,
               icon: FiUserCheck,
             },
             {
-              label: "Total Buyers",
+              label: t("userManagement.stats.totalBuyers"),
               value: stats?.totalBuyers,
               icon: FiShoppingBag,
             },
             {
-              label: "Total Service Providers",
+              label: t("userManagement.stats.totalServiceProviders"),
               value: stats?.totalServiceProviders,
               icon: TbUserStar,
             },
@@ -164,74 +219,89 @@ export default function UserManagementPage() {
         </div>
 
         {/* Right: Pie Chart */}
-        <div className="bg-white rounded-2xl shadow-sm border border-[#F0ECFF] p-5">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-[15px] font-medium text-[#2E2E2E]">
-              User Distribution
+        <div className='bg-white rounded-2xl shadow-sm border border-[#F0ECFF] p-5'>
+          <div className='flex items-center justify-between mb-4'>
+            <h3 className='text-[15px] font-medium text-[#2E2E2E]'>
+              {t("userManagement.stats.userDistribution")}
             </h3>
-            <FiPieChart className="text-[20px] text-[#8736C5]" />
+            <FiPieChart className='text-[20px] text-[#8736C5]' />
           </div>
-          
+
           {pieChartData.length > 0 ? (
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
+            <div className='h-64'>
+              <ResponsiveContainer width='100%' height='100%'>
                 <PieChart>
                   <Pie
                     data={pieChartData}
-                    cx="50%"
-                    cy="50%"
+                    cx='50%'
+                    cy='50%'
                     innerRadius={60}
                     outerRadius={80}
                     paddingAngle={5}
-                    dataKey="value"
-                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(1)}%`}
-                  >
+                    dataKey='value'
+                    label={({ name, percent }) =>
+                      `${name}: ${(percent * 100).toFixed(1)}%`
+                    }>
                     {pieChartData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
-                  <Tooltip 
-                    formatter={(value) => [value, 'Users']}
-                    contentStyle={{ 
-                      backgroundColor: 'white', 
-                      border: '1px solid #F0ECFF',
-                      borderRadius: '8px',
-                      boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
+                  <Tooltip
+                    formatter={(value) => [
+                      value,
+                      t("userManagement.stats.users"),
+                    ]}
+                    contentStyle={{
+                      backgroundColor: "white",
+                      border: "1px solid #F0ECFF",
+                      borderRadius: "8px",
+                      boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
                     }}
                   />
-                  <Legend 
-                    verticalAlign="bottom" 
+                  <Legend
+                    verticalAlign='bottom'
                     height={36}
                     formatter={(value) => (
-                      <span style={{ color: '#2E2E2E', fontSize: '12px' }}>{value}</span>
+                      <span style={{ color: "#2E2E2E", fontSize: "12px" }}>
+                        {value}
+                      </span>
                     )}
                   />
                 </PieChart>
               </ResponsiveContainer>
             </div>
           ) : (
-            <div className="h-64 flex items-center justify-center text-gray-500">
-              No data available for chart
+            <div className='h-64 flex items-center justify-center text-gray-500'>
+              {t("userManagement.chart.noData")}
             </div>
           )}
 
           {/* Percentage breakdown */}
           {stats && stats.totalUsers > 0 && (
-            <div className="mt-4 space-y-2">
+            <div className='mt-4 space-y-2'>
               {pieChartData.map((item) => {
-                const percentage = ((item.value / stats.totalUsers) * 100).toFixed(1);
+                const percentage = (
+                  (item.value / stats.totalUsers) *
+                  100
+                ).toFixed(1);
                 return (
-                  <div key={item.name} className="flex items-center justify-between text-sm">
-                    <div className="flex items-center">
-                      <div 
-                        className="w-3 h-3 rounded-full mr-2" 
+                  <div
+                    key={item.name}
+                    className='flex items-center justify-between text-sm'>
+                    <div className='flex items-center'>
+                      <div
+                        className='w-3 h-3 rounded-full mr-2'
                         style={{ backgroundColor: item.color }}
                       />
-                      <span className="text-gray-700">{item.name}</span>
+                      <span className='text-gray-700'>{item.name}</span>
                     </div>
-                    <div className="flex items-center">
-                      <span className="text-gray-900 font-medium">{item.value}</span>
-                      <span className="text-gray-500 ml-2">({percentage}%)</span>
+                    <div className='flex items-center'>
+                      <span className='text-gray-900 font-medium'>
+                        {item.value}
+                      </span>
+                      <span className='text-gray-500 ml-2'>
+                        ({percentage}%)
+                      </span>
                     </div>
                   </div>
                 );
@@ -244,7 +314,12 @@ export default function UserManagementPage() {
       {/* TABS + SEARCH */}
       <div className='mt-6 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4'>
         <div className='flex flex-wrap gap-3'>
-          {["All Users", "Buyer", "Seller", "Service Provider"].map((tab) => (
+          {[
+            t("userManagement.tabs.allUsers"),
+            t("userManagement.tabs.buyer"),
+            t("userManagement.tabs.seller"),
+            t("userManagement.tabs.serviceProvider"),
+          ].map((tab) => (
             <button
               key={tab}
               onClick={() => {
@@ -269,7 +344,7 @@ export default function UserManagementPage() {
             />
             <input
               type='text'
-              placeholder='Search by name or email'
+              placeholder={t("userManagement.search.placeholder")}
               className='w-full pl-9 pr-3 py-2.5 bg-white rounded-full border border-[#E4E2F5] text-sm focus:outline-none focus:ring-1 focus:ring-[#F88D25]'
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -284,12 +359,24 @@ export default function UserManagementPage() {
           <table className='min-w-full text-left text-sm'>
             <thead>
               <tr className='text-[12px] text-[#A3A3B5] border-b border-gray-200 bg-[#F9F6FF]'>
-                <th className='py-3 px-3'>USER</th>
-                <th className='py-3 px-3'>CONTACT</th>
-                <th className='py-3 px-3'>TYPE</th>
-                <th className='py-3 px-3'>STATUS</th>
-                <th className='py-3 px-3'>REGISTERED</th>
-                <th className='py-3 px-3 text-right'>ACTION</th>
+                <th className='py-3 px-3'>
+                  {t("userManagement.table.headers.user")}
+                </th>
+                <th className='py-3 px-3'>
+                  {t("userManagement.table.headers.contact")}
+                </th>
+                <th className='py-3 px-3'>
+                  {t("userManagement.table.headers.type")}
+                </th>
+                <th className='py-3 px-3'>
+                  {t("userManagement.table.headers.status")}
+                </th>
+                <th className='py-3 px-3'>
+                  {t("userManagement.table.headers.registered")}
+                </th>
+                <th className='py-3 px-3 text-right'>
+                  {t("userManagement.table.headers.action")}
+                </th>
               </tr>
             </thead>
 
@@ -297,13 +384,13 @@ export default function UserManagementPage() {
               {isLoading ? (
                 <tr>
                   <td colSpan={6} className='py-6 text-center text-gray-500'>
-                    Loading...
+                    {t("userManagement.table.loading")}
                   </td>
                 </tr>
               ) : users.length === 0 ? (
                 <tr>
                   <td colSpan={6} className='py-6 text-center text-gray-500'>
-                    No users found.
+                    {t("userManagement.table.noUsers")}
                   </td>
                 </tr>
               ) : (
@@ -329,14 +416,11 @@ export default function UserManagementPage() {
                     </td>
 
                     <td className='py-3 px-3'>
-                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                        user.role === 'buyer' 
-                          ? 'bg-[#FFF3E6] text-[#F78D25]'
-                          : user.role === 'seller'
-                          ? 'bg-[#F2E9FF] text-[#8736C5]'
-                          : 'bg-[#E6F8EF] text-[#32A35A]'
-                      }`}>
-                        {user.role}
+                      <span
+                        className={`px-3 py-1 rounded-full text-xs font-medium ${
+                          roleColors[user.role] || "bg-gray-100 text-gray-800"
+                        }`}>
+                        {getRoleDisplay(user.role)}
                       </span>
                     </td>
 
@@ -349,9 +433,15 @@ export default function UserManagementPage() {
                         className={`px-3 py-1 rounded-full text-xs font-medium cursor-pointer border ${
                           statusColors[user.status]
                         }`}>
-                        <option value='active'>Active</option>
-                        <option value='pending'>Pending</option>
-                        <option value='suspend'>Suspended</option>
+                        <option value='active'>
+                          {t("userManagement.status.active")}
+                        </option>
+                        <option value='pending'>
+                          {t("userManagement.status.pending")}
+                        </option>
+                        <option value='suspend'>
+                          {t("userManagement.status.suspend")}
+                        </option>
                       </select>
                     </td>
 
@@ -368,7 +458,7 @@ export default function UserManagementPage() {
                           setSelectedUserId(user._id);
                           setShowUserModal(true);
                         }}>
-                        View
+                        {t("userManagement.table.view")}
                       </button>
                     </td>
                   </tr>
@@ -400,11 +490,13 @@ export default function UserManagementPage() {
 
         <Dialog.Panel className='relative bg-white rounded-xl shadow-lg max-w-md w-full mx-auto p-6 z-10'>
           <Dialog.Title className='text-lg font-semibold mb-2'>
-            User Details
+            {t("userManagement.modal.title")}
           </Dialog.Title>
 
           {isUserLoading ? (
-            <div className='py-8 text-center text-gray-500'>Loading...</div>
+            <div className='py-8 text-center text-gray-500'>
+              {t("userManagement.modal.loading")}
+            </div>
           ) : userDetails?.data ? (
             <div className='space-y-3'>
               <div className='flex items-center gap-4'>
@@ -420,28 +512,43 @@ export default function UserManagementPage() {
                     {userDetails.data.name}
                   </div>
                   <div className='text-xs text-gray-500'>
-                    {userDetails.data.role}
+                    {getRoleDisplay(userDetails.data.role)}
                   </div>
                 </div>
               </div>
 
               <div>
-                <span className='font-medium'>Email: </span>
+                <span className='font-medium'>
+                  {t("userManagement.modal.email")}{" "}
+                </span>
                 {userDetails.data.email}
               </div>
 
               <div>
-                <span className='font-medium'>Phone: </span>
+                <span className='font-medium'>
+                  {t("userManagement.modal.phone")}{" "}
+                </span>
                 {userDetails.data.phoneNumber || "-"}
               </div>
 
               <div>
-                <span className='font-medium'>Status: </span>
-                {userDetails.data.status}
+                <span className='font-medium'>
+                  {t("userManagement.modal.status")}{" "}
+                </span>
+                <span
+                  className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                    statusColors[userDetails.data.status] ||
+                    "bg-gray-100 text-gray-800"
+                  }`}>
+                  {t(`userManagement.status.${userDetails.data.status}`) ||
+                    userDetails.data.status}
+                </span>
               </div>
 
               <div>
-                <span className='font-medium'>Registered: </span>
+                <span className='font-medium'>
+                  {t("userManagement.modal.registered")}{" "}
+                </span>
                 {userDetails.data.createdAt
                   ? new Date(userDetails.data.createdAt).toLocaleString()
                   : "-"}
@@ -449,7 +556,7 @@ export default function UserManagementPage() {
             </div>
           ) : (
             <div className='py-8 text-center text-gray-500'>
-              No user details found.
+              {t("userManagement.modal.noDetails")}
             </div>
           )}
 
@@ -460,7 +567,7 @@ export default function UserManagementPage() {
                 setShowUserModal(false);
                 setSelectedUserId(null);
               }}>
-              Close
+              {t("userManagement.modal.close")}
             </button>
           </div>
         </Dialog.Panel>

@@ -7,7 +7,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast, { Toaster } from "react-hot-toast";
-import { FcGoogle } from "react-icons/fc";
 import { FiEye, FiEyeOff, FiLock, FiMail } from "react-icons/fi";
 
 export default function LoginPage() {
@@ -219,19 +218,19 @@ export default function LoginPage() {
           </form>
 
           {/* Divider */}
-          <div className='flex items-center gap-4 my-6'>
+          {/* <div className='flex items-center gap-4 my-6'>
             <div className='flex-1 h-px bg-gray-200'></div>
             <span className='text-sm text-gray-400'>Or continue with</span>
             <div className='flex-1 h-px bg-gray-200'></div>
-          </div>
+          </div> */}
 
           {/* Google */}
-          <button
+          {/* <button
             onClick={handleGoogleLogin}
             className='w-full py-3 flex items-center justify-center gap-2 text-gray-700 border border-gray-300 rounded-xl hover:bg-gray-50 transition hover:border-[#4285F4] hover:shadow-sm cursor-pointer'>
             <FcGoogle className='text-xl' />
             Google
-          </button>
+          </button> */}
 
           {/* Create account */}
           <p className='text-center mt-8 text-sm text-gray-600'>
@@ -263,7 +262,7 @@ export default function LoginPage() {
           </div>
 
           {/* Test Credentials Note */}
-          <div className='mt-6 p-4 bg-gradient-to-r from-[#F3F8FF] to-[#FFF3E5] border border-[#D4E6FF] rounded-xl text-sm text-gray-700'>
+          {/* <div className='mt-6 p-4 bg-gradient-to-r from-[#F3F8FF] to-[#FFF3E5] border border-[#D4E6FF] rounded-xl text-sm text-gray-700'>
             <p className='font-medium mb-2 text-[#6A11CB] flex items-center gap-2'>
               <span className='text-lg'>🔐</span>
               Try these test credentials:
@@ -287,7 +286,7 @@ export default function LoginPage() {
             <p className='mt-2 text-xs text-gray-500'>
               Click Login button to see data in console
             </p>
-          </div>
+          </div> */}
         </div>
       </div>
     </div>

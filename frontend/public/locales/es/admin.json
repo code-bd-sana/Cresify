@@ -486,5 +486,167 @@
       "exporting": "Exportando...",
       "export": "Exportar"
     }
+  },
+  "refund": {
+    "title": "Gestión de Reembolsos",
+    "loading": "Cargando datos de reembolso...",
+    "totalRefunds": "Total: {{count}} solicitudes de reembolso",
+    "itemsPerPage": "Artículos por página:",
+    "noRefunds": "No se encontraron solicitudes de reembolso",
+    "table": {
+      "headers": {
+        "refundId": "ID de Reembolso",
+        "customer": "Cliente",
+        "seller": "Vendedor",
+        "amount": "Monto",
+        "status": "Estado",
+        "date": "Fecha",
+        "actions": "Acciones"
+      }
+    },
+    "status": {
+      "approved": "Aprobado",
+      "rejected": "Rechazado",
+      "requested": "Pendiente",
+      "processing": "Procesando",
+      "unknown": "Desconocido"
+    },
+    "modal": {
+      "title": "Detalles del Reembolso",
+      "basicInfo": "Información Básica",
+      "customerInfo": "Información del Cliente",
+      "sellerInfo": "Información del Vendedor",
+      "refundReason": "Motivo del Reembolso",
+      "evidence": "Evidencia",
+      "refundItems": "Artículos para Reembolsar",
+      "processRefund": "Procesar Reembolso",
+      "sections": {
+        "refundInfo": "Información del Reembolso",
+        "refundId": "ID de Reembolso:",
+        "amount": "Monto:",
+        "status": "Estado:",
+        "requested": "Solicitado:",
+        "customer": {
+          "name": "Nombre:",
+          "email": "Correo:",
+          "phone": "Teléfono:"
+        },
+        "seller": {
+          "shopName": "Nombre de la Tienda:",
+          "sellerName": "Nombre del Vendedor:",
+          "email": "Correo:"
+        }
+      },
+      "itemsTable": {
+        "product": "Producto",
+        "quantity": "Cantidad",
+        "price": "Precio",
+        "amount": "Monto"
+      },
+      "actionForm": {
+        "title": "Procesar Reembolso",
+        "action": "Acción",
+        "partialAmount": "Monto Parcial (Máx: {{amount}})",
+        "enterAmount": "Ingresa el monto",
+        "actions": {
+          "approve": "Aprobar Reembolso Completo",
+          "partial": "Aprobar Reembolso Parcial",
+          "reject": "Rechazar Reembolso"
+        }
+      },
+      "buttons": {
+        "cancel": "Cancelar",
+        "rejectRefund": "Rechazar Reembolso",
+        "approvePartial": "Aprobar Parcial",
+        "approveRefund": "Aprobar Reembolso",
+        "processing": "Procesando...",
+        "viewDetails": "Ver Detalles"
+      },
+      "messages": {
+        "error": {
+          "selectRefund": "Por favor, selecciona un reembolso y asegúrate de estar conectado.",
+          "invalidAmount": "Por favor, ingresa un monto válido para el reembolso parcial.",
+          "failed": "Error al procesar el reembolso."
+        },
+        "success": "Reembolso {{action}} exitosamente!"
+      }
+    },
+    "pagination": {
+      "page": "Página {{current}} de {{total}}",
+      "goToPage": "Ir a la página:",
+      "previous": "Anterior",
+      "next": "Siguiente"
+    }
+  },
+  "serviceRefund": {
+    "title": "Reembolsos de Servicios",
+    "pageTitle": "Reembolsos de Reservas de Servicios",
+    "loading": "Cargando datos de reembolso...",
+    "totalRefunds": "Total: {{count}} solicitudes de reembolso",
+    "itemsPerPage": "Artículos por página:",
+    "noRefunds": "No se encontraron solicitudes de reembolso",
+    "table": {
+      "headers": {
+        "refundId": "ID de Reembolso",
+        "customer": "Cliente",
+        "amount": "Monto",
+        "status": "Estado",
+        "date": "Fecha",
+        "actions": "Acciones"
+      }
+    },
+    "status": {
+      "approved": "Aprobado",
+      "rejected": "Rechazado",
+      "requested": "Pendiente",
+      "processing": "Procesando",
+      "refunded_full": "Reembolsado",
+      "partial_refunded": "Parcialmente Reembolsado",
+      "under_review": "En Revisión",
+      "unknown": "Desconocido"
+    },
+    "modal": {
+      "title": "Detalles del Reembolso",
+      "sections": {
+        "refundInfo": "Información del Reembolso",
+        "customerInfo": "Información del Cliente",
+        "refundReason": "Motivo del Reembolso",
+        "evidence": "Evidencia",
+        "fields": {
+          "refundId": "ID de Reembolso:",
+          "amount": "Monto:",
+          "status": "Estado:",
+          "requested": "Solicitado:",
+          "customerName": "Nombre:",
+          "customerEmail": "Correo:",
+          "customerPhone": "Teléfono:"
+        }
+      }
+    },
+    "buttons": {
+      "viewDetails": "Ver Detalles",
+      "approve": "Aprobar",
+      "reject": "Rechazar",
+      "process": "Procesar",
+      "processing": "Procesando...",
+      "close": "Cerrar"
+    },
+    "alerts": {
+      "approveConfirm": "¿Aprobar esta solicitud de reembolso?",
+      "rejectConfirm": "¿Rechazar esta solicitud de reembolso?",
+      "processConfirm": "¿Procesar este reembolso ahora?",
+      "approveSuccess": "Reembolso aprobado exitosamente",
+      "rejectSuccess": "Reembolso rechazado exitosamente",
+      "processSuccess": "Reembolso procesado exitosamente",
+      "approveFailed": "Error al aprobar el reembolso",
+      "rejectFailed": "Error al rechazar el reembolso",
+      "processFailed": "Error al procesar el reembolso"
+    },
+    "pagination": {
+      "page": "Página {{current}} de {{total}}",
+      "goToPage": "Ir a la página:",
+      "previous": "Anterior",
+      "next": "Siguiente"
+    }
   }
 }
