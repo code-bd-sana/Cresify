@@ -120,7 +120,7 @@ export default function StoreProfile() {
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/(^-|-$)/g, '');
-      setStoreUrl(`${window.location.origin}/store/${_id}`);
+      setStoreUrl(`${window.location.origin}/store/${id}`);
     }
   }, [formData.shopName, id]);
 
