@@ -138,7 +138,7 @@ export default function AccountSettings() {
     }));
   };
 
-  const handleServiceChange = (e) => {
+  const handleServiceChange = (e) => {                    
     const { name, value } = e.target;
     setServiceData((prev) => ({
       ...prev,
@@ -776,7 +776,6 @@ export default function AccountSettings() {
             </div>
           </div>
 
-          <RegisterAdmin />
 
           {/* Password Requirements */}
           <div className='mb-4 p-4 bg-yellow-50 rounded-lg border border-yellow-100'>
@@ -798,6 +797,12 @@ export default function AccountSettings() {
             {t("settings.password.form.update")}
           </button>
         </form>
+
+        
+
+
+        
+          <RegisterAdmin />
       </div>
     </div>
   );

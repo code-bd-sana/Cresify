@@ -5,8 +5,8 @@ import Image from "next/image";
 import { IoChevronDownOutline, IoSearchOutline } from "react-icons/io5";
 import Link from "next/link";
 import { useAllLocationQuery } from "@/feature/ProductApi";
-import { useTranslation } from "react-i18next"; // Add this import
-import { usePathname } from "next/navigation"; // Add this import
+import { useTranslation } from "react-i18next";
+import { usePathname } from "next/navigation";
 
 export default function HomeBanner() {
   const [filters, setFilters] = useState({
@@ -24,12 +24,7 @@ export default function HomeBanner() {
   const { data: locationData, isLoading, isError } = useAllLocationQuery();
   
   // Translation hook
-  const { t, i18n } = useTranslation("home"); // Use "home" namespace
-  const pathname = usePathname();
-
-  // Extract current locale from pathname
-  const pathSegments = pathname.split("/").filter(Boolean);
-  const currentLocale = ["en", "es"].includes(pathSegments[0]) ? pathSegments[0] : "en";
+  const { t } = useTranslation("home");
 
   // Extract data from API response
   const countries = locationData?.data?.countries || [];
@@ -70,7 +65,7 @@ export default function HomeBanner() {
     setCitySearch("");
   };
 
-  // Build query string from filters with locale
+  // Build query string from filters
   const buildQueryString = () => {
     const params = new URLSearchParams();
     
@@ -79,14 +74,6 @@ export default function HomeBanner() {
     if (filters.city) params.append('city', filters.city);
     
     return params.toString() ? `?${params.toString()}` : '';
-  };
-
-  // Create localized href
-  const createLocalizedHref = (path) => {
-    if (path.startsWith(`/${currentLocale}`)) {
-      return path;
-    }
-    return `/${currentLocale}${path.startsWith("/") ? path : `/${path}`}`;
   };
 
   return (
@@ -219,7 +206,7 @@ export default function HomeBanner() {
           >
             {/* Explore Marketplace with query parameters */}
             <Link 
-              href={createLocalizedHref(`/marketplace${buildQueryString()}`)}
+              href={`/marketplace${buildQueryString()}`}
               className="w-full sm:w-auto"
             >
               <button
@@ -241,7 +228,7 @@ export default function HomeBanner() {
 
             {/* Browse Services with query parameters */}
             <Link 
-              href={createLocalizedHref(`/services${buildQueryString()}`)}
+              href={`/services${buildQueryString()}`}
               className="w-full sm:w-auto"
             >
               <button
@@ -313,8 +300,8 @@ function EnhancedDropdown({
   onClose,
   isLoading = false,
   isError = false,
-  t, // Translation function passed from parent
-  itemType = "" // countries, regions, cities
+  t,
+  itemType = ""
 }) {
   const [open, setOpen] = useState(false);
 
@@ -324,7 +311,7 @@ function EnhancedDropdown({
 
   const handleClose = () => {
     setOpen(false);
-    onSearchChange(""); // Clear search when closing
+    onSearchChange("");
     onClose?.();
   };
 
@@ -341,7 +328,6 @@ function EnhancedDropdown({
     return String(option);
   };
 
-  // Get placeholder text for search
   const getSearchPlaceholder = () => {
     if (itemType === "countries") return t("search_country");
     if (itemType === "regions") return t("search_region");
@@ -349,7 +335,6 @@ function EnhancedDropdown({
     return `Search ${label.toLowerCase()}...`;
   };
 
-  // Get no results message
   const getNoResultsMessage = () => {
     if (searchValue) {
       return t("no_results", { 
@@ -358,7 +343,6 @@ function EnhancedDropdown({
       });
     }
     
-    // Default no items message
     if (itemType === "countries") return t("no_countries");
     if (itemType === "regions") return t("no_regions");
     if (itemType === "cities") return t("no_cities");
