@@ -144,9 +144,9 @@ export default function FeaturedProducts() {
           <h2 className="text-[36px] font-bold text-center mb-2">
           {t('title')}
           </h2>
-          {/* <p className="text-center font-bold text-[#AC65EE] text-[15px] mb-12">
-            Discover our handpicked selection of top-quality products from trusted sellers
-          </p> */}
+          <p className="text-center font-bold text-[#AC65EE] text-[15px] mb-12">
+          {t('description')}
+          </p>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
             {[1, 2, 3, 4].map((item) => (
@@ -183,7 +183,7 @@ export default function FeaturedProducts() {
 
         {/* Subtext */}
         <p className="text-center font-bold text-[#AC65EE] text-[15px] mb-12">
-          Discover our handpicked selection of top-quality products from trusted sellers
+          {t('description')}
         </p>
 
         {/* Product Grid */}
