@@ -1,0 +1,32 @@
+{
+  "settings": {
+    "adminRegistration": {
+      "title": "Create Admin Account",
+      "subtitle": "Register a new administrator for the platform",
+      "form": {
+        "email": "Email Address",
+        "emailPlaceholder": "admin@example.com",
+        "password": "Password",
+        "passwordPlaceholder": "Enter password",
+        "confirmPassword": "Confirm Password",
+        "confirmPasswordPlaceholder": "Re-enter password",
+        "info": "Note: This admin account will have full access to manage the entire platform.",
+        "errors": {
+          "allFields": "All fields are required",
+          "passwordMismatch": "Passwords do not match",
+          "passwordLength": "Password must be at least 6 characters"
+        }
+      },
+      "actions": {
+        "create": "Create Admin Account",
+        "creating": "Creating Account...",
+        "backToLogin": "Back to Login"
+      },
+      "success": "Admin account created successfully! Redirecting to login...",
+      "errors": {
+        "registrationFailed": "Registration failed. Please try again.",
+        "general": "An error occurred. Please try again."
+      }
+    }
+  }
+}

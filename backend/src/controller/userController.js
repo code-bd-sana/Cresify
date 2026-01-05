@@ -144,22 +144,20 @@ export const changePassword = async (req, res) => {
 };
 
 export const updateProfile = async (req, res) => {
-  console.log(req.body, "hey");
+  console.log(req.body, "Update Profile Request");
   try {
-    const id = req.body.id; // Ensure you're using the correct identifier (you had `id = req.body` previously)
+    const id = req.body.id;
 
     const {
       name,
       phoneNumber,
       shopName,
-      categories,
+      shopDescription,
       serviceName,
       serviceCategory,
       serviceArea,
-      shopDescription,
       serviceRedius,
       servicesImage,
-
       address,
       hourlyRate,
       yearsofExperience,
@@ -167,46 +165,82 @@ export const updateProfile = async (req, res) => {
       category,
       website,
       shopLogo,
+      instagram,
+      facebook,
+      twitter,
+      linkedin,
+      workingHours,
+      workingDays,
+      slotDuration,
+      country,
+      region,
+      city
     } = req.body;
 
-    // Perform the update operation
-    const updated = await User.updateOne(
-      { _id: id },
-      {
-        $set: {
-          name,
-          phoneNumber,
-          shopName,
-          categories,
-          serviceName,
-          serviceCategory,
-          serviceArea,
-          serviceRedius,
-          hourlyRate,
-          yearsofExperience,
-          serviceDescription,
-          shopDescription,
-      servicesImage,
+    // Build update object
+    const updateData = {
+      ...(name && { name }),
+      ...(phoneNumber && { phoneNumber }),
+      // Store Information
+      ...(shopName && { shopName }),
+      ...(shopDescription && { shopDescription }),
+      ...(shopLogo && { shopLogo }),
+      ...(website && { website }),
+      ...(category && { category }),
+      // Service Information
+      ...(serviceName && { serviceName }),
+      ...(serviceCategory && { serviceCategory }),
+      ...(serviceArea && { serviceArea }),
+      ...(serviceRedius !== undefined && { serviceRedius: Number(serviceRedius) }),
+      ...(hourlyRate !== undefined && { hourlyRate: Number(hourlyRate) }),
+      ...(yearsofExperience && { yearsofExperience }),
+      ...(serviceDescription && { serviceDescription }),
+      // Services Images
+      ...(servicesImage && { servicesImage }),
+      // Social Media
+      ...(instagram && { instagram }),
+      ...(facebook && { facebook }),
+      ...(twitter && { twitter }),
+      ...(linkedin && { linkedin }),
+      // Working Hours
+      ...(workingHours && { workingHours }),
+      ...(workingDays && { workingDays }),
+      ...(slotDuration !== undefined && { slotDuration: Number(slotDuration) }),
+      // Location
+      ...(address && { address }),
+      ...(country && { country }),
+      ...(region && { region }),
+      ...(city && { city }),
+      // Update timestamp
+      updatedAt: new Date()
+    };
 
-          addresss: address,
-
-          category,
-          website,
-          shopLogo,
-        },
-      }
+    // Perform update
+    const result = await User.findByIdAndUpdate(
+      id,
+      { $set: updateData },
+      { new: true, runValidators: true }
     );
 
-    // Return a simple success message or the update count
+    if (!result) {
+      return res.status(404).json({
+        message: "User not found",
+        success: false
+      });
+    }
+
     res.status(200).json({
       message: "Profile updated successfully",
-      updatedCount: updated.nModified, // `nModified` will tell you how many documents were modified
+      success: true,
+      data: result
     });
+    
   } catch (error) {
-    console.log(error, "Tumi aamar personal error");
+    console.error("Profile update error:", error);
     res.status(500).json({
-      error: error.message || error,
       message: "An error occurred while updating the profile",
+      error: error.message,
+      success: false
     });
   }
 };

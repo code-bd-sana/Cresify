@@ -60,7 +60,7 @@ export const config = {
     "/dashboard/messages",
     "/dashboard/settings",
     '/profile',
-'/product-details/:path*',
+
 '/cart',
 '/dashboard/refund',
 '/book-now'

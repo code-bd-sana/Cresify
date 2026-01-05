@@ -126,7 +126,7 @@ export const myProduct = async (req, res) => {
     const allProducts = await Product.find(query)
       .skip(skip)
       .limit(limit)
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 }).populate('seller');
 
     // Count total for frontend pagination
     const total = await Product.countDocuments(query);
@@ -312,7 +312,7 @@ export const allProduct = async (req, res) => {
       .skip(skip)
       .limit(limit)
       .sort(sortOptions)
-      .populate("seller", "name email _id");
+      .populate("seller", "name email _id shopName");
 
     // Count total for frontend pagination
     const total = await Product.countDocuments(query);

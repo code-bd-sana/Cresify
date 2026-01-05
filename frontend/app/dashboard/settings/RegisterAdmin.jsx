@@ -7,14 +7,45 @@ import toast, { Toaster } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 
 const RegisterAdmin = () => {
-  const { t } = useTranslation("seller");
+  const { t } = useTranslation("adminRegistration");
   const [createUser, { isLoading: userLoading }] = useCreateUserMutation();
-
+  
   const [formData, setFormData] = useState({
     email: "",
     password: "",
     confirmPassword: "",
   });
+
+  const [validationErrors, setValidationErrors] = useState({});
+
+  const validateForm = () => {
+    const errors = {};
+
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!formData.email) {
+      errors.email = "Email address is required";
+    } else if (!emailRegex.test(formData.email)) {
+      errors.email = "Please enter a valid email address";
+    }
+
+    // Password validation
+    if (!formData.password) {
+      errors.password = "Password is required";
+    } else if (formData.password.length < 6) {
+      errors.password = "Password must be at least 6 characters";
+    }
+
+    // Confirm password validation
+    if (!formData.confirmPassword) {
+      errors.confirmPassword = "Please confirm your password";
+    } else if (formData.password !== formData.confirmPassword) {
+      errors.confirmPassword = "Passwords do not match";
+    }
+
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -22,171 +53,232 @@ const RegisterAdmin = () => {
       ...prev,
       [name]: value,
     }));
+    
+    // Clear validation error when user starts typing
+    if (validationErrors[name]) {
+      setValidationErrors((prev) => ({
+        ...prev,
+        [name]: "",
+      }));
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    // Simple validation
-    if (!formData.email || !formData.password || !formData.confirmPassword) {
-      toast.error(t("settings.adminRegistration.form.errors.allFields"));
+    
+    if (!validateForm()) {
+      toast.error("Please fix the errors in the form");
       return;
     }
 
-    if (formData.password !== formData.confirmPassword) {
-      toast.error(t("settings.adminRegistration.form.errors.passwordMismatch"));
-      return;
-    }
-
-    if (formData.password.length < 6) {
-      toast.error(t("settings.adminRegistration.form.errors.passwordLength"));
-      return;
-    }
-
-    // Prepare data with dummy values
+    // Prepare ONLY email and password for API call
     const adminData = {
       email: formData.email,
       password: formData.password,
       role: "admin",
-      name: `Admin ${formData.email.split("@")[0]}`,
-      phoneNumber: "+1 (555) 123-4567",
-      status: "active",
-      // Add other required dummy fields here
-      registrationDate: new Date().toISOString(),
-      nationalId: "ADMIN-" + Date.now().toString().slice(-6),
-      serviceName: "Platform Administration",
-      serviceCategory: "management",
-      serviceArea: "Global",
-      serviceRedius: 0,
-      hourlyRate: 0,
-      yearsofExperience: "5+ years",
-      serviceDescription: "System administration",
-      country: "Global",
-      region: "HQ",
-      city: "Virtual",
-      address: "Admin Headquarters",
-      servicesImage: [],
-      workingDays: ["Mon", "Tue", "Wed", "Thu", "Fri"],
     };
 
-    try {
-      const response = await createUser(adminData);
+    console.log("📤 Sending API Request with data:", adminData);
 
+    try {
+      // Show loading toast
+      toast.loading("Creating admin account...");
+      
+      // Make API call
+      const response = await createUser(adminData);
+      
+      console.log("📥 API Response Received:", response);
+
+      // Check for errors
       if (response.error) {
-        throw new Error(
-          response.error.data?.message ||
-            t("settings.adminRegistration.errors.registrationFailed")
-        );
+        console.error("❌ API Error Details:", response.error);
+        console.error("❌ Error Data:", response.error.data);
+        console.error("❌ Error Status:", response.error.status);
+        
+        let errorMessage = "Registration failed";
+        
+        if (response.error.data) {
+          if (response.error.data.message) {
+            errorMessage = response.error.data.message;
+          } else if (response.error.data.error) {
+            errorMessage = response.error.data.error;
+          } else if (typeof response.error.data === 'string') {
+            errorMessage = response.error.data;
+          }
+        }
+        
+        throw new Error(errorMessage);
       }
 
-      toast.success(t("settings.adminRegistration.success"));
-      setTimeout(() => {
-        window.location.href = "/login";
-      }, 1500);
+      // Check for success response
+      if (response.data) {
+        console.log("✅ API Success Response Data:", response.data);
+        
+        toast.success("Admin account created successfully!");
+        
+        // Clear form
+        setFormData({
+          email: "",
+          password: "",
+          confirmPassword: "",
+        });
+
+        
+      } else {
+        console.warn("⚠️ No data in response:", response);
+        throw new Error("No response data received");
+      }
+      
     } catch (error) {
-      toast.error(
-        error.message || t("settings.adminRegistration.errors.general")
-      );
+      console.error("🔥 Registration Error:", error);
+      
+      // Handle specific error cases
+      let errorMessage = error.message || "An error occurred";
+      
+      if (errorMessage.includes("already exists") || 
+          errorMessage.includes("duplicate") || 
+          errorMessage.includes("Email already")) {
+        toast.error("This email is already registered");
+      } else if (errorMessage.includes("network") || 
+                errorMessage.includes("Network") || 
+                errorMessage.includes("fetch")) {
+        toast.error("Network error. Please check your connection.");
+      } else {
+        toast.error(errorMessage);
+      }
     }
   };
 
   return (
-    <div className='min-h-screen bg-gray-50 flex items-center justify-center p-4'>
-      <Toaster />
-      <div className='max-w-md w-full'>
-        <div className='bg-white rounded-lg shadow-md p-8'>
-          <div className='text-center mb-8'>
-            <Image
-              src={logo}
-              width={120}
-              height={45}
-              alt='Cresify Logo'
-              className='mx-auto mb-4'
-            />
-            <h1 className='text-2xl font-bold text-gray-900'>
-              {t("settings.adminRegistration.title")}
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex flex-col items-center justify-center p-4">
+      <Toaster 
+        position="top-center"
+        toastOptions={{
+          duration: 4000,
+          style: {
+            background: '#363636',
+            color: '#fff',
+          },
+          success: {
+            duration: 3000,
+          },
+          error: {
+            duration: 4000,
+          },
+        }}
+      />
+      
+      <div className="absolute top-0 left-0 w-full p-6">
+        <div className="max-w-6xl mx-auto flex items-center justify-between">
+          <Image
+            src={logo}
+            width={150}
+            height={50}
+            alt="Cresify Logo"
+            className="h-auto"
+          />
+          <a
+            href="/login"
+            className="text-sm text-gray-600 hover:text-purple-600 font-medium transition-colors hover:underline"
+          >
+            Back to Login
+          </a>
+        </div>
+      </div>
+
+      <div className="w-full max-w-md mt-20">
+        <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-200">
+          <div className="bg-gradient-to-r from-[#9838E1] to-[#F68E44] p-8 text-center">
+            <h1 className="text-2xl font-bold text-white mb-2">
+              Create Admin Account
             </h1>
-            <p className='text-gray-600 mt-2'>
-              {t("settings.adminRegistration.subtitle")}
+            <p className="text-gray-100 text-sm">
+              Register a new system administrator
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className='space-y-4'>
-            <div>
-              <label className='block text-sm font-medium text-gray-700 mb-1'>
-                {t("settings.adminRegistration.form.email")}
-              </label>
-              <input
-                type='email'
-                name='email'
-                value={formData.email}
-                onChange={handleInputChange}
-                className='w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none'
-                placeholder={t(
-                  "settings.adminRegistration.form.emailPlaceholder"
+          <div className="p-8">
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Email Address *
+                </label>
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-[#9838E1] focus:border-transparent outline-none ${
+                    validationErrors.email 
+                      ? "border-red-300 bg-red-50" 
+                      : "border-gray-300"
+                  }`}
+                  placeholder="admin@example.com"
+                />
+                {validationErrors.email && (
+                  <p className="mt-1 text-sm text-red-600">{validationErrors.email}</p>
                 )}
-                required
-              />
-            </div>
+              </div>
 
-            <div>
-              <label className='block text-sm font-medium text-gray-700 mb-1'>
-                {t("settings.adminRegistration.form.password")}
-              </label>
-              <input
-                type='password'
-                name='password'
-                value={formData.password}
-                onChange={handleInputChange}
-                className='w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none'
-                placeholder={t(
-                  "settings.adminRegistration.form.passwordPlaceholder"
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Password * (min. 6 characters)
+                </label>
+                <input
+                  type="password"
+                  name="password"
+                  value={formData.password}
+                  onChange={handleInputChange}
+                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-[#9838E1] focus:border-transparent outline-none ${
+                    validationErrors.password 
+                      ? "border-red-300 bg-red-50" 
+                      : "border-gray-300"
+                  }`}
+                  placeholder="••••••••"
+                />
+                {validationErrors.password && (
+                  <p className="mt-1 text-sm text-red-600">{validationErrors.password}</p>
                 )}
-                minLength={6}
-                required
-              />
-            </div>
+              </div>
 
-            <div>
-              <label className='block text-sm font-medium text-gray-700 mb-1'>
-                {t("settings.adminRegistration.form.confirmPassword")}
-              </label>
-              <input
-                type='password'
-                name='confirmPassword'
-                value={formData.confirmPassword}
-                onChange={handleInputChange}
-                className='w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none'
-                placeholder={t(
-                  "settings.adminRegistration.form.confirmPasswordPlaceholder"
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Confirm Password *
+                </label>
+                <input
+                  type="password"
+                  name="confirmPassword"
+                  value={formData.confirmPassword}
+                  onChange={handleInputChange}
+                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-[#9838E1] focus:border-transparent outline-none ${
+                    validationErrors.confirmPassword 
+                      ? "border-red-300 bg-red-50" 
+                      : "border-gray-300"
+                  }`}
+                  placeholder="••••••••"
+                />
+                {validationErrors.confirmPassword && (
+                  <p className="mt-1 text-sm text-red-600">{validationErrors.confirmPassword}</p>
                 )}
-                minLength={6}
-                required
-              />
+              </div>
+
+              <button
+                type="submit"
+                disabled={userLoading}
+                className="w-full bg-gradient-to-r from-[#9838E1] to-[#F68E44] text-white py-3 px-4 rounded-lg font-semibold hover:opacity-90 transition disabled:opacity-50"
+              >
+                {userLoading ? "Creating Account..." : "Create Admin Account"}
+              </button>
+            </form>
+
+            <div className="mt-6 text-center">
+              <button
+                onClick={() => console.log("Form Data:", formData)}
+                className="text-sm text-gray-500 hover:text-gray-700"
+              >
+                Debug: Log Form Data
+              </button>
             </div>
-
-            <div className='bg-blue-50 p-3 rounded-lg border border-blue-100'>
-              <p className='text-sm text-blue-800'>
-                {t("settings.adminRegistration.form.info")}
-              </p>
-            </div>
-
-            <button
-              type='submit'
-              disabled={userLoading}
-              className='w-full bg-purple-600 text-white py-3 rounded-lg font-medium hover:bg-purple-700 transition-colors disabled:opacity-50'>
-              {userLoading
-                ? t("settings.adminRegistration.actions.creating")
-                : t("settings.adminRegistration.actions.create")}
-            </button>
-          </form>
-
-          <div className='mt-6 text-center'>
-            <a
-              href='/login'
-              className='text-sm text-gray-600 hover:text-purple-600 hover:underline'>
-              {t("settings.adminRegistration.actions.backToLogin")}
-            </a>
           </div>
         </div>
       </div>
