@@ -53,6 +53,8 @@ const loadTranslations = () => {
       provider: require("@/public/locales/en/provider.json"),
       admin: require("@/public/locales/en/admin.json"),
       store: require("@/public/locales/en/store.json"),
+      adminRegistration: require('@/public/locales/en/adminRegistration.json'),
+          login: require('@/public/locales/es/login.json')
     },
     es: {
       navbar: require("@/public/locales/es/navbar.json"),
@@ -82,6 +84,8 @@ const loadTranslations = () => {
       provider: require("@/public/locales/es/provider.json"),
       admin: require("@/public/locales/es/admin.json"),
       store: require("@/public/locales/es/store.json"),
+      adminRegistration: require('@/public/locales/es/adminRegistration.json'),
+      login: require('@/public/locales/es/login.json')
     },
   };
 };

@@ -1,0 +1,32 @@
+{
+  "settings": {
+    "adminRegistration": {
+      "title": "Crear Cuenta de Administrador",
+      "subtitle": "Registrar un nuevo administrador para la plataforma",
+      "form": {
+        "email": "Correo Electrónico",
+        "emailPlaceholder": "admin@ejemplo.com",
+        "password": "Contraseña",
+        "passwordPlaceholder": "Ingrese la contraseña",
+        "confirmPassword": "Confirmar Contraseña",
+        "confirmPasswordPlaceholder": "Vuelva a ingresar la contraseña",
+        "info": "Nota: Esta cuenta de administrador tendrá acceso completo para gestionar toda la plataforma.",
+        "errors": {
+          "allFields": "Todos los campos son obligatorios",
+          "passwordMismatch": "Las contraseñas no coinciden",
+          "passwordLength": "La contraseña debe tener al menos 6 caracteres"
+        }
+      },
+      "actions": {
+        "create": "Crear Cuenta de Administrador",
+        "creating": "Creando Cuenta...",
+        "backToLogin": "Volver al Inicio de Sesión"
+      },
+      "success": "¡Cuenta de administrador creada con éxito! Redirigiendo al inicio de sesión...",
+      "errors": {
+        "registrationFailed": "Registro fallido. Por favor, intente nuevamente.",
+        "general": "Ocurrió un error. Por favor, intente nuevamente."
+      }
+    }
+  }
+}

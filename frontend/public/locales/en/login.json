@@ -1,0 +1,24 @@
+{
+  "login": {
+    "title": "Welcome Back 👋",
+    "subtitle": "Log in to continue with your store or explore products.",
+    "form": {
+      "email": "Email",
+      "emailPlaceholder": "Youremail@example.com",
+      "password": "Password",
+      "passwordPlaceholder": "••••••••",
+      "rememberMe": "Remember me",
+      "forgotPassword": "Forgot your Password?",
+      "submit": "Login",
+      "showPassword": "Show password",
+      "hidePassword": "Hide password"
+    },
+    "newHere": "Are you new here?",
+    "createSeller": "Create a seller account",
+    "registerBuyer": "Register as a Buyer",
+    "registerProvider": "Register as a Service Provider",
+    "errors": {
+      "loginFailed": "Login failed. Please check your credentials."
+    }
+  }
+}

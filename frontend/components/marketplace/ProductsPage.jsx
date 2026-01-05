@@ -177,7 +177,7 @@ function ProductsPagePage({ searchTerm = "" }) {
   
   const products = data?.data || [];
   const totalProducts = data?.total || 0;
-
+console.log(products, 'this is all products')
   const categories = [
     "Fashion",
     "Food and Drinks",
@@ -697,7 +697,7 @@ function ProductsPagePage({ searchTerm = "" }) {
 
                 {/* Seller */}
                 <p className="text-[14px] text-[#A46CFF] font-medium mb-2">
-                  {t('by')} {product.seller?.name || product.seller?.email || t('unknown_seller')}
+                  {t('by')} {product.seller?.shopName || t('unknown_seller')}
                 </p>
 
                 {/* Location Info */}
