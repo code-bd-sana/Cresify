@@ -1,9 +1,10 @@
 "use client";
 
-import { useGetReviewBySellerIdQuery } from "@/feature/review/ReviewApi";
+import { useGetReviewBySellerIdQuery, useUpdateReviewMutation } from "@/feature/review/ReviewApi";
 import { useSession } from "next-auth/react";
 import Image from "next/image";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { FaStar } from "react-icons/fa";
 import { LuReply } from "react-icons/lu";
@@ -11,14 +12,12 @@ import { LuReply } from "react-icons/lu";
 export default function ReviewsPage() {
   const { t } = useTranslation("seller");
   const [replyBox, setReplyBox] = useState(null);
+  const [replyText, setReplyText] = useState("");
   const { data: session } = useSession();
   const userId = session?.user?.id;
 
-  const { data: reviewData, isLoading } = useGetReviewBySellerIdQuery(userId);
-  console.log(reviewData, "revie data");
-
-  // Extract reviews from API response or use empty array
-  const apiReviews = reviewData?.data || [];
+  const { data: reviewData, isLoading, refetch } = useGetReviewBySellerIdQuery(userId);
+  const [updateReview] = useUpdateReviewMutation();
 
   // Format date function
   const formatDate = (dateString) => {
@@ -28,6 +27,41 @@ export default function ReviewsPage() {
       month: "short",
       day: "numeric",
     });
+  };
+
+  // Extract reviews from API response or use empty array
+  const apiReviews = reviewData?.data || [];
+
+  const handleReply = async (reviewId) => {
+    if (!replyText.trim()) {
+      toast.error(t("reviews.emptyReplyError"));
+      return;
+    }
+
+    try {
+      await updateReview({
+        id: reviewId,
+        reply: replyText
+      }).unwrap();
+
+      toast.success(t("reviews.replySuccess"));
+      setReplyBox(null);
+      setReplyText("");
+      refetch(); // Refresh reviews to show updated reply
+    } catch (error) {
+      console.error("Failed to send reply:", error);
+      toast.error(t("reviews.replyError"));
+    }
+  };
+
+  const handleOpenReplyBox = (review) => {
+    // If already has a reply, don't open reply box
+    if (review.reply) {
+      toast.info(t("reviews.alreadyReplied"));
+      return;
+    }
+    setReplyBox(review._id);
+    setReplyText("");
   };
 
   if (isLoading) {
@@ -117,36 +151,47 @@ export default function ReviewsPage() {
                     {item.review}
                   </p>
 
-                  {/* COMMENT/REPLY SECTION - HARDCODED COMMENT FOR DESIGN */}
-                  <div className='mt-4 bg-[#f5eaff] text-[#7b43ff] rounded-lg p-4 text-sm'>
-                    <p className='font-medium text-gray-600 mb-1'>
-                      {t("reviews.yourReply")}:
-                    </p>
-                    {t("reviews.sampleReply")}
-                  </div>
+                  {/* COMMENT/REPLY SECTION - Only show if reply exists */}
+                  {item.reply && (
+                    <div className='mt-4 bg-[#f5eaff] text-[#7b43ff] rounded-lg p-4 text-sm'>
+                      <p className='font-medium text-gray-600 mb-1'>
+                        {t("reviews.yourReply")}:
+                      </p>
+                      {item.reply}
+                    </div>
+                  )}
 
-                  {/* REPLY BUTTON */}
-                  <button
-                    onClick={() => setReplyBox(item._id)}
-                    className='flex items-center gap-2 mt-4 text-[#9c6bff] font-medium hover:opacity-70'>
-                    <LuReply size={18} />
-                    {t("reviews.replyButton")}
-                  </button>
+                  {/* REPLY BUTTON - Only show if no reply exists */}
+                  {!item.reply && (
+                    <button
+                      onClick={() => handleOpenReplyBox(item)}
+                      className='flex items-center gap-2 mt-4 text-[#9c6bff] font-medium hover:opacity-70'>
+                      <LuReply size={18} />
+                      {t("reviews.replyButton")}
+                    </button>
+                  )}
 
                   {/* DYNAMIC INPUT BOX */}
                   {replyBox === item._id && (
                     <div className='mt-4'>
                       <textarea
+                        value={replyText}
+                        onChange={(e) => setReplyText(e.target.value)}
                         placeholder={t("reviews.replyPlaceholder")}
                         className='w-full h-20 border border-[#d2b7ff] rounded-lg p-3 text-sm focus:ring-2 focus:ring-[#b38aff] outline-none'
                       />
 
                       <div className='flex gap-3 mt-3'>
-                        <button className='bg-[#a675ff] text-white text-sm font-medium px-5 py-2 rounded-lg hover:bg-[#935df8] transition'>
+                        <button
+                          onClick={() => handleReply(item._id)}
+                          className='bg-[#a675ff] text-white text-sm font-medium px-5 py-2 rounded-lg hover:bg-[#935df8] transition'>
                           {t("reviews.sendReply")}
                         </button>
                         <button
-                          onClick={() => setReplyBox(null)}
+                          onClick={() => {
+                            setReplyBox(null);
+                            setReplyText("");
+                          }}
                           className='text-gray-500 hover:text-gray-700 text-sm'>
                           {t("common.cancel")}
                         </button>
