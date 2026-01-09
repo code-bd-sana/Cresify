@@ -143,3 +143,48 @@ export const getReviewByProviderId = async (req, res) => {
     });
   }
 };
+
+
+
+
+export const updateReview = async (req, res) => {
+  try {
+    const { id, reply } = req.body;
+
+    if (!id || !reply) {
+      return res.status(400).json({
+        success: false,
+        message: "Review ID and reply are required",
+      });
+    }
+
+    const updatedReview = await Review.updateOne(
+      { _id: id },
+      {
+        $set: {
+          reply: reply,
+        },
+      }
+    );
+
+    if (updatedReview.matchedCount === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Review not found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Reply updated successfully",
+    });
+
+  } catch (error) {
+    console.error("Update review error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Something went wrong",
+    });
+  }
+};
