@@ -35,11 +35,11 @@ export default function SearchHero({ onSearch, initialSearch = "" }) {
         </p>
 
         {/* Search Bar */}
-        <div className="w-full max-w-[780px] mx-auto flex items-center border border-[#A766E5] rounded-[12px] bg-white px-3 py-2 shadow-[0px_4px_18px_rgba(0,0,0,0.08)]">
-          {/* Icon */}
+        {/* <div className="w-full max-w-[780px] mx-auto flex items-center border border-[#A766E5] rounded-[12px] bg-white px-3 py-2 shadow-[0px_4px_18px_rgba(0,0,0,0.08)]">
+
           <FiSearch className="text-[#F78D25] text-[20px] mr-3" />
 
-          {/* Input */}
+   
           <input
             type="text"
             value={search}
@@ -49,7 +49,6 @@ export default function SearchHero({ onSearch, initialSearch = "" }) {
             className="flex-1 text-[15px] text-[#444] placeholder:text-[#A3A3A3] outline-none py-1"
           />
 
-          {/* Button */}
           <button
             onClick={handleSearchClick}
             className="px-8 py-[12px] cursor-pointer rounded-[10px] text-white text-[15px] font-medium
@@ -60,7 +59,7 @@ export default function SearchHero({ onSearch, initialSearch = "" }) {
           >
             {t('search_hero.search_button')}
           </button>
-        </div>
+        </div> */}
       </div>
     </section>
   );

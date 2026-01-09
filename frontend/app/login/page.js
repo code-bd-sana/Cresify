@@ -274,7 +274,7 @@ export default function LoginPage() {
             </div>
 
             {/* Remember + Forgot */}
-            <div className='flex items-center justify-between mt-3'>
+            {/* <div className='flex items-center justify-between mt-3'>
               <label className='flex items-center gap-2 text-sm text-gray-700 cursor-pointer'>
                 <input
                   type='checkbox'
@@ -291,7 +291,7 @@ export default function LoginPage() {
               >
                 {t.form.forgotPassword}
               </button>
-            </div>
+            </div> */}
 
             {/* Login Button */}
             <button
