@@ -802,7 +802,9 @@ export default function AccountSettings() {
 
 
         
-          <RegisterAdmin />
+{
+  role === 'admin' &&           <RegisterAdmin />
+}
       </div>
     </div>
   );

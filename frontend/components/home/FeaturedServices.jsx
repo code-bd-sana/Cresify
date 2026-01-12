@@ -11,6 +11,8 @@ import {
   LuWrench,
   LuDroplets,
   LuHammer,
+  LuMapPin,
+  LuStar,
 } from "react-icons/lu";
 
 import { FaUserCircle } from "react-icons/fa";
@@ -18,6 +20,7 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { useGetAllServiceProvidersQuery } from "@/feature/UserApi";
 import { useTranslation } from "react-i18next";
+import { AiFillStar } from "react-icons/ai";
 
 // Service icons mapping
 const serviceIcons = {
@@ -56,84 +59,15 @@ const getServiceIcon = (serviceName) => {
   return serviceIcons.other;
 };
 
-// Get service title from service name
-const getServiceTitle = (serviceName) => {
-  const name = (serviceName || "").toLowerCase();
-  
-  const titleMap = {
-    "cleaning": "Home Cleaning",
-    "plumbing": "Plumbing",
-    "electrical": "Electrical",
-    "gardening": "Gardening",
-    "painting": "Painting",
-    "moving": "Moving",
-    "pet care": "Pet Care",
-    "tutoring": "Tutoring",
-    "appliance repair": "Appliance Repair",
-    "carpentry": "Carpentry",
-    "handyman": "Handyman Services",
-    "water services": "Water Services",
-    "other": "Other Services",
-  };
-  
-  // Find matching service
-  for (const [key, title] of Object.entries(titleMap)) {
-    if (name.includes(key)) return title;
-  }
-  
-  // Capitalize first letter of each word
-  return serviceName
-    .split(" ")
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(" ");
-};
-
-// Get service description
-const getServiceDescription = (serviceName) => {
-  const name = (serviceName || "").toLowerCase();
-  
-  const descriptionMap = {
-    "cleaning": "Professional cleaning services for your home",
-    "plumbing": "Expert plumbers for all your needs",
-    "electrical": "Licensed electricians at your service",
-    "gardening": "Transform your outdoor spaces",
-    "painting": "Professional painting services",
-    "moving": "Reliable moving and packing services",
-    "pet care": "Caring for your furry friends",
-    "tutoring": "Expert tutors for all subjects",
-    "appliance repair": "Repair and maintenance for all appliances",
-    "carpentry": "Custom woodwork and furniture",
-    "handyman": "All-around repair and maintenance",
-    "water services": "Water supply and plumbing solutions",
-    "other": "Various professional services",
-  };
-  
-  // Find matching description
-  for (const [key, desc] of Object.entries(descriptionMap)) {
-    if (name.includes(key)) return desc;
-  }
-  
-  return "Professional service providers";
-};
-
 // Custom Skeleton Loader Component
 const ServiceCardSkeleton = () => (
-  <div className="rounded-[18px] p-5 bg-white shadow-[0px_4px_18px_rgba(0,0,0,0.10)] animate-pulse">
-    {/* Icon Box Skeleton */}
-    <div className="w-[55px] h-[55px] rounded-[14px] bg-gray-300 mb-4"></div>
-    
-    {/* Title Skeleton */}
-    <div className="h-5 bg-gray-300 rounded mb-2 w-3/4"></div>
-    
-    {/* Description Skeleton */}
-    <div className="h-4 bg-gray-300 rounded mb-3 w-full"></div>
-    <div className="h-4 bg-gray-300 rounded mb-4 w-2/3"></div>
-    
-    {/* Providers Skeleton */}
-    <div className="flex items-center gap-2">
-      <div className="w-4 h-4 bg-gray-300 rounded-full"></div>
-      <div className="h-3 bg-gray-300 rounded w-1/2"></div>
-    </div>
+  <div className="bg-white rounded-[20px] p-[14px] animate-pulse">
+    <div className="w-full h-[210px] bg-gray-300 rounded-[16px] mb-4"></div>
+    <div className="h-4 bg-gray-300 rounded mb-2"></div>
+    <div className="h-3 bg-gray-300 rounded mb-3"></div>
+    <div className="h-3 bg-gray-300 rounded mb-4"></div>
+    <div className="h-4 bg-gray-300 rounded mb-5"></div>
+    <div className="h-10 bg-gray-300 rounded-[12px]"></div>
   </div>
 );
 
@@ -144,27 +78,33 @@ export default function FeaturedServices() {
   const [loading, setLoading] = useState(true);
   const {t} = useTranslation('service');
 
-  // Process data when fetched  🍌
-
-
+  // Process data when fetched
   useEffect(() => {
     if (data?.data) {
-      const servicesData = data.data;
+      const providers = data.data.providers || data.data;
       
-      // Process services data
-      const processedServices = servicesData.map((service, index) => {
-        const serviceName = service.name || service.title || service.serviceName || "Service";
-        const serviceCategory = service.category || service.serviceCategory || "other";
+      // Take only first 10 providers
+      const limitedProviders = providers.slice(0, 10);
+      
+      // Process providers data
+      const processedServices = limitedProviders.map((provider) => {
+        const serviceName = provider.serviceName || provider.name || "Service";
+        const serviceCategory = provider.serviceCategory || provider.category || "other";
         
         return {
-          id: service._id || `service-${index}`,
-          title: getServiceTitle(serviceName),
-          desc: service.description || getServiceDescription(serviceName),
+          id: provider._id || provider.id,
+          name: provider.name || "Unnamed Provider",
+          serviceName: serviceName,
+          title: serviceName,
+          desc: provider.serviceDescription || "Professional service provider",
           icon: getServiceIcon(serviceName),
-          providers: service.providerCount || service.providers || Math.floor(Math.random() * 50) + 20,
-          active: index === 0, // First one active
           category: serviceCategory,
-          name: serviceName,
+          rating: 4.5, // Default rating
+          reviews: 0,
+          location: provider.city || provider.region || provider.country || "Location not specified",
+          hourlyRate: provider.hourlyRate || 50,
+          yearsOfExperience: provider.yearsOfExperience || "Not specified",
+          image: provider.servicesImage?.[0] || "/blog/blog1.jpg",
         };
       });
       
@@ -182,13 +122,6 @@ export default function FeaturedServices() {
           <div className="text-center mb-2">
             <div className="h-10 bg-gray-300 rounded-lg mx-auto mb-2 max-w-[300px] animate-pulse"></div>
             <div className="h-4 bg-gray-300 rounded mx-auto mb-12 max-w-[400px] animate-pulse"></div>
-          </div>
-
-          {/* Stats Skeleton */}
-          <div className="mb-8 text-center">
-            <div className="inline-flex items-center gap-4 bg-gray-300 px-6 py-3 rounded-full animate-pulse max-w-[200px] mx-auto">
-              <div className="h-4 bg-gray-400 rounded w-full"></div>
-            </div>
           </div>
 
           {/* Grid Skeleton */}
@@ -209,118 +142,32 @@ export default function FeaturedServices() {
 
   // Show error state
   if (error) {
-    // Fallback to default services if API fails
-    const fallbackServices = [
-      {
-        id: "1",
-        title: "Home Cleaning",
-        desc: "Professional cleaning services for your home",
-        icon: <LuHouse size={28} color="#ffffff" />,
-        providers: 45,
-        active: true,
-      },
-      {
-        id: "2",
-        title: "Plumbing",
-        desc: "Expert plumbers for all your needs",
-        icon: <LuWrench size={28} color="#ffffff" />,
-        providers: 32,
-      },
-      {
-        id: "3",
-        title: "Electrical",
-        desc: "Licensed electricians at your service",
-        icon: <LuZap size={28} color="#ffffff" />,
-        providers: 28,
-      },
-      {
-        id: "4",
-        title: "Gardening",
-        desc: "Transform your outdoor spaces",
-        icon: <LuFlower2 size={28} color="#ffffff" />,
-        providers: 24,
-      },
-      {
-        id: "5",
-        title: "Painting",
-        desc: "Professional painting services",
-        icon: <LuPaintbrush size={28} color="#ffffff" />,
-        providers: 36,
-      },
-      {
-        id: "6",
-        title: "Moving",
-        desc: "Reliable moving and packing services",
-        icon: <LuTruck size={28} color="#ffffff" />,
-        providers: 19,
-      },
-      {
-        id: "7",
-        title: "Pet Care",
-        desc: "Caring for your furry friends",
-        icon: <LuPawPrint size={28} color="#ffffff" />,
-        providers: 22,
-      },
-      {
-        id: "8",
-        title: "Tutoring",
-        desc: "Expert tutors for all subjects",
-        icon: <LuBookOpen size={28} color="#ffffff" />,
-        providers: 41,
-      },
-    ];
-
     return (
       <section className="w-full py-20 px-10 bg-[#F5F5F7]">
         <div className="max-w-[1350px] mx-auto">
           <h2 className="text-[36px] font-bold text-center mb-2">
-        {t('featured_services')}adfsdfas
+            {t('featured_services')}
           </h2>
           <p className="text-center text-[#AC65EE] font-bold text-[15px] mb-12">
-            Find trusted professionals for any service you need in your area
+            {t('services_subtitle')}
           </p>
 
           {/* Error Message */}
           <div className="mb-8 p-4 bg-red-50 border border-red-200 rounded-lg text-center">
-            <p className="text-red-600">Unable to load services from database. Showing popular services instead.</p>
+            <p className="text-red-600">Unable to load services from database.</p>
           </div>
 
-          {/* Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
-            {fallbackServices.map((item) => (
-              <div
-                key={item.id}
-                className={`
-                  rounded-[18px] p-5 bg-white shadow-[0px_4px_18px_rgba(0,0,0,0.10)]
-                  hover:shadow-[0px_6px_22px_rgba(0,0,0,0.16)]
-                  transition
-                  border ${item.active ? "border-[#9838E1]" : "border-transparent"}
-                `}
-              >
-                {/* Icon Box */}
-                <div
-                  className="w-[55px] h-[55px] rounded-[14px] 
-                  bg-gradient-to-r from-[#9838E1] to-[#F68E44]
-                  flex items-center justify-center mb-4"
-                >
-                  {item.icon}
-                </div>
-
-                {/* Title */}
-                <h3 className="text-[16px] font-bold mb-1">{item.title}</h3>
-
-                {/* Description */}
-                <p className="text-[14px] text-[#9838E1] leading-[22px] mb-4">
-                  {item.desc}
-                </p>
-
-                {/* Providers */}
-                <div className="flex items-center gap-2 text-[13px] text-[#6D6D6D]">
-                  <FaUserCircle className="text-[16px]" />
-                  {item.providers} providers
-                </div>
-              </div>
-            ))}
+          {/* Empty State */}
+          <div className="text-center py-12">
+            <div className="inline-block p-6 bg-gradient-to-r from-purple-100 to-orange-100 rounded-full mb-4">
+              <LuWrench size={48} className="text-gray-400" />
+            </div>
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">
+              No services available
+            </h3>
+            <p className="text-gray-600 mb-6">
+              Services will be added soon. Check back later!
+            </p>
           </div>
 
           {/* Button */}
@@ -328,14 +175,12 @@ export default function FeaturedServices() {
             <Link href="/services">
               <button
                 className="
-             px-8 py-[12px]  cursor-pointer cur rounded-[10px] text-white text-[15px] font-medium
-              bg-gradient-to-r from-[#9838E1] to-[#F68E44]
-              shadow-[0px_4px_14px_rgba(0,0,0,0.15)]
-              hover:from-[#8a2dc8] hover:to-[#e57f3a] transition-all
-              hover:shadow-[0px_6px_20px_rgba(152,56,225,0.3)]
+                px-8 py-[12px] rounded-[10px] text-white text-[15px] font-medium
+                bg-gradient-to-r from-[#9838E1] to-[#F68E44]
+                shadow-[0px_4px_14px_rgba(0,0,0,0.15)]
               "
               >
-                View All Categories
+                Browse All Services
               </button>
             </Link>
           </div>
@@ -350,10 +195,10 @@ export default function FeaturedServices() {
       <section className="w-full py-20 px-10 bg-[#F5F5F7]">
         <div className="max-w-[1350px] mx-auto">
           <h2 className="text-[36px] font-bold text-center mb-2">
-           {t('featured_services')}
+            {t('featured_services')}
           </h2>
           <p className="text-center text-[#AC65EE] font-bold text-[15px] mb-12">
-            Find trusted professionals for any service you need in your area
+            {t('services_subtitle')}
           </p>
 
           {/* Empty State */}
@@ -393,77 +238,132 @@ export default function FeaturedServices() {
       <div className="max-w-[1350px] mx-auto">
         {/* Heading */}
         <h2 className="text-[36px] font-bold text-center mb-2">
-   {t('featured_services')}
+          {t('featured_services')}
         </h2>
 
         {/* Subheading */}
         <p className="text-center text-[#AC65EE] font-bold text-[15px] mb-12">
-{t('services_subtitle')}
+          {t('services_subtitle')}
         </p>
 
         {/* Stats */}
-        {/* <div className="mb-8 text-center">
+        <div className="mb-8 text-center">
           <div className="inline-flex items-center gap-4 bg-white px-6 py-3 rounded-full shadow-sm">
             <span className="text-sm text-gray-600">
-              <span className="font-bold text-purple-600">{services.length}</span> services available
+              <span className="font-bold text-purple-600">{services.length}</span> featured services
             </span>
             <span className="h-4 w-px bg-gray-300"></span>
             <span className="text-sm text-gray-600">
               <span className="font-bold text-orange-600">
-                {services.reduce((sum, service) => sum + service.providers, 0)}
-              </span> total providers
+                {services.filter(s => s.yearsOfExperience !== "Not specified").length}
+              </span> experienced providers
             </span>
           </div>
-        </div> */}
+        </div>
 
-        {/* Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
-          {services.map((item, index) => (
+        {/* Grid - 4 columns for larger screens */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+          {services.map((service) => (
             <Link 
-              key={item.id} 
-              href={`/services?service=${encodeURIComponent(item.category || item.name)}`}
+              key={service.id} 
+              href={`/service-details?id=${service.id}`}
               className="block"
             >
               <div
-                className={`
-                  rounded-[18px] p-5 bg-white shadow-[0px_4px_18px_rgba(0,0,0,0.10)]
-                  hover:shadow-[0px_6px_22px_rgba(0,0,0,0.16)]
-                  transition-all duration-300 hover:scale-[1.02]
-                  border ${item.active ? "border-[#9838E1]" : "border-transparent"}
-                  cursor-pointer h-full
-                `}
+                className="
+                  bg-white rounded-[20px] overflow-hidden p-3.5 
+                  hover:shadow-lg transition-shadow duration-300 
+                  h-full flex flex-col border border-transparent
+                  hover:border-purple-100
+                "
               >
-                {/* Icon Box */}
-                <div
-                  className="w-[55px] h-[55px] rounded-[14px] 
-                  bg-gradient-to-r from-[#9838E1] to-[#F68E44]
-                  flex items-center justify-center mb-4"
-                >
-                  {item.icon}
+                {/* Image */}
+                <div className="relative w-full h-[180px] mb-4 flex-shrink-0 rounded-[16px] overflow-hidden">
+                  <img
+                    src={service.image}
+                    className="w-full h-full object-cover"
+                    alt={service.title}
+                    onError={(e) => {
+                      e.target.src = "/blog/blog1.jpg";
+                    }}
+                  />
+                  
+                  {/* Service Category Badge */}
+                  <span className="absolute top-3 right-3 px-3 py-[3px] bg-[#A46CFF] text-white text-[12px] rounded-full shadow-[0_2px_8px_rgba(0,0,0,0.20)]">
+                    {service.category}
+                  </span>
+                  
+                  {/* Experience Badge */}
+                  {service.yearsOfExperience !== "Not specified" && (
+                    <span className="absolute top-3 left-3 px-3 py-[3px] bg-green-500 text-white text-[12px] rounded-full shadow-[0_2px_8px_rgba(0,0,0,0.20)]">
+                      {service.yearsOfExperience} exp
+                    </span>
+                  )}
                 </div>
 
-                {/* Title */}
-                <h3 className="text-[16px] font-bold mb-1">{item.title}</h3>
+                {/* Icon and Title */}
+                <div className="flex items-center gap-3 mb-3">
+                  <div
+                    className="w-[45px] h-[45px] rounded-[12px] 
+                    bg-gradient-to-r from-[#9838E1] to-[#F68E44]
+                    flex items-center justify-center flex-shrink-0"
+                  >
+                    {service.icon}
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-[16px] font-semibold text-[#1A1A1A] mb-0.5">
+                      {service.name}
+                    </h3>
+                    <h4 className="text-[14px] font-medium text-purple-600">
+                      {service.title}
+                    </h4>
+                  </div>
+                </div>
 
                 {/* Description */}
-                <p className="text-[14px] text-[#9838E1] leading-[22px] mb-4">
-                  {item.desc}
+                <p className="text-[13px] text-gray-600 mb-3 line-clamp-2 flex-grow">
+                  {service.desc}
                 </p>
 
-                {/* Providers */}
-                <div className="flex items-center gap-2 text-[13px] text-[#6D6D6D]">
-                  <FaUserCircle className="text-[16px]" />
-                  <span className="font-medium">{item.providers}</span> providers available
+                {/* Location */}
+                <div className="flex items-center gap-2 text-[13px] text-[#6A6A6A] mb-3">
+                  <LuMapPin className="text-[14px] flex-shrink-0" />
+                  <span className="line-clamp-1">{service.location}</span>
                 </div>
 
-                {/* Service Category Badge */}
-                {item.category && (
-                  <div className="mt-4">
-                    <span className="inline-block px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded">
-                      {item.category}
-                    </span>
+                {/* Rating */}
+                <div className="flex items-center text-[14px] text-[#6A6A6A] mb-4">
+                  {[...Array(5)].map((_, i) => (
+                    <AiFillStar
+                      key={i}
+                      className={`text-[15px] ${
+                        i < Math.floor(service.rating) 
+                          ? "text-[#FFA534]" 
+                          : "text-[#E0E0E0]"
+                      }`}
+                    />
+                  ))}
+                  <span className="ml-1">{service.rating} ({service.reviews} reviews)</span>
+                </div>
+
+                {/* Price and Button */}
+                <div className="flex-shrink-0">
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <p className="text-[12px] text-[#6B6B6B]">
+                        Starting at
+                      </p>
+                      <p className="text-[20px] font-semibold text-[#F78D25]">
+                        ${service.hourlyRate}/hour
+                      </p>
+                    </div>
                   </div>
-                )}
+
+                  {/* Button */}
+                  <button className="w-full py-3 text-[15px] font-medium text-white rounded-xl bg-gradient-to-r from-[#9838E1] to-[#F68E44] shadow-[0_4px_14px_rgba(0,0,0,0.15)] hover:opacity-90 transition-opacity">
+                    View Details
+                  </button>
+                </div>
               </div>
             </Link>
           ))}
@@ -474,14 +374,14 @@ export default function FeaturedServices() {
           <Link href="/services">
             <button
               className="
-            px-8 py-[12px] cursor-pointer rounded-[10px] text-white text-[15px] font-medium
-              bg-gradient-to-r from-[#9838E1] to-[#F68E44]
-              shadow-[0px_4px_14px_rgba(0,0,0,0.15)]
-              hover:from-[#8a2dc8] hover:to-[#e57f3a] transition-all
-              hover:shadow-[0px_6px_20px_rgba(152,56,225,0.3)] flex items-center gap-2
-            "
+                px-8 py-[12px] cursor-pointer rounded-[10px] text-white text-[15px] font-medium
+                bg-gradient-to-r from-[#9838E1] to-[#F68E44]
+                shadow-[0px_4px_14px_rgba(0,0,0,0.15)]
+                hover:from-[#8a2dc8] hover:to-[#e57f3a] transition-all
+                hover:shadow-[0px_6px_20px_rgba(152,56,225,0.3)] flex items-center gap-2
+              "
             >
-        {t('view_all_categories')}
+              {t('view_all_services')}
               <svg 
                 className="w-4 h-4" 
                 fill="none" 
