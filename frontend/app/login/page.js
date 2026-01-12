@@ -343,31 +343,7 @@ export default function LoginPage() {
           </div>
 
           {/* Test Credentials Note */}
-          <div className='mt-6 p-4 bg-gradient-to-r from-[#F3F8FF] to-[#FFF3E5] border border-[#D4E6FF] rounded-xl text-sm text-gray-700'>
-            <p className='font-medium mb-2 text-[#6A11CB] flex items-center gap-2'>
-              <span className='text-lg'>🔐</span>
-              {t.testCredentials.title}
-            </p>
-            <div className='space-y-1'>
-              <p className='flex items-center gap-2'>
-                <span className='text-[#F88D25]'>📧</span>
-                <span className='font-medium'>{t.testCredentials.email}</span>
-                <code className='bg-gray-100 px-2 py-1 rounded text-[#6A11CB]'>
-                  demo@cresify.com
-                </code>
-              </p>
-              <p className='flex items-center gap-2'>
-                <span className='text-[#F88D25]'>🔑</span>
-                <span className='font-medium'>{t.testCredentials.password}</span>
-                <code className='bg-gray-100 px-2 py-1 rounded text-[#6A11CB]'>
-                  demo123
-                </code>
-              </p>
-            </div>
-            <p className='mt-2 text-xs text-gray-500'>
-              {t.testCredentials.note}
-            </p>
-          </div>
+     
         </div>
       </div>
     </div>
