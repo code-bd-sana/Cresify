@@ -408,7 +408,7 @@ const BookingsPage = () => {
         </div>
 
         {/* Quick Status Filters */}
-        <div className='flex flex-wrap gap-2 mt-4'>
+        {/* <div className='flex flex-wrap gap-2 mt-4'>
           {[
             "all",
             "pending",
@@ -439,7 +439,7 @@ const BookingsPage = () => {
               </button>
             );
           })}
-        </div>
+        </div> */}
       </div>
 
       {/* Bookings Table */}
@@ -572,7 +572,7 @@ const BookingsPage = () => {
                         title={t("bookings.actions.viewDetails")}>
                         <Eye size={18} />
                       </button>
-                      <button
+                      {/* <button
                         onClick={() =>
                           handleStatusChange(booking._id, "accept")
                         }
@@ -585,11 +585,11 @@ const BookingsPage = () => {
                         className='p-2 text-red-600 hover:bg-red-50 rounded-lg transition'
                         title={t("bookings.actions.deleteBooking")}>
                         <Trash2 size={18} />
-                      </button>
+                      </button> */}
                       <div className='relative'>
-                        <button className='p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition'>
+                        {/* <button className='p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition'>
                           <MoreVertical size={18} />
-                        </button>
+                        </button> */}
                       </div>
                     </div>
                   </td>
