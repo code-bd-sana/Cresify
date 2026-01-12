@@ -176,7 +176,8 @@ export default function AddProduct() {
         createdAt: new Date().toISOString(),
       };
 
-      await createProduct(finalData);
+      const productssave = await createProduct(finalData);
+      console.log(productssave, 'allah i dont knokw ami ki korbo')
       toast.success("Product posted successfully");
 
       setFormData({

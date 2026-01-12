@@ -124,13 +124,13 @@ export default function ContactSection() {
                 <div>
                   <p className="text-[13px] text-[#5A5A5A]">{t('email')}</p>
                   <p className="text-[13px] text-[#9838E1] font-medium">
-                    curtis.warren@example.com
+                contacto@cresify.com
                   </p>
                 </div>
               </div>
 
               {/* Phone */}
-              <div className="flex items-center gap-3">
+              {/* <div className="flex items-center gap-3">
                 <div className="w-[40px] h-[40px] rounded-[10px]
                   flex items-center justify-center
                   bg-gradient-to-r from-[#9838E1] to-[#F68E44]">
@@ -142,7 +142,7 @@ export default function ContactSection() {
                     (704) 555-0127
                   </p>
                 </div>
-              </div>
+              </div> */}
 
             </div>
           </div>
@@ -154,17 +154,24 @@ export default function ContactSection() {
             </h4>
 
             <div className="flex items-center gap-3">
+{[
+  { Icon: X, link: "https://x.com/mycresify" },
+  { Icon: Instagram, link: "https://instagram.com/myscresify" },
+].map(({ Icon, link }, i) => (
+  <a
+    key={i}
+    href={link}
+    target="_blank"
+    rel="noopener noreferrer"
+    className="w-[40px] h-[40px] rounded-[10px]
+    flex items-center justify-center cursor-pointer
+    bg-gradient-to-r from-[#9838E1] to-[#F68E44]
+    hover:scale-110 transition-transform"
+  >
+    <Icon className="text-white" size={18} />
+  </a>
+))}
 
-              {[X, Instagram, Facebook, MessageSquare].map((Icon, i) => (
-                <div
-                  key={i}
-                  className="w-[40px] h-[40px] rounded-[10px]
-                  flex items-center justify-center cursor-pointer
-                  bg-gradient-to-r from-[#9838E1] to-[#F68E44]"
-                >
-                  <Icon className="text-white" size={18} />
-                </div>
-              ))}
 
             </div>
           </div>
