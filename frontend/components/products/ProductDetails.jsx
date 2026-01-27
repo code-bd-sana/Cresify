@@ -39,6 +39,11 @@ export default function ProductDetails({ id }) {
 
   // ADD TO CART HANDLER
   const cartHandler = async () => {
+
+
+    if(!userId){
+      return toast.error('Please Login First')
+    }
     try {
       const body = {
         product: id,

@@ -11,6 +11,7 @@ const ProductDetailspage = () => {
   return (
     <div>
       <ProductDetails id={id}/>
+      
       <CustomerReviews id={id}/>
     </div>
   );

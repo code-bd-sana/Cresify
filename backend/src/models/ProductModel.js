@@ -32,7 +32,7 @@ const productSchema = new Schema(
     },
     status: {
       type: String,
-      enum: ["active", "out-of-stock", "ubpublish", "rejected", "pending"],
+      enum: ["active", "out-of-stock", "ubpublish", "rejected", "pending", "unpublish"],
       default: "pending",
     },
 

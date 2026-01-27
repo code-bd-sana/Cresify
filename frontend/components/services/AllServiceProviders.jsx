@@ -435,166 +435,166 @@ function AllServiceProvidersPage() {
           </div>
 
           {/* Search and Filter Controls */}
-          <div className='bg-white rounded-xl p-4 shadow-sm mb-6'>
-            <div className='flex flex-col md:flex-row gap-4'>
-              {/* Search Input */}
-              <div className='flex-1 relative'>
-                <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5' />
-                <input
-                  type='text'
-                  placeholder={t("search_placeholder")}
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className='w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent'
-                />
-                <p className='text-xs text-gray-500 mt-1 pl-1'>
-                  {t("search_hint")}
-                </p>
-              </div>
+     <div className='bg-white rounded-xl p-4 shadow-sm mb-6'>
+  <div className='flex flex-col md:flex-row gap-4 items-center'>
+    {/* Search Input - Now centered with other filters */}
+    <div className='flex-1 w-full md:w-auto'>
+      <div className='relative'>
+        <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5' />
+        <input
+          type='text'
+          placeholder={t("search_placeholder")}
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className='w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent'
+        />
+      </div>
+  
+    </div>
 
-              {/* Service Category Filter */}
-              <div className='flex items-center gap-2'>
-                <Filter className='text-gray-400 w-5 h-5' />
-                <select
-                  value={serviceFilter}
-                  onChange={(e) => setServiceFilter(e.target.value)}
-                  className='border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-purple-500 focus:border-transparent'>
-                  <option value='all'>{t("all_services")}</option>
-                  {serviceCategories.slice(1).map((category) => (
-                    <option key={category} value={category}>
-                      {category.charAt(0).toUpperCase() + category.slice(1)}
-                    </option>
-                  ))}
-                </select>
-              </div>
+    {/* Service Category Filter */}
+    <div className='flex items-center gap-2 w-full md:w-auto'>
+      <Filter className='text-gray-400 w-5 h-5 flex-shrink-0' />
+      <select
+        value={serviceFilter}
+        onChange={(e) => setServiceFilter(e.target.value)}
+        className='border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-purple-500 focus:border-transparent w-full md:w-auto'>
+        <option value='all'>{t("all_services")}</option>
+        {serviceCategories.slice(1).map((category) => (
+          <option key={category} value={category}>
+            {category.charAt(0).toUpperCase() + category.slice(1)}
+          </option>
+        ))}
+      </select>
+    </div>
 
-              {/* Location Filter */}
-              <div className='flex items-center gap-2'>
-                <MapPin className='text-gray-400 w-5 h-5' />
-                <select
-                  value={hasURLParams ? "custom" : locationFilter}
-                  onChange={(e) => handleLocationFilterChange(e.target.value)}
-                  className='border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-purple-500 focus:border-transparent'
-                  disabled={hasURLParams}>
-                  <option value='all'>{t("all_locations")}</option>
-                  {hasURLParams && (
-                    <option value='custom'>{t("custom_url_filter")}</option>
-                  )}
-                  {!hasURLParams &&
-                    uniqueLocations.map((location) => (
-                      <option
-                        key={`${location.type}:${location.value}`}
-                        value={location.value.toLowerCase()}>
-                        {location.value} ({location.type})
-                      </option>
-                    ))}
-                </select>
-                {hasURLParams && (
-                  <span className='text-xs text-gray-500 ml-2'>
-                    ({t("using_url_filters")})
-                  </span>
-                )}
-              </div>
+    {/* Location Filter */}
+    <div className='flex items-center gap-2 w-full md:w-auto'>
+      <MapPin className='text-gray-400 w-5 h-5 flex-shrink-0' />
+      <select
+        value={hasURLParams ? "custom" : locationFilter}
+        onChange={(e) => handleLocationFilterChange(e.target.value)}
+        className='border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-purple-500 focus:border-transparent w-full md:w-auto'
+        disabled={hasURLParams}>
+        <option value='all'>{t("all_locations")}</option>
+        {hasURLParams && (
+          <option value='custom'>{t("custom_url_filter")}</option>
+        )}
+        {!hasURLParams &&
+          uniqueLocations.map((location) => (
+            <option
+              key={`${location.type}:${location.value}`}
+              value={location.value.toLowerCase()}>
+              {location.value} ({location.type})
+            </option>
+          ))}
+      </select>
+      {hasURLParams && (
+        <span className='text-xs text-gray-500 ml-2 hidden md:inline'>
+          ({t("using_url_filters")})
+        </span>
+      )}
+    </div>
 
-              {/* Items Per Page */}
-              <div className='flex items-center gap-2'>
-                <span className='text-sm text-gray-600'>{t("show")}:</span>
-                <select
-                  value={limit}
-                  onChange={(e) => handleLimitChange(Number(e.target.value))}
-                  className='border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-purple-500 focus:border-transparent'>
-                  <option value='10'>10</option>
-                  <option value='20'>20</option>
-                  <option value='30'>30</option>
-                  <option value='50'>50</option>
-                </select>
-              </div>
-            </div>
+    {/* Items Per Page */}
+    <div className='flex items-center gap-2 w-full md:w-auto'>
+      <span className='text-sm text-gray-600 flex-shrink-0'>{t("show")}:</span>
+      <select
+        value={limit}
+        onChange={(e) => handleLimitChange(Number(e.target.value))}
+        className='border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-purple-500 focus:border-transparent w-full md:w-auto'>
+        <option value='10'>10</option>
+        <option value='20'>20</option>
+        <option value='30'>30</option>
+        <option value='50'>50</option>
+      </select>
+    </div>
+  </div>
 
-            {/* Active Filters */}
-            {(serviceFilter !== "all" || hasURLParams || searchQuery) && (
-              <div className='mt-4 pt-4 border-t border-gray-200'>
-                <div className='flex items-center flex-wrap gap-2'>
-                  <span className='text-sm text-gray-600'>
-                    {t("active_filters")}:
-                  </span>
+  {/* Active Filters */}
+  {(serviceFilter !== "all" || hasURLParams || searchQuery) && (
+    <div className='mt-4 pt-4 border-t border-gray-200'>
+      <div className='flex items-center flex-wrap gap-2'>
+        <span className='text-sm text-gray-600'>
+          {t("active_filters")}:
+        </span>
 
-                  {serviceFilter !== "all" && (
-                    <span className='inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800'>
-                      {t("service")}: {serviceFilter}
-                      <button
-                        onClick={() => setServiceFilter("all")}
-                        className='ml-1 text-purple-600 hover:text-purple-800'>
-                        ×
-                      </button>
-                    </span>
-                  )}
+        {serviceFilter !== "all" && (
+          <span className='inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800'>
+            {t("service")}: {serviceFilter}
+            <button
+              onClick={() => setServiceFilter("all")}
+              className='ml-1 text-purple-600 hover:text-purple-800'>
+              ×
+            </button>
+          </span>
+        )}
 
-                  {countryParam && (
-                    <span className='inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800'>
-                      <Globe className='w-3 h-3 mr-1' />
-                      {t("country")}: {countryParam}
-                      <button
-                        onClick={() => clearLocationFilter("country")}
-                        className='ml-1 text-blue-600 hover:text-blue-800'>
-                        ×
-                      </button>
-                    </span>
-                  )}
+        {countryParam && (
+          <span className='inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800'>
+            <Globe className='w-3 h-3 mr-1' />
+            {t("country")}: {countryParam}
+            <button
+              onClick={() => clearLocationFilter("country")}
+              className='ml-1 text-blue-600 hover:text-blue-800'>
+              ×
+            </button>
+          </span>
+        )}
 
-                  {regionParam && (
-                    <span className='inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800'>
-                      <MapPin className='w-3 h-3 mr-1' />
-                      {t("region")}: {regionParam}
-                      <button
-                        onClick={() => clearLocationFilter("region")}
-                        className='ml-1 text-purple-600 hover:text-purple-800'>
-                        ×
-                      </button>
-                    </span>
-                  )}
+        {regionParam && (
+          <span className='inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800'>
+            <MapPin className='w-3 h-3 mr-1' />
+            {t("region")}: {regionParam}
+            <button
+              onClick={() => clearLocationFilter("region")}
+              className='ml-1 text-purple-600 hover:text-purple-800'>
+              ×
+            </button>
+          </span>
+        )}
 
-                  {cityParam && (
-                    <span className='inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800'>
-                      <Building className='w-3 h-3 mr-1' />
-                      {t("city")}: {cityParam}
-                      <button
-                        onClick={() => clearLocationFilter("city")}
-                        className='ml-1 text-green-600 hover:text-green-800'>
-                        ×
-                      </button>
-                    </span>
-                  )}
+        {cityParam && (
+          <span className='inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800'>
+            <Building className='w-3 h-3 mr-1' />
+            {t("city")}: {cityParam}
+            <button
+              onClick={() => clearLocationFilter("city")}
+              className='ml-1 text-green-600 hover:text-green-800'>
+              ×
+            </button>
+          </span>
+        )}
 
-                  {searchQuery && (
-                    <span className='inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800'>
-                      {t("search")}: {searchQuery}
-                      <button
-                        onClick={() => setSearchQuery("")}
-                        className='ml-1 text-green-600 hover:text-green-800'>
-                        ×
-                      </button>
-                    </span>
-                  )}
+        {searchQuery && (
+          <span className='inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800'>
+            {t("search")}: {searchQuery}
+            <button
+              onClick={() => setSearchQuery("")}
+              className='ml-1 text-green-600 hover:text-green-800'>
+              ×
+            </button>
+          </span>
+        )}
 
-                  {(serviceFilter !== "all" || hasURLParams || searchQuery) && (
-                    <button
-                      onClick={() => {
-                        setServiceFilter("all");
-                        clearAllLocationFilters();
-                        setSearchQuery("");
-                      }}
-                      className='text-sm text-gray-600 hover:text-gray-800 underline'>
-                      {t("clear_all_filters")}
-                    </button>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
+        {(serviceFilter !== "all" || hasURLParams || searchQuery) && (
+          <button
+            onClick={() => {
+              setServiceFilter("all");
+              clearAllLocationFilters();
+              setSearchQuery("");
+            }}
+            className='text-sm text-gray-600 hover:text-gray-800 underline'>
+            {t("clear_all_filters")}
+          </button>
+        )}
+      </div>
+    </div>
+  )}
+</div>
 
           {/* Location Summary */}
-          {uniqueLocations.length > 0 && (
+          {/* {uniqueLocations.length > 0 && (
             <div className='mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200'>
               <div className='flex items-center gap-2 mb-2'>
                 <Globe className='w-4 h-4 text-blue-600' />
@@ -636,7 +636,7 @@ function AllServiceProvidersPage() {
                 )}
               </div>
             </div>
-          )}
+          )} */}
 
           {/* URL Filter Info */}
           {hasURLParams && filteredProviders.length > 0 && (

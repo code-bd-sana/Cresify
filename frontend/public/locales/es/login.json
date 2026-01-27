@@ -1,0 +1,24 @@
+{
+  "login": {
+    "title": "Bienvenido de nuevo 👋",
+    "subtitle": "Inicia sesión para continuar con tu tienda o explorar productos.",
+    "form": {
+      "email": "Correo electrónico",
+      "emailPlaceholder": "Tucorreo@ejemplo.com",
+      "password": "Contraseña",
+      "passwordPlaceholder": "••••••••",
+      "rememberMe": "Recordarme",
+      "forgotPassword": "¿Olvidaste tu contraseña?",
+      "submit": "Iniciar sesión",
+      "showPassword": "Mostrar contraseña",
+      "hidePassword": "Ocultar contraseña"
+    },
+    "newHere": "¿Eres nuevo aquí?",
+    "createSeller": "Crear una cuenta de vendedor",
+    "registerBuyer": "Registrarse como Comprador",
+    "registerProvider": "Registrarse como Proveedor de Servicios",
+    "errors": {
+      "loginFailed": "Inicio de sesión fallido. Por favor, verifica tus credenciales."
+    }
+  }
+}
